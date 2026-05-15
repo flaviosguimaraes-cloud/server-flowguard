@@ -22,6 +22,7 @@
    const navigate = useNavigate({ from: '/' });
  
    useEffect(() => {
+      console.log('AuthProvider useEffect starting');
      const username = localStorage.getItem('username');
      const role = localStorage.getItem('role') as 'admin' | 'reader';
      const token = localStorage.getItem('access_token');
@@ -29,6 +30,7 @@
      if (token && username && role) {
        setUser({ username, role });
      }
+      console.log('AuthProvider setting loading to false');
      setLoading(false);
    }, []);
  
