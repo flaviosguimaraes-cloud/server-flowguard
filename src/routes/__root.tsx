@@ -69,7 +69,7 @@ function RootComponent() {
    const { user } = useAuth();
    const location = useLocation();
    const isLoginPage = location.pathname === "/login";
-   const token = localStorage.getItem('access_token');
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
  
    if (!token && !isLoginPage) {
      return <Navigate to="/login" replace />;

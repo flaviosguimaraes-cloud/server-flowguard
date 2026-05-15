@@ -19,6 +19,7 @@
  
  export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
    const [user, setUser] = useState<User | null>(() => {
+     if (typeof window === 'undefined') return null;
      const token = localStorage.getItem('access_token');
      const username = localStorage.getItem('username');
      const role = localStorage.getItem('role');
