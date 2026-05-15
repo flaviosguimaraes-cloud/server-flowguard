@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import { 
   LayoutDashboard, Activity, ShieldAlert, Shield, Zap, List, 
   Network, CheckCircle, XCircle, Globe, Settings2, Server, 
@@ -6,12 +6,13 @@ import {
   Settings, LogOut, ChevronDown, ChevronRight, Menu, X
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from '@tanstack/react-router';
- import { useTranslation } from '../hooks/useTranslation';
+import { useTranslation } from '../hooks/useTranslation';
+import { useUI } from '../contexts/UIContext';
  import { useAuth } from '../contexts/AuthContext';
  import { clsx } from 'clsx';
  
 export const Sidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
+  const { sidebarCollapsed: collapsed, setSidebarCollapsed: setCollapsed } = useUI();
   const [openGroups, setOpenGroups] = useState<string[]>(['mitigation', 'operation']);
   const { t } = useTranslation();
   const { logout } = useAuth();
@@ -68,7 +69,7 @@ export const Sidebar = () => {
   return (
     <div className={clsx(
       "h-screen transition-all duration-300 flex flex-col z-50",
-      "bg-[#13151f] dark:bg-[#13151f] light:bg-[#1e293b]", // Specification: bg-[#13151f] (dark) or #1e293b (light)
+      "bg-[#13151f] dark:bg-[#13151f] lg:bg-[#1e293b]", // Specification: bg-[#13151f] (dark) or #1e293b (light)
       collapsed ? "w-[60px]" : "w-[220px]"
     )}>
       {/* Logo */}
