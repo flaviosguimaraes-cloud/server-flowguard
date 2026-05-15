@@ -61,11 +61,18 @@ function RootComponent() {
 
 function AuthWrapper() {
   const { user, loading } = useAuth();
-  console.log('AuthWrapper rendering', { user, loading });
   const location = useLocation();
   const navigate = useNavigate();
 
   const isLoginPage = location.pathname === "/login";
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#0f1117] text-gray-100">
+        <div className="text-xl">Carregando...</div>
+      </div>
+    );
+  }
 
   React.useEffect(() => {
     if (!loading && !user && !isLoginPage) {
