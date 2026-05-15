@@ -10,13 +10,22 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as EventsRouteImport } from './routes/events'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ChangePasswordRouteImport } from './routes/change-password'
+import { Route as AnalysisRouteImport } from './routes/analysis'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as MitigationIndexRouteImport } from './routes/mitigation/index'
+import { Route as MitigationActiveRouteImport } from './routes/mitigation/active'
 
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const EventsRoute = EventsRouteImport.update({
+  id: '/events',
+  path: '/events',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DashboardRoute = DashboardRouteImport.update({
@@ -29,44 +38,100 @@ const ChangePasswordRoute = ChangePasswordRouteImport.update({
   path: '/change-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AnalysisRoute = AnalysisRouteImport.update({
+  id: '/analysis',
+  path: '/analysis',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MitigationIndexRoute = MitigationIndexRouteImport.update({
+  id: '/mitigation/',
+  path: '/mitigation/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MitigationActiveRoute = MitigationActiveRouteImport.update({
+  id: '/mitigation/active',
+  path: '/mitigation/active',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/analysis': typeof AnalysisRoute
   '/change-password': typeof ChangePasswordRoute
   '/dashboard': typeof DashboardRoute
+  '/events': typeof EventsRoute
   '/login': typeof LoginRoute
+  '/mitigation/active': typeof MitigationActiveRoute
+  '/mitigation/': typeof MitigationIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/analysis': typeof AnalysisRoute
   '/change-password': typeof ChangePasswordRoute
   '/dashboard': typeof DashboardRoute
+  '/events': typeof EventsRoute
   '/login': typeof LoginRoute
+  '/mitigation/active': typeof MitigationActiveRoute
+  '/mitigation': typeof MitigationIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/analysis': typeof AnalysisRoute
   '/change-password': typeof ChangePasswordRoute
   '/dashboard': typeof DashboardRoute
+  '/events': typeof EventsRoute
   '/login': typeof LoginRoute
+  '/mitigation/active': typeof MitigationActiveRoute
+  '/mitigation/': typeof MitigationIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/change-password' | '/dashboard' | '/login'
+  fullPaths:
+    | '/'
+    | '/analysis'
+    | '/change-password'
+    | '/dashboard'
+    | '/events'
+    | '/login'
+    | '/mitigation/active'
+    | '/mitigation/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/change-password' | '/dashboard' | '/login'
-  id: '__root__' | '/' | '/change-password' | '/dashboard' | '/login'
+  to:
+    | '/'
+    | '/analysis'
+    | '/change-password'
+    | '/dashboard'
+    | '/events'
+    | '/login'
+    | '/mitigation/active'
+    | '/mitigation'
+  id:
+    | '__root__'
+    | '/'
+    | '/analysis'
+    | '/change-password'
+    | '/dashboard'
+    | '/events'
+    | '/login'
+    | '/mitigation/active'
+    | '/mitigation/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AnalysisRoute: typeof AnalysisRoute
   ChangePasswordRoute: typeof ChangePasswordRoute
   DashboardRoute: typeof DashboardRoute
+  EventsRoute: typeof EventsRoute
   LoginRoute: typeof LoginRoute
+  MitigationActiveRoute: typeof MitigationActiveRoute
+  MitigationIndexRoute: typeof MitigationIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -76,6 +141,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/events': {
+      id: '/events'
+      path: '/events'
+      fullPath: '/events'
+      preLoaderRoute: typeof EventsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/dashboard': {
@@ -92,6 +164,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChangePasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/analysis': {
+      id: '/analysis'
+      path: '/analysis'
+      fullPath: '/analysis'
+      preLoaderRoute: typeof AnalysisRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/': {
       id: '/'
       path: '/'
@@ -99,15 +178,43 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mitigation/': {
+      id: '/mitigation/'
+      path: '/mitigation'
+      fullPath: '/mitigation/'
+      preLoaderRoute: typeof MitigationIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mitigation/active': {
+      id: '/mitigation/active'
+      path: '/mitigation/active'
+      fullPath: '/mitigation/active'
+      preLoaderRoute: typeof MitigationActiveRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AnalysisRoute: AnalysisRoute,
   ChangePasswordRoute: ChangePasswordRoute,
   DashboardRoute: DashboardRoute,
+  EventsRoute: EventsRoute,
   LoginRoute: LoginRoute,
+  MitigationActiveRoute: MitigationActiveRoute,
+  MitigationIndexRoute: MitigationIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
