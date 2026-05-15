@@ -69,7 +69,7 @@ export const Sidebar = () => {
   return (
     <div className={clsx(
       "h-screen transition-all duration-300 flex flex-col z-50",
-      "bg-[#13151f] dark:bg-[#13151f] lg:bg-[#1e293b]", // Specification: bg-[#13151f] (dark) or #1e293b (light)
+      "bg-[#1e293b] dark:bg-[#13151f]", // Specification: bg-[#13151f] (dark) or #1e293b (light)
       collapsed ? "w-[60px]" : "w-[220px]"
     )}>
       {/* Logo */}
