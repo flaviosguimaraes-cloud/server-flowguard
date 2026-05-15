@@ -47,25 +47,32 @@
      refetchInterval: 30000,
    });
  
-   const removeMutation = useMutation({
-     mutationFn: async (ip: string) => {
-       return api.post('/api/mitigation/remove', { ip });
-     },
-     onSuccess: () => {
-       toast.success('Mitigação removida com sucesso');
-       queryClient.invalidateQueries({ queryKey: ['mitigation-active'] });
-       queryClient.invalidateQueries({ queryKey: ['bgp-flowspec'] });
-     },
-     onError: (error: any) => {
-       toast.error(error.response?.data?.detail || 'Erro ao remover mitigação');
-     }
-   });
- 
-   const handleRemove = (ip: string) => {
-     if (window.confirm(`Tem certeza que deseja remover a mitigação para ${ip}?`)) {
-       removeMutation.mutate(ip);
-     }
-   };
+  const handleRemove = async (ip: string) => {
+    if (!window.confirm(`Tem certeza que deseja remover a mitigação para ${ip}?`)) {
+      return;
+    }
+
+    try {
+      const response = await api.post(
+        '/api/mitigation/remove',
+        { ip },
+        {
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        }
+      );
+      toast.success('Mitigação removida com sucesso');
+      queryClient.invalidateQueries({ queryKey: ['mitigation-active'] });
+      queryClient.invalidateQueries({ queryKey: ['bgp-flowspec'] });
+      queryClient.invalidateQueries({ queryKey: ['detection-stats'] });
+    } catch (error: any) {
+      toast.error(
+        error.response?.data?.detail || 
+        'Erro ao remover mitigação'
+      );
+    }
+  };
  
    return (
      <div className="space-y-6 animate-in fade-in duration-500">
@@ -280,11 +287,15 @@
          )}
        </div>
  
-       <MitigationModal 
-         isOpen={isMitigationOpen} 
-         onClose={() => setIsMitigationOpen(false)} 
-         targetIP="" 
-       />
+      <MitigationModal 
+        isOpen={isMitigationOpen} 
+        onClose={() => setIsMitigationOpen(false)} 
+        targetIP=""
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['mitigation-active'] });
+          queryClient.invalidateQueries({ queryKey: ['detection-stats'] });
+        }}
+      />
  
        <FlowSpecModal
          isOpen={isFlowSpecOpen}
