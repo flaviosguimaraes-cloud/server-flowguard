@@ -77,6 +77,89 @@ export default function Dashboard() {
      refetchInterval: 30000,
    });
 
+   const chartData = (timeline || []).map((d: any) => ({
+     time: d.time ? d.time.substring(11, 16) : '',
+     rx: parseFloat((d.rx_bytes / 1e9).toFixed(2)),
+     tx: parseFloat((d.tx_bytes / 1e9).toFixed(2)),
+   }));
+
+   const protoMap: Record<number, string> = {
+     6: 'TCP', 17: 'UDP', 1: 'ICMP',
+     47: 'GRE', 50: 'ESP', 89: 'OSPF'
+   };
+
+   const totalBytes = (protocols?.items || []).reduce((a: number, b: any) => a + b.bytes, 0);
+
+   const protoData = (protocols?.items || [])
+     .slice(0, 5)
+     .map((p: any) => ({
+       name: protoMap[p.proto] || 'Proto ' + p.proto,
+       bytes: p.bytes,
+       flows: p.flows,
+       pct: totalBytes > 0 ? ((p.bytes / totalBytes) * 100).toFixed(1) : 0
+     }));
+
+   const flagMap: Record<string, string> = {
+     BR: '🇧🇷', US: '🇺🇸', CN: '🇨🇳', RU: '🇷🇺', DE: '🇩🇪', FR: '🇫🇷',
+     GB: '🇬🇧', JP: '🇯🇵', KR: '🇰🇷', AR: '🇦🇷', CL: '🇨🇱', MX: '🇲🇽',
+     HK: '🇭🇰', SG: '🇸🇬', NL: '🇳🇱', CA: '🇨🇦', AU: '🇦🇺', IN: '🇮🇳',
+     UA: '🇺🇦', TR: '🇹🇷'
+   };
+
+   const totalCountryBytes = (countries?.items || []).reduce((a: number, b: any) => a + b.bytes, 0);
+
+   const countryData = (countries?.items || [])
+     .slice(0, 8)
+     .map((c: any) => ({
+       flag: flagMap[c.country] || '🌐',
+       code: c.country,
+       bytes: c.bytes,
+       pct: totalCountryBytes > 0 ? ((c.bytes / totalCountryBytes) * 100).toFixed(1) : 0
+     }));
+
+   const portMap: Record<number, string> = {
+     443: 'HTTPS', 80: 'HTTP', 53: 'DNS', 22: 'SSH', 25: 'SMTP', 110: 'POP3',
+     143: 'IMAP', 3389: 'RDP', 8080: 'HTTP-Alt', 123: 'NTP', 161: 'SNMP', 179: 'BGP',
+     1194: 'VPN', 3306: 'MySQL', 5432: 'PG'
+   };
+
+   const totalPortBytes = (ports?.items || []).reduce((a: number, b: any) => a + b.bytes, 0);
+
+   const portData = (ports?.items || [])
+     .slice(0, 6)
+     .map((p: any) => ({
+       port: p.port,
+       name: portMap[p.port] || String(p.port),
+       bytes: p.bytes,
+       pct: totalPortBytes > 0 ? ((p.bytes / totalPortBytes) * 100).toFixed(1) : 0
+     }));
+
+   const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
+
+   const fmtBytes = (b: number) =>
+     b > 1e9 ? (b / 1e9).toFixed(1) + ' GB' :
+     b > 1e6 ? (b / 1e6).toFixed(0) + ' MB' :
+     b > 1e3 ? (b / 1e3).toFixed(0) + ' KB' :
+     b + ' B';
+
+   const fmtPPS = (p: number) => p > 1000 ? (p / 1000).toFixed(1) + 'k' : String(p);
+
+   const relevantInterfaces = (interfaces?.interfaces || [])
+     .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
+     .filter((i: any) => {
+       const name = (i.display_name || i.if_name || '').toLowerCase();
+       return !name.includes('null') && !name.includes('loopback') && !name.includes('virtual') &&
+         !name.includes('template') && !name.includes('inloop');
+     })
+     .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
+     .slice(0, 6);
+
+   const fmtBps = (bps: number) =>
+     bps > 1e9 ? (bps / 1e9).toFixed(1) + ' Gbps' :
+     bps > 1e6 ? (bps / 1e6).toFixed(0) + ' Mbps' :
+     bps > 1e3 ? (bps / 1e3).toFixed(0) + ' Kbps' :
+     bps + ' bps';
+
   if (statsLoading) {
     return (
       <div className="space-y-6">
@@ -131,41 +214,51 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-         <div className="h-[300px] w-full">
-           <ResponsiveContainer width="100%" height="100%">
-             <LineChart data={timeline?.map((d: any) => ({
-               time: d.time.substring(11, 16),
-               rx: (d.rx_bytes / 1e9).toFixed(2),
-               tx: (d.tx_bytes / 1e9).toFixed(2),
-             }))} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-               <XAxis 
-                 dataKey="time" 
-                 stroke="var(--text-secondary)" 
-                 fontSize={11} 
-                 tickLine={false}
-                 axisLine={false}
-               />
-               <YAxis 
-                 stroke="var(--text-secondary)" 
-                 fontSize={11} 
-                 tickLine={false}
-                 axisLine={false}
-               />
-               <Tooltip 
-                 contentStyle={{ 
-                   backgroundColor: 'var(--bg-card)', 
-                   borderColor: 'var(--border)',
-                   borderRadius: '8px',
-                   fontSize: '12px',
-                   color: 'var(--text-primary)'
-                 }} 
-               />
-               <Line dataKey="rx" stroke="#3b82f6" dot={false} strokeWidth={2} name="RX (Gbps)" />
-               <Line dataKey="tx" stroke="#22c55e" dot={false} strokeWidth={2} name="TX (Gbps)" />
-             </LineChart>
-           </ResponsiveContainer>
-         </div>
+        <div className="h-[200px] w-full">
+          <ResponsiveContainer width="100%" height="100%">
+            <LineChart data={chartData}>
+              <CartesianGrid
+                strokeDasharray="3 3"
+                stroke="#2a2d3e" />
+              <XAxis
+                dataKey="time"
+                tick={{ fontSize: 11, fill: '#8892a4' }}
+                tickLine={false}
+                axisLine={false}
+                interval={4} />
+              <YAxis
+                tick={{ fontSize: 11, fill: '#8892a4' }}
+                tickLine={false}
+                axisLine={false}
+                tickFormatter={v => v + 'G'} />
+              <Tooltip
+                formatter={(v: any, n: string) => [
+                  v + ' Gbps',
+                  n === 'rx' ? 'Entrada' : 'Saída'
+                ]}
+                contentStyle={{
+                  background: '#1e2130',
+                  border: '1px solid #2a2d3e',
+                  borderRadius: 6,
+                  fontSize: 12
+                }} />
+              <Line
+                type="monotone"
+                dataKey="rx"
+                stroke="#3b82f6"
+                strokeWidth={2}
+                dot={false}
+                name="rx" />
+              <Line
+                type="monotone"
+                dataKey="tx"
+                stroke="#22c55e"
+                strokeWidth={2}
+                dot={false}
+                name="tx" />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
       </div>
 
       {/* Secondary Grids */}
@@ -173,52 +266,69 @@ export default function Dashboard() {
          {/* Top Protocols */}
          <div className="bg-bg-card p-6 rounded-xl border border-border shadow-sm">
            <h2 className="text-lg font-bold mb-6 text-text-primary">{t('protocols')}</h2>
-           <div className="space-y-4">
-             {protocols?.items?.slice(0, 6).map((item: any, idx: number) => {
-               const name = item.proto === 6 ? 'TCP' : item.proto === 17 ? 'UDP' : item.proto === 1 ? 'ICMP' : `Proto ${item.proto}`;
-               const totalBytes = protocols.items.reduce((acc: number, curr: any) => acc + curr.bytes, 0);
-               const percentage = ((item.bytes / totalBytes) * 100).toFixed(1);
-               return (
-                 <div key={item.proto} className="space-y-2">
-                   <div className="flex justify-between text-xs font-semibold">
-                     <span className="text-text-primary uppercase">{name}</span>
-                     <span className="text-text-secondary">{(item.bytes / 1e9).toFixed(2)} GB ({percentage}%)</span>
-                   </div>
-                   <div className="w-full bg-bg-secondary rounded-full h-1.5 overflow-hidden">
-                     <div 
-                       className={clsx(
-                         "h-full rounded-full transition-all duration-1000",
-                         idx === 0 ? "bg-accent" : idx === 1 ? "bg-success" : idx === 2 ? "bg-warning" : "bg-text-secondary/50"
-                       )}
-                       style={{ width: `${percentage}%` }}
-                     />
-                   </div>
+           <div className="space-y-2">
+             {protoData.map((p, i) => (
+               <div key={i} style={{
+                 display: 'flex', alignItems: 'center',
+                 gap: 10, padding: '6px 0',
+                 borderBottom: i < protoData.length - 1
+                   ? '1px solid #2a2d3e' : 'none'
+               }}>
+                 <span style={{
+                   minWidth: 45, fontSize: 13,
+                   fontWeight: 500, color: '#e2e8f0'
+                 }}>{p.name}</span>
+                 <div style={{
+                   flex: 1, height: 6,
+                   background: '#2a2d3e',
+                   borderRadius: 3, overflow: 'hidden'
+                 }}>
+                   <div style={{
+                     width: p.pct + '%', height: '100%',
+                     background: '#3b82f6', borderRadius: 3
+                   }} />
                  </div>
-               );
-             })}
+                 <span style={{
+                   fontSize: 12, color: '#8892a4',
+                   minWidth: 40, textAlign: 'right'
+                 }}>{p.pct}%</span>
+               </div>
+             ))}
            </div>
          </div>
  
          {/* Top Countries */}
          <div className="bg-bg-card p-6 rounded-xl border border-border shadow-sm">
            <h2 className="text-lg font-bold mb-6 text-text-primary">{t('countries')}</h2>
-           <div className="space-y-4">
-             {countries?.items?.slice(0, 6).map((item: any) => {
-               const totalBytes = countries.items.reduce((acc: number, curr: any) => acc + curr.bytes, 0);
-               const percentage = ((item.bytes / totalBytes) * 100).toFixed(1);
-               return (
-                 <div key={item.country} className="flex items-center justify-between p-2 hover:bg-bg-secondary rounded-lg transition-colors border-b border-border/50 last:border-0">
-                   <div className="flex items-center gap-3">
-                     <span className="text-xl">{getFlagEmoji(item.country)}</span>
-                     <span className="text-sm font-medium text-text-primary">{item.country}</span>
-                   </div>
-                   <div className="text-right">
-                     <p className="text-sm font-bold text-text-primary">{(item.bytes / 1e9).toFixed(2)} GB</p>
-                     <p className="text-[10px] text-text-secondary font-bold uppercase">{percentage}% share</p>
-                   </div>
+           <div className="space-y-1">
+             {countryData.map((c, i) => (
+               <div key={i} style={{
+                 display: 'flex', alignItems: 'center',
+                 gap: 8, padding: '5px 0',
+                 borderBottom: i < countryData.length - 1
+                   ? '1px solid #2a2d3e' : 'none'
+               }}>
+                 <span style={{ fontSize: 16 }}>{c.flag}</span>
+                 <span style={{
+                   fontSize: 12, color: '#e2e8f0',
+                   minWidth: 30
+                 }}>{c.code}</span>
+                 <div style={{
+                   flex: 1, height: 6,
+                   background: '#2a2d3e',
+                   borderRadius: 3, overflow: 'hidden'
+                 }}>
+                   <div style={{
+                     width: c.pct + '%', height: '100%',
+                     background: '#3b82f6', borderRadius: 3
+                   }} />
                  </div>
-               );
-             })}
+                 <span style={{
+                   fontSize: 12, color: '#8892a4',
+                   minWidth: 35, textAlign: 'right'
+                 }}>{c.pct}%</span>
+               </div>
+             ))}
            </div>
          </div>
       </div>
@@ -227,28 +337,27 @@ export default function Dashboard() {
          {/* Top Ports */}
          <div className="bg-bg-card p-6 rounded-xl border border-border shadow-sm">
            <h2 className="text-lg font-bold mb-6 text-text-primary">{t('port')}s</h2>
-           <div className="h-[240px] w-full">
+           <div className="h-[180px] w-full">
              <ResponsiveContainer width="100%" height="100%">
-               <BarChart data={ports?.items?.slice(0, 8).map((p: any) => ({
-                 name: p.port === 443 ? 'HTTPS' : p.port === 53 ? 'DNS' : p.port === 80 ? 'HTTP' : p.port === 22 ? 'SSH' : p.port === 25 ? 'SMTP' : p.port.toString(),
-                 value: p.bytes / 1e6 // MB
-               })) || []} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                 <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={10} tickLine={false} axisLine={false} />
-                 <YAxis stroke="var(--text-secondary)" fontSize={10} tickLine={false} axisLine={false} />
-                 <Tooltip 
-                   contentStyle={{ 
-                     backgroundColor: 'var(--bg-card)', 
-                     borderColor: 'var(--border)',
-                     borderRadius: '8px',
-                     fontSize: '11px'
-                   }} 
-                 />
-                 <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                   {ports?.items?.slice(0, 8).map((entry: any, index: number) => (
-                     <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'var(--accent)' : 'var(--accent-bg)'} />
-                   ))}
-                 </Bar>
+               <BarChart data={portData}
+                 margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                 <XAxis
+                   dataKey="name"
+                   tick={{ fontSize: 10, fill: '#8892a4' }}
+                   tickLine={false} axisLine={false} />
+                 <YAxis
+                   tick={{ fontSize: 10, fill: '#8892a4' }}
+                   tickLine={false} axisLine={false}
+                   tickFormatter={v => v + '%'} />
+                 <Tooltip
+                   formatter={v => [v + '%']}
+                   contentStyle={{
+                     background: '#1e2130',
+                     border: '1px solid #2a2d3e',
+                     borderRadius: 6, fontSize: 12
+                   }} />
+                 <Bar dataKey="pct" fill="#3b82f6"
+                   radius={[3, 3, 0, 0]} />
                </BarChart>
              </ResponsiveContainer>
            </div>
@@ -258,29 +367,26 @@ export default function Dashboard() {
          <div className="bg-bg-card p-6 rounded-xl border border-border shadow-sm">
            <h2 className="text-lg font-bold mb-6 text-text-primary">{t('top_interfaces')}</h2>
            <div className="space-y-5">
-             {interfaces?.interfaces?.slice(0, 4).map((iface: any) => {
-               const formatBps = (bps: number) => {
-                 if (bps > 1e9) return (bps / 1e9).toFixed(1) + " Gbps";
-                 if (bps > 1e6) return (bps / 1e6).toFixed(0) + " Mbps";
-                 return bps + " bps";
-               };
-               const utilization = (iface.in_bps / iface.if_speed) * 100;
+             {relevantInterfaces.map((i: any) => {
+               const utilPct = i.if_speed > 0
+                 ? Math.min((i.in_bps / i.if_speed) * 100, 100)
+                 : 0;
                return (
-                 <div key={iface.display_name} className="space-y-2">
+                 <div key={i.if_index || i.display_name} className="space-y-2">
                    <div className="flex justify-between items-end">
                      <div>
-                       <p className="text-xs font-bold text-accent uppercase tracking-tighter">{iface.display_name}</p>
-                       <p className="text-lg font-bold text-text-primary leading-none">{formatBps(iface.in_bps)}</p>
+                       <p className="text-xs font-bold text-accent uppercase tracking-tighter">{i.display_name || i.if_name}</p>
+                       <p className="text-lg font-bold text-text-primary leading-none">{fmtBps(i.in_bps)}</p>
                      </div>
                      <div className="text-right">
                        <p className="text-[10px] text-text-secondary font-bold uppercase">Utilization</p>
-                       <p className="text-xs font-bold text-success">{utilization.toFixed(1)}%</p>
+                       <p className="text-xs font-bold text-success">{utilPct.toFixed(1)}%</p>
                      </div>
                    </div>
                    <div className="w-full bg-bg-secondary rounded-full h-2 overflow-hidden flex">
-                     <div 
-                       className="bg-accent h-full transition-all duration-1000" 
-                       style={{ width: `${Math.min(100, utilization)}%` }}
+                     <div
+                       className="bg-accent h-full transition-all duration-1000"
+                       style={{ width: `${utilPct}%` }}
                      />
                    </div>
                  </div>
@@ -310,35 +416,41 @@ export default function Dashboard() {
                 <th className="px-6 py-3 border-b border-border text-right">{t('pps')}</th>
               </tr>
             </thead>
-             <tbody className="text-sm divide-y divide-border/50">
-               {connections?.items?.map((conn: any, i: number) => (
-                 <tr key={i} className="hover:bg-accent/5 transition-colors group">
-                   <td className="px-6 py-4">
-                     <div className="flex items-center gap-2">
-                       <span>{getFlagEmoji(conn.country)}</span>
-                       <span className="font-medium text-text-primary">{conn.src_ip}</span>
-                       <span className="text-text-secondary text-xs">:{conn.src_port}</span>
-                     </div>
-                   </td>
-                   <td className="px-6 py-4 text-text-primary">{conn.dst_ip}<span className="text-text-secondary text-xs">:{conn.dst_port}</span></td>
-                   <td className="px-6 py-4">
-                     <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-accent-bg text-accent">{conn.service || 'UNKNOWN'}</span>
-                   </td>
-                   <td className="px-6 py-4">
-                     <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-bg-secondary text-text-secondary">{conn.proto === 6 ? 'TCP' : conn.proto === 17 ? 'UDP' : conn.proto}</span>
-                   </td>
-                   <td className="px-6 py-4 text-right font-bold text-text-primary">{(conn.bytes / 1024 / 1024).toFixed(1)} MB</td>
-                   <td className="px-6 py-4 text-right text-text-secondary">{conn.pps}</td>
-                 </tr>
-               ))}
-               {(!connections?.items || connections.items.length === 0) && (
-                 <tr>
-                   <td colSpan={6} className="px-6 py-8 text-center text-text-secondary italic">
-                     No active connections found
-                   </td>
-                 </tr>
-               )}
-             </tbody>
+            <tbody className="text-sm divide-y divide-border/50">
+              {(connections || []).map((item: any, i: number) => (
+                <tr key={i} className="hover:bg-accent/5 transition-colors group">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center gap-2">
+                      <span>{flagMap[item.src_country] || '🌐'}</span>
+                      <span className="font-medium text-text-primary">{item.src_addr}</span>
+                      <span className="text-text-secondary text-xs">:{item.src_port}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-text-primary">
+                    <div className="flex items-center gap-2">
+                      <span>{flagMap[item.dst_country] || '🌐'}</span>
+                      <span>{item.dst_addr}</span>
+                      <span className="text-text-secondary text-xs">:{item.dst_port}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-accent-bg text-accent">{item.src_org || 'UNKNOWN'}</span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-bg-secondary text-text-secondary">{protoName(item.proto)}</span>
+                  </td>
+                  <td className="px-6 py-4 text-right font-bold text-text-primary">{fmtBytes(item.bytes)}</td>
+                  <td className="px-6 py-4 text-right text-text-secondary">{fmtPPS(item.pps)}</td>
+                </tr>
+              ))}
+              {(!connections || connections.length === 0) && (
+                <tr>
+                  <td colSpan={6} className="px-6 py-8 text-center text-text-secondary italic">
+                    No active connections found
+                  </td>
+                </tr>
+              )}
+            </tbody>
           </table>
         </div>
       </div>
