@@ -1,4 +1,5 @@
- import { useState } from 'react';
+import { useState, FormEvent } from 'react';
+import { useNavigate } from '@tanstack/react-router';
  import { useAuth } from '../contexts/AuthContext';
  import { useTranslation } from '../hooks/useTranslation';
  import api from '../services/api';
@@ -8,10 +9,11 @@
  export default function Login() {
    const [username, setUsername] = useState('');
    const [password, setPassword] = useState('');
+  const navigate = useNavigate();
    const { login } = useAuth();
    const { t, lang, changeLanguage } = useTranslation();
  
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
     try {
       const params = new URLSearchParams();
@@ -34,11 +36,7 @@
       localStorage.setItem('username', data.username);
       localStorage.setItem('role', data.role);
 
-      if (data.must_change_password) {
-        window.location.href = '/change-password';
-      } else {
-        window.location.href = '/dashboard';
-      }
+      login(data);
     } catch (error: any) {
       const msg = error.response?.data?.detail || 'Usuário ou senha incorretos';
       toast.error(msg);
