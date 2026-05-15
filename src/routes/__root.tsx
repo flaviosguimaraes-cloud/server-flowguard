@@ -1,6 +1,7 @@
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
- import { AuthProvider, useAuth } from "../contexts/AuthContext";
+ import { AuthProvider, useAuth } from "../contexts/AuthProvider";
+ import { ThemeProvider } from "../contexts/ThemeContext";
  import { Toaster } from "sonner";
  import { Sidebar } from "../components/Sidebar";
  import { Header } from "../components/Header";
@@ -47,14 +48,16 @@ function RootComponent() {
       <head>
         <HeadContent />
       </head>
-      <body>
-        <QueryClientProvider client={queryClient}>
-          <AuthProvider>
-            <AuthWrapper />
-          </AuthProvider>
-        </QueryClientProvider>
-        <Scripts />
-      </body>
+       <body>
+         <QueryClientProvider client={queryClient}>
+           <ThemeProvider>
+             <AuthProvider>
+               <AuthWrapper />
+             </AuthProvider>
+           </ThemeProvider>
+         </QueryClientProvider>
+         <Scripts />
+       </body>
     </html>
   );
 }
