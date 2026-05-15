@@ -287,11 +287,15 @@
          )}
        </div>
  
-       <MitigationModal 
-         isOpen={isMitigationOpen} 
-         onClose={() => setIsMitigationOpen(false)} 
-         targetIP="" 
-       />
+      <MitigationModal 
+        isOpen={isMitigationOpen} 
+        onClose={() => setIsMitigationOpen(false)} 
+        targetIP=""
+        onSuccess={() => {
+          queryClient.invalidateQueries({ queryKey: ['mitigation-active'] });
+          queryClient.invalidateQueries({ queryKey: ['detection-stats'] });
+        }}
+      />
  
        <FlowSpecModal
          isOpen={isFlowSpecOpen}
