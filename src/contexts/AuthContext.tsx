@@ -18,17 +18,17 @@
  const AuthContext = createContext<AuthContextType | undefined>(undefined);
  
  export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-   const [user, setUser] = useState<User | null>(null);
- 
-   useEffect(() => {
+   const [user, setUser] = useState<User | null>(() => {
+     if (typeof window === 'undefined') return null;
      const token = localStorage.getItem('access_token');
      const username = localStorage.getItem('username');
      const role = localStorage.getItem('role');
  
      if (token && username && role) {
-       setUser({ token, username, role });
+       return { token, username, role };
      }
-   }, []);
+     return null;
+   });
    const [loading, setLoading] = useState(false);
    const navigate = useNavigate();
  
