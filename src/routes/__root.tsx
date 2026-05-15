@@ -73,13 +73,6 @@ function AuthWrapper() {
     }
   }, [loading, user, isLoginPage, navigate]);
 
-  if (loading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen bg-[#0f1117] text-gray-100">
-        <div className="text-xl">Carregando...</div>
-      </div>
-    );
-  }
 
   if (!user && !isLoginPage) {
     return null;
