@@ -256,17 +256,19 @@ export default function Dashboard() {
       {/* Top Stats */}
        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
          <StatCard 
-           title={t('traffic_in')} 
-           value={(detection?.incoming_mbps / 1000).toFixed(1)} 
-           unit="Gbps" 
-           icon={<ArrowDown className="text-accent" size={20} />} 
-         />
-         <StatCard 
-           title={t('traffic_out')} 
-           value={(detection?.outgoing_mbps / 1000).toFixed(1)} 
-           unit="Gbps" 
-           icon={<ArrowUp className="text-success" size={20} />} 
-         />
+            title={t('traffic_in')} 
+            value={(detection?.incoming_mbps / 1000).toFixed(1)} 
+            unit="Gbps" 
+            icon={<ArrowDown className="text-accent" size={20} />} 
+            tooltip="Baseado em Flow — amostragem 1:500"
+          />
+          <StatCard 
+            title={t('traffic_out')} 
+            value={(detection?.outgoing_mbps / 1000).toFixed(1)} 
+            unit="Gbps" 
+            icon={<ArrowUp className="text-success" size={20} />} 
+            tooltip="Baseado em Flow — amostragem 1:500"
+          />
          <StatCard 
            title={t('active_flows')} 
            value={detection?.incoming_pps > 1000 ? (detection.incoming_pps / 1000).toFixed(1) + 'k' : detection?.incoming_pps || '0'} 
@@ -280,17 +282,56 @@ export default function Dashboard() {
        </div>
 
       {/* Main Chart */}
-      <div className="bg-bg-card p-6 rounded-xl border border-border shadow-sm transition-colors">
-        <div className="flex justify-between items-center mb-6">
-          <h2 className="text-lg font-bold text-text-primary">Network Traffic (30m)</h2>
-          <div className="flex gap-4">
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-accent"></div>
-              <span className="text-xs text-text-secondary font-medium uppercase tracking-wider">Inbound (RX)</span>
+      <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm transition-colors">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Network Traffic (30m)</h2>
+          
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex bg-gray-100 dark:bg-bg-secondary p-1 rounded-lg">
+              <button
+                onClick={() => setTrafficSource('flow')}
+                className={clsx(
+                  "px-3 py-1 text-[10px] font-bold rounded-md transition-all uppercase tracking-wider",
+                  trafficSource === 'flow' ? "bg-white dark:bg-accent text-accent dark:text-white shadow-sm" : "text-text-secondary hover:text-text-primary"
+                )}>
+                Tráfego Flow
+              </button>
+              <button
+                onClick={() => setTrafficSource('snmp')}
+                className={clsx(
+                  "px-3 py-1 text-[10px] font-bold rounded-md transition-all uppercase tracking-wider",
+                  trafficSource === 'snmp' ? "bg-white dark:bg-accent text-accent dark:text-white shadow-sm" : "text-text-secondary hover:text-text-primary"
+                )}>
+                Por Interface
+              </button>
             </div>
-            <div className="flex items-center gap-2">
-              <div className="w-3 h-3 rounded-full bg-success"></div>
-              <span className="text-xs text-text-secondary font-medium uppercase tracking-wider">Outbound (TX)</span>
+
+            {trafficSource === 'snmp' && (
+              <select
+                value={selectedInterface || ''}
+                onChange={e => setSelectedInterface(e.target.value)}
+                className="bg-gray-100 dark:bg-bg-secondary border-none text-[10px] font-bold rounded-lg px-2 py-1.5 text-text-primary focus:ring-1 focus:ring-accent outline-none">
+                <option value="">Selecionar interface...</option>
+                {(interfaces?.interfaces || [])
+                  .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
+                  .map((i: any) => (
+                    <option key={i.if_index || i.display_name} value={i.display_name}>
+                      {i.display_name}
+                    </option>
+                  ))
+                }
+              </select>
+            )}
+
+            <div className="flex gap-4 ml-2">
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-accent"></div>
+                <span className="text-[10px] text-text-secondary font-bold uppercase tracking-wider">In (RX)</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <div className="w-3 h-3 rounded-full bg-success"></div>
+                <span className="text-[10px] text-text-secondary font-bold uppercase tracking-wider">Out (TX)</span>
+              </div>
             </div>
           </div>
         </div>
@@ -485,12 +526,13 @@ export default function Dashboard() {
           </button>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+          <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="bg-bg-secondary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+              <tr className="bg-gray-50 dark:bg-bg-secondary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
                 <th className="px-6 py-3 border-b border-border">{t('source_ip')}</th>
                 <th className="px-6 py-3 border-b border-border">{t('dest_ip')}</th>
-                <th className="px-6 py-3 border-b border-border">{t('service')}</th>
+                <th className="px-6 py-3 border-b border-border">Serviço</th>
+                <th className="px-6 py-3 border-b border-border">Empresa</th>
                 <th className="px-6 py-3 border-b border-border">{t('protocol')}</th>
                 <th className="px-6 py-3 border-b border-border text-right">{t('bytes')}</th>
                 <th className="px-6 py-3 border-b border-border text-right">{t('pps')}</th>
@@ -501,25 +543,35 @@ export default function Dashboard() {
                 <tr key={i} className="hover:bg-accent/5 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <span>{flagMap[item.src_country] || '🌐'}</span>
-                      <span className="font-medium text-text-primary">{item.src_addr}</span>
+                      <span className="text-lg">{getFlag(item.src_country)}</span>
+                      <span className="font-medium text-gray-900 dark:text-gray-100">{item.src_addr}</span>
                       <span className="text-text-secondary text-xs">:{item.src_port}</span>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-text-primary">
+                  <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
-                      <span>{flagMap[item.dst_country] || '🌐'}</span>
-                      <span>{item.dst_addr}</span>
+                      <span className="text-lg">{getFlag(item.dst_country)}</span>
+                      <span className="text-gray-900 dark:text-gray-100">{item.dst_addr}</span>
                       <span className="text-text-secondary text-xs">:{item.dst_port}</span>
                     </div>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-accent-bg text-accent">{item.src_org || 'UNKNOWN'}</span>
+                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{getService(item.dst_port)}</span>
                   </td>
                   <td className="px-6 py-4">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-bg-secondary text-text-secondary">{protoName(item.proto)}</span>
+                    <span className="text-[11px] text-text-secondary" title={item.src_org}>{getOrg(item.src_org)}</span>
                   </td>
-                  <td className="px-6 py-4 text-right font-bold text-text-primary">{fmtBytes(item.bytes)}</td>
+                  <td className="px-6 py-4">
+                    <span className={clsx(
+                      "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
+                      item.proto === 6 ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                      item.proto === 17 ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" :
+                      "bg-gray-100 text-gray-700 dark:bg-bg-secondary dark:text-text-secondary"
+                    )}>
+                      {protoName(item.proto)}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-right font-bold text-gray-900 dark:text-gray-100">{fmtBytes(item.bytes)}</td>
                   <td className="px-6 py-4 text-right text-text-secondary">{fmtPPS(item.pps)}</td>
                 </tr>
               ))}
