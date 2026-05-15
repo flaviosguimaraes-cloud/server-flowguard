@@ -61,6 +61,7 @@ function RootComponent() {
 
 function AuthWrapper() {
   const { user, loading } = useAuth();
+  console.log('AuthWrapper rendering', { user, loading });
   const location = useLocation();
   const navigate = useNavigate();
 
