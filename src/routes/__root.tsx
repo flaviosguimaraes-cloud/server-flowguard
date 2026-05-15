@@ -1,4 +1,5 @@
- import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import React from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
  import { AuthProvider, useAuth } from "../contexts/AuthContext";
  import { Toaster } from "sonner";
  import { Sidebar } from "../components/Sidebar";
@@ -10,6 +11,7 @@
    Scripts,
    useLocation,
    Navigate,
+  useNavigate,
  } from "@tanstack/react-router";
  
  import appCss from "../styles.css?url";
@@ -37,45 +39,70 @@
    component: RootComponent,
  });
  
- function RootComponent() {
-   const { queryClient } = Route.useRouteContext();
- 
-   return (
-     <QueryClientProvider client={queryClient}>
-       <AuthProvider>
-         <AuthWrapper />
-       </AuthProvider>
-     </QueryClientProvider>
-   );
- }
- 
- function AuthWrapper() {
-   const { user, loading } = useAuth();
-   const location = useLocation();
- 
-   if (loading) return <div>Loading...</div>;
- 
-   const isLoginPage = location.pathname === '/login';
- 
-   if (!user && !isLoginPage) {
-     return <Navigate to="/login" />;
-   }
- 
-   if (isLoginPage) {
-     return <Outlet />;
-   }
- 
-   return (
-     <div className="flex min-h-screen bg-[#0f1117] text-gray-100">
-       <Sidebar />
-       <div className="flex-1 flex flex-col min-w-0">
-         <Header />
-         <main className="p-6 overflow-auto">
-           <Outlet />
-         </main>
-       </div>
-       <Toaster position="top-right" theme="dark" />
-       <Scripts />
-     </div>
-   );
- }
+function RootComponent() {
+  const { queryClient } = Route.useRouteContext();
+
+  return (
+    <html lang="pt-BR">
+      <head>
+        <HeadContent />
+      </head>
+      <body>
+        <QueryClientProvider client={queryClient}>
+          <AuthProvider>
+            <AuthWrapper />
+          </AuthProvider>
+        </QueryClientProvider>
+        <Scripts />
+      </body>
+    </html>
+  );
+}
+
+function AuthWrapper() {
+  const { user, loading } = useAuth();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const isLoginPage = location.pathname === "/login";
+
+  React.useEffect(() => {
+    if (!loading && !user && !isLoginPage) {
+      navigate({ to: '/login' });
+    }
+  }, [loading, user, isLoginPage, navigate]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center min-h-screen bg-[#0f1117] text-gray-100">
+        <div className="text-xl">Carregando...</div>
+      </div>
+    );
+  }
+
+  if (!user && !isLoginPage) {
+    return null;
+  }
+
+  if (isLoginPage) {
+    return (
+      <>
+        <Outlet />
+        <Toaster position="top-right" theme="dark" />
+      </>
+    );
+  }
+
+  return (
+    <div className="flex min-h-screen bg-[#0f1117] text-gray-100">
+      <Sidebar />
+      <div className="flex-1 flex flex-col min-w-0">
+        <Header />
+        <main className="p-6 overflow-auto">
+          <Outlet />
+        </main>
+      </div>
+      <Toaster position="top-right" theme="dark" />
+    </div>
+  );
+}
