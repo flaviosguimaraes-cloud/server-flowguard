@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { useTranslation } from '../hooks/useTranslation';
@@ -12,8 +12,41 @@ import { clsx } from 'clsx';
 
 export default function Dashboard() {
   const { t } = useTranslation();
-  const [trafficSource, setTrafficSource] = useState<'flow' | 'snmp'>('flow');
-  const [selectedInterface, setSelectedInterface] = useState<string | null>(null);
+  const [trafficSource, setTrafficSource] = useState<'flow' | 'snmp'>(() =>
+    localStorage.getItem('fg_traffic_source') as 'flow' | 'snmp' || 'snmp'
+  );
+
+  const [selectedIfaces, setSelectedIfaces] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('fg_selected_ifaces');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('fg_traffic_source', trafficSource);
+  }, [trafficSource]);
+
+  useEffect(() => {
+    localStorage.setItem('fg_selected_ifaces', JSON.stringify(selectedIfaces));
+  }, [selectedIfaces]);
+
+  useEffect(() => {
+    if (trafficSource === 'snmp' && selectedIfaces.length === 0 && interfaces?.interfaces?.length > 0) {
+      const top3 = (interfaces.interfaces || [])
+        .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
+        .filter((i: any) => {
+          const n = (i.display_name || '').toLowerCase();
+          return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
+        })
+        .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
+        .slice(0, 3)
+        .map((i: any) => i.display_name);
+      setSelectedIfaces(top3);
+    }
+  }, [interfaces, trafficSource, selectedIfaces.length]);
 
   const { data: detection, isLoading: statsLoading } = useQuery({
      queryKey: ['detection-stats'],
@@ -89,38 +122,24 @@ export default function Dashboard() {
    console.log('ports:', ports);
    console.log('connections:', connections);
 
-    const chartData = useMemo(() => {
-      if (trafficSource === 'flow') {
-        return (timeline || []).map((d: any) => ({
-          time: d.time ? d.time.substring(11, 16) : '',
-          rx: parseFloat((d.rx_bytes / 1e8).toFixed(2)), // Convert to Gbps (1e9) but here requested tráfego de clientes
-          tx: parseFloat((d.tx_bytes / 1e8).toFixed(2)),
-        }));
-      } else if (trafficSource === 'snmp' && selectedInterface) {
-        // For SNMP we don't have historical data in this summary endpoint, 
-        // but we can show current value or mock a bit if timeline is not available for SNMP.
-        // However, the instructions say: "filtrar interfaces?.interfaces pelo nome e mostrar in_bps/out_bps em Gbps"
-        // Since chart needs a list, and summary is just a snapshot, we might need a different endpoint 
-        // for historical SNMP traffic. But I'll follow the instructions as best as possible.
-        // If SNMP selected, maybe we just show the current point or empty if no timeline exists for SNMP.
-        // Actually, usually these charts show historical data. 
-        // I'll stick to 'flow' for historical and maybe just one point for SNMP if that's what's available.
-        // Re-reading: "Se snmp + interface selecionada: filtrar interfaces?.interfaces pelo nome e mostrar in_bps/out_bps em Gbps"
-        // I'll just use the flow timeline for now but label it differently or try to find snmp timeline if exists.
-        // Wait, the API doesn't seem to provide SNMP timeline in the current queries.
-        // I'll just use the flow timeline for the chart structure but adjust the values if possible.
-        return (timeline || []).map((d: any) => ({
-          time: d.time ? d.time.substring(11, 16) : '',
-          rx: parseFloat((d.rx_bytes / 1e9).toFixed(2)),
-          tx: parseFloat((d.tx_bytes / 1e9).toFixed(2)),
-        }));
-      }
+    const flowData = useMemo(() => {
       return (timeline || []).map((d: any) => ({
         time: d.time ? d.time.substring(11, 16) : '',
         rx: parseFloat((d.rx_bytes / 1e9).toFixed(2)),
         tx: parseFloat((d.tx_bytes / 1e9).toFixed(2)),
       }));
-    }, [timeline, trafficSource, selectedInterface]);
+    }, [timeline]);
+
+    const snmpData = useMemo(() => {
+      if (!interfaces?.interfaces) return [];
+      return (interfaces.interfaces || [])
+        .filter((i: any) => selectedIfaces.includes(i.display_name))
+        .map((i: any) => ({
+          name: i.display_name,
+          rx: i.in_bps / 1e9,
+          tx: i.out_bps / 1e9,
+        }));
+    }, [interfaces, selectedIfaces]);
 
     const protoMap: Record<number, string> = {
      6: 'TCP', 17: 'UDP', 1: 'ICMP',
