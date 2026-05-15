@@ -4,7 +4,7 @@ import { useNavigate } from '@tanstack/react-router';
  import { useTranslation } from '../hooks/useTranslation';
  import api from '../services/api';
  import { toast } from 'sonner';
- import { Lock, User } from 'lucide-react';
+  import { Lock, User, Shield, Globe } from 'lucide-react';
  
  export default function Login() {
    const [username, setUsername] = useState('');
@@ -43,50 +43,72 @@ import { useNavigate } from '@tanstack/react-router';
     }
   };
  
-   return (
-     <div className="min-h-screen bg-[#0f1117] flex items-center justify-center p-4">
-       <div className="max-w-md w-full bg-[#1e2130] p-8 rounded-xl shadow-2xl">
-         <div className="text-center mb-8">
-           <h1 className="text-3xl font-bold text-[#3b82f6]">FlowGuard</h1>
-           <p className="text-gray-400 mt-2">Network Intelligence & DDoS Mitigation</p>
-         </div>
-         <form onSubmit={handleSubmit} className="space-y-6">
-           <div className="relative">
-             <User className="absolute left-3 top-3 text-gray-500" size={18} />
-             <input
-               type="text"
-               placeholder={t('username')}
-               className="w-full bg-[#0f1117] border border-gray-700 rounded-lg py-2 pl-10 pr-4 outline-none focus:border-[#3b82f6]"
-               value={username}
-               onChange={(e) => setUsername(e.target.value)}
-             />
-           </div>
-           <div className="relative">
-             <Lock className="absolute left-3 top-3 text-gray-500" size={18} />
-             <input
-               type="password"
-               placeholder={t('password')}
-               className="w-full bg-[#0f1117] border border-gray-700 rounded-lg py-2 pl-10 pr-4 outline-none focus:border-[#3b82f6]"
-               value={password}
-               onChange={(e) => setPassword(e.target.value)}
-             />
-           </div>
-           <button className="w-full bg-[#3b82f6] hover:bg-[#2563eb] text-white font-bold py-2 rounded-lg transition-colors">
-             {t('login')}
-           </button>
-         </form>
-         <div className="mt-8 pt-6 border-t border-gray-700 flex justify-center gap-4 text-sm">
-           {['pt-BR', 'en', 'es'].map((l) => (
-             <button
-               key={l}
-               onClick={() => changeLanguage(l as any)}
-               className={lang === l ? "text-[#3b82f6] font-bold" : "text-gray-400"}
-             >
-               {l.split('-')[0].toUpperCase()}
-             </button>
-           ))}
-         </div>
-       </div>
-     </div>
-   );
+  return (
+    <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4 transition-colors">
+      <div className="max-w-md w-full bg-bg-card p-8 rounded-xl shadow-2xl border border-border transition-colors">
+        <div className="flex justify-between items-center mb-6">
+          <div className="flex items-center gap-2">
+            <Globe className="text-text-secondary" size={18} />
+            <select 
+              value={lang} 
+              onChange={(e) => changeLanguage(e.target.value as any)}
+              className="bg-transparent border-none outline-none text-sm cursor-pointer text-text-secondary font-medium"
+            >
+              <option value="pt-BR">PT</option>
+              <option value="en">EN</option>
+              <option value="es">ES</option>
+            </select>
+          </div>
+        </div>
+
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center p-3 bg-accent/10 rounded-2xl mb-4">
+            <Shield className="text-accent" size={40} />
+          </div>
+          <h1 className="text-3xl font-bold text-accent tracking-tight">FlowGuard</h1>
+          <p className="text-text-secondary mt-2">Network Intelligence & DDoS Mitigation</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-5">
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">
+              {t('username')}
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
+              <input
+                type="text"
+                placeholder={t('username')}
+                className="w-full bg-bg-secondary border border-border rounded-lg py-2.5 pl-10 pr-4 outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all text-text-primary placeholder:text-text-secondary/50"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">
+              {t('password')}
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
+              <input
+                type="password"
+                placeholder={t('password')}
+                className="w-full bg-bg-secondary border border-border rounded-lg py-2.5 pl-10 pr-4 outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all text-text-primary placeholder:text-text-secondary/50"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <button className="w-full bg-accent hover:bg-accent/90 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-accent/20 active:scale-[0.98] mt-2">
+            {t('login')}
+          </button>
+        </form>
+      </div>
+    </div>
+  );
  }
