@@ -30,25 +30,54 @@
  });
  
  api.interceptors.response.use(
-   (response) => {
-     console.log('API Response:',
-       response.config.url,
-       response.status,
-       'dados:', JSON.stringify(
-         response.data).substring(0, 100));
-     return response;
-   },
-   (error) => {
-     console.error('API Error:',
-       error.config?.url,
-       error.response?.status,
-       error.response?.data);
-      const isLoginEndpoint = error.config?.url?.includes('/auth/login');
-
-      if (error.response?.status === 401 && !isLoginEndpoint) {
-       localStorage.clear();
-       window.location.href = '/login';
+   (response) => response,
+   async (error) => {
+     const originalRequest = error.config;
+ 
+     // Ignorar erros de login e refresh
+     const isAuthEndpoint =
+       originalRequest?.url?.includes('/auth/login')
+       || originalRequest?.url?.includes(
+         '/auth/refresh');
+ 
+     if (error.response?.status === 401
+         && !isAuthEndpoint
+         && !originalRequest?._retry) {
+ 
+       originalRequest._retry = true;
+ 
+       // Tentar refresh token antes de deslogar
+       const refreshToken =
+         localStorage.getItem('refresh_token');
+ 
+       if (refreshToken) {
+         try {
+           const response = await api.post(
+             '/api/auth/refresh',
+             { refresh_token: refreshToken },
+             { headers: {
+               'Content-Type': 'application/json'
+             }}
+           );
+           const newToken =
+             response.data.access_token;
+           localStorage.setItem(
+             'access_token', newToken);
+           originalRequest.headers.Authorization =
+             `Bearer ${newToken}`;
+           return api(originalRequest);
+         } catch (refreshError) {
+           // Refresh falhou — aí sim desloga
+           localStorage.clear();
+           window.location.href = '/login';
+           return Promise.reject(refreshError);
+         }
+       } else {
+         localStorage.clear();
+         window.location.href = '/login';
+       }
      }
+ 
      return Promise.reject(error);
    }
  );
