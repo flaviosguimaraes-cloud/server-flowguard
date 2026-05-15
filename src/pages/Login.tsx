@@ -124,8 +124,15 @@ import { useState, FormEvent, useEffect } from 'react';
             </div>
           </div>
 
-          <button className="w-full bg-accent hover:bg-accent/90 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-accent/20 active:scale-[0.98] mt-2">
-            {t('login')}
+          <button 
+            disabled={loading}
+            className="w-full bg-accent hover:bg-accent/90 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-accent/20 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70"
+          >
+            {loading ? (
+              <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              t('login')
+            )}
           </button>
         </form>
       </div>
