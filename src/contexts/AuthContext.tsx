@@ -40,16 +40,16 @@
      setUser({ username: data.username, role: data.role });
  
      if (data.must_change_password) {
-       navigate('/change-password');
+       navigate({ to: '/change-password' });
      } else {
-       navigate('/dashboard');
+       navigate({ to: '/dashboard' });
      }
    };
  
    const logout = () => {
      localStorage.clear();
      setUser(null);
-     navigate('/login');
+     navigate({ to: '/login' });
    };
  
    const isAdmin = () => user?.role === 'admin';
