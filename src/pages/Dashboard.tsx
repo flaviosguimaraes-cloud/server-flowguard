@@ -310,28 +310,35 @@ export default function Dashboard() {
                 <th className="px-6 py-3 border-b border-border text-right">{t('pps')}</th>
               </tr>
             </thead>
-            <tbody className="text-sm divide-y divide-border/50">
-              {[1, 2, 3, 4, 5].map((i) => (
-                <tr key={i} className={clsx("hover:bg-accent/5 transition-colors group", i === 2 && "bg-danger-bg/5")}>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <span>🇧🇷</span>
-                      <span className="font-medium text-text-primary">177.12.34.{i}</span>
-                      <span className="text-text-secondary text-xs">:{80 + i}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 text-text-primary">200.221.2.45<span className="text-text-secondary text-xs">:443</span></td>
-                  <td className="px-6 py-4">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-accent-bg text-accent">HTTPS</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-bg-secondary text-text-secondary">TCP</span>
-                  </td>
-                  <td className="px-6 py-4 text-right font-bold text-text-primary">1.2 MB</td>
-                  <td className="px-6 py-4 text-right text-text-secondary">450</td>
-                </tr>
-              ))}
-            </tbody>
+             <tbody className="text-sm divide-y divide-border/50">
+               {connections?.items?.map((conn: any, i: number) => (
+                 <tr key={i} className="hover:bg-accent/5 transition-colors group">
+                   <td className="px-6 py-4">
+                     <div className="flex items-center gap-2">
+                       <span>{getFlagEmoji(conn.country)}</span>
+                       <span className="font-medium text-text-primary">{conn.src_ip}</span>
+                       <span className="text-text-secondary text-xs">:{conn.src_port}</span>
+                     </div>
+                   </td>
+                   <td className="px-6 py-4 text-text-primary">{conn.dst_ip}<span className="text-text-secondary text-xs">:{conn.dst_port}</span></td>
+                   <td className="px-6 py-4">
+                     <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-accent-bg text-accent">{conn.service || 'UNKNOWN'}</span>
+                   </td>
+                   <td className="px-6 py-4">
+                     <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-bg-secondary text-text-secondary">{conn.proto === 6 ? 'TCP' : conn.proto === 17 ? 'UDP' : conn.proto}</span>
+                   </td>
+                   <td className="px-6 py-4 text-right font-bold text-text-primary">{(conn.bytes / 1024 / 1024).toFixed(1)} MB</td>
+                   <td className="px-6 py-4 text-right text-text-secondary">{conn.pps}</td>
+                 </tr>
+               ))}
+               {(!connections?.items || connections.items.length === 0) && (
+                 <tr>
+                   <td colSpan={6} className="px-6 py-8 text-center text-text-secondary italic">
+                     No active connections found
+                   </td>
+                 </tr>
+               )}
+             </tbody>
           </table>
         </div>
       </div>
