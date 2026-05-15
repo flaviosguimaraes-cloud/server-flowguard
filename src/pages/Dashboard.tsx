@@ -419,12 +419,12 @@ export default function Dashboard() {
                   labelStyle={{ color: 'var(--text-secondary)' }}
                 />
                 <Bar dataKey="rx" name="rx" radius={[0, 4, 4, 0]}>
-                  {snmpData.map((entry, index) => (
+                  {snmpData.map((_entry: any, index: number) => (
                     <Cell key={`cell-rx-${index}`} fill={ifaceColors[index % ifaceColors.length]} fillOpacity={0.8} />
                   ))}
                 </Bar>
                 <Bar dataKey="tx" name="tx" radius={[0, 4, 4, 0]}>
-                  {snmpData.map((entry, index) => (
+                  {snmpData.map((_entry: any, index: number) => (
                     <Cell key={`cell-tx-${index}`} fill={ifaceColors[index % ifaceColors.length]} fillOpacity={0.4} />
                   ))}
                 </Bar>
@@ -571,42 +571,55 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody className="text-sm divide-y divide-border/50">
-              {(Array.isArray(connections) ? connections : (connections?.items || connections?.data || [])).map((item: any, i: number) => (
-                <tr key={i} className="hover:bg-accent/5 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{getFlag(item.src_country)}</span>
-                      <span className="font-medium text-gray-900 dark:text-gray-100">{item.src_addr}</span>
-                      <span className="text-text-secondary text-xs">:{item.src_port}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{getFlag(item.dst_country)}</span>
-                      <span className="text-gray-900 dark:text-gray-100">{item.dst_addr}</span>
-                      <span className="text-text-secondary text-xs">:{item.dst_port}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{getService(item.dst_port)}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-[11px] text-text-secondary" title={item.src_org}>{getOrg(item.src_org)}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={clsx(
-                      "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
-                      item.proto === 6 ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
-                      item.proto === 17 ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" :
-                      "bg-gray-100 text-gray-700 dark:bg-bg-secondary dark:text-text-secondary"
-                    )}>
-                      {protoName(item.proto)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right font-bold text-gray-900 dark:text-gray-100">{fmtBytes(item.bytes)}</td>
-                  <td className="px-6 py-4 text-right text-text-secondary">{fmtPPS(item.pps)}</td>
-                </tr>
-              ))}
+              {(Array.isArray(connections) ? connections : (connections?.items || connections?.data || [])).map((item: any, i: number) => {
+                const flipped = shouldFlip(item);
+                const src = flipped ? item.dst_addr : item.src_addr;
+                const srcPort = flipped ? item.dst_port : item.src_port;
+                const srcCountry = flipped ? item.dst_country : item.src_country;
+                
+                const dst = flipped ? item.src_addr : item.dst_addr;
+                const dstPort = flipped ? item.src_port : item.dst_port;
+                const dstCountry = flipped ? item.src_country : item.dst_country;
+                const dstOrg = flipped ? item.src_org : item.dst_org;
+
+                return (
+                  <tr key={i} className="hover:bg-accent/5 transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <FlagEmoji code={srcCountry} />
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{src}</span>
+                        <span className="text-text-secondary text-xs">:{srcPort}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <FlagEmoji code={dstCountry} />
+                        <span className="text-gray-900 dark:text-gray-100">{dst}</span>
+                        <span className="text-text-secondary text-xs">:{dstPort}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{getService(dstPort)}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-[11px] text-text-secondary" title={dstOrg}>{getOrg(dstOrg)}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={clsx(
+                        "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
+                        item.proto === 6 ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                        item.proto === 17 ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" :
+                        item.proto === 1 ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                        "bg-gray-100 text-gray-700 dark:bg-bg-secondary dark:text-text-secondary"
+                      )}>
+                        {protoName(item.proto)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right font-bold text-gray-900 dark:text-gray-100">{fmtBytes(item.bytes)}</td>
+                    <td className="px-6 py-4 text-right text-text-secondary">{calcPPS(item.packets)}</td>
+                  </tr>
+                );
+              })}
               {(!connections || connections.length === 0) && (
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-text-secondary italic">
