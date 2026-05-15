@@ -16,6 +16,9 @@ import { Route as ChangePasswordRouteImport } from './routes/change-password'
 import { Route as AnalysisRouteImport } from './routes/analysis'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as MitigationIndexRouteImport } from './routes/mitigation/index'
+import { Route as MitigationWhitelistRouteImport } from './routes/mitigation/whitelist'
+import { Route as MitigationFlowspecRouteImport } from './routes/mitigation/flowspec'
+import { Route as MitigationBgpRouteImport } from './routes/mitigation/bgp'
 import { Route as MitigationActiveRouteImport } from './routes/mitigation/active'
 
 const LoginRoute = LoginRouteImport.update({
@@ -53,6 +56,21 @@ const MitigationIndexRoute = MitigationIndexRouteImport.update({
   path: '/mitigation/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MitigationWhitelistRoute = MitigationWhitelistRouteImport.update({
+  id: '/mitigation/whitelist',
+  path: '/mitigation/whitelist',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MitigationFlowspecRoute = MitigationFlowspecRouteImport.update({
+  id: '/mitigation/flowspec',
+  path: '/mitigation/flowspec',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MitigationBgpRoute = MitigationBgpRouteImport.update({
+  id: '/mitigation/bgp',
+  path: '/mitigation/bgp',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MitigationActiveRoute = MitigationActiveRouteImport.update({
   id: '/mitigation/active',
   path: '/mitigation/active',
@@ -67,6 +85,9 @@ export interface FileRoutesByFullPath {
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/mitigation/active': typeof MitigationActiveRoute
+  '/mitigation/bgp': typeof MitigationBgpRoute
+  '/mitigation/flowspec': typeof MitigationFlowspecRoute
+  '/mitigation/whitelist': typeof MitigationWhitelistRoute
   '/mitigation/': typeof MitigationIndexRoute
 }
 export interface FileRoutesByTo {
@@ -77,6 +98,9 @@ export interface FileRoutesByTo {
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/mitigation/active': typeof MitigationActiveRoute
+  '/mitigation/bgp': typeof MitigationBgpRoute
+  '/mitigation/flowspec': typeof MitigationFlowspecRoute
+  '/mitigation/whitelist': typeof MitigationWhitelistRoute
   '/mitigation': typeof MitigationIndexRoute
 }
 export interface FileRoutesById {
@@ -88,6 +112,9 @@ export interface FileRoutesById {
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/mitigation/active': typeof MitigationActiveRoute
+  '/mitigation/bgp': typeof MitigationBgpRoute
+  '/mitigation/flowspec': typeof MitigationFlowspecRoute
+  '/mitigation/whitelist': typeof MitigationWhitelistRoute
   '/mitigation/': typeof MitigationIndexRoute
 }
 export interface FileRouteTypes {
@@ -100,6 +127,9 @@ export interface FileRouteTypes {
     | '/events'
     | '/login'
     | '/mitigation/active'
+    | '/mitigation/bgp'
+    | '/mitigation/flowspec'
+    | '/mitigation/whitelist'
     | '/mitigation/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -110,6 +140,9 @@ export interface FileRouteTypes {
     | '/events'
     | '/login'
     | '/mitigation/active'
+    | '/mitigation/bgp'
+    | '/mitigation/flowspec'
+    | '/mitigation/whitelist'
     | '/mitigation'
   id:
     | '__root__'
@@ -120,6 +153,9 @@ export interface FileRouteTypes {
     | '/events'
     | '/login'
     | '/mitigation/active'
+    | '/mitigation/bgp'
+    | '/mitigation/flowspec'
+    | '/mitigation/whitelist'
     | '/mitigation/'
   fileRoutesById: FileRoutesById
 }
@@ -131,6 +167,9 @@ export interface RootRouteChildren {
   EventsRoute: typeof EventsRoute
   LoginRoute: typeof LoginRoute
   MitigationActiveRoute: typeof MitigationActiveRoute
+  MitigationBgpRoute: typeof MitigationBgpRoute
+  MitigationFlowspecRoute: typeof MitigationFlowspecRoute
+  MitigationWhitelistRoute: typeof MitigationWhitelistRoute
   MitigationIndexRoute: typeof MitigationIndexRoute
 }
 
@@ -185,6 +224,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MitigationIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mitigation/whitelist': {
+      id: '/mitigation/whitelist'
+      path: '/mitigation/whitelist'
+      fullPath: '/mitigation/whitelist'
+      preLoaderRoute: typeof MitigationWhitelistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mitigation/flowspec': {
+      id: '/mitigation/flowspec'
+      path: '/mitigation/flowspec'
+      fullPath: '/mitigation/flowspec'
+      preLoaderRoute: typeof MitigationFlowspecRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mitigation/bgp': {
+      id: '/mitigation/bgp'
+      path: '/mitigation/bgp'
+      fullPath: '/mitigation/bgp'
+      preLoaderRoute: typeof MitigationBgpRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mitigation/active': {
       id: '/mitigation/active'
       path: '/mitigation/active'
@@ -203,6 +263,9 @@ const rootRouteChildren: RootRouteChildren = {
   EventsRoute: EventsRoute,
   LoginRoute: LoginRoute,
   MitigationActiveRoute: MitigationActiveRoute,
+  MitigationBgpRoute: MitigationBgpRoute,
+  MitigationFlowspecRoute: MitigationFlowspecRoute,
+  MitigationWhitelistRoute: MitigationWhitelistRoute,
   MitigationIndexRoute: MitigationIndexRoute,
 }
 export const routeTree = rootRouteImport
