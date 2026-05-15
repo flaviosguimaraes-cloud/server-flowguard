@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { useTranslation } from '../hooks/useTranslation';
-import { 
-  AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-  BarChart, Bar, Cell
-} from 'recharts';
+ import { 
+   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
+   BarChart, Bar, Cell, AreaChart, Area
+ } from 'recharts';
 import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical } from 'lucide-react';
 import { Skeleton } from '../components/Skeleton';
 import { clsx } from 'clsx';
@@ -12,47 +12,70 @@ import { clsx } from 'clsx';
 export default function Dashboard() {
   const { t } = useTranslation();
 
-  const { data: stats, isLoading: statsLoading } = useQuery({
-    queryKey: ['stats'],
-    queryFn: async () => (await api.get('/api/detection/stats')).data,
-    refetchInterval: 30000,
-  });
-
-  const { data: timeline } = useQuery({
-    queryKey: ['timeline'],
-    queryFn: async () => (await api.get('/api/flows/timeline?minutes=30')).data,
-    refetchInterval: 30000,
-  });
-
-  const { data: protocols } = useQuery({
-    queryKey: ['protocols'],
-    queryFn: async () => (await api.get('/api/flows/protocols?minutes=30')).data,
-    refetchInterval: 30000,
-  });
-
-  const { data: countries } = useQuery({
-    queryKey: ['countries'],
-    queryFn: async () => (await api.get('/api/flows/countries?minutes=30')).data,
-    refetchInterval: 30000,
-  });
-
-  const { data: ports } = useQuery({
-    queryKey: ['ports'],
-    queryFn: async () => (await api.get('/api/flows/ports?minutes=30')).data,
-    refetchInterval: 30000,
-  });
-
-  const { data: interfaces } = useQuery({
-    queryKey: ['interfaces'],
-    queryFn: async () => (await api.get('/api/collectors/1/interfaces/summary')).data,
-    refetchInterval: 30000,
-  });
-
-  const { data: flowsSummary } = useQuery({
-    queryKey: ['flows-summary'],
-    queryFn: async () => (await api.get('/api/flows/summary')).data,
-    refetchInterval: 30000,
-  });
+   const { data: detection, isLoading: statsLoading } = useQuery({
+     queryKey: ['detection-stats'],
+     queryFn: async () => {
+       const r = await api.get('/api/detection/stats');
+       return r.data;
+     },
+     refetchInterval: 30000,
+     retry: 1,
+   });
+ 
+   const { data: timeline } = useQuery({
+     queryKey: ['timeline'],
+     queryFn: async () => {
+       const r = await api.get('/api/flows/timeline?minutes=30');
+       return r.data;
+     },
+     refetchInterval: 30000,
+     retry: 1,
+   });
+ 
+   const { data: protocols } = useQuery({
+     queryKey: ['protocols'],
+     queryFn: async () => {
+       const r = await api.get('/api/flows/protocols?minutes=30');
+       return r.data;
+     },
+     refetchInterval: 30000,
+   });
+ 
+   const { data: countries } = useQuery({
+     queryKey: ['countries'],
+     queryFn: async () => {
+       const r = await api.get('/api/flows/countries?minutes=30');
+       return r.data;
+     },
+     refetchInterval: 30000,
+   });
+ 
+   const { data: ports } = useQuery({
+     queryKey: ['ports'],
+     queryFn: async () => {
+       const r = await api.get('/api/flows/ports?minutes=30');
+       return r.data;
+     },
+     refetchInterval: 30000,
+   });
+ 
+   const { data: interfaces } = useQuery({
+     queryKey: ['interfaces'],
+     queryFn: async () => {
+       const r = await api.get('/api/collectors/1/interfaces/summary');
+       return r.data;
+     },
+     refetchInterval: 60000,
+   });
+ 
+   const { data: connections } = useQuery({
+     queryKey: ['connections'],
+     queryFn: async () => {
+       const r = await api.get('/api/flows/connections?limit=10');
+       return r.data;
+     },
+     refetchInterval: 30000,
+   });
 
   if (statsLoading) {
     return (
