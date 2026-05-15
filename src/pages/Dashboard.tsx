@@ -390,31 +390,19 @@ export default function Dashboard() {
             <h2 className="text-lg font-bold mb-6 text-gray-900 dark:text-gray-100">{t('protocols')}</h2>
             <div className="space-y-2">
               {protoData.map((p: any, i: number) => (
-               <div key={i} style={{
-                 display: 'flex', alignItems: 'center',
-                 gap: 10, padding: '6px 0',
-                 borderBottom: i < protoData.length - 1
-                   ? '1px solid #2a2d3e' : 'none'
-               }}>
-                 <span style={{
-                   minWidth: 45, fontSize: 13,
-                   fontWeight: 500, color: '#e2e8f0'
-                 }}>{p.name}</span>
-                 <div style={{
-                   flex: 1, height: 6,
-                   background: '#2a2d3e',
-                   borderRadius: 3, overflow: 'hidden'
-                 }}>
-                   <div style={{
-                     width: p.pct + '%', height: '100%',
-                     background: '#3b82f6', borderRadius: 3
-                   }} />
-                 </div>
-                 <span style={{
-                   fontSize: 12, color: '#8892a4',
-                   minWidth: 40, textAlign: 'right'
-                 }}>{p.pct}%</span>
-               </div>
+                <div key={i} className={clsx(
+                  "flex items-center gap-[10px] py-[6px]",
+                  i < protoData.length - 1 && "border-b border-gray-100 dark:border-[#2a2d3e]"
+                )}>
+                  <span className="min-w-[45px] text-[13px] font-medium text-gray-700 dark:text-[#e2e8f0]">{p.name}</span>
+                  <div className="flex-1 h-[6px] bg-gray-100 dark:bg-[#2a2d3e] rounded-[3px] overflow-hidden">
+                    <div 
+                      className="h-full bg-accent rounded-[3px]"
+                      style={{ width: p.pct + '%' }}
+                    />
+                  </div>
+                  <span className="text-[12px] text-text-secondary min-w-[40px] text-right">{p.pct}%</span>
+                </div>
              ))}
            </div>
          </div>
@@ -424,32 +412,20 @@ export default function Dashboard() {
             <h2 className="text-lg font-bold mb-6 text-gray-900 dark:text-gray-100">{t('countries')}</h2>
             <div className="space-y-1">
               {countryData.map((c: any, i: number) => (
-               <div key={i} style={{
-                 display: 'flex', alignItems: 'center',
-                 gap: 8, padding: '5px 0',
-                 borderBottom: i < countryData.length - 1
-                   ? '1px solid #2a2d3e' : 'none'
-               }}>
-                 <span style={{ fontSize: 16 }}>{c.flag}</span>
-                 <span style={{
-                   fontSize: 12, color: '#e2e8f0',
-                   minWidth: 30
-                 }}>{c.code}</span>
-                 <div style={{
-                   flex: 1, height: 6,
-                   background: '#2a2d3e',
-                   borderRadius: 3, overflow: 'hidden'
-                 }}>
-                   <div style={{
-                     width: c.pct + '%', height: '100%',
-                     background: '#3b82f6', borderRadius: 3
-                   }} />
-                 </div>
-                 <span style={{
-                   fontSize: 12, color: '#8892a4',
-                   minWidth: 35, textAlign: 'right'
-                 }}>{c.pct}%</span>
-               </div>
+                <div key={i} className={clsx(
+                  "flex items-center gap-[8px] py-[5px]",
+                  i < countryData.length - 1 && "border-b border-gray-100 dark:border-[#2a2d3e]"
+                )}>
+                  <span className="text-base">{c.flag}</span>
+                  <span className="text-[12px] text-gray-700 dark:text-[#e2e8f0] min-w-[30px] font-medium">{c.code}</span>
+                  <div className="flex-1 h-[6px] bg-gray-100 dark:bg-[#2a2d3e] rounded-[3px] overflow-hidden">
+                    <div 
+                      className="h-full bg-accent rounded-[3px]"
+                      style={{ width: c.pct + '%' }}
+                    />
+                  </div>
+                  <span className="text-[12px] text-text-secondary min-w-[35px] text-right">{c.pct}%</span>
+                </div>
              ))}
            </div>
          </div>
