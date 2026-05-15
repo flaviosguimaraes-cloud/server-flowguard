@@ -359,11 +359,15 @@ export default function Dashboard() {
                   n === 'rx' ? 'Entrada' : 'Saída'
                 ]}
                 contentStyle={{
-                  background: '#1e2130',
-                  border: '1px solid #2a2d3e',
+                  backgroundColor: 'var(--bg-card)',
+                  border: '1px solid var(--border)',
                   borderRadius: 6,
-                  fontSize: 12
-                }} />
+                  fontSize: 12,
+                  color: 'var(--text-primary)'
+                }}
+                itemStyle={{ color: 'var(--text-primary)' }}
+                labelStyle={{ color: 'var(--text-secondary)' }}
+              />
               <Line
                 type="monotone"
                 dataKey="rx"
@@ -449,11 +453,15 @@ export default function Dashboard() {
                    tickFormatter={v => v + '%'} />
                  <Tooltip
                    formatter={v => [v + '%']}
-                   contentStyle={{
-                     background: '#1e2130',
-                     border: '1px solid #2a2d3e',
-                     borderRadius: 6, fontSize: 12
-                   }} />
+                  contentStyle={{
+                    backgroundColor: 'var(--bg-card)',
+                    border: '1px solid var(--border)',
+                    borderRadius: 6, fontSize: 12,
+                    color: 'var(--text-primary)'
+                  }}
+                  itemStyle={{ color: 'var(--text-primary)' }}
+                  labelStyle={{ color: 'var(--text-secondary)' }}
+                />
                  <Bar dataKey="pct" fill="#3b82f6"
                    radius={[3, 3, 0, 0]} />
                </BarChart>
