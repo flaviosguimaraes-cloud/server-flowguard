@@ -2,10 +2,12 @@
  import { createRouter as createTanStackRouter } from '@tanstack/react-router'
  import { routeTree } from './routeTree.gen'
  
- export function createRouter() {
+ export const getRouter = () => {
    const queryClient = new QueryClient()
  
-   return createTanStackRouter({
+   const router = createTanStackRouter({
+   return router;
+ }
      routeTree,
      context: { queryClient },
    })
