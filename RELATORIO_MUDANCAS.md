@@ -43,3 +43,5 @@ O sistema foi totalmente refatorado com um design profissional.
  ## 7. Correção Crítica de Segurança e API
  - **Remoção de Token em Autenticação:** Corrigido o interceptor de requisições no arquivo `src/services/api.ts` para não enviar o cabeçalho `Authorization` durante o login e refresh de token, evitando erros de credenciais inválidas caso existisse um token expirado no cache.
  - **Tratamento de Erros de Login:** Implementada a limpeza de estados de erro ao digitar no formulário de login e tratamento refinado para respostas 401.
+ - **Renovação de Token (Refresh Token):** Implementada lógica no interceptor da API para tentar renovar o token automaticamente antes de deslogar o usuário em caso de erro 401, evitando loops de redirecionamento.
+ - **Persistência de Sessão Síncrona:** O estado de autenticação agora é lido do `localStorage` instantaneamente na inicialização, eliminando "flickers" e garantindo que rotas protegidas funcionem corretamente.
