@@ -383,13 +383,13 @@ export default function Dashboard() {
         </div>
       </div>
 
-      {/* Secondary Grids */}
+       {/* Secondary Grids */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
          {/* Top Protocols */}
-         <div className="bg-bg-card p-6 rounded-xl border border-border shadow-sm">
-           <h2 className="text-lg font-bold mb-6 text-text-primary">{t('protocols')}</h2>
-           <div className="space-y-2">
-             {protoData.map((p: any, i: number) => (
+         <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm">
+            <h2 className="text-lg font-bold mb-6 text-gray-900 dark:text-gray-100">{t('protocols')}</h2>
+            <div className="space-y-2">
+              {protoData.map((p: any, i: number) => (
                <div key={i} style={{
                  display: 'flex', alignItems: 'center',
                  gap: 10, padding: '6px 0',
@@ -419,11 +419,11 @@ export default function Dashboard() {
            </div>
          </div>
  
-         {/* Top Countries */}
-         <div className="bg-bg-card p-6 rounded-xl border border-border shadow-sm">
-           <h2 className="text-lg font-bold mb-6 text-text-primary">{t('countries')}</h2>
-           <div className="space-y-1">
-             {countryData.map((c: any, i: number) => (
+          {/* Top Countries */}
+         <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm">
+            <h2 className="text-lg font-bold mb-6 text-gray-900 dark:text-gray-100">{t('countries')}</h2>
+            <div className="space-y-1">
+              {countryData.map((c: any, i: number) => (
                <div key={i} style={{
                  display: 'flex', alignItems: 'center',
                  gap: 8, padding: '5px 0',
@@ -456,10 +456,10 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-         {/* Top Ports */}
-         <div className="bg-bg-card p-6 rounded-xl border border-border shadow-sm">
-           <h2 className="text-lg font-bold mb-6 text-text-primary">{t('port')}s</h2>
-           <div className="h-[180px] w-full">
+          {/* Top Ports */}
+         <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm">
+            <h2 className="text-lg font-bold mb-6 text-gray-900 dark:text-gray-100">{t('port')}s</h2>
+            <div className="h-[180px] w-full">
              <ResponsiveContainer width="100%" height="100%">
                <BarChart data={portData}
                  margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
@@ -485,10 +485,10 @@ export default function Dashboard() {
            </div>
          </div>
  
-         {/* SNMP Interfaces */}
-         <div className="bg-bg-card p-6 rounded-xl border border-border shadow-sm">
-           <h2 className="text-lg font-bold mb-6 text-text-primary">{t('top_interfaces')}</h2>
-           <div className="space-y-5">
+          {/* SNMP Interfaces */}
+         <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm">
+            <h2 className="text-lg font-bold mb-6 text-gray-900 dark:text-gray-100">{t('top_interfaces')}</h2>
+            <div className="space-y-5">
              {relevantInterfaces.map((i: any) => {
                const utilPct = i.if_speed > 0
                  ? Math.min((i.in_bps / i.if_speed) * 100, 100)
@@ -518,10 +518,10 @@ export default function Dashboard() {
          </div>
       </div>
 
-      {/* Active Connections Table */}
-      <div className="bg-bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-border flex justify-between items-center bg-bg-secondary/30">
-          <h2 className="text-lg font-bold text-text-primary">{t('active_connections')}</h2>
+       {/* Active Connections Table */}
+      <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-gray-200 dark:border-border flex justify-between items-center bg-gray-50/50 dark:bg-bg-secondary/30">
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('active_connections')}</h2>
           <button className="text-text-secondary hover:text-text-primary transition-colors">
             <MoreVertical size={20} />
           </button>
