@@ -1,6 +1,4 @@
-import { useState, FormEvent } from 'react';
-import { useNavigate } from '@tanstack/react-router';
- import { useAuth } from '../contexts/AuthContext';
+import { useState, FormEvent, useEffect } from 'react';
  import { useTranslation } from '../hooks/useTranslation';
  import api from '../services/api';
  import { toast } from 'sonner';
@@ -9,12 +7,20 @@ import { useNavigate } from '@tanstack/react-router';
  export default function Login() {
    const [username, setUsername] = useState('');
    const [password, setPassword] = useState('');
-  const navigate = useNavigate();
-   const { login } = useAuth();
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
    const { t, lang, changeLanguage } = useTranslation();
  
+  // Limpar erro ao digitar
+  useEffect(() => {
+    if (error) setError('');
+  }, [username, password]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
+
     try {
       const params = new URLSearchParams();
       params.append('username', username);
@@ -36,10 +42,18 @@ import { useNavigate } from '@tanstack/react-router';
       localStorage.setItem('username', data.username);
       localStorage.setItem('role', data.role);
 
-      login(data);
+      if (data.must_change_password) {
+        window.location.href = '/change-password';
+      } else {
+        window.location.href = '/dashboard';
+      }
     } catch (error: any) {
-      const msg = error.response?.data?.detail || 'Usuário ou senha incorretos';
-      toast.error(msg);
+      setError(
+        error.response?.data?.detail || 
+        'Usuário ou senha incorretos'
+      );
+    } finally {
+      setLoading(false);
     }
   };
  
@@ -69,7 +83,13 @@ import { useNavigate } from '@tanstack/react-router';
           <p className="text-text-secondary mt-2">Network Intelligence & DDoS Mitigation</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-lg text-sm text-center font-medium animate-in fade-in duration-300">
+              {error}
+            </div>
+          )}
+
           <div className="space-y-1">
             <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">
               {t('username')}
@@ -104,8 +124,15 @@ import { useNavigate } from '@tanstack/react-router';
             </div>
           </div>
 
-          <button className="w-full bg-accent hover:bg-accent/90 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-accent/20 active:scale-[0.98] mt-2">
-            {t('login')}
+          <button 
+            disabled={loading}
+            className="w-full bg-accent hover:bg-accent/90 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-accent/20 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70"
+          >
+            {loading ? (
+              <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              t('login')
+            )}
           </button>
         </form>
       </div>
