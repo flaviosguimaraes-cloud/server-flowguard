@@ -2,6 +2,7 @@ import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
   import { AuthProvider, useAuth } from "../contexts/AuthContext";
  import { ThemeProvider } from "../contexts/ThemeContext";
+ import { UIProvider } from "../contexts/UIContext";
  import { Toaster } from "sonner";
  import { Sidebar } from "../components/Sidebar";
  import { Header } from "../components/Header";
@@ -51,9 +52,11 @@ function RootComponent() {
        <body>
          <QueryClientProvider client={queryClient}>
            <ThemeProvider>
-             <AuthProvider>
-               <AuthWrapper />
-             </AuthProvider>
+             <UIProvider>
+               <AuthProvider>
+                 <AuthWrapper />
+               </AuthProvider>
+             </UIProvider>
            </ThemeProvider>
          </QueryClientProvider>
          <Scripts />
