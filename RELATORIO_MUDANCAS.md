@@ -38,4 +38,8 @@ O sistema foi totalmente refatorado com um design profissional.
 ## 6. Correções Técnicas
 - Substituição de `window.location.href` por `navigate` do TanStack Router para navegação sem refresh.
 - Centralização do estado da Sidebar via `UIContext`.
-- Padronização dos componentes `Skeleton` para carregamento suave.
+ - Padronização dos componentes `Skeleton` para carregamento suave.
+ 
+ ## 7. Correção Crítica de Segurança e API
+ - **Remoção de Token em Autenticação:** Corrigido o interceptor de requisições no arquivo `src/services/api.ts` para não enviar o cabeçalho `Authorization` durante o login e refresh de token, evitando erros de credenciais inválidas caso existisse um token expirado no cache.
+ - **Tratamento de Erros de Login:** Implementada a limpeza de estados de erro ao digitar no formulário de login e tratamento refinado para respostas 401.
