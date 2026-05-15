@@ -64,6 +64,14 @@ function AuthWrapper() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const isLoginPage = location.pathname === "/login";
+
+  React.useEffect(() => {
+    if (!loading && !user && !isLoginPage) {
+      navigate({ to: '/login' });
+    }
+  }, [loading, user, isLoginPage, navigate]);
+
   console.log("AuthWrapper render:", { user, loading, path: location.pathname });
 
   if (loading) {
@@ -73,14 +81,6 @@ function AuthWrapper() {
       </div>
     );
   }
-
-  const isLoginPage = location.pathname === "/login";
-
-  React.useEffect(() => {
-    if (!loading && !user && !isLoginPage) {
-      navigate({ to: '/login' });
-    }
-  }, [loading, user, isLoginPage, navigate]);
 
   if (!user && !isLoginPage) {
     return null;
