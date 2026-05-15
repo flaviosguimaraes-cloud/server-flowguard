@@ -1,4 +1,5 @@
- import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import React from "react";
+import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
  import { AuthProvider, useAuth } from "../contexts/AuthContext";
  import { Toaster } from "sonner";
  import { Sidebar } from "../components/Sidebar";
@@ -10,6 +11,7 @@
    Scripts,
    useLocation,
    Navigate,
+  useNavigate,
  } from "@tanstack/react-router";
  
  import appCss from "../styles.css?url";
@@ -60,6 +62,7 @@ function RootComponent() {
 function AuthWrapper() {
   const { user, loading } = useAuth();
   const location = useLocation();
+  const navigate = useNavigate();
 
   console.log("AuthWrapper render:", { user, loading, path: location.pathname });
 
