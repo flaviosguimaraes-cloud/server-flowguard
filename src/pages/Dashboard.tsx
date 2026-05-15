@@ -170,48 +170,57 @@ export default function Dashboard() {
 
       {/* Secondary Grids */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Protocols */}
-        <div className="bg-bg-card p-6 rounded-xl border border-border shadow-sm">
-          <h2 className="text-lg font-bold mb-6 text-text-primary">{t('protocols')}</h2>
-          <div className="space-y-4">
-            {protocols?.slice(0, 6).map((item: any, idx: number) => (
-              <div key={item.name} className="space-y-2">
-                <div className="flex justify-between text-xs font-semibold">
-                  <span className="text-text-primary uppercase">{item.name}</span>
-                  <span className="text-text-secondary">{item.value} Gbps ({item.percentage}%)</span>
-                </div>
-                <div className="w-full bg-bg-secondary rounded-full h-1.5 overflow-hidden">
-                  <div 
-                    className={clsx(
-                      "h-full rounded-full transition-all duration-1000",
-                      idx === 0 ? "bg-accent" : idx === 1 ? "bg-success" : idx === 2 ? "bg-warning" : "bg-text-secondary/50"
-                    )}
-                    style={{ width: `${item.percentage}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Top Countries */}
-        <div className="bg-bg-card p-6 rounded-xl border border-border shadow-sm">
-          <h2 className="text-lg font-bold mb-6 text-text-primary">{t('countries')}</h2>
-          <div className="space-y-4">
-            {countries?.slice(0, 6).map((item: any) => (
-              <div key={item.name} className="flex items-center justify-between p-2 hover:bg-bg-secondary rounded-lg transition-colors border-b border-border/50 last:border-0">
-                <div className="flex items-center gap-3">
-                  <span className="text-xl">{getFlagEmoji(item.code)}</span>
-                  <span className="text-sm font-medium text-text-primary">{item.name}</span>
-                </div>
-                <div className="text-right">
-                  <p className="text-sm font-bold text-text-primary">{item.value} Gbps</p>
-                  <p className="text-[10px] text-text-secondary font-bold uppercase">{item.percentage}% share</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+         {/* Top Protocols */}
+         <div className="bg-bg-card p-6 rounded-xl border border-border shadow-sm">
+           <h2 className="text-lg font-bold mb-6 text-text-primary">{t('protocols')}</h2>
+           <div className="space-y-4">
+             {protocols?.items?.slice(0, 6).map((item: any, idx: number) => {
+               const name = item.proto === 6 ? 'TCP' : item.proto === 17 ? 'UDP' : item.proto === 1 ? 'ICMP' : `Proto ${item.proto}`;
+               const totalBytes = protocols.items.reduce((acc: number, curr: any) => acc + curr.bytes, 0);
+               const percentage = ((item.bytes / totalBytes) * 100).toFixed(1);
+               return (
+                 <div key={item.proto} className="space-y-2">
+                   <div className="flex justify-between text-xs font-semibold">
+                     <span className="text-text-primary uppercase">{name}</span>
+                     <span className="text-text-secondary">{(item.bytes / 1e9).toFixed(2)} GB ({percentage}%)</span>
+                   </div>
+                   <div className="w-full bg-bg-secondary rounded-full h-1.5 overflow-hidden">
+                     <div 
+                       className={clsx(
+                         "h-full rounded-full transition-all duration-1000",
+                         idx === 0 ? "bg-accent" : idx === 1 ? "bg-success" : idx === 2 ? "bg-warning" : "bg-text-secondary/50"
+                       )}
+                       style={{ width: `${percentage}%` }}
+                     />
+                   </div>
+                 </div>
+               );
+             })}
+           </div>
+         </div>
+ 
+         {/* Top Countries */}
+         <div className="bg-bg-card p-6 rounded-xl border border-border shadow-sm">
+           <h2 className="text-lg font-bold mb-6 text-text-primary">{t('countries')}</h2>
+           <div className="space-y-4">
+             {countries?.items?.slice(0, 6).map((item: any) => {
+               const totalBytes = countries.items.reduce((acc: number, curr: any) => acc + curr.bytes, 0);
+               const percentage = ((item.bytes / totalBytes) * 100).toFixed(1);
+               return (
+                 <div key={item.country} className="flex items-center justify-between p-2 hover:bg-bg-secondary rounded-lg transition-colors border-b border-border/50 last:border-0">
+                   <div className="flex items-center gap-3">
+                     <span className="text-xl">{getFlagEmoji(item.country)}</span>
+                     <span className="text-sm font-medium text-text-primary">{item.country}</span>
+                   </div>
+                   <div className="text-right">
+                     <p className="text-sm font-bold text-text-primary">{(item.bytes / 1e9).toFixed(2)} GB</p>
+                     <p className="text-[10px] text-text-secondary font-bold uppercase">{percentage}% share</p>
+                   </div>
+                 </div>
+               );
+             })}
+           </div>
+         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
