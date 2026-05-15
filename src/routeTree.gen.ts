@@ -13,11 +13,14 @@ import { Route as LoginRouteImport } from './routes/login'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ChangePasswordRouteImport } from './routes/change-password'
+import { Route as CdnsRouteImport } from './routes/cdns'
 import { Route as AnalysisRouteImport } from './routes/analysis'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as OperationIndexRouteImport } from './routes/operation/index'
 import { Route as MitigationIndexRouteImport } from './routes/mitigation/index'
 import { Route as MitigationWhitelistRouteImport } from './routes/mitigation/whitelist'
 import { Route as MitigationFlowspecRouteImport } from './routes/mitigation/flowspec'
+import { Route as MitigationBlacklistRouteImport } from './routes/mitigation/blacklist'
 import { Route as MitigationBgpRouteImport } from './routes/mitigation/bgp'
 import { Route as MitigationActiveRouteImport } from './routes/mitigation/active'
 
@@ -41,6 +44,11 @@ const ChangePasswordRoute = ChangePasswordRouteImport.update({
   path: '/change-password',
   getParentRoute: () => rootRouteImport,
 } as any)
+const CdnsRoute = CdnsRouteImport.update({
+  id: '/cdns',
+  path: '/cdns',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const AnalysisRoute = AnalysisRouteImport.update({
   id: '/analysis',
   path: '/analysis',
@@ -49,6 +57,11 @@ const AnalysisRoute = AnalysisRouteImport.update({
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const OperationIndexRoute = OperationIndexRouteImport.update({
+  id: '/operation/',
+  path: '/operation/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MitigationIndexRoute = MitigationIndexRouteImport.update({
@@ -66,6 +79,11 @@ const MitigationFlowspecRoute = MitigationFlowspecRouteImport.update({
   path: '/mitigation/flowspec',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MitigationBlacklistRoute = MitigationBlacklistRouteImport.update({
+  id: '/mitigation/blacklist',
+  path: '/mitigation/blacklist',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MitigationBgpRoute = MitigationBgpRouteImport.update({
   id: '/mitigation/bgp',
   path: '/mitigation/bgp',
@@ -80,97 +98,118 @@ const MitigationActiveRoute = MitigationActiveRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analysis': typeof AnalysisRoute
+  '/cdns': typeof CdnsRoute
   '/change-password': typeof ChangePasswordRoute
   '/dashboard': typeof DashboardRoute
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/mitigation/active': typeof MitigationActiveRoute
   '/mitigation/bgp': typeof MitigationBgpRoute
+  '/mitigation/blacklist': typeof MitigationBlacklistRoute
   '/mitigation/flowspec': typeof MitigationFlowspecRoute
   '/mitigation/whitelist': typeof MitigationWhitelistRoute
   '/mitigation/': typeof MitigationIndexRoute
+  '/operation/': typeof OperationIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analysis': typeof AnalysisRoute
+  '/cdns': typeof CdnsRoute
   '/change-password': typeof ChangePasswordRoute
   '/dashboard': typeof DashboardRoute
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/mitigation/active': typeof MitigationActiveRoute
   '/mitigation/bgp': typeof MitigationBgpRoute
+  '/mitigation/blacklist': typeof MitigationBlacklistRoute
   '/mitigation/flowspec': typeof MitigationFlowspecRoute
   '/mitigation/whitelist': typeof MitigationWhitelistRoute
   '/mitigation': typeof MitigationIndexRoute
+  '/operation': typeof OperationIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/analysis': typeof AnalysisRoute
+  '/cdns': typeof CdnsRoute
   '/change-password': typeof ChangePasswordRoute
   '/dashboard': typeof DashboardRoute
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
   '/mitigation/active': typeof MitigationActiveRoute
   '/mitigation/bgp': typeof MitigationBgpRoute
+  '/mitigation/blacklist': typeof MitigationBlacklistRoute
   '/mitigation/flowspec': typeof MitigationFlowspecRoute
   '/mitigation/whitelist': typeof MitigationWhitelistRoute
   '/mitigation/': typeof MitigationIndexRoute
+  '/operation/': typeof OperationIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
     | '/analysis'
+    | '/cdns'
     | '/change-password'
     | '/dashboard'
     | '/events'
     | '/login'
     | '/mitigation/active'
     | '/mitigation/bgp'
+    | '/mitigation/blacklist'
     | '/mitigation/flowspec'
     | '/mitigation/whitelist'
     | '/mitigation/'
+    | '/operation/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
     | '/analysis'
+    | '/cdns'
     | '/change-password'
     | '/dashboard'
     | '/events'
     | '/login'
     | '/mitigation/active'
     | '/mitigation/bgp'
+    | '/mitigation/blacklist'
     | '/mitigation/flowspec'
     | '/mitigation/whitelist'
     | '/mitigation'
+    | '/operation'
   id:
     | '__root__'
     | '/'
     | '/analysis'
+    | '/cdns'
     | '/change-password'
     | '/dashboard'
     | '/events'
     | '/login'
     | '/mitigation/active'
     | '/mitigation/bgp'
+    | '/mitigation/blacklist'
     | '/mitigation/flowspec'
     | '/mitigation/whitelist'
     | '/mitigation/'
+    | '/operation/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalysisRoute: typeof AnalysisRoute
+  CdnsRoute: typeof CdnsRoute
   ChangePasswordRoute: typeof ChangePasswordRoute
   DashboardRoute: typeof DashboardRoute
   EventsRoute: typeof EventsRoute
   LoginRoute: typeof LoginRoute
   MitigationActiveRoute: typeof MitigationActiveRoute
   MitigationBgpRoute: typeof MitigationBgpRoute
+  MitigationBlacklistRoute: typeof MitigationBlacklistRoute
   MitigationFlowspecRoute: typeof MitigationFlowspecRoute
   MitigationWhitelistRoute: typeof MitigationWhitelistRoute
   MitigationIndexRoute: typeof MitigationIndexRoute
+  OperationIndexRoute: typeof OperationIndexRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -203,6 +242,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ChangePasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/cdns': {
+      id: '/cdns'
+      path: '/cdns'
+      fullPath: '/cdns'
+      preLoaderRoute: typeof CdnsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/analysis': {
       id: '/analysis'
       path: '/analysis'
@@ -215,6 +261,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/operation/': {
+      id: '/operation/'
+      path: '/operation'
+      fullPath: '/operation/'
+      preLoaderRoute: typeof OperationIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/mitigation/': {
@@ -238,6 +291,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MitigationFlowspecRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mitigation/blacklist': {
+      id: '/mitigation/blacklist'
+      path: '/mitigation/blacklist'
+      fullPath: '/mitigation/blacklist'
+      preLoaderRoute: typeof MitigationBlacklistRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mitigation/bgp': {
       id: '/mitigation/bgp'
       path: '/mitigation/bgp'
@@ -258,15 +318,18 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalysisRoute: AnalysisRoute,
+  CdnsRoute: CdnsRoute,
   ChangePasswordRoute: ChangePasswordRoute,
   DashboardRoute: DashboardRoute,
   EventsRoute: EventsRoute,
   LoginRoute: LoginRoute,
   MitigationActiveRoute: MitigationActiveRoute,
   MitigationBgpRoute: MitigationBgpRoute,
+  MitigationBlacklistRoute: MitigationBlacklistRoute,
   MitigationFlowspecRoute: MitigationFlowspecRoute,
   MitigationWhitelistRoute: MitigationWhitelistRoute,
   MitigationIndexRoute: MitigationIndexRoute,
+  OperationIndexRoute: OperationIndexRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
