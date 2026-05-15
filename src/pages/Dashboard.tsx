@@ -190,17 +190,12 @@ export default function Dashboard() {
       GB:'🇬🇧', JP:'🇯🇵', KR:'🇰🇷', AR:'🇦🇷', CL:'🇨🇱', MX:'🇲🇽',
       HK:'🇭🇰', SG:'🇸🇬', NL:'🇳🇱', CA:'🇨🇦', AU:'🇦🇺', IN:'🇮🇳',
       UA:'🇺🇦', TR:'🇹🇷', ES:'🇪🇸', IT:'🇮🇹', PT:'🇵🇹', PL:'🇵🇱',
-      SE:'🇸🇪', NO:'🇳🇴', FI:'🇫🇮', CH:'🇨🇭', AT:'🇦🇹', BE:'🇧🇪',
-      CZ:'🇨🇿', RO:'🇷🇴', HU:'🇭🇺', BG:'🇧🇬', HR:'🇭🇷', SK:'🇸🇰',
-      ZA:'🇿🇦', NG:'🇳🇬', EG:'🇪🇬', IL:'🇮🇱', AE:'🇦🇪', SA:'🇸🇦',
+      SE:'🇸🇪', NO:'🇳🇴', CH:'🇨🇭', ZA:'🇿🇦', AE:'🇦🇪', SA:'🇸🇦',
       TH:'🇹🇭', VN:'🇻🇳', ID:'🇮🇩', MY:'🇲🇾', PH:'🇵🇭', TW:'🇹🇼',
-      BD:'🇧🇩', PK:'🇵🇰', IR:'🇮🇷', CO:'🇨🇴', PE:'🇵🇪', VE:'🇻🇪',
-      EC:'🇪🇨', BO:'🇧🇴', PY:'🇵🇾', UY:'🇺🇾', CR:'🇨🇷', PA:'🇵🇦',
-      DO:'🇩🇴', CU:'🇨🇺', GT:'🇬🇹', LT:'🇱🇹', LV:'🇱🇻', EE:'🇪🇪',
-      BY:'🇧🇾', MD:'🇲🇩', GE:'🇬🇪', AM:'🇦🇲', AZ:'🇦🇿', KZ:'🇰🇿',
-      UZ:'🇺🇿', MN:'🇲🇳', KG:'🇰🇬',
+      CO:'🇨🇴', PE:'🇵🇪', IL:'🇮🇱', EG:'🇪🇬', NG:'🇳🇬', IE:'🇮🇪',
     };
 
+    const countryItems = countries?.items || countries?.data || (Array.isArray(countries) ? countries : []);
     const totalCountryBytes = countryItems.reduce((a: number, b: any) => a + b.bytes, 0);
 
     const countryData = countryItems
@@ -273,12 +268,7 @@ export default function Dashboard() {
 
     const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
 
-    const fmtBytes = (b: number) =>
-      b > 1e9 ? (b / 1e9).toFixed(1) + ' GB' :
-      b > 1e6 ? (b / 1e6).toFixed(0) + ' MB' :
-      b > 1e3 ? (b / 1e3).toFixed(0) + ' KB' :
-      b + ' B';
-
+    const ifaceColors = ['#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
    const relevantInterfaces = (interfaces?.interfaces || [])
      .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
      .filter((i: any) => {
