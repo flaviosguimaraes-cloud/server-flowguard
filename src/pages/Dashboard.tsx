@@ -340,7 +340,8 @@ export default function Dashboard() {
             <LineChart data={chartData}>
               <CartesianGrid
                 strokeDasharray="3 3"
-                stroke="#2a2d3e" />
+                stroke="currentColor"
+                className="text-gray-200 dark:text-[#2a2d3e]" />
               <XAxis
                 dataKey="time"
                 tick={{ fontSize: 11, fill: '#8892a4' }}
@@ -590,11 +591,14 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ title, value, unit, icon, trend }: any) {
+function StatCard({ title, value, unit, icon, trend, tooltip }: any) {
   return (
-    <div className="bg-bg-card p-6 rounded-xl border border-border shadow-sm flex flex-col justify-between min-h-[120px] transition-all hover:border-accent/50 group">
+    <div 
+      className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm flex flex-col justify-between min-h-[120px] transition-all hover:border-accent/50 group relative"
+      title={tooltip}
+    >
       <div className="flex justify-between items-start">
-        <div className="p-2.5 bg-bg-secondary rounded-xl group-hover:bg-accent/10 transition-colors">
+        <div className="p-2.5 bg-gray-50 dark:bg-bg-secondary rounded-xl group-hover:bg-accent/10 transition-colors">
           {icon}
         </div>
         {trend && (
@@ -608,12 +612,19 @@ function StatCard({ title, value, unit, icon, trend }: any) {
         )}
       </div>
       <div className="mt-4">
-        <p className="text-text-secondary text-[11px] font-bold uppercase tracking-wider">{title}</p>
+        <p className="text-gray-500 dark:text-text-secondary text-[11px] font-bold uppercase tracking-wider">{title}</p>
         <div className="flex items-baseline gap-1 mt-1">
-          <h3 className="text-2xl font-bold text-text-primary tracking-tight">{value}</h3>
-          {unit && <span className="text-xs font-bold text-text-secondary">{unit}</span>}
+          <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">{value}</h3>
+          {unit && <span className="text-xs font-bold text-gray-500 dark:text-text-secondary">{unit}</span>}
         </div>
       </div>
+      {tooltip && (
+        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+           <div className="bg-gray-800 text-white text-[10px] py-1 px-2 rounded whitespace-nowrap shadow-lg">
+             {tooltip}
+           </div>
+        </div>
+      )}
     </div>
   );
 }
