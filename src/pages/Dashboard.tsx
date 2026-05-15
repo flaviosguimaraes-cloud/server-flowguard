@@ -330,105 +330,106 @@ export default function Dashboard() {
       {/* Main Chart */}
       <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm transition-colors">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Network Traffic (30m)</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Network Traffic</h2>
           
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex bg-gray-100 dark:bg-bg-secondary p-1 rounded-lg">
-              <button
-                onClick={() => setTrafficSource('flow')}
-                className={clsx(
-                  "px-3 py-1 text-[10px] font-bold rounded-md transition-all uppercase tracking-wider",
-                  trafficSource === 'flow' ? "bg-white dark:bg-accent text-accent dark:text-white shadow-sm" : "text-text-secondary hover:text-text-primary"
-                )}>
-                Tráfego Flow
-              </button>
               <button
                 onClick={() => setTrafficSource('snmp')}
                 className={clsx(
                   "px-3 py-1 text-[10px] font-bold rounded-md transition-all uppercase tracking-wider",
                   trafficSource === 'snmp' ? "bg-white dark:bg-accent text-accent dark:text-white shadow-sm" : "text-text-secondary hover:text-text-primary"
                 )}>
-                Por Interface
+                Interface (SNMP)
+              </button>
+              <button
+                onClick={() => setTrafficSource('flow')}
+                className={clsx(
+                  "px-3 py-1 text-[10px] font-bold rounded-md transition-all uppercase tracking-wider",
+                  trafficSource === 'flow' ? "bg-white dark:bg-accent text-accent dark:text-white shadow-sm" : "text-text-secondary hover:text-text-primary"
+                )}>
+                Tráfego Geral (Flow)
               </button>
             </div>
 
             {trafficSource === 'snmp' && (
-              <select
-                value={selectedInterface || ''}
-                onChange={e => setSelectedInterface(e.target.value)}
-                className="bg-gray-100 dark:bg-bg-secondary border-none text-[10px] font-bold rounded-lg px-2 py-1.5 text-text-primary focus:ring-1 focus:ring-accent outline-none">
-                <option value="">Selecionar interface...</option>
+              <div className="flex flex-wrap gap-2 max-w-[400px]">
                 {(interfaces?.interfaces || [])
                   .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
+                  .filter((i: any) => {
+                    const n = (i.display_name || '').toLowerCase();
+                    return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
+                  })
+                  .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
+                  .slice(0, 8)
                   .map((i: any) => (
-                    <option key={i.if_index || i.display_name} value={i.display_name}>
+                    <button
+                      key={i.display_name}
+                      onClick={() => {
+                        setSelectedIfaces(prev => 
+                          prev.includes(i.display_name) 
+                            ? prev.filter(n => n !== i.display_name)
+                            : [...prev, i.display_name]
+                        );
+                      }}
+                      className={clsx(
+                        "px-2 py-1 text-[9px] font-bold rounded border transition-all",
+                        selectedIfaces.includes(i.display_name)
+                          ? "bg-accent/10 border-accent text-accent"
+                          : "bg-transparent border-gray-200 dark:border-gray-700 text-text-secondary hover:border-accent"
+                      )}
+                    >
                       {i.display_name}
-                    </option>
+                    </button>
                   ))
                 }
-              </select>
+                <span className="text-[10px] font-bold text-text-secondary self-center ml-1">
+                  {selectedIfaces.length} selecionadas
+                </span>
+              </div>
             )}
-
-            <div className="flex gap-4 ml-2">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-accent"></div>
-                <span className="text-[10px] text-text-secondary font-bold uppercase tracking-wider">In (RX)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-success"></div>
-                <span className="text-[10px] text-text-secondary font-bold uppercase tracking-wider">Out (TX)</span>
-              </div>
-            </div>
           </div>
         </div>
-        <div className="h-[200px] w-full">
+
+        <div className="h-[250px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="currentColor"
-                className="text-gray-200 dark:text-[#2a2d3e]" />
-              <XAxis
-                dataKey="time"
-                tick={{ fontSize: 11, fill: '#8892a4' }}
-                tickLine={false}
-                axisLine={false}
-                interval={4} />
-              <YAxis
-                tick={{ fontSize: 11, fill: '#8892a4' }}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={v => v + 'G'} />
-              <Tooltip
-                formatter={(v: any, n: string) => [
-                  v + ' Gbps',
-                  n === 'rx' ? 'Entrada' : 'Saída'
-                ]}
-                contentStyle={{
-                  backgroundColor: 'var(--bg-card)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 6,
-                  fontSize: 12,
-                  color: 'var(--text-primary)'
-                }}
-                itemStyle={{ color: 'var(--text-primary)' }}
-                labelStyle={{ color: 'var(--text-secondary)' }}
-              />
-              <Line
-                type="monotone"
-                dataKey="rx"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                dot={false}
-                name="rx" />
-              <Line
-                type="monotone"
-                dataKey="tx"
-                stroke="#22c55e"
-                strokeWidth={2}
-                dot={false}
-                name="tx" />
-            </LineChart>
+            {trafficSource === 'flow' ? (
+              <LineChart data={flowData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-gray-200 dark:text-[#2a2d3e]" />
+                <XAxis dataKey="time" tick={{ fontSize: 11, fill: '#8892a4' }} tickLine={false} axisLine={false} interval={4} />
+                <YAxis tick={{ fontSize: 11, fill: '#8892a4' }} tickLine={false} axisLine={false} tickFormatter={v => v + 'G'} />
+                <Tooltip
+                  formatter={(v: any, n: string) => [v + ' Gbps', n === 'rx' ? 'Entrada' : 'Saída']}
+                  contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12, color: 'var(--text-primary)' }}
+                  itemStyle={{ color: 'var(--text-primary)' }}
+                  labelStyle={{ color: 'var(--text-secondary)' }}
+                />
+                <Line type="monotone" dataKey="rx" stroke="#3b82f6" strokeWidth={2} dot={false} name="rx" />
+                <Line type="monotone" dataKey="tx" stroke="#22c55e" strokeWidth={2} dot={false} name="tx" />
+              </LineChart>
+            ) : (
+              <BarChart data={snmpData} layout="vertical" margin={{ left: 40, right: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="currentColor" className="text-gray-200 dark:text-[#2a2d3e]" />
+                <XAxis type="number" tick={{ fontSize: 11, fill: '#8892a4' }} tickLine={false} axisLine={false} tickFormatter={v => v + 'G'} />
+                <YAxis dataKey="name" type="category" tick={{ fontSize: 10, fill: '#8892a4' }} tickLine={false} axisLine={false} width={80} />
+                <Tooltip
+                  formatter={(v: any, n: string) => [parseFloat(v).toFixed(2) + ' Gbps', n === 'rx' ? 'Entrada (RX)' : 'Saída (TX)']}
+                  contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12, color: 'var(--text-primary)' }}
+                  itemStyle={{ color: 'var(--text-primary)' }}
+                  labelStyle={{ color: 'var(--text-secondary)' }}
+                />
+                <Bar dataKey="rx" name="rx" radius={[0, 4, 4, 0]}>
+                  {snmpData.map((entry, index) => (
+                    <Cell key={`cell-rx-${index}`} fill={ifaceColors[index % ifaceColors.length]} fillOpacity={0.8} />
+                  ))}
+                </Bar>
+                <Bar dataKey="tx" name="tx" radius={[0, 4, 4, 0]}>
+                  {snmpData.map((entry, index) => (
+                    <Cell key={`cell-tx-${index}`} fill={ifaceColors[index % ifaceColors.length]} fillOpacity={0.4} />
+                  ))}
+                </Bar>
+              </BarChart>
+            )}
           </ResponsiveContainer>
         </div>
       </div>
