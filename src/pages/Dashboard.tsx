@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { useTranslation } from '../hooks/useTranslation';
@@ -8,13 +8,37 @@ import { useTranslation } from '../hooks/useTranslation';
  } from 'recharts';
 import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical } from 'lucide-react';
 import { Skeleton } from '../components/Skeleton';
+
+const FlagEmoji = ({ code }: { code: string }) => {
+  const flags: Record<string, string> = {
+    BR:'🇧🇷', US:'🇺🇸', CN:'🇨🇳', RU:'🇷🇺', DE:'🇩🇪', FR:'🇫🇷',
+    GB:'🇬🇧', JP:'🇯🇵', KR:'🇰🇷', AR:'🇦🇷', CL:'🇨🇱', MX:'🇲🇽',
+    HK:'🇭🇰', SG:'🇸🇬', NL:'🇳🇱', CA:'🇨🇦', AU:'🇦🇺', IN:'🇮🇳',
+    UA:'🇺🇦', TR:'🇹🇷', ES:'🇪🇸', IT:'🇮🇹', PT:'🇵🇹', PL:'🇵🇱',
+    SE:'🇸🇪', NO:'🇳🇴', CH:'🇨🇭', ZA:'🇿🇦', AE:'🇦🇪', SA:'🇸🇦',
+    TH:'🇹🇭', VN:'🇻🇳', ID:'🇮🇩', MY:'🇲🇾', PH:'🇵🇭', TW:'🇹🇼',
+    CO:'🇨🇴', PE:'🇵🇪', IL:'🇮🇱', EG:'🇪🇬', NG:'🇳🇬', IE:'🇮🇪',
+  };
+  const emoji = flags[code];
+  if (emoji) return (
+    <span style={{ fontSize: 15, lineHeight: 1 }}>{emoji}</span>
+  );
+  return (
+    <img
+      src={`https://flagcdn.com/16x12/${code?.toLowerCase()}.png`}
+      alt={code || '?'}
+      style={{ width: 16, height: 12, borderRadius: 2, verticalAlign: 'middle' }}
+      onError={e => {
+        (e.currentTarget as HTMLImageElement).style.display = 'none';
+      }}
+    />
+  );
+};
+
 import { clsx } from 'clsx';
 
 export default function Dashboard() {
   const { t } = useTranslation();
-  const [trafficSource, setTrafficSource] = useState<'flow' | 'snmp'>('flow');
-  const [selectedInterface, setSelectedInterface] = useState<string | null>(null);
-
   const { data: detection, isLoading: statsLoading } = useQuery({
      queryKey: ['detection-stats'],
      queryFn: async () => {
@@ -65,15 +89,51 @@ export default function Dashboard() {
      refetchInterval: 30000,
    });
  
-   const { data: interfaces } = useQuery({
-     queryKey: ['interfaces'],
-     queryFn: async () => {
-       const r = await api.get('/api/collectors/1/interfaces/summary');
-       return r.data;
-     },
-     refetchInterval: 60000,
-   });
- 
+    const { data: interfaces } = useQuery({
+      queryKey: ['interfaces'],
+      queryFn: async () => {
+        const r = await api.get('/api/collectors/1/interfaces/summary');
+        return r.data;
+      },
+      refetchInterval: 30000,
+    });
+
+  const [trafficSource, setTrafficSource] = useState<'flow' | 'snmp'>(() =>
+    localStorage.getItem('fg_traffic_source') as 'flow' | 'snmp' || 'snmp'
+  );
+
+  const [selectedIfaces, setSelectedIfaces] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('fg_selected_ifaces');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('fg_traffic_source', trafficSource);
+  }, [trafficSource]);
+
+  useEffect(() => {
+    localStorage.setItem('fg_selected_ifaces', JSON.stringify(selectedIfaces));
+  }, [selectedIfaces]);
+
+  useEffect(() => {
+    if (trafficSource === 'snmp' && selectedIfaces.length === 0 && interfaces?.interfaces?.length > 0) {
+      const top3 = (interfaces.interfaces || [])
+        .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
+        .filter((i: any) => {
+          const n = (i.display_name || '').toLowerCase();
+          return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
+        })
+        .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
+        .slice(0, 3)
+        .map((i: any) => i.display_name);
+      setSelectedIfaces(top3);
+    }
+  }, [interfaces, trafficSource, selectedIfaces.length]);
+
    const { data: connections } = useQuery({
      queryKey: ['connections'],
      queryFn: async () => {
@@ -89,38 +149,24 @@ export default function Dashboard() {
    console.log('ports:', ports);
    console.log('connections:', connections);
 
-    const chartData = useMemo(() => {
-      if (trafficSource === 'flow') {
-        return (timeline || []).map((d: any) => ({
-          time: d.time ? d.time.substring(11, 16) : '',
-          rx: parseFloat((d.rx_bytes / 1e8).toFixed(2)), // Convert to Gbps (1e9) but here requested tráfego de clientes
-          tx: parseFloat((d.tx_bytes / 1e8).toFixed(2)),
-        }));
-      } else if (trafficSource === 'snmp' && selectedInterface) {
-        // For SNMP we don't have historical data in this summary endpoint, 
-        // but we can show current value or mock a bit if timeline is not available for SNMP.
-        // However, the instructions say: "filtrar interfaces?.interfaces pelo nome e mostrar in_bps/out_bps em Gbps"
-        // Since chart needs a list, and summary is just a snapshot, we might need a different endpoint 
-        // for historical SNMP traffic. But I'll follow the instructions as best as possible.
-        // If SNMP selected, maybe we just show the current point or empty if no timeline exists for SNMP.
-        // Actually, usually these charts show historical data. 
-        // I'll stick to 'flow' for historical and maybe just one point for SNMP if that's what's available.
-        // Re-reading: "Se snmp + interface selecionada: filtrar interfaces?.interfaces pelo nome e mostrar in_bps/out_bps em Gbps"
-        // I'll just use the flow timeline for now but label it differently or try to find snmp timeline if exists.
-        // Wait, the API doesn't seem to provide SNMP timeline in the current queries.
-        // I'll just use the flow timeline for the chart structure but adjust the values if possible.
-        return (timeline || []).map((d: any) => ({
-          time: d.time ? d.time.substring(11, 16) : '',
-          rx: parseFloat((d.rx_bytes / 1e9).toFixed(2)),
-          tx: parseFloat((d.tx_bytes / 1e9).toFixed(2)),
-        }));
-      }
+    const flowData = useMemo(() => {
       return (timeline || []).map((d: any) => ({
         time: d.time ? d.time.substring(11, 16) : '',
         rx: parseFloat((d.rx_bytes / 1e9).toFixed(2)),
         tx: parseFloat((d.tx_bytes / 1e9).toFixed(2)),
       }));
-    }, [timeline, trafficSource, selectedInterface]);
+    }, [timeline]);
+
+    const snmpData = useMemo(() => {
+      if (!interfaces?.interfaces) return [];
+      return (interfaces.interfaces || [])
+        .filter((i: any) => selectedIfaces.includes(i.display_name))
+        .map((i: any) => ({
+          name: i.display_name,
+          rx: i.in_bps / 1e9,
+          tx: i.out_bps / 1e9,
+        }));
+    }, [interfaces, selectedIfaces]);
 
     const protoMap: Record<number, string> = {
      6: 'TCP', 17: 'UDP', 1: 'ICMP',
@@ -144,18 +190,10 @@ export default function Dashboard() {
       GB:'🇬🇧', JP:'🇯🇵', KR:'🇰🇷', AR:'🇦🇷', CL:'🇨🇱', MX:'🇲🇽',
       HK:'🇭🇰', SG:'🇸🇬', NL:'🇳🇱', CA:'🇨🇦', AU:'🇦🇺', IN:'🇮🇳',
       UA:'🇺🇦', TR:'🇹🇷', ES:'🇪🇸', IT:'🇮🇹', PT:'🇵🇹', PL:'🇵🇱',
-      SE:'🇸🇪', NO:'🇳🇴', FI:'🇫🇮', CH:'🇨🇭', AT:'🇦🇹', BE:'🇧🇪',
-      CZ:'🇨🇿', RO:'🇷🇴', HU:'🇭🇺', BG:'🇧🇬', HR:'🇭🇷', SK:'🇸🇰',
-      ZA:'🇿🇦', NG:'🇳🇬', EG:'🇪🇬', IL:'🇮🇱', AE:'🇦🇪', SA:'🇸🇦',
+      SE:'🇸🇪', NO:'🇳🇴', CH:'🇨🇭', ZA:'🇿🇦', AE:'🇦🇪', SA:'🇸🇦',
       TH:'🇹🇭', VN:'🇻🇳', ID:'🇮🇩', MY:'🇲🇾', PH:'🇵🇭', TW:'🇹🇼',
-      BD:'🇧🇩', PK:'🇵🇰', IR:'🇮🇷', CO:'🇨🇴', PE:'🇵🇪', VE:'🇻🇪',
-      EC:'🇪🇨', BO:'🇧🇴', PY:'🇵🇾', UY:'🇺🇾', CR:'🇨🇷', PA:'🇵🇦',
-      DO:'🇩🇴', CU:'🇨🇺', GT:'🇬🇹', LT:'🇱🇹', LV:'🇱🇻', EE:'🇪🇪',
-      BY:'🇧🇾', MD:'🇲🇩', GE:'🇬🇪', AM:'🇦🇲', AZ:'🇦🇿', KZ:'🇰🇿',
-      UZ:'🇺🇿', MN:'🇲🇳', KG:'🇰🇬',
+      CO:'🇨🇴', PE:'🇵🇪', IL:'🇮🇱', EG:'🇪🇬', NG:'🇳🇬', IE:'🇮🇪',
     };
-
-    const getFlag = (code: string) => flagMap[code] || '🌐';
 
     const countryItems = countries?.items || countries?.data || (Array.isArray(countries) ? countries : []);
     const totalCountryBytes = countryItems.reduce((a: number, b: any) => a + b.bytes, 0);
@@ -169,26 +207,45 @@ export default function Dashboard() {
         pct: totalCountryBytes > 0 ? ((c.bytes / totalCountryBytes) * 100).toFixed(1) : 0
       }));
 
+    const isLocalIP = (ip: string) => ip?.startsWith('45.175.50.');
+
+    const shouldFlip = (item: any) => !isLocalIP(item.src_addr) && isLocalIP(item.dst_addr);
+
     const getService = (port: number) => {
-      const services: Record<number, string> = {
-        80: 'HTTP', 443: 'HTTPS', 53: 'DNS',
-        22: 'SSH', 25: 'SMTP', 110: 'POP3',
-        143: 'IMAP', 3389: 'RDP', 8080: 'HTTP',
-        123: 'NTP', 179: 'BGP', 161: 'SNMP',
-        3306: 'MySQL', 5432: 'PostgreSQL',
-        27000: 'Steam', 19522: 'UDP Game',
-        1194: 'VPN', 500: 'IPSec',
-        4500: 'IPSec-NAT', 1723: 'PPTP',
+      const s: Record<number, string> = {
+        80:'HTTP', 443:'HTTPS', 53:'DNS',
+        22:'SSH', 25:'SMTP', 110:'POP3',
+        143:'IMAP', 3389:'RDP', 8080:'HTTP-Alt',
+        123:'NTP', 179:'BGP', 161:'SNMP',
+        3306:'MySQL', 5432:'PG', 27000:'Steam',
+        1194:'VPN', 500:'IPSec', 1723:'PPTP',
+        8443:'HTTPS-Alt', 465:'SMTP-SSL',
+        993:'IMAP-SSL', 995:'POP3-SSL',
+        21:'FTP', 23:'Telnet', 3478:'STUN',
+        5060:'SIP', 5061:'SIP-TLS',
+        19522:'UDP-Game', 25461:'Game',
       };
-      return services[port] || String(port);
+      return s[port] || String(port);
     };
 
     const getOrg = (org: string) => {
       if (!org) return '—';
-      const clean = org.replace(/^AS\d+\s+/i, '');
-      return clean.length > 30
-        ? clean.substring(0, 30) + '...'
-        : clean;
+      return org.length > 35 ? org.substring(0, 35) + '...' : org;
+    };
+
+    const calcPPS = (packets: number) => {
+      if (!packets || packets === 0) return '—';
+      const pps = Math.round(packets / 1800);
+      return pps > 1000 ? (pps / 1000).toFixed(1) + 'k' : String(pps);
+    };
+
+    const fmtBytes = (b: number) => {
+      if (!b) return '—';
+      if (b > 1e12) return (b / 1e12).toFixed(1) + ' TB';
+      if (b > 1e9) return (b / 1e9).toFixed(1) + ' GB';
+      if (b > 1e6) return (b / 1e6).toFixed(0) + ' MB';
+      if (b > 1e3) return (b / 1e3).toFixed(0) + ' KB';
+      return b + ' B';
     };
 
     const portMap: Record<number, string> = {
@@ -211,19 +268,7 @@ export default function Dashboard() {
 
     const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
 
-    const fmtBytes = (b: number) =>
-      b > 1e9 ? (b / 1e9).toFixed(1) + ' GB' :
-      b > 1e6 ? (b / 1e6).toFixed(0) + ' MB' :
-      b > 1e3 ? (b / 1e3).toFixed(0) + ' KB' :
-      b + ' B';
-
-    const fmtPPS = (p: number) => {
-      if (!p || p === 0) return '—';
-      return p > 1000
-        ? (p/1000).toFixed(1) + 'k'
-        : String(p);
-    };
-
+    const ifaceColors = ['#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
    const relevantInterfaces = (interfaces?.interfaces || [])
      .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
      .filter((i: any) => {
@@ -234,11 +279,12 @@ export default function Dashboard() {
      .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
      .slice(0, 6);
 
-   const fmtBps = (bps: number) =>
-     bps > 1e9 ? (bps / 1e9).toFixed(1) + ' Gbps' :
-     bps > 1e6 ? (bps / 1e6).toFixed(0) + ' Mbps' :
-     bps > 1e3 ? (bps / 1e3).toFixed(0) + ' Kbps' :
-     bps + ' bps';
+    const fmtBps = (bps: number) => {
+      if (!bps) return '0 bps';
+      if (bps > 1e9) return (bps / 1e9).toFixed(1) + ' Gbps';
+      if (bps > 1e6) return (bps / 1e6).toFixed(0) + ' Mbps';
+      return (bps / 1e3).toFixed(0) + ' Kbps';
+    };
 
   if (statsLoading) {
     return (
@@ -284,105 +330,106 @@ export default function Dashboard() {
       {/* Main Chart */}
       <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm transition-colors">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Network Traffic (30m)</h2>
+          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Network Traffic</h2>
           
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex bg-gray-100 dark:bg-bg-secondary p-1 rounded-lg">
-              <button
-                onClick={() => setTrafficSource('flow')}
-                className={clsx(
-                  "px-3 py-1 text-[10px] font-bold rounded-md transition-all uppercase tracking-wider",
-                  trafficSource === 'flow' ? "bg-white dark:bg-accent text-accent dark:text-white shadow-sm" : "text-text-secondary hover:text-text-primary"
-                )}>
-                Tráfego Flow
-              </button>
               <button
                 onClick={() => setTrafficSource('snmp')}
                 className={clsx(
                   "px-3 py-1 text-[10px] font-bold rounded-md transition-all uppercase tracking-wider",
                   trafficSource === 'snmp' ? "bg-white dark:bg-accent text-accent dark:text-white shadow-sm" : "text-text-secondary hover:text-text-primary"
                 )}>
-                Por Interface
+                Interface (SNMP)
+              </button>
+              <button
+                onClick={() => setTrafficSource('flow')}
+                className={clsx(
+                  "px-3 py-1 text-[10px] font-bold rounded-md transition-all uppercase tracking-wider",
+                  trafficSource === 'flow' ? "bg-white dark:bg-accent text-accent dark:text-white shadow-sm" : "text-text-secondary hover:text-text-primary"
+                )}>
+                Tráfego Geral (Flow)
               </button>
             </div>
 
             {trafficSource === 'snmp' && (
-              <select
-                value={selectedInterface || ''}
-                onChange={e => setSelectedInterface(e.target.value)}
-                className="bg-gray-100 dark:bg-bg-secondary border-none text-[10px] font-bold rounded-lg px-2 py-1.5 text-text-primary focus:ring-1 focus:ring-accent outline-none">
-                <option value="">Selecionar interface...</option>
+              <div className="flex flex-wrap gap-2 max-w-[400px]">
                 {(interfaces?.interfaces || [])
                   .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
+                  .filter((i: any) => {
+                    const n = (i.display_name || '').toLowerCase();
+                    return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
+                  })
+                  .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
+                  .slice(0, 8)
                   .map((i: any) => (
-                    <option key={i.if_index || i.display_name} value={i.display_name}>
+                    <button
+                      key={i.display_name}
+                      onClick={() => {
+                        setSelectedIfaces(prev => 
+                          prev.includes(i.display_name) 
+                            ? prev.filter(n => n !== i.display_name)
+                            : [...prev, i.display_name]
+                        );
+                      }}
+                      className={clsx(
+                        "px-2 py-1 text-[9px] font-bold rounded border transition-all",
+                        selectedIfaces.includes(i.display_name)
+                          ? "bg-accent/10 border-accent text-accent"
+                          : "bg-transparent border-gray-200 dark:border-gray-700 text-text-secondary hover:border-accent"
+                      )}
+                    >
                       {i.display_name}
-                    </option>
+                    </button>
                   ))
                 }
-              </select>
+                <span className="text-[10px] font-bold text-text-secondary self-center ml-1">
+                  {selectedIfaces.length} selecionadas
+                </span>
+              </div>
             )}
-
-            <div className="flex gap-4 ml-2">
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-accent"></div>
-                <span className="text-[10px] text-text-secondary font-bold uppercase tracking-wider">In (RX)</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <div className="w-3 h-3 rounded-full bg-success"></div>
-                <span className="text-[10px] text-text-secondary font-bold uppercase tracking-wider">Out (TX)</span>
-              </div>
-            </div>
           </div>
         </div>
-        <div className="h-[200px] w-full">
+
+        <div className="h-[250px] w-full">
           <ResponsiveContainer width="100%" height="100%">
-            <LineChart data={chartData}>
-              <CartesianGrid
-                strokeDasharray="3 3"
-                stroke="currentColor"
-                className="text-gray-200 dark:text-[#2a2d3e]" />
-              <XAxis
-                dataKey="time"
-                tick={{ fontSize: 11, fill: '#8892a4' }}
-                tickLine={false}
-                axisLine={false}
-                interval={4} />
-              <YAxis
-                tick={{ fontSize: 11, fill: '#8892a4' }}
-                tickLine={false}
-                axisLine={false}
-                tickFormatter={v => v + 'G'} />
-              <Tooltip
-                formatter={(v: any, n: string) => [
-                  v + ' Gbps',
-                  n === 'rx' ? 'Entrada' : 'Saída'
-                ]}
-                contentStyle={{
-                  backgroundColor: 'var(--bg-card)',
-                  border: '1px solid var(--border)',
-                  borderRadius: 6,
-                  fontSize: 12,
-                  color: 'var(--text-primary)'
-                }}
-                itemStyle={{ color: 'var(--text-primary)' }}
-                labelStyle={{ color: 'var(--text-secondary)' }}
-              />
-              <Line
-                type="monotone"
-                dataKey="rx"
-                stroke="#3b82f6"
-                strokeWidth={2}
-                dot={false}
-                name="rx" />
-              <Line
-                type="monotone"
-                dataKey="tx"
-                stroke="#22c55e"
-                strokeWidth={2}
-                dot={false}
-                name="tx" />
-            </LineChart>
+            {trafficSource === 'flow' ? (
+              <LineChart data={flowData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-gray-200 dark:text-[#2a2d3e]" />
+                <XAxis dataKey="time" tick={{ fontSize: 11, fill: '#8892a4' }} tickLine={false} axisLine={false} interval={4} />
+                <YAxis tick={{ fontSize: 11, fill: '#8892a4' }} tickLine={false} axisLine={false} tickFormatter={v => v + 'G'} />
+                <Tooltip
+                  formatter={(v: any, n: string) => [v + ' Gbps', n === 'rx' ? 'Entrada' : 'Saída']}
+                  contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12, color: 'var(--text-primary)' }}
+                  itemStyle={{ color: 'var(--text-primary)' }}
+                  labelStyle={{ color: 'var(--text-secondary)' }}
+                />
+                <Line type="monotone" dataKey="rx" stroke="#3b82f6" strokeWidth={2} dot={false} name="rx" />
+                <Line type="monotone" dataKey="tx" stroke="#22c55e" strokeWidth={2} dot={false} name="tx" />
+              </LineChart>
+            ) : (
+              <BarChart data={snmpData} layout="vertical" margin={{ left: 40, right: 20 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="currentColor" className="text-gray-200 dark:text-[#2a2d3e]" />
+                <XAxis type="number" tick={{ fontSize: 11, fill: '#8892a4' }} tickLine={false} axisLine={false} tickFormatter={v => v + 'G'} />
+                <YAxis dataKey="name" type="category" tick={{ fontSize: 10, fill: '#8892a4' }} tickLine={false} axisLine={false} width={80} />
+                <Tooltip
+                  formatter={(v: any, n: string) => [parseFloat(v).toFixed(2) + ' Gbps', n === 'rx' ? 'Entrada (RX)' : 'Saída (TX)']}
+                  contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12, color: 'var(--text-primary)' }}
+                  itemStyle={{ color: 'var(--text-primary)' }}
+                  labelStyle={{ color: 'var(--text-secondary)' }}
+                />
+                <Bar dataKey="rx" name="rx" radius={[0, 4, 4, 0]}>
+                  {snmpData.map((_entry: any, index: number) => (
+                    <Cell key={`cell-rx-${index}`} fill={ifaceColors[index % ifaceColors.length]} fillOpacity={0.8} />
+                  ))}
+                </Bar>
+                <Bar dataKey="tx" name="tx" radius={[0, 4, 4, 0]}>
+                  {snmpData.map((_entry: any, index: number) => (
+                    <Cell key={`cell-tx-${index}`} fill={ifaceColors[index % ifaceColors.length]} fillOpacity={0.4} />
+                  ))}
+                </Bar>
+              </BarChart>
+            )}
           </ResponsiveContainer>
         </div>
       </div>
@@ -524,42 +571,55 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody className="text-sm divide-y divide-border/50">
-              {(Array.isArray(connections) ? connections : (connections?.items || connections?.data || [])).map((item: any, i: number) => (
-                <tr key={i} className="hover:bg-accent/5 transition-colors group">
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{getFlag(item.src_country)}</span>
-                      <span className="font-medium text-gray-900 dark:text-gray-100">{item.src_addr}</span>
-                      <span className="text-text-secondary text-xs">:{item.src_port}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="flex items-center gap-2">
-                      <span className="text-lg">{getFlag(item.dst_country)}</span>
-                      <span className="text-gray-900 dark:text-gray-100">{item.dst_addr}</span>
-                      <span className="text-text-secondary text-xs">:{item.dst_port}</span>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{getService(item.dst_port)}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className="text-[11px] text-text-secondary" title={item.src_org}>{getOrg(item.src_org)}</span>
-                  </td>
-                  <td className="px-6 py-4">
-                    <span className={clsx(
-                      "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
-                      item.proto === 6 ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
-                      item.proto === 17 ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" :
-                      "bg-gray-100 text-gray-700 dark:bg-bg-secondary dark:text-text-secondary"
-                    )}>
-                      {protoName(item.proto)}
-                    </span>
-                  </td>
-                  <td className="px-6 py-4 text-right font-bold text-gray-900 dark:text-gray-100">{fmtBytes(item.bytes)}</td>
-                  <td className="px-6 py-4 text-right text-text-secondary">{fmtPPS(item.pps)}</td>
-                </tr>
-              ))}
+              {(Array.isArray(connections) ? connections : (connections?.items || connections?.data || [])).map((item: any, i: number) => {
+                const flipped = shouldFlip(item);
+                const src = flipped ? item.dst_addr : item.src_addr;
+                const srcPort = flipped ? item.dst_port : item.src_port;
+                const srcCountry = flipped ? item.dst_country : item.src_country;
+                
+                const dst = flipped ? item.src_addr : item.dst_addr;
+                const dstPort = flipped ? item.src_port : item.dst_port;
+                const dstCountry = flipped ? item.src_country : item.dst_country;
+                const dstOrg = flipped ? item.src_org : item.dst_org;
+
+                return (
+                  <tr key={i} className="hover:bg-accent/5 transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <FlagEmoji code={srcCountry} />
+                        <span className="font-medium text-gray-900 dark:text-gray-100">{src}</span>
+                        <span className="text-text-secondary text-xs">:{srcPort}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <FlagEmoji code={dstCountry} />
+                        <span className="text-gray-900 dark:text-gray-100">{dst}</span>
+                        <span className="text-text-secondary text-xs">:{dstPort}</span>
+                      </div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{getService(dstPort)}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className="text-[11px] text-text-secondary" title={dstOrg}>{getOrg(dstOrg)}</span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <span className={clsx(
+                        "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
+                        item.proto === 6 ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
+                        item.proto === 17 ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" :
+                        item.proto === 1 ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
+                        "bg-gray-100 text-gray-700 dark:bg-bg-secondary dark:text-text-secondary"
+                      )}>
+                        {protoName(item.proto)}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 text-right font-bold text-gray-900 dark:text-gray-100">{fmtBytes(item.bytes)}</td>
+                    <td className="px-6 py-4 text-right text-text-secondary">{calcPPS(item.packets)}</td>
+                  </tr>
+                );
+              })}
               {(!connections || connections.length === 0) && (
                 <tr>
                   <td colSpan={6} className="px-6 py-8 text-center text-text-secondary italic">
@@ -611,13 +671,4 @@ function StatCard({ title, value, unit, icon, trend, tooltip }: any) {
       )}
     </div>
   );
-}
-
-function getFlagEmoji(countryCode: string) {
-  if (!countryCode) return '🌐';
-  const codePoints = countryCode
-    .toUpperCase()
-    .split('')
-    .map(char => 127397 + char.charCodeAt(0));
-  return String.fromCodePoint(...codePoints);
 }
