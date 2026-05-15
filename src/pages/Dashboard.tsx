@@ -36,24 +36,27 @@ export default function Dashboard() {
      queryKey: ['protocols'],
      queryFn: async () => {
        const r = await api.get('/api/flows/protocols?minutes=30');
+       console.log('protocols raw:', r.data);
        return r.data;
      },
      refetchInterval: 30000,
    });
- 
+
    const { data: countries } = useQuery({
      queryKey: ['countries'],
      queryFn: async () => {
        const r = await api.get('/api/flows/countries?minutes=30');
+       console.log('countries raw:', r.data);
        return r.data;
      },
      refetchInterval: 30000,
    });
- 
+
    const { data: ports } = useQuery({
      queryKey: ['ports'],
      queryFn: async () => {
        const r = await api.get('/api/flows/ports?minutes=30');
+       console.log('ports raw:', r.data);
        return r.data;
      },
      refetchInterval: 30000,
@@ -72,10 +75,16 @@ export default function Dashboard() {
      queryKey: ['connections'],
      queryFn: async () => {
        const r = await api.get('/api/flows/connections?limit=10');
+       console.log('connections raw:', r.data);
        return r.data;
      },
      refetchInterval: 30000,
    });
+
+   console.log('protocols:', protocols);
+   console.log('countries:', countries);
+   console.log('ports:', ports);
+   console.log('connections:', connections);
 
    const chartData = (timeline || []).map((d: any) => ({
      time: d.time ? d.time.substring(11, 16) : '',
@@ -88,16 +97,17 @@ export default function Dashboard() {
      47: 'GRE', 50: 'ESP', 89: 'OSPF'
    };
 
-   const totalBytes = (protocols?.items || []).reduce((a: number, b: any) => a + b.bytes, 0);
+    const protoItems = protocols?.items || protocols?.data || (Array.isArray(protocols) ? protocols : []);
+    const totalBytes = protoItems.reduce((a: number, b: any) => a + b.bytes, 0);
 
-   const protoData = (protocols?.items || [])
-     .slice(0, 5)
-     .map((p: any) => ({
-       name: protoMap[p.proto] || 'Proto ' + p.proto,
-       bytes: p.bytes,
-       flows: p.flows,
-       pct: totalBytes > 0 ? ((p.bytes / totalBytes) * 100).toFixed(1) : 0
-     }));
+    const protoData = protoItems
+      .slice(0, 5)
+      .map((p: any) => ({
+        name: protoMap[p.proto] || 'Proto ' + p.proto,
+        bytes: p.bytes,
+        flows: p.flows,
+        pct: totalBytes > 0 ? ((p.bytes / totalBytes) * 100).toFixed(1) : 0
+      }));
 
    const flagMap: Record<string, string> = {
      BR: '🇧🇷', US: '🇺🇸', CN: '🇨🇳', RU: '🇷🇺', DE: '🇩🇪', FR: '🇫🇷',
@@ -106,16 +116,17 @@ export default function Dashboard() {
      UA: '🇺🇦', TR: '🇹🇷'
    };
 
-   const totalCountryBytes = (countries?.items || []).reduce((a: number, b: any) => a + b.bytes, 0);
+    const countryItems = countries?.items || countries?.data || (Array.isArray(countries) ? countries : []);
+    const totalCountryBytes = countryItems.reduce((a: number, b: any) => a + b.bytes, 0);
 
-   const countryData = (countries?.items || [])
-     .slice(0, 8)
-     .map((c: any) => ({
-       flag: flagMap[c.country] || '🌐',
-       code: c.country,
-       bytes: c.bytes,
-       pct: totalCountryBytes > 0 ? ((c.bytes / totalCountryBytes) * 100).toFixed(1) : 0
-     }));
+    const countryData = countryItems
+      .slice(0, 8)
+      .map((c: any) => ({
+        flag: flagMap[c.country] || '🌐',
+        code: c.country,
+        bytes: c.bytes,
+        pct: totalCountryBytes > 0 ? ((c.bytes / totalCountryBytes) * 100).toFixed(1) : 0
+      }));
 
    const portMap: Record<number, string> = {
      443: 'HTTPS', 80: 'HTTP', 53: 'DNS', 22: 'SSH', 25: 'SMTP', 110: 'POP3',
@@ -123,16 +134,17 @@ export default function Dashboard() {
      1194: 'VPN', 3306: 'MySQL', 5432: 'PG'
    };
 
-   const totalPortBytes = (ports?.items || []).reduce((a: number, b: any) => a + b.bytes, 0);
+    const portItems = ports?.items || ports?.data || (Array.isArray(ports) ? ports : []);
+    const totalPortBytes = portItems.reduce((a: number, b: any) => a + b.bytes, 0);
 
-   const portData = (ports?.items || [])
-     .slice(0, 6)
-     .map((p: any) => ({
-       port: p.port,
-       name: portMap[p.port] || String(p.port),
-       bytes: p.bytes,
-       pct: totalPortBytes > 0 ? ((p.bytes / totalPortBytes) * 100).toFixed(1) : 0
-     }));
+    const portData = portItems
+      .slice(0, 6)
+      .map((p: any) => ({
+        port: p.port,
+        name: portMap[p.port] || String(p.port),
+        bytes: p.bytes,
+        pct: totalPortBytes > 0 ? ((p.bytes / totalPortBytes) * 100).toFixed(1) : 0
+      }));
 
    const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
 
@@ -417,7 +429,7 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody className="text-sm divide-y divide-border/50">
-              {(connections || []).map((item: any, i: number) => (
+              {(Array.isArray(connections) ? connections : (connections?.items || connections?.data || [])).map((item: any, i: number) => (
                 <tr key={i} className="hover:bg-accent/5 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center gap-2">
