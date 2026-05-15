@@ -72,8 +72,6 @@ function AuthWrapper() {
     }
   }, [loading, user, isLoginPage, navigate]);
 
-  console.log("AuthWrapper render:", { user, loading, path: location.pathname });
-
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#0f1117] text-gray-100">
