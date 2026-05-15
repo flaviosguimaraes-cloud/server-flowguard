@@ -201,9 +201,6 @@ export default function Dashboard() {
       UZ:'🇺🇿', MN:'🇲🇳', KG:'🇰🇬',
     };
 
-    const getFlag = (code: string) => flagMap[code] || '🌐';
-
-    const countryItems = countries?.items || countries?.data || (Array.isArray(countries) ? countries : []);
     const totalCountryBytes = countryItems.reduce((a: number, b: any) => a + b.bytes, 0);
 
     const countryData = countryItems
@@ -215,26 +212,45 @@ export default function Dashboard() {
         pct: totalCountryBytes > 0 ? ((c.bytes / totalCountryBytes) * 100).toFixed(1) : 0
       }));
 
+    const isLocalIP = (ip: string) => ip?.startsWith('45.175.50.');
+
+    const shouldFlip = (item: any) => !isLocalIP(item.src_addr) && isLocalIP(item.dst_addr);
+
     const getService = (port: number) => {
-      const services: Record<number, string> = {
-        80: 'HTTP', 443: 'HTTPS', 53: 'DNS',
-        22: 'SSH', 25: 'SMTP', 110: 'POP3',
-        143: 'IMAP', 3389: 'RDP', 8080: 'HTTP',
-        123: 'NTP', 179: 'BGP', 161: 'SNMP',
-        3306: 'MySQL', 5432: 'PostgreSQL',
-        27000: 'Steam', 19522: 'UDP Game',
-        1194: 'VPN', 500: 'IPSec',
-        4500: 'IPSec-NAT', 1723: 'PPTP',
+      const s: Record<number, string> = {
+        80:'HTTP', 443:'HTTPS', 53:'DNS',
+        22:'SSH', 25:'SMTP', 110:'POP3',
+        143:'IMAP', 3389:'RDP', 8080:'HTTP-Alt',
+        123:'NTP', 179:'BGP', 161:'SNMP',
+        3306:'MySQL', 5432:'PG', 27000:'Steam',
+        1194:'VPN', 500:'IPSec', 1723:'PPTP',
+        8443:'HTTPS-Alt', 465:'SMTP-SSL',
+        993:'IMAP-SSL', 995:'POP3-SSL',
+        21:'FTP', 23:'Telnet', 3478:'STUN',
+        5060:'SIP', 5061:'SIP-TLS',
+        19522:'UDP-Game', 25461:'Game',
       };
-      return services[port] || String(port);
+      return s[port] || String(port);
     };
 
     const getOrg = (org: string) => {
       if (!org) return '—';
-      const clean = org.replace(/^AS\d+\s+/i, '');
-      return clean.length > 30
-        ? clean.substring(0, 30) + '...'
-        : clean;
+      return org.length > 35 ? org.substring(0, 35) + '...' : org;
+    };
+
+    const calcPPS = (packets: number) => {
+      if (!packets || packets === 0) return '—';
+      const pps = Math.round(packets / 1800);
+      return pps > 1000 ? (pps / 1000).toFixed(1) + 'k' : String(pps);
+    };
+
+    const fmtBytes = (b: number) => {
+      if (!b) return '—';
+      if (b > 1e12) return (b / 1e12).toFixed(1) + ' TB';
+      if (b > 1e9) return (b / 1e9).toFixed(1) + ' GB';
+      if (b > 1e6) return (b / 1e6).toFixed(0) + ' MB';
+      if (b > 1e3) return (b / 1e3).toFixed(0) + ' KB';
+      return b + ' B';
     };
 
     const portMap: Record<number, string> = {
@@ -263,13 +279,6 @@ export default function Dashboard() {
       b > 1e3 ? (b / 1e3).toFixed(0) + ' KB' :
       b + ' B';
 
-    const fmtPPS = (p: number) => {
-      if (!p || p === 0) return '—';
-      return p > 1000
-        ? (p/1000).toFixed(1) + 'k'
-        : String(p);
-    };
-
    const relevantInterfaces = (interfaces?.interfaces || [])
      .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
      .filter((i: any) => {
@@ -280,11 +289,12 @@ export default function Dashboard() {
      .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
      .slice(0, 6);
 
-   const fmtBps = (bps: number) =>
-     bps > 1e9 ? (bps / 1e9).toFixed(1) + ' Gbps' :
-     bps > 1e6 ? (bps / 1e6).toFixed(0) + ' Mbps' :
-     bps > 1e3 ? (bps / 1e3).toFixed(0) + ' Kbps' :
-     bps + ' bps';
+    const fmtBps = (bps: number) => {
+      if (!bps) return '0 bps';
+      if (bps > 1e9) return (bps / 1e9).toFixed(1) + ' Gbps';
+      if (bps > 1e6) return (bps / 1e6).toFixed(0) + ' Mbps';
+      return (bps / 1e3).toFixed(0) + ' Kbps';
+    };
 
   if (statsLoading) {
     return (
