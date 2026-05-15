@@ -36,6 +36,17 @@ import { useNavigate } from '@tanstack/react-router';
       localStorage.setItem('username', data.username);
       localStorage.setItem('role', data.role);
 
+      localStorage.setItem('access_token', data.access_token);
+      localStorage.setItem('refresh_token', data.refresh_token);
+      localStorage.setItem('username', data.username);
+      localStorage.setItem('role', data.role);
+
+      if (data.must_change_password) {
+        navigate({ to: '/change-password' });
+      } else {
+        navigate({ to: '/dashboard' });
+      }
+      // Also call login to update context state
       login(data);
     } catch (error: any) {
       const msg = error.response?.data?.detail || 'Usuário ou senha incorretos';
