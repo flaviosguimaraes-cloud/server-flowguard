@@ -224,59 +224,70 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Top Ports */}
-        <div className="bg-bg-card p-6 rounded-xl border border-border shadow-sm">
-          <h2 className="text-lg font-bold mb-6 text-text-primary">{t('port')}s</h2>
-          <div className="h-[240px] w-full">
-            <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={ports?.slice(0, 8) || []} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-                <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={10} tickLine={false} axisLine={false} />
-                <YAxis stroke="var(--text-secondary)" fontSize={10} tickLine={false} axisLine={false} />
-                <Tooltip 
-                  contentStyle={{ 
-                    backgroundColor: 'var(--bg-card)', 
-                    borderColor: 'var(--border)',
-                    borderRadius: '8px',
-                    fontSize: '11px'
-                  }} 
-                />
-                <Bar dataKey="value" radius={[4, 4, 0, 0]}>
-                  {ports?.slice(0, 8).map((entry: any, index: number) => (
-                    <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'var(--accent)' : 'var(--accent-bg)'} />
-                  ))}
-                </Bar>
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-
-        {/* SNMP Interfaces */}
-        <div className="bg-bg-card p-6 rounded-xl border border-border shadow-sm">
-          <h2 className="text-lg font-bold mb-6 text-text-primary">{t('top_interfaces')}</h2>
-          <div className="space-y-5">
-            {interfaces?.slice(0, 4).map((iface: any) => (
-              <div key={iface.name} className="space-y-2">
-                <div className="flex justify-between items-end">
-                  <div>
-                    <p className="text-xs font-bold text-accent uppercase tracking-tighter">{iface.name}</p>
-                    <p className="text-lg font-bold text-text-primary leading-none">{iface.rx_mbps} <span className="text-xs font-normal text-text-secondary">Mbps</span></p>
-                  </div>
-                  <div className="text-right">
-                    <p className="text-[10px] text-text-secondary font-bold uppercase">Utilization</p>
-                    <p className="text-xs font-bold text-success">{Math.round((iface.rx_mbps / (iface.speed || 10000)) * 100)}%</p>
-                  </div>
-                </div>
-                <div className="w-full bg-bg-secondary rounded-full h-2 overflow-hidden flex">
-                  <div 
-                    className="bg-accent h-full transition-all duration-1000" 
-                    style={{ width: `${Math.min(100, (iface.rx_mbps / (iface.speed || 10000)) * 100)}%` }}
-                  />
-                </div>
-              </div>
-            ))}
-          </div>
-        </div>
+         {/* Top Ports */}
+         <div className="bg-bg-card p-6 rounded-xl border border-border shadow-sm">
+           <h2 className="text-lg font-bold mb-6 text-text-primary">{t('port')}s</h2>
+           <div className="h-[240px] w-full">
+             <ResponsiveContainer width="100%" height="100%">
+               <BarChart data={ports?.items?.slice(0, 8).map((p: any) => ({
+                 name: p.port === 443 ? 'HTTPS' : p.port === 53 ? 'DNS' : p.port === 80 ? 'HTTP' : p.port === 22 ? 'SSH' : p.port === 25 ? 'SMTP' : p.port.toString(),
+                 value: p.bytes / 1e6 // MB
+               })) || []} margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
+                 <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+                 <XAxis dataKey="name" stroke="var(--text-secondary)" fontSize={10} tickLine={false} axisLine={false} />
+                 <YAxis stroke="var(--text-secondary)" fontSize={10} tickLine={false} axisLine={false} />
+                 <Tooltip 
+                   contentStyle={{ 
+                     backgroundColor: 'var(--bg-card)', 
+                     borderColor: 'var(--border)',
+                     borderRadius: '8px',
+                     fontSize: '11px'
+                   }} 
+                 />
+                 <Bar dataKey="value" radius={[4, 4, 0, 0]}>
+                   {ports?.items?.slice(0, 8).map((entry: any, index: number) => (
+                     <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'var(--accent)' : 'var(--accent-bg)'} />
+                   ))}
+                 </Bar>
+               </BarChart>
+             </ResponsiveContainer>
+           </div>
+         </div>
+ 
+         {/* SNMP Interfaces */}
+         <div className="bg-bg-card p-6 rounded-xl border border-border shadow-sm">
+           <h2 className="text-lg font-bold mb-6 text-text-primary">{t('top_interfaces')}</h2>
+           <div className="space-y-5">
+             {interfaces?.interfaces?.slice(0, 4).map((iface: any) => {
+               const formatBps = (bps: number) => {
+                 if (bps > 1e9) return (bps / 1e9).toFixed(1) + " Gbps";
+                 if (bps > 1e6) return (bps / 1e6).toFixed(0) + " Mbps";
+                 return bps + " bps";
+               };
+               const utilization = (iface.in_bps / iface.if_speed) * 100;
+               return (
+                 <div key={iface.display_name} className="space-y-2">
+                   <div className="flex justify-between items-end">
+                     <div>
+                       <p className="text-xs font-bold text-accent uppercase tracking-tighter">{iface.display_name}</p>
+                       <p className="text-lg font-bold text-text-primary leading-none">{formatBps(iface.in_bps)}</p>
+                     </div>
+                     <div className="text-right">
+                       <p className="text-[10px] text-text-secondary font-bold uppercase">Utilization</p>
+                       <p className="text-xs font-bold text-success">{utilization.toFixed(1)}%</p>
+                     </div>
+                   </div>
+                   <div className="w-full bg-bg-secondary rounded-full h-2 overflow-hidden flex">
+                     <div 
+                       className="bg-accent h-full transition-all duration-1000" 
+                       style={{ width: `${Math.min(100, utilization)}%` }}
+                     />
+                   </div>
+                 </div>
+               );
+             })}
+           </div>
+         </div>
       </div>
 
       {/* Active Connections Table */}
