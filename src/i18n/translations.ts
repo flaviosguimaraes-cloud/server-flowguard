@@ -48,6 +48,12 @@
      white_black_list: 'Whitelist / Blacklist',
      flowspec_rules: 'Regras FlowSpec',
      bgp_routes: 'Rotas BGP',
+      under_construction: 'Em construção',
+      active: 'Ativo',
+      bgp: 'BGP',
+      whitelist: 'Whitelist',
+      blacklist: 'Blacklist',
+      flowspec_short: 'FlowSpec',
      cdns: 'Ranking de CDNs',
    },
    'en': {
@@ -97,6 +103,12 @@
      white_black_list: 'Whitelist / Blacklist',
      flowspec_rules: 'FlowSpec Rules',
      bgp_routes: 'BGP Routes',
+      under_construction: 'Under construction',
+      active: 'Active',
+      bgp: 'BGP',
+      whitelist: 'Whitelist',
+      blacklist: 'Blacklist',
+      flowspec_short: 'FlowSpec',
      cdns: 'CDN Ranking',
    },
    'es': {
@@ -146,6 +158,12 @@
      white_black_list: 'Whitelist / Blacklist',
      flowspec_rules: 'Reglas FlowSpec',
      bgp_routes: 'Rutas BGP',
+      under_construction: 'En construcción',
+      active: 'Activo',
+      bgp: 'BGP',
+      whitelist: 'Lista blanca',
+      blacklist: 'Lista negra',
+      flowspec_short: 'FlowSpec',
      cdns: 'Ranking de CDNs',
    }
  };
