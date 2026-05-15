@@ -1,5 +1,5 @@
- import { useState, useMemo } from 'react';
- import { useQuery } from '@tanstack/react-query';
+import { useState, useMemo, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
  import api from '../services/api';
  import { useTranslation } from '../hooks/useTranslation';
  import { 
@@ -35,6 +35,7 @@
  export default function Analysis() {
    const { t } = useTranslation();
    const isAdmin = localStorage.getItem('role') === 'admin';
+  const queryClient = useQueryClient();
    
    const [search, setSearch] = useState('');
    const [proto, setProto] = useState('Todos');
@@ -120,6 +121,11 @@
      setIsMitigationOpen(true);
    };
  
+  const handleMitigationSuccess = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['mitigation-active'] });
+    queryClient.invalidateQueries({ queryKey: ['detection-stats'] });
+  }, [queryClient]);
+
    return (
      <div className="space-y-6 animate-in fade-in duration-500">
        <div className="flex justify-between items-center">
@@ -296,6 +302,7 @@
          targetIP={mitigationData.ip}
          protocol={mitigationData.proto}
          port={mitigationData.port}
+        onSuccess={handleMitigationSuccess}
        />
      </div>
    );
