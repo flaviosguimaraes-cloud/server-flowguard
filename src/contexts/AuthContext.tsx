@@ -1,5 +1,5 @@
  import React, { createContext, useContext, useState, useEffect } from 'react';
- import { useNavigate } from 'react-router-dom';
+ import { useNavigate } from '@tanstack/react-router';
  
  interface User {
    username: string;
@@ -19,7 +19,7 @@
  export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
    const [user, setUser] = useState<User | null>(null);
    const [loading, setLoading] = useState(true);
-   const navigate = useNavigate();
+   const navigate = useNavigate({ from: '/' });
  
    useEffect(() => {
      const username = localStorage.getItem('username');
