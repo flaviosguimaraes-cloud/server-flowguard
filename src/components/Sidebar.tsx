@@ -1,6 +1,6 @@
  import { useState } from 'react';
  import { LayoutDashboard, ShieldAlert, Activity, Server, Settings, Users, LogOut, Menu, X } from 'lucide-react';
- import { Link, useLocation } from 'react-router-dom';
+ import { Link, useLocation } from '@tanstack/react-router';
  import { useTranslation } from '../hooks/useTranslation';
  import { useAuth } from '../contexts/AuthContext';
  import { clsx } from 'clsx';
