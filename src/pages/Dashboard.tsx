@@ -91,33 +91,30 @@ export default function Dashboard() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       {/* Top Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <StatCard 
-          title={t('traffic_in')} 
-          value={stats?.rx_gbps || '0'} 
-          unit="Gbps" 
-          icon={<ArrowDown className="text-accent" size={20} />} 
-          trend="+2.5%" 
-        />
-        <StatCard 
-          title={t('traffic_out')} 
-          value={stats?.tx_gbps || '0'} 
-          unit="Gbps" 
-          icon={<ArrowUp className="text-success" size={20} />} 
-          trend="-1.2%" 
-        />
-        <StatCard 
-          title={t('active_flows')} 
-          value={stats?.active_flows || '0'} 
-          icon={<Activity className="text-warning" size={20} />} 
-        />
-        <StatCard 
-          title={t('active_mitigations')} 
-          value={stats?.active_mitigations || '0'} 
-          icon={<Shield className="text-danger" size={20} />} 
-          trend="Active"
-        />
-      </div>
+       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+         <StatCard 
+           title={t('traffic_in')} 
+           value={(detection?.incoming_mbps / 1000).toFixed(1)} 
+           unit="Gbps" 
+           icon={<ArrowDown className="text-accent" size={20} />} 
+         />
+         <StatCard 
+           title={t('traffic_out')} 
+           value={(detection?.outgoing_mbps / 1000).toFixed(1)} 
+           unit="Gbps" 
+           icon={<ArrowUp className="text-success" size={20} />} 
+         />
+         <StatCard 
+           title={t('active_flows')} 
+           value={detection?.incoming_pps > 1000 ? (detection.incoming_pps / 1000).toFixed(1) + 'k' : detection?.incoming_pps || '0'} 
+           icon={<Activity className="text-warning" size={20} />} 
+         />
+         <StatCard 
+           title={t('active_mitigations')} 
+           value={detection?.active_mitigations || '0'} 
+           icon={<Shield className="text-danger" size={20} />} 
+         />
+       </div>
 
       {/* Main Chart */}
       <div className="bg-bg-card p-6 rounded-xl border border-border shadow-sm transition-colors">
@@ -134,63 +131,41 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-        <div className="h-[300px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            <AreaChart data={timeline || []} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="colorRx" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--accent)" stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor="var(--accent)" stopOpacity={0}/>
-                </linearGradient>
-                <linearGradient id="colorTx" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="var(--success)" stopOpacity={0.1}/>
-                  <stop offset="95%" stopColor="var(--success)" stopOpacity={0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
-              <XAxis 
-                dataKey="time" 
-                stroke="var(--text-secondary)" 
-                fontSize={11} 
-                tickLine={false}
-                axisLine={false}
-              />
-              <YAxis 
-                stroke="var(--text-secondary)" 
-                fontSize={11} 
-                tickLine={false}
-                axisLine={false}
-              />
-              <Tooltip 
-                contentStyle={{ 
-                  backgroundColor: 'var(--bg-card)', 
-                  borderColor: 'var(--border)',
-                  borderRadius: '8px',
-                  fontSize: '12px',
-                  color: 'var(--text-primary)'
-                }} 
-              />
-              <Area 
-                type="monotone" 
-                dataKey="rx" 
-                stroke="var(--accent)" 
-                strokeWidth={2}
-                fillOpacity={1} 
-                fill="url(#colorRx)" 
-                name="RX (Gbps)" 
-              />
-              <Area 
-                type="monotone" 
-                dataKey="tx" 
-                stroke="var(--success)" 
-                strokeWidth={2}
-                fillOpacity={1} 
-                fill="url(#colorTx)" 
-                name="TX (Gbps)" 
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
+         <div className="h-[300px] w-full">
+           <ResponsiveContainer width="100%" height="100%">
+             <LineChart data={timeline?.map((d: any) => ({
+               time: d.time.substring(11, 16),
+               rx: (d.rx_bytes / 1e9).toFixed(2),
+               tx: (d.tx_bytes / 1e9).toFixed(2),
+             }))} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+               <CartesianGrid strokeDasharray="3 3" stroke="var(--border)" vertical={false} />
+               <XAxis 
+                 dataKey="time" 
+                 stroke="var(--text-secondary)" 
+                 fontSize={11} 
+                 tickLine={false}
+                 axisLine={false}
+               />
+               <YAxis 
+                 stroke="var(--text-secondary)" 
+                 fontSize={11} 
+                 tickLine={false}
+                 axisLine={false}
+               />
+               <Tooltip 
+                 contentStyle={{ 
+                   backgroundColor: 'var(--bg-card)', 
+                   borderColor: 'var(--border)',
+                   borderRadius: '8px',
+                   fontSize: '12px',
+                   color: 'var(--text-primary)'
+                 }} 
+               />
+               <Line dataKey="rx" stroke="#3b82f6" dot={false} strokeWidth={2} name="RX (Gbps)" />
+               <Line dataKey="tx" stroke="#22c55e" dot={false} strokeWidth={2} name="TX (Gbps)" />
+             </LineChart>
+           </ResponsiveContainer>
+         </div>
       </div>
 
       {/* Secondary Grids */}
