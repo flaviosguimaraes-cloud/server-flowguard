@@ -2,8 +2,9 @@
  import { useNavigate } from '@tanstack/react-router';
  
  interface User {
+   token: string;
    username: string;
-   role: 'admin' | 'reader';
+   role: string;
  }
  
  interface AuthContextType {
@@ -17,27 +18,29 @@
  const AuthContext = createContext<AuthContextType | undefined>(undefined);
  
  export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-   const [user, setUser] = useState<User | null>(null);
-    const [loading, setLoading] = useState(false);
-    const navigate = useNavigate();
- 
-   useEffect(() => {
-     const username = localStorage.getItem('username');
-     const role = localStorage.getItem('role') as 'admin' | 'reader';
+   const [user, setUser] = useState<User | null>(() => {
      const token = localStorage.getItem('access_token');
+     const username = localStorage.getItem('username');
+     const role = localStorage.getItem('role');
  
      if (token && username && role) {
-       setUser({ username, role });
+       return { token, username, role };
      }
-     setLoading(false);
-   }, []);
+     return null;
+   });
+   const [loading, setLoading] = useState(false);
+   const navigate = useNavigate();
  
    const login = (data: any) => {
      localStorage.setItem('access_token', data.access_token);
      localStorage.setItem('refresh_token', data.refresh_token);
      localStorage.setItem('username', data.username);
      localStorage.setItem('role', data.role);
-     setUser({ username: data.username, role: data.role });
+     setUser({ 
+       token: data.access_token, 
+       username: data.username, 
+       role: data.role 
+     });
  
      if (data.must_change_password) {
        navigate({ to: '/change-password' });
