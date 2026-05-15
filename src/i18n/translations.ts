@@ -54,6 +54,11 @@
       whitelist: 'Whitelist',
       blacklist: 'Blacklist',
       flowspec_short: 'FlowSpec',
+      protocols: 'Protocolos',
+      countries: 'Países',
+      asns: 'ASNs',
+      active_connections: 'Conexões Ativas',
+      top_interfaces: 'Top Interfaces SNMP',
      cdns: 'Ranking de CDNs',
    },
    'en': {
@@ -109,6 +114,11 @@
       whitelist: 'Whitelist',
       blacklist: 'Blacklist',
       flowspec_short: 'FlowSpec',
+      protocols: 'Protocols',
+      countries: 'Countries',
+      asns: 'ASNs',
+      active_connections: 'Active Connections',
+      top_interfaces: 'Top SNMP Interfaces',
      cdns: 'CDN Ranking',
    },
    'es': {
@@ -164,6 +174,11 @@
       whitelist: 'Lista blanca',
       blacklist: 'Lista negra',
       flowspec_short: 'FlowSpec',
+      protocols: 'Protocolos',
+      countries: 'Países',
+      asns: 'ASNs',
+      active_connections: 'Conexiones Activas',
+      top_interfaces: 'Top Interfaces SNMP',
      cdns: 'Ranking de CDNs',
    }
  };
