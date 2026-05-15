@@ -214,7 +214,7 @@
              <tbody className="text-sm divide-y divide-border/50">
                {isLoading ? (
                  Array.from({ length: 5 }).map((_, i) => (
-                   <tr key={i}><td colSpan={8} className="px-6 py-4"><Skeleton height={20} /></td></tr>
+                   <tr key={i}><td colSpan={8} className="px-6 py-4"><div className="w-full h-8 bg-gray-100 dark:bg-[#2a2d3e] rounded animate-pulse" /></td></tr>
                  ))
                ) : connectionItems.length === 0 ? (
                  <tr>
