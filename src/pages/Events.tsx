@@ -1,5 +1,5 @@
- import { useState } from 'react';
- import { useQuery } from '@tanstack/react-query';
+import { useState, useCallback } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
  import api from '../services/api';
  import { useTranslation } from '../hooks/useTranslation';
  import { 
@@ -13,6 +13,7 @@
  export default function Events() {
    const { t } = useTranslation();
    const isAdmin = localStorage.getItem('role') === 'admin';
+  const queryClient = useQueryClient();
    const [isMitigationOpen, setIsMitigationOpen] = useState(false);
    const [targetIP, setTargetIP] = useState('');
  
@@ -43,10 +44,16 @@
      refetchInterval: 30000,
    });
  
-   const handleMitigate = (ip: string) => {
-     setTargetIP(ip);
-     setIsMitigationOpen(true);
-   };
+  const handleMitigate = useCallback((ip: string) => {
+    setTargetIP(ip);
+    setIsMitigationOpen(true);
+  }, []);
+
+  const handleMitigationSuccess = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['detection-stats-events'] });
+    queryClient.invalidateQueries({ queryKey: ['mitigation-active-events'] });
+    queryClient.invalidateQueries({ queryKey: ['audit-logs-mitigation'] });
+  }, [queryClient]);
  
    if (statsLoading) {
      return (
@@ -197,6 +204,7 @@
          isOpen={isMitigationOpen}
          onClose={() => setIsMitigationOpen(false)}
          targetIP={targetIP}
+        onSuccess={handleMitigationSuccess}
        />
      </div>
    );
