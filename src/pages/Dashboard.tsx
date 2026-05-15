@@ -267,7 +267,7 @@ export default function Dashboard() {
          <div className="bg-bg-card p-6 rounded-xl border border-border shadow-sm">
            <h2 className="text-lg font-bold mb-6 text-text-primary">{t('protocols')}</h2>
            <div className="space-y-2">
-             {protoData.map((p, i) => (
+             {protoData.map((p: any, i: number) => (
                <div key={i} style={{
                  display: 'flex', alignItems: 'center',
                  gap: 10, padding: '6px 0',
@@ -301,7 +301,7 @@ export default function Dashboard() {
          <div className="bg-bg-card p-6 rounded-xl border border-border shadow-sm">
            <h2 className="text-lg font-bold mb-6 text-text-primary">{t('countries')}</h2>
            <div className="space-y-1">
-             {countryData.map((c, i) => (
+             {countryData.map((c: any, i: number) => (
                <div key={i} style={{
                  display: 'flex', alignItems: 'center',
                  gap: 8, padding: '5px 0',
