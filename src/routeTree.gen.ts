@@ -9,11 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as SystemRouteImport } from './routes/system'
+import { Route as SettingsRouteImport } from './routes/settings'
+import { Route as NotificationsRouteImport } from './routes/notifications'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as ChangePasswordRouteImport } from './routes/change-password'
 import { Route as CdnsRouteImport } from './routes/cdns'
+import { Route as AuditRouteImport } from './routes/audit'
 import { Route as AnalysisRouteImport } from './routes/analysis'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OperationIndexRouteImport } from './routes/operation/index'
@@ -27,6 +31,21 @@ import { Route as MitigationBlacklistRouteImport } from './routes/mitigation/bla
 import { Route as MitigationBgpRouteImport } from './routes/mitigation/bgp'
 import { Route as MitigationActiveRouteImport } from './routes/mitigation/active'
 
+const SystemRoute = SystemRouteImport.update({
+  id: '/system',
+  path: '/system',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SettingsRoute = SettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const NotificationsRoute = NotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
@@ -50,6 +69,11 @@ const ChangePasswordRoute = ChangePasswordRouteImport.update({
 const CdnsRoute = CdnsRouteImport.update({
   id: '/cdns',
   path: '/cdns',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuditRoute = AuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const AnalysisRoute = AnalysisRouteImport.update({
@@ -116,11 +140,15 @@ const MitigationActiveRoute = MitigationActiveRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/analysis': typeof AnalysisRoute
+  '/audit': typeof AuditRoute
   '/cdns': typeof CdnsRoute
   '/change-password': typeof ChangePasswordRoute
   '/dashboard': typeof DashboardRoute
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
+  '/settings': typeof SettingsRoute
+  '/system': typeof SystemRoute
   '/mitigation/active': typeof MitigationActiveRoute
   '/mitigation/bgp': typeof MitigationBgpRoute
   '/mitigation/blacklist': typeof MitigationBlacklistRoute
@@ -135,11 +163,15 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/analysis': typeof AnalysisRoute
+  '/audit': typeof AuditRoute
   '/cdns': typeof CdnsRoute
   '/change-password': typeof ChangePasswordRoute
   '/dashboard': typeof DashboardRoute
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
+  '/settings': typeof SettingsRoute
+  '/system': typeof SystemRoute
   '/mitigation/active': typeof MitigationActiveRoute
   '/mitigation/bgp': typeof MitigationBgpRoute
   '/mitigation/blacklist': typeof MitigationBlacklistRoute
@@ -155,11 +187,15 @@ export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/analysis': typeof AnalysisRoute
+  '/audit': typeof AuditRoute
   '/cdns': typeof CdnsRoute
   '/change-password': typeof ChangePasswordRoute
   '/dashboard': typeof DashboardRoute
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
+  '/notifications': typeof NotificationsRoute
+  '/settings': typeof SettingsRoute
+  '/system': typeof SystemRoute
   '/mitigation/active': typeof MitigationActiveRoute
   '/mitigation/bgp': typeof MitigationBgpRoute
   '/mitigation/blacklist': typeof MitigationBlacklistRoute
@@ -176,11 +212,15 @@ export interface FileRouteTypes {
   fullPaths:
     | '/'
     | '/analysis'
+    | '/audit'
     | '/cdns'
     | '/change-password'
     | '/dashboard'
     | '/events'
     | '/login'
+    | '/notifications'
+    | '/settings'
+    | '/system'
     | '/mitigation/active'
     | '/mitigation/bgp'
     | '/mitigation/blacklist'
@@ -195,11 +235,15 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/analysis'
+    | '/audit'
     | '/cdns'
     | '/change-password'
     | '/dashboard'
     | '/events'
     | '/login'
+    | '/notifications'
+    | '/settings'
+    | '/system'
     | '/mitigation/active'
     | '/mitigation/bgp'
     | '/mitigation/blacklist'
@@ -214,11 +258,15 @@ export interface FileRouteTypes {
     | '__root__'
     | '/'
     | '/analysis'
+    | '/audit'
     | '/cdns'
     | '/change-password'
     | '/dashboard'
     | '/events'
     | '/login'
+    | '/notifications'
+    | '/settings'
+    | '/system'
     | '/mitigation/active'
     | '/mitigation/bgp'
     | '/mitigation/blacklist'
@@ -234,11 +282,15 @@ export interface FileRouteTypes {
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AnalysisRoute: typeof AnalysisRoute
+  AuditRoute: typeof AuditRoute
   CdnsRoute: typeof CdnsRoute
   ChangePasswordRoute: typeof ChangePasswordRoute
   DashboardRoute: typeof DashboardRoute
   EventsRoute: typeof EventsRoute
   LoginRoute: typeof LoginRoute
+  NotificationsRoute: typeof NotificationsRoute
+  SettingsRoute: typeof SettingsRoute
+  SystemRoute: typeof SystemRoute
   MitigationActiveRoute: typeof MitigationActiveRoute
   MitigationBgpRoute: typeof MitigationBgpRoute
   MitigationBlacklistRoute: typeof MitigationBlacklistRoute
@@ -253,6 +305,27 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/system': {
+      id: '/system'
+      path: '/system'
+      fullPath: '/system'
+      preLoaderRoute: typeof SystemRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/settings': {
+      id: '/settings'
+      path: '/settings'
+      fullPath: '/settings'
+      preLoaderRoute: typeof SettingsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/notifications': {
+      id: '/notifications'
+      path: '/notifications'
+      fullPath: '/notifications'
+      preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/login': {
       id: '/login'
       path: '/login'
@@ -286,6 +359,13 @@ declare module '@tanstack/react-router' {
       path: '/cdns'
       fullPath: '/cdns'
       preLoaderRoute: typeof CdnsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/audit': {
+      id: '/audit'
+      path: '/audit'
+      fullPath: '/audit'
+      preLoaderRoute: typeof AuditRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/analysis': {
@@ -378,11 +458,15 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AnalysisRoute: AnalysisRoute,
+  AuditRoute: AuditRoute,
   CdnsRoute: CdnsRoute,
   ChangePasswordRoute: ChangePasswordRoute,
   DashboardRoute: DashboardRoute,
   EventsRoute: EventsRoute,
   LoginRoute: LoginRoute,
+  NotificationsRoute: NotificationsRoute,
+  SettingsRoute: SettingsRoute,
+  SystemRoute: SystemRoute,
   MitigationActiveRoute: MitigationActiveRoute,
   MitigationBgpRoute: MitigationBgpRoute,
   MitigationBlacklistRoute: MitigationBlacklistRoute,
