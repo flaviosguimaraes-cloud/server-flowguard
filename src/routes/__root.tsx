@@ -1,6 +1,6 @@
 import React from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
- import { AuthProvider, useAuth } from "../contexts/AuthProvider";
+  import { AuthProvider, useAuth } from "../contexts/AuthContext";
  import { ThemeProvider } from "../contexts/ThemeContext";
  import { Toaster } from "sonner";
  import { Sidebar } from "../components/Sidebar";
