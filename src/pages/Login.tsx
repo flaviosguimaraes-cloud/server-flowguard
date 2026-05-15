@@ -1,6 +1,4 @@
-import { useState, FormEvent } from 'react';
-import { useNavigate } from '@tanstack/react-router';
- import { useAuth } from '../contexts/AuthContext';
+import { useState, FormEvent, useEffect } from 'react';
  import { useTranslation } from '../hooks/useTranslation';
  import api from '../services/api';
  import { toast } from 'sonner';
@@ -9,12 +7,20 @@ import { useNavigate } from '@tanstack/react-router';
  export default function Login() {
    const [username, setUsername] = useState('');
    const [password, setPassword] = useState('');
-  const navigate = useNavigate();
-   const { login } = useAuth();
+  const [error, setError] = useState('');
+  const [loading, setLoading] = useState(false);
    const { t, lang, changeLanguage } = useTranslation();
  
+  // Limpar erro ao digitar
+  useEffect(() => {
+    if (error) setError('');
+  }, [username, password]);
+
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
+    setError('');
+    setLoading(true);
+
     try {
       const params = new URLSearchParams();
       params.append('username', username);
@@ -36,10 +42,18 @@ import { useNavigate } from '@tanstack/react-router';
       localStorage.setItem('username', data.username);
       localStorage.setItem('role', data.role);
 
-      login(data);
+      if (data.must_change_password) {
+        window.location.href = '/change-password';
+      } else {
+        window.location.href = '/dashboard';
+      }
     } catch (error: any) {
-      const msg = error.response?.data?.detail || 'Usuário ou senha incorretos';
-      toast.error(msg);
+      setError(
+        error.response?.data?.detail || 
+        'Usuário ou senha incorretos'
+      );
+    } finally {
+      setLoading(false);
     }
   };
  
