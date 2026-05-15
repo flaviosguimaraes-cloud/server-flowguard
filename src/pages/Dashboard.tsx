@@ -8,46 +8,37 @@ import { useTranslation } from '../hooks/useTranslation';
  } from 'recharts';
 import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical } from 'lucide-react';
 import { Skeleton } from '../components/Skeleton';
+
+const FlagEmoji = ({ code }: { code: string }) => {
+  const flags: Record<string, string> = {
+    BR:'🇧🇷', US:'🇺🇸', CN:'🇨🇳', RU:'🇷🇺', DE:'🇩🇪', FR:'🇫🇷',
+    GB:'🇬🇧', JP:'🇯🇵', KR:'🇰🇷', AR:'🇦🇷', CL:'🇨🇱', MX:'🇲🇽',
+    HK:'🇭🇰', SG:'🇸🇬', NL:'🇳🇱', CA:'🇨🇦', AU:'🇦🇺', IN:'🇮🇳',
+    UA:'🇺🇦', TR:'🇹🇷', ES:'🇪🇸', IT:'🇮🇹', PT:'🇵🇹', PL:'🇵🇱',
+    SE:'🇸🇪', NO:'🇳🇴', CH:'🇨🇭', ZA:'🇿🇦', AE:'🇦🇪', SA:'🇸🇦',
+    TH:'🇹🇭', VN:'🇻🇳', ID:'🇮🇩', MY:'🇲🇾', PH:'🇵🇭', TW:'🇹🇼',
+    CO:'🇨🇴', PE:'🇵🇪', IL:'🇮🇱', EG:'🇪🇬', NG:'🇳🇬', IE:'🇮🇪',
+  };
+  const emoji = flags[code];
+  if (emoji) return (
+    <span style={{ fontSize: 15, lineHeight: 1 }}>{emoji}</span>
+  );
+  return (
+    <img
+      src={`https://flagcdn.com/16x12/${code?.toLowerCase()}.png`}
+      alt={code || '?'}
+      style={{ width: 16, height: 12, borderRadius: 2, verticalAlign: 'middle' }}
+      onError={e => {
+        (e.currentTarget as HTMLImageElement).style.display = 'none';
+      }}
+    />
+  );
+};
+
 import { clsx } from 'clsx';
 
 export default function Dashboard() {
   const { t } = useTranslation();
-  const [trafficSource, setTrafficSource] = useState<'flow' | 'snmp'>(() =>
-    localStorage.getItem('fg_traffic_source') as 'flow' | 'snmp' || 'snmp'
-  );
-
-  const [selectedIfaces, setSelectedIfaces] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('fg_selected_ifaces');
-      return saved ? JSON.parse(saved) : [];
-    } catch {
-      return [];
-    }
-  });
-
-  useEffect(() => {
-    localStorage.setItem('fg_traffic_source', trafficSource);
-  }, [trafficSource]);
-
-  useEffect(() => {
-    localStorage.setItem('fg_selected_ifaces', JSON.stringify(selectedIfaces));
-  }, [selectedIfaces]);
-
-  useEffect(() => {
-    if (trafficSource === 'snmp' && selectedIfaces.length === 0 && interfaces?.interfaces?.length > 0) {
-      const top3 = (interfaces.interfaces || [])
-        .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
-        .filter((i: any) => {
-          const n = (i.display_name || '').toLowerCase();
-          return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
-        })
-        .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
-        .slice(0, 3)
-        .map((i: any) => i.display_name);
-      setSelectedIfaces(top3);
-    }
-  }, [interfaces, trafficSource, selectedIfaces.length]);
-
   const { data: detection, isLoading: statsLoading } = useQuery({
      queryKey: ['detection-stats'],
      queryFn: async () => {
@@ -98,15 +89,51 @@ export default function Dashboard() {
      refetchInterval: 30000,
    });
  
-   const { data: interfaces } = useQuery({
-     queryKey: ['interfaces'],
-     queryFn: async () => {
-       const r = await api.get('/api/collectors/1/interfaces/summary');
-       return r.data;
-     },
-     refetchInterval: 60000,
-   });
- 
+    const { data: interfaces } = useQuery({
+      queryKey: ['interfaces'],
+      queryFn: async () => {
+        const r = await api.get('/api/collectors/1/interfaces/summary');
+        return r.data;
+      },
+      refetchInterval: 30000,
+    });
+
+  const [trafficSource, setTrafficSource] = useState<'flow' | 'snmp'>(() =>
+    localStorage.getItem('fg_traffic_source') as 'flow' | 'snmp' || 'snmp'
+  );
+
+  const [selectedIfaces, setSelectedIfaces] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('fg_selected_ifaces');
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('fg_traffic_source', trafficSource);
+  }, [trafficSource]);
+
+  useEffect(() => {
+    localStorage.setItem('fg_selected_ifaces', JSON.stringify(selectedIfaces));
+  }, [selectedIfaces]);
+
+  useEffect(() => {
+    if (trafficSource === 'snmp' && selectedIfaces.length === 0 && interfaces?.interfaces?.length > 0) {
+      const top3 = (interfaces.interfaces || [])
+        .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
+        .filter((i: any) => {
+          const n = (i.display_name || '').toLowerCase();
+          return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
+        })
+        .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
+        .slice(0, 3)
+        .map((i: any) => i.display_name);
+      setSelectedIfaces(top3);
+    }
+  }, [interfaces, trafficSource, selectedIfaces.length]);
+
    const { data: connections } = useQuery({
      queryKey: ['connections'],
      queryFn: async () => {
