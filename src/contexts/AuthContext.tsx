@@ -22,6 +22,7 @@
    const navigate = useNavigate({ from: '/' });
  
    useEffect(() => {
+    console.log("AuthContext useEffect running on client");
      const username = localStorage.getItem('username');
      const role = localStorage.getItem('role') as 'admin' | 'reader';
      const token = localStorage.getItem('access_token');
