@@ -34,7 +34,9 @@
        error.config?.url,
        error.response?.status,
        error.response?.data);
-     if (error.response?.status === 401) {
+      const isLoginEndpoint = error.config?.url?.includes('/auth/login');
+
+      if (error.response?.status === 401 && !isLoginEndpoint) {
        localStorage.clear();
        window.location.href = '/login';
      }
