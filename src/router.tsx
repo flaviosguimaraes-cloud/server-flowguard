@@ -6,15 +6,15 @@
    const queryClient = new QueryClient()
  
    const router = createTanStackRouter({
-   return router;
- }
      routeTree,
      context: { queryClient },
    })
+ 
+   return router
  }
  
  declare module '@tanstack/react-router' {
    interface Register {
-     router: ReturnType<typeof createRouter>
+     router: ReturnType<typeof getRouter>
    }
  }
