@@ -61,6 +61,8 @@ function AuthWrapper() {
   const { user, loading } = useAuth();
   const location = useLocation();
 
+  console.log("AuthWrapper render:", { user, loading, path: location.pathname });
+
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-screen bg-[#0f1117] text-gray-100">
