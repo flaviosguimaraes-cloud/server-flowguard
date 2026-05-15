@@ -11,15 +11,39 @@
    const { login } = useAuth();
    const { t, lang, changeLanguage } = useTranslation();
  
-   const handleSubmit = async (e: React.FormEvent) => {
-     e.preventDefault();
-     try {
-       const { data } = await api.post('/api/auth/login', { username, password });
-       login(data);
-     } catch (error) {
-       toast.error('Login failed: Invalid credentials');
-     }
-   };
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const params = new URLSearchParams();
+      params.append('username', username);
+      params.append('password', password);
+
+      const response = await api.post(
+        '/api/auth/login',
+        params,
+        {
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+          },
+        }
+      );
+
+      const data = response.data;
+      localStorage.setItem('access_token', data.access_token);
+      localStorage.setItem('refresh_token', data.refresh_token);
+      localStorage.setItem('username', data.username);
+      localStorage.setItem('role', data.role);
+
+      if (data.must_change_password) {
+        window.location.href = '/change-password';
+      } else {
+        window.location.href = '/dashboard';
+      }
+    } catch (error: any) {
+      const msg = error.response?.data?.detail || 'Usuário ou senha incorretos';
+      toast.error(msg);
+    }
+  };
  
    return (
      <div className="min-h-screen bg-[#0f1117] flex items-center justify-center p-4">
