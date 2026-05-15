@@ -83,7 +83,13 @@ import { useState, FormEvent, useEffect } from 'react';
           <p className="text-text-secondary mt-2">Network Intelligence & DDoS Mitigation</p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-5">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-lg text-sm text-center font-medium animate-in fade-in duration-300">
+              {error}
+            </div>
+          )}
+
           <div className="space-y-1">
             <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">
               {t('username')}
