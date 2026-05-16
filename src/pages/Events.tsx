@@ -9,6 +9,8 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
  import { Skeleton } from '../components/Skeleton';
  import { clsx } from 'clsx';
  import MitigationModal from '../components/MitigationModal';
+ import { TooltipProvider } from '../components/ui/tooltip';
+ import { MitigationTooltip } from '../components/MitigationTooltip';
  
  export default function Events() {
    const { t } = useTranslation();
@@ -74,8 +76,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
      );
    }
  
-   return (
-     <div className="space-y-6 animate-in fade-in duration-500">
+    return (
+      <TooltipProvider>
+      <div className="space-y-6 animate-in fade-in duration-500">
        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('events')}</h1>
  
        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -137,26 +140,28 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
                <ArrowDown size={16} className="text-accent" /> Top Hosts de Entrada
              </h3>
              <div className="space-y-6">
-                {(() => {
-                  const hosts = stats?.top_hosts_in || [];
-                  const maxPps = Math.max(...hosts.map((h: any) => h.pps || 0), 0);
-                  const bannedIPs = new Set((activeMitigations?.routes || activeMitigations?.items || []).map((i: any) => i.ip || i.prefix?.split('/')[0]));
-
-                  if (hosts.length === 0) {
-                    return <p className="text-center py-8 text-text-secondary italic text-sm">Nenhuma anomalia de entrada</p>;
-                  }
-
-                  return hosts.map((host: any, i: number) => (
-                    <HostItem 
-                      key={i} 
-                      host={host} 
-                      onMitigate={handleMitigate} 
-                      isAdmin={isAdmin} 
-                      maxPps={maxPps}
-                      isBanned={bannedIPs.has(host.ip)}
-                    />
-                  ));
-                })()}
+                 {(() => {
+                   const hosts = stats?.top_hosts_in || [];
+                   const maxPps = Math.max(...hosts.map((h: any) => h.pps || 0), 0);
+                   const mitigationList = activeMitigations?.items || activeMitigations?.routes || [];
+                   const bannedMap = new Map(mitigationList.map((i: any) => [i.ip || i.prefix?.split('/')[0], i]));
+ 
+                   if (hosts.length === 0) {
+                     return <p className="text-center py-8 text-text-secondary italic text-sm">Nenhuma anomalia de entrada</p>;
+                   }
+ 
+                   return hosts.map((host: any, i: number) => (
+                     <HostItem 
+                       key={i} 
+                       host={host} 
+                       onMitigate={handleMitigate} 
+                       isAdmin={isAdmin} 
+                       maxPps={maxPps}
+                       isBanned={bannedMap.has(host.ip)}
+                       mitigationData={bannedMap.get(host.ip)}
+                     />
+                   ));
+                 })()}
              </div>
            </div>
  
@@ -166,26 +171,28 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
                <ArrowUp size={16} className="text-success" /> Top Hosts de Saída
              </h3>
              <div className="space-y-6">
-                {(() => {
-                  const hosts = stats?.top_hosts_out || [];
-                  const maxPps = Math.max(...hosts.map((h: any) => h.pps || 0), 0);
-                  const bannedIPs = new Set((activeMitigations?.routes || activeMitigations?.items || []).map((i: any) => i.ip || i.prefix?.split('/')[0]));
-
-                  if (hosts.length === 0) {
-                    return <p className="text-center py-8 text-text-secondary italic text-sm">Nenhuma anomalia de saída</p>;
-                  }
-
-                  return hosts.map((host: any, i: number) => (
-                    <HostItem 
-                      key={i} 
-                      host={host} 
-                      onMitigate={handleMitigate} 
-                      isAdmin={isAdmin} 
-                      maxPps={maxPps}
-                      isBanned={bannedIPs.has(host.ip)}
-                    />
-                  ));
-                })()}
+                 {(() => {
+                   const hosts = stats?.top_hosts_out || [];
+                   const maxPps = Math.max(...hosts.map((h: any) => h.pps || 0), 0);
+                   const mitigationList = activeMitigations?.items || activeMitigations?.routes || [];
+                   const bannedMap = new Map(mitigationList.map((i: any) => [i.ip || i.prefix?.split('/')[0], i]));
+ 
+                   if (hosts.length === 0) {
+                     return <p className="text-center py-8 text-text-secondary italic text-sm">Nenhuma anomalia de saída</p>;
+                   }
+ 
+                   return hosts.map((host: any, i: number) => (
+                     <HostItem 
+                       key={i} 
+                       host={host} 
+                       onMitigate={handleMitigate} 
+                       isAdmin={isAdmin} 
+                       maxPps={maxPps}
+                       isBanned={bannedMap.has(host.ip)}
+                       mitigationData={bannedMap.get(host.ip)}
+                     />
+                   ));
+                 })()}
              </div>
            </div>
          </div>
@@ -253,11 +260,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
             50% { opacity: 0.6; }
           }
         `}</style>
-     </div>
-   );
- }
- 
-  function HostItem({ host, onMitigate, isAdmin, maxPps, isBanned }: any) {
+      </div>
+      </TooltipProvider>
+    );
+  }
+  
+   function HostItem({ host, onMitigate, isAdmin, maxPps, isBanned, mitigationData }: any) {
     const getRisk = (pps: number) => {
       if (isBanned || pps >= 80000) return 'high';
       if (pps >= 30000) return 'medium';
@@ -307,10 +315,25 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
        <div className="flex justify-between items-end">
          <div>
             <div className="flex items-center gap-2 mb-1 flex-wrap">
-              <span className="text-sm font-bold text-gray-900 dark:text-gray-100 font-mono flex items-center gap-1">
-                {isBanned && <span title="Em mitigação">🔒</span>}
-                {host.ip}
-             </span>
+               {isBanned ? (
+                 <MitigationTooltip data={{
+                   ip: host.ip,
+                   tipo: mitigationData?.type || 'Blackhole /32',
+                   desde: mitigationData?.since || mitigationData?.age,
+                   pps: mitigationData?.pps || host.pps,
+                   mbps: mitigationData?.mbps || host.mbps,
+                   fonte: mitigationData?.source || 'Manual (admin)'
+                 }}>
+                   <span className="text-sm font-bold text-gray-900 dark:text-gray-100 font-mono flex items-center gap-1 cursor-help">
+                     <span>🔒</span>
+                     {host.ip}
+                   </span>
+                 </MitigationTooltip>
+               ) : (
+                 <span className="text-sm font-bold text-gray-900 dark:text-gray-100 font-mono flex items-center gap-1">
+                   {host.ip}
+                 </span>
+               )}
               
               <span style={{
                 fontSize: 10,
