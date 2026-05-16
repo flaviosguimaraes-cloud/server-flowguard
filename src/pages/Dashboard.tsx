@@ -413,15 +413,31 @@ export default function Dashboard() {
     const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
 
     const ifaceColors = ['#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
-    const relevantInterfaces = (Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
-      .filter((i: any) => (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0)
-      .filter((i: any) => {
-        const name = (i.display_name || i.if_name || '').toLowerCase();
-        return !name.includes('null') && !name.includes('loopback') && !name.includes('virtual') &&
-          !name.includes('template') && !name.includes('inloop');
-      })
-      .sort((a: any, b: any) => ((b.in_bps || 0) + (b.out_bps || 0)) - ((a.in_bps || 0) + (a.out_bps || 0)))
-      .slice(0, 6);
+  const snmpTotals = useMemo(() => {
+    const list = Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [];
+    let rx = 0;
+    let tx = 0;
+    list.forEach((i: any) => {
+      const name = (i.display_name || i.if_name || '').toLowerCase();
+      if (!name || name.includes('null') || name.includes('loopback') || name.includes('virtual')) return;
+      rx += (i.in_bps || 0);
+      tx += (i.out_bps || 0);
+    });
+    return {
+      rx: rx / 1e9,
+      tx: tx / 1e9
+    };
+  }, [interfaces]);
+
+  const relevantInterfaces = (Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
+    .filter((i: any) => (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0)
+    .filter((i: any) => {
+      const name = (i.display_name || i.if_name || '').toLowerCase();
+      return !name.includes('null') && !name.includes('loopback') && !name.includes('virtual') &&
+        !name.includes('template') && !name.includes('inloop');
+    })
+    .sort((a: any, b: any) => ((b.in_bps || 0) + (b.out_bps || 0)) - ((a.in_bps || 0) + (a.out_bps || 0)))
+    .slice(0, 6);
 
   const fmtBps = (bps: number) => {
     if (!bps || bps === 0) return '0 bps';
@@ -454,32 +470,46 @@ export default function Dashboard() {
          }
        `}</style>
       {/* Top Stats */}
-       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-         <StatCard 
-            title={t('traffic_in')} 
-            value={(detection?.incoming_mbps / 1000).toFixed(1)} 
-            unit="Gbps" 
-            icon={<ArrowDown className="text-accent" size={20} />} 
-            tooltip="Baseado em Flow — amostragem 1:500"
-          />
-          <StatCard 
-            title={t('traffic_out')} 
-            value={(detection?.outgoing_mbps / 1000).toFixed(1)} 
-            unit="Gbps" 
-            icon={<ArrowUp className="text-success" size={20} />} 
-            tooltip="Baseado em Flow — amostragem 1:500"
-          />
-         <StatCard 
-           title={t('active_flows')} 
-           value={detection?.incoming_pps > 1000 ? (detection.incoming_pps / 1000).toFixed(1) + 'k' : detection?.incoming_pps || '0'} 
-           icon={<Activity className="text-warning" size={20} />} 
-         />
-         <StatCard 
-           title={t('active_mitigations')} 
-           value={detection?.active_mitigations || '0'} 
-           icon={<Shield className="text-danger" size={20} />} 
-         />
-       </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+        <StatCard 
+          title="FLOW IPv4 ↓" 
+          value={(detection?.incoming_mbps / 1000).toFixed(1)} 
+          unit="Gbps" 
+          icon={<ArrowDown className="text-accent" size={20} />} 
+          subtitle="Estimado via Flow · sampling 1:1000"
+        />
+        <StatCard 
+          title="FLOW IPv4 ↑" 
+          value={(detection?.outgoing_mbps / 1000).toFixed(1)} 
+          unit="Gbps" 
+          icon={<ArrowUp className="text-success" size={20} />} 
+          subtitle="Estimado via Flow · sampling 1:1000"
+        />
+        <StatCard 
+          title="SNMP ↓ Total" 
+          value={snmpTotals.rx.toFixed(1)} 
+          unit="Gbps" 
+          icon={<ArrowDown className="text-blue-500" size={20} />} 
+          subtitle="Tráfego real · todas interfaces"
+        />
+        <StatCard 
+          title="SNMP ↑ Total" 
+          value={snmpTotals.tx.toFixed(1)} 
+          unit="Gbps" 
+          icon={<ArrowUp className="text-green-500" size={20} />} 
+          subtitle="Tráfego real · todas interfaces"
+        />
+        <StatCard 
+          title={t('active_flows')} 
+          value={detection?.incoming_pps > 1000 ? (detection.incoming_pps / 1000).toFixed(1) + 'k' : detection?.incoming_pps || '0'} 
+          icon={<Activity className="text-warning" size={20} />} 
+        />
+        <StatCard 
+          title={t('active_mitigations')} 
+          value={detection?.active_mitigations || '0'} 
+          icon={<Shield className="text-danger" size={20} />} 
+        />
+      </div>
 
       {/* Main Chart: Tráfego da Interface */}
       <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm transition-colors">
