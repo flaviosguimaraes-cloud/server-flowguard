@@ -17,15 +17,20 @@ const REFETCH_INTERVAL = 30000;
 export default function Dashboard() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [lastUpdate, setLastUpdate] = useState(new Date());
+  const [countdown, setCountdown] = useState(30);
 
   useEffect(() => {
-    const interval = setInterval(() => {
+    const timer = setInterval(() => {
+      setCountdown(c => (c <= 1 ? 30 : c - 1));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  useEffect(() => {
+    if (countdown === 30) {
       queryClient.invalidateQueries();
-      setLastUpdate(new Date());
-    }, REFETCH_INTERVAL);
-    return () => clearInterval(interval);
-  }, [queryClient]);
+    }
+  }, [countdown, queryClient]);
 
   const { data: detection, isLoading: statsLoading } = useQuery({
     queryKey: ['detection-stats'],
@@ -332,6 +337,30 @@ export default function Dashboard() {
           <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Network Traffic</h2>
           
           <div className="flex flex-wrap items-center gap-3">
+            <button 
+              onClick={() => {
+                queryClient.invalidateQueries();
+                setCountdown(30);
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-bg-secondary hover:bg-gray-100 dark:hover:bg-[#2a2d3e] text-text-secondary hover:text-text-primary rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider border border-gray-200 dark:border-[#2a2d3e]"
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="14" height="14" 
+                viewBox="0 0 24 24" fill="none" 
+                stroke="currentColor" strokeWidth="2.5" 
+                strokeLinecap="round" strokeLinejoin="round"
+                className={clsx(countdown === 30 && "animate-spin")}
+                style={{ animationDuration: '1s' }}
+              >
+                <path d="M23 4v6h-6"/>
+                <path d="M1 20v-6h6"/>
+                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/>
+                <path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/>
+              </svg>
+              <span>{countdown}s</span>
+            </button>
+
             <div className="flex bg-gray-100 dark:bg-bg-secondary p-1 rounded-lg">
               <button
                 onClick={() => setTrafficSource('snmp')}
