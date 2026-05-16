@@ -1051,7 +1051,7 @@ export default function Dashboard() {
                 <th className="px-6 py-3 border-b border-border">Serviço</th>
                 <th className="px-6 py-3 border-b border-border">Empresa</th>
                 <th className="px-6 py-3 border-b border-border">{t('protocol')}</th>
-                <th className="px-6 py-3 border-b border-border text-right">VOLUME</th>
+                <th className="px-6 py-3 border-b border-border text-right">VOLUME (2 min)</th>
                 <th className="px-6 py-3 border-b border-border text-right">{t('pps')}</th>
               </tr>
             </thead>
@@ -1149,7 +1149,7 @@ export default function Dashboard() {
                           <span className="cursor-help">{fmtBytes(item.bytes)}</span>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Volume transferido (2 min)</p>
+                          <p>Volume transferido nos últimos 2 minutos (estimado com sampling 1:1000)</p>
                         </TooltipContent>
                       </Tooltip>
                     </td>
