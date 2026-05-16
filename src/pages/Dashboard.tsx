@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { useTranslation } from '../hooks/useTranslation';
@@ -6,96 +6,86 @@ import { useTranslation } from '../hooks/useTranslation';
    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
    BarChart, Bar, Cell, AreaChart, Area
  } from 'recharts';
-import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical } from 'lucide-react';
+import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon } from 'lucide-react';
 import { Skeleton } from '../components/Skeleton';
-
-const FlagEmoji = ({ code }: { code: string }) => {
-  const flags: Record<string, string> = {
-    BR:'🇧🇷', US:'🇺🇸', CN:'🇨🇳', RU:'🇷🇺', DE:'🇩🇪', FR:'🇫🇷',
-    GB:'🇬🇧', JP:'🇯🇵', KR:'🇰🇷', AR:'🇦🇷', CL:'🇨🇱', MX:'🇲🇽',
-    HK:'🇭🇰', SG:'🇸🇬', NL:'🇳🇱', CA:'🇨🇦', AU:'🇦🇺', IN:'🇮🇳',
-    UA:'🇺🇦', TR:'🇹🇷', ES:'🇪🇸', IT:'🇮🇹', PT:'🇵🇹', PL:'🇵🇱',
-    SE:'🇸🇪', NO:'🇳🇴', CH:'🇨🇭', ZA:'🇿🇦', AE:'🇦🇪', SA:'🇸🇦',
-    TH:'🇹🇭', VN:'🇻🇳', ID:'🇮🇩', MY:'🇲🇾', PH:'🇵🇭', TW:'🇹🇼',
-    CO:'🇨🇴', PE:'🇵🇪', IL:'🇮🇱', EG:'🇪🇬', NG:'🇳🇬', IE:'🇮🇪',
-  };
-  const emoji = flags[code];
-  if (emoji) return (
-    <span style={{ fontSize: 15, lineHeight: 1 }}>{emoji}</span>
-  );
-  return (
-    <img
-      src={`https://flagcdn.com/16x12/${code?.toLowerCase()}.png`}
-      alt={code || '?'}
-      style={{ width: 16, height: 12, borderRadius: 2, verticalAlign: 'middle' }}
-      onError={e => {
-        (e.currentTarget as HTMLImageElement).style.display = 'none';
-      }}
-    />
-  );
-};
+import Flag from '../components/Flag';
 
 import { clsx } from 'clsx';
 
 export default function Dashboard() {
   const { t } = useTranslation();
+
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTick(t => t + 1);
+    }, 30000);
+    return () => clearInterval(timer);
+  }, []);
+
   const { data: detection, isLoading: statsLoading } = useQuery({
-     queryKey: ['detection-stats'],
+     queryKey: ['detection-stats', tick],
      queryFn: async () => {
        const r = await api.get('/api/detection/stats');
        return r.data;
      },
      refetchInterval: 30000,
+     staleTime: 0,
      retry: 1,
    });
  
    const { data: timeline } = useQuery({
-     queryKey: ['timeline'],
+     queryKey: ['timeline', tick],
      queryFn: async () => {
        const r = await api.get('/api/flows/timeline?minutes=30');
        return r.data;
      },
      refetchInterval: 30000,
+     staleTime: 0,
      retry: 1,
    });
  
    const { data: protocols } = useQuery({
-     queryKey: ['protocols'],
+     queryKey: ['protocols', tick],
      queryFn: async () => {
        const r = await api.get('/api/flows/protocols?minutes=30');
        console.log('protocols raw:', r.data);
        return r.data;
      },
      refetchInterval: 30000,
+     staleTime: 0,
    });
 
    const { data: countries } = useQuery({
-     queryKey: ['countries'],
+     queryKey: ['countries', tick],
      queryFn: async () => {
        const r = await api.get('/api/flows/countries?minutes=30');
        console.log('countries raw:', r.data);
        return r.data;
      },
      refetchInterval: 30000,
+     staleTime: 0,
    });
 
    const { data: ports } = useQuery({
-     queryKey: ['ports'],
+     queryKey: ['ports', tick],
      queryFn: async () => {
        const r = await api.get('/api/flows/ports?minutes=30');
        console.log('ports raw:', r.data);
        return r.data;
      },
      refetchInterval: 30000,
+     staleTime: 0,
    });
  
     const { data: interfaces } = useQuery({
-      queryKey: ['interfaces'],
+       queryKey: ['interfaces', tick],
       queryFn: async () => {
         const r = await api.get('/api/collectors/1/interfaces/summary');
         return r.data;
       },
       refetchInterval: 30000,
+       staleTime: 0,
     });
 
   const [trafficSource, setTrafficSource] = useState<'flow' | 'snmp'>(() =>
@@ -110,6 +100,7 @@ export default function Dashboard() {
       return [];
     }
   });
+  const [sumMode, setSumMode] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('fg_traffic_source', trafficSource);
@@ -135,13 +126,14 @@ export default function Dashboard() {
   }, [interfaces, trafficSource, selectedIfaces.length]);
 
    const { data: connections } = useQuery({
-     queryKey: ['connections'],
+     queryKey: ['connections', tick],
      queryFn: async () => {
        const r = await api.get('/api/flows/connections?limit=10');
        console.log('connections raw:', r.data);
        return r.data;
      },
      refetchInterval: 30000,
+     staleTime: 0,
    });
 
    console.log('protocols:', protocols);
@@ -157,15 +149,10 @@ export default function Dashboard() {
       }));
     }, [timeline]);
 
-    const snmpData = useMemo(() => {
+    const selectedIfaceData = useMemo(() => {
       if (!interfaces?.interfaces) return [];
       return (interfaces.interfaces || [])
-        .filter((i: any) => selectedIfaces.includes(i.display_name))
-        .map((i: any) => ({
-          name: i.display_name,
-          rx: i.in_bps / 1e9,
-          tx: i.out_bps / 1e9,
-        }));
+        .filter((i: any) => selectedIfaces.includes(i.display_name));
     }, [interfaces, selectedIfaces]);
 
     const protoMap: Record<number, string> = {
@@ -185,23 +172,12 @@ export default function Dashboard() {
         pct: totalBytes > 0 ? ((p.bytes / totalBytes) * 100).toFixed(1) : 0
       }));
 
-    const flagMap: Record<string, string> = {
-      BR:'🇧🇷', US:'🇺🇸', CN:'🇨🇳', RU:'🇷🇺', DE:'🇩🇪', FR:'🇫🇷',
-      GB:'🇬🇧', JP:'🇯🇵', KR:'🇰🇷', AR:'🇦🇷', CL:'🇨🇱', MX:'🇲🇽',
-      HK:'🇭🇰', SG:'🇸🇬', NL:'🇳🇱', CA:'🇨🇦', AU:'🇦🇺', IN:'🇮🇳',
-      UA:'🇺🇦', TR:'🇹🇷', ES:'🇪🇸', IT:'🇮🇹', PT:'🇵🇹', PL:'🇵🇱',
-      SE:'🇸🇪', NO:'🇳🇴', CH:'🇨🇭', ZA:'🇿🇦', AE:'🇦🇪', SA:'🇸🇦',
-      TH:'🇹🇭', VN:'🇻🇳', ID:'🇮🇩', MY:'🇲🇾', PH:'🇵🇭', TW:'🇹🇼',
-      CO:'🇨🇴', PE:'🇵🇪', IL:'🇮🇱', EG:'🇪🇬', NG:'🇳🇬', IE:'🇮🇪',
-    };
-
     const countryItems = countries?.items || countries?.data || (Array.isArray(countries) ? countries : []);
     const totalCountryBytes = countryItems.reduce((a: number, b: any) => a + b.bytes, 0);
 
     const countryData = countryItems
       .slice(0, 8)
       .map((c: any) => ({
-        flag: flagMap[c.country] || '🌐',
         code: c.country,
         bytes: c.bytes,
         pct: totalCountryBytes > 0 ? ((c.bytes / totalCountryBytes) * 100).toFixed(1) : 0
@@ -329,7 +305,7 @@ export default function Dashboard() {
 
       {/* Main Chart */}
       <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm transition-colors">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b border-gray-100 dark:border-[#2a2d3e] pb-4">
           <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Network Traffic</h2>
           
           <div className="flex flex-wrap items-center gap-3">
@@ -337,101 +313,177 @@ export default function Dashboard() {
               <button
                 onClick={() => setTrafficSource('snmp')}
                 className={clsx(
-                  "px-3 py-1 text-[10px] font-bold rounded-md transition-all uppercase tracking-wider",
+                  "flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-md transition-all uppercase tracking-wider",
                   trafficSource === 'snmp' ? "bg-white dark:bg-accent text-accent dark:text-white shadow-sm" : "text-text-secondary hover:text-text-primary"
                 )}>
-                Interface (SNMP)
+                <BarChart2 size={14} /> Por Interface (SNMP)
               </button>
               <button
                 onClick={() => setTrafficSource('flow')}
                 className={clsx(
-                  "px-3 py-1 text-[10px] font-bold rounded-md transition-all uppercase tracking-wider",
+                  "flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-md transition-all uppercase tracking-wider",
                   trafficSource === 'flow' ? "bg-white dark:bg-accent text-accent dark:text-white shadow-sm" : "text-text-secondary hover:text-text-primary"
                 )}>
-                Tráfego Geral (Flow)
+                <LineChartIcon size={14} /> Timeline (Flow)
               </button>
             </div>
-
-            {trafficSource === 'snmp' && (
-              <div className="flex flex-wrap gap-2 max-w-[400px]">
-                {(interfaces?.interfaces || [])
-                  .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
-                  .filter((i: any) => {
-                    const n = (i.display_name || '').toLowerCase();
-                    return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
-                  })
-                  .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
-                  .slice(0, 8)
-                  .map((i: any) => (
-                    <button
-                      key={i.display_name}
-                      onClick={() => {
-                        setSelectedIfaces(prev => 
-                          prev.includes(i.display_name) 
-                            ? prev.filter(n => n !== i.display_name)
-                            : [...prev, i.display_name]
-                        );
-                      }}
-                      className={clsx(
-                        "px-2 py-1 text-[9px] font-bold rounded border transition-all",
-                        selectedIfaces.includes(i.display_name)
-                          ? "bg-accent/10 border-accent text-accent"
-                          : "bg-transparent border-gray-200 dark:border-gray-700 text-text-secondary hover:border-accent"
-                      )}
-                    >
-                      {i.display_name}
-                    </button>
-                  ))
-                }
-                <span className="text-[10px] font-bold text-text-secondary self-center ml-1">
-                  {selectedIfaces.length} selecionadas
-                </span>
-              </div>
-            )}
           </div>
         </div>
 
-        <div className="h-[250px] w-full">
-          <ResponsiveContainer width="100%" height="100%">
-            {trafficSource === 'flow' ? (
-              <LineChart data={flowData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-gray-200 dark:text-[#2a2d3e]" />
+        {trafficSource === 'snmp' ? (
+          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <div className="lg:col-span-1 space-y-1 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
+              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Interfaces</p>
+              {(interfaces?.interfaces || [])
+                .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
+                .filter((i: any) => {
+                  const n = (i.display_name || '').toLowerCase();
+                  return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template') && !n.includes('inloop');
+                })
+                .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
+                .map((iface: any, idx: number) => (
+                  <label key={iface.display_name} className="flex items-center gap-2 cursor-pointer py-1.5 px-2 rounded hover:bg-gray-50 dark:hover:bg-bg-secondary transition-colors group">
+                    <input
+                      type="checkbox"
+                      checked={selectedIfaces.includes(iface.display_name)}
+                      onChange={() => {
+                        setSelectedIfaces(prev => 
+                          prev.includes(iface.display_name) 
+                            ? prev.filter(n => n !== iface.display_name)
+                            : [...prev, iface.display_name]
+                        );
+                      }}
+                      className="w-3.5 h-3.5 rounded border-gray-300 text-accent focus:ring-accent accent-accent"
+                    />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-[11px] font-bold truncate transition-colors" style={{ color: selectedIfaces.includes(iface.display_name) ? ifaceColors[idx % ifaceColors.length] : undefined }}>
+                        {iface.display_name}
+                      </p>
+                      <p className="text-[9px] text-text-secondary flex items-center gap-1">
+                        {fmtBps(iface.in_bps)} <ArrowDown size={8} /> {fmtBps(iface.out_bps)} <ArrowUp size={8} />
+                      </p>
+                    </div>
+                  </label>
+                ))
+              }
+              <button
+                onClick={() => setSumMode(m => !m)}
+                className={clsx(
+                  "w-full mt-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border",
+                  sumMode ? "bg-accent/10 border-accent text-accent" : "bg-transparent border-gray-200 dark:border-[#2a2d3e] text-text-secondary hover:border-accent"
+                )}>
+                {sumMode ? '✓ Somando selecionadas' : 'Somar selecionadas'}
+              </button>
+            </div>
+            <div className="lg:col-span-3 space-y-6 pt-2">
+              {!sumMode ? (
+                selectedIfaceData.map((iface: any, idx: number) => {
+                  const inPct = iface.if_speed > 0 ? Math.min((iface.in_bps / iface.if_speed) * 100, 100) : 0;
+                  const outPct = iface.if_speed > 0 ? Math.min((iface.out_bps / iface.if_speed) * 100, 100) : 0;
+                  return (
+                    <div key={iface.display_name} className="space-y-1.5">
+                      <div className="flex justify-between items-center text-[11px]">
+                        <span className="font-bold flex items-center gap-2" style={{ color: ifaceColors[idx % ifaceColors.length] }}>
+                          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: ifaceColors[idx % ifaceColors.length] }} />
+                          {iface.display_name}
+                        </span>
+                        <span className="text-text-secondary font-medium">
+                          {fmtBps(iface.in_bps)} <ArrowDown size={10} className="inline" /> / {fmtBps(iface.out_bps)} <ArrowUp size={10} className="inline" />
+                        </span>
+                      </div>
+                      <div className="space-y-1">
+                        <div className="h-2.5 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden shadow-inner border border-gray-200/50 dark:border-transparent">
+                          <div className="h-full transition-all duration-1000 rounded-full" style={{ width: inPct + '%', backgroundColor: ifaceColors[idx % ifaceColors.length] }} />
+                        </div>
+                        <div className="h-2.5 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden shadow-inner border border-gray-200/50 dark:border-transparent">
+                          <div className="h-full transition-all duration-1000 rounded-full opacity-60" style={{ width: outPct + '%', backgroundColor: ifaceColors[idx % ifaceColors.length] }} />
+                        </div>
+                      </div>
+                      <div className="flex justify-between text-[9px] text-text-secondary font-medium px-1">
+                        <span>Capacidade: {fmtBps(iface.if_speed)}</span>
+                        <span>Utilização: {inPct.toFixed(1)}% (RX) / {outPct.toFixed(1)}% (TX)</span>
+                      </div>
+                    </div>
+                  );
+                })
+              ) : (
+                <div className="h-full flex flex-col justify-center space-y-10 py-4">
+                  {(() => {
+                    const totalRx = selectedIfaceData.reduce((a: number, b: any) => a + (b.in_bps || 0), 0);
+                    const totalTx = selectedIfaceData.reduce((a: number, b: any) => a + (b.out_bps || 0), 0);
+                    const totalSpeed = selectedIfaceData.reduce((a: number, b: any) => a + (b.if_speed || 0), 0);
+                    const totalInPct = totalSpeed > 0 ? Math.min((totalRx / totalSpeed) * 100, 100) : 0;
+                    const totalOutPct = totalSpeed > 0 ? Math.min((totalTx / totalSpeed) * 100, 100) : 0;
+                    return (
+                      <>
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-end">
+                            <div>
+                              <p className="text-xs font-bold text-accent uppercase tracking-widest mb-1">Total Entrada (RX)</p>
+                              <h3 className="text-4xl font-black text-gray-900 dark:text-gray-100">{fmtBps(totalRx)}</h3>
+                            </div>
+                            <span className="text-sm font-bold text-accent">{totalInPct.toFixed(1)}%</span>
+                          </div>
+                          <div className="h-4 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden shadow-inner">
+                            <div className="h-full bg-accent transition-all duration-1000 shadow-lg shadow-accent/20" style={{ width: totalInPct + '%' }} />
+                          </div>
+                        </div>
+                        <div className="space-y-4">
+                          <div className="flex justify-between items-end">
+                            <div>
+                              <p className="text-xs font-bold text-success uppercase tracking-widest mb-1">Total Saída (TX)</p>
+                              <h3 className="text-4xl font-black text-gray-900 dark:text-gray-100">{fmtBps(totalTx)}</h3>
+                            </div>
+                            <span className="text-sm font-bold text-success">{totalOutPct.toFixed(1)}%</span>
+                          </div>
+                          <div className="h-4 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden shadow-inner">
+                            <div className="h-full bg-success transition-all duration-1000 shadow-lg shadow-success/20" style={{ width: totalOutPct + '%' }} />
+                          </div>
+                        </div>
+                        <div className="text-center text-[11px] text-text-secondary font-bold uppercase tracking-widest pt-4">
+                          Capacidade Combinada: {fmtBps(totalSpeed)}
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+              {selectedIfaces.length === 0 && (
+                <div className="h-full flex items-center justify-center text-text-secondary italic text-sm">
+                  Selecione ao menos uma interface para visualizar
+                </div>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="h-[300px] w-full pt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart data={flowData}>
+                <defs>
+                  <linearGradient id="colorRx" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
+                  </linearGradient>
+                  <linearGradient id="colorTx" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
+                    <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-gray-200 dark:text-[#2a2d3e]" vertical={false} />
                 <XAxis dataKey="time" tick={{ fontSize: 11, fill: '#8892a4' }} tickLine={false} axisLine={false} interval={4} />
                 <YAxis tick={{ fontSize: 11, fill: '#8892a4' }} tickLine={false} axisLine={false} tickFormatter={v => v + 'G'} />
                 <Tooltip
                   formatter={(v: any, n: string) => [v + ' Gbps', n === 'rx' ? 'Entrada' : 'Saída']}
-                  contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12, color: 'var(--text-primary)' }}
-                  itemStyle={{ color: 'var(--text-primary)' }}
-                  labelStyle={{ color: 'var(--text-secondary)' }}
+                  contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, color: 'var(--text-primary)', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
+                  itemStyle={{ color: 'var(--text-primary)', padding: '2px 0' }}
+                  labelStyle={{ color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: 'bold' }}
                 />
-                <Line type="monotone" dataKey="rx" stroke="#3b82f6" strokeWidth={2} dot={false} name="rx" />
-                <Line type="monotone" dataKey="tx" stroke="#22c55e" strokeWidth={2} dot={false} name="tx" />
-              </LineChart>
-            ) : (
-              <BarChart data={snmpData} layout="vertical" margin={{ left: 40, right: 20 }}>
-                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="currentColor" className="text-gray-200 dark:text-[#2a2d3e]" />
-                <XAxis type="number" tick={{ fontSize: 11, fill: '#8892a4' }} tickLine={false} axisLine={false} tickFormatter={v => v + 'G'} />
-                <YAxis dataKey="name" type="category" tick={{ fontSize: 10, fill: '#8892a4' }} tickLine={false} axisLine={false} width={80} />
-                <Tooltip
-                  formatter={(v: any, n: string) => [parseFloat(v).toFixed(2) + ' Gbps', n === 'rx' ? 'Entrada (RX)' : 'Saída (TX)']}
-                  contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 12, color: 'var(--text-primary)' }}
-                  itemStyle={{ color: 'var(--text-primary)' }}
-                  labelStyle={{ color: 'var(--text-secondary)' }}
-                />
-                <Bar dataKey="rx" name="rx" radius={[0, 4, 4, 0]}>
-                  {snmpData.map((_entry: any, index: number) => (
-                    <Cell key={`cell-rx-${index}`} fill={ifaceColors[index % ifaceColors.length]} fillOpacity={0.8} />
-                  ))}
-                </Bar>
-                <Bar dataKey="tx" name="tx" radius={[0, 4, 4, 0]}>
-                  {snmpData.map((_entry: any, index: number) => (
-                    <Cell key={`cell-tx-${index}`} fill={ifaceColors[index % ifaceColors.length]} fillOpacity={0.4} />
-                  ))}
-                </Bar>
-              </BarChart>
-            )}
-          </ResponsiveContainer>
-        </div>
+                <Area type="monotone" dataKey="rx" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorRx)" name="rx" />
+                <Area type="monotone" dataKey="tx" stroke="#22c55e" strokeWidth={3} fillOpacity={1} fill="url(#colorTx)" name="tx" />
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
        {/* Secondary Grids */}
@@ -465,10 +517,10 @@ export default function Dashboard() {
               {countryData.map((c: any, i: number) => (
                 <div key={i} className={clsx(
                   "flex items-center gap-[8px] py-[5px]",
-                  i < countryData.length - 1 && "border-b border-gray-100 dark:border-[#2a2d3e]"
-                )}>
-                  <span className="text-base">{c.flag}</span>
-                  <span className="text-[12px] text-gray-700 dark:text-[#e2e8f0] min-w-[30px] font-medium">{c.code}</span>
+                   i < countryData.length - 1 && "border-b border-gray-100 dark:border-[#2a2d3e]"
+                 )}>
+                   <Flag code={c.code} size={18} />
+                   <span className="text-[12px] text-gray-700 dark:text-[#e2e8f0] min-w-[30px] font-medium ml-1">{c.code}</span>
                   <div className="flex-1 h-[6px] bg-gray-100 dark:bg-[#2a2d3e] rounded-[3px] overflow-hidden">
                     <div 
                       className="h-full bg-accent rounded-[3px]"
@@ -585,19 +637,19 @@ export default function Dashboard() {
                 return (
                   <tr key={i} className="hover:bg-accent/5 transition-colors group">
                     <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <FlagEmoji code={srcCountry} />
-                        <span className="font-medium text-gray-900 dark:text-gray-100">{src}</span>
-                        <span className="text-text-secondary text-xs">:{srcPort}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-4">
-                      <div className="flex items-center gap-2">
-                        <FlagEmoji code={dstCountry} />
-                        <span className="text-gray-900 dark:text-gray-100">{dst}</span>
-                        <span className="text-text-secondary text-xs">:{dstPort}</span>
-                      </div>
-                    </td>
+                     <div className="flex items-center gap-2">
+                       <Flag code={srcCountry} />
+                       <span className="font-medium text-gray-900 dark:text-gray-100">{src}</span>
+                       <span className="text-text-secondary text-xs">:{srcPort}</span>
+                     </div>
+                   </td>
+                   <td className="px-6 py-4">
+                     <div className="flex items-center gap-2">
+                       <Flag code={dstCountry} />
+                       <span className="text-gray-900 dark:text-gray-100">{dst}</span>
+                       <span className="text-text-secondary text-xs">:{dstPort}</span>
+                     </div>
+                   </td>
                     <td className="px-6 py-4">
                       <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{getService(dstPort)}</span>
                     </td>
@@ -629,6 +681,9 @@ export default function Dashboard() {
               )}
             </tbody>
           </table>
+        </div>
+        <div className="p-3 border-t border-gray-100 dark:border-border text-[10px] text-text-secondary text-right font-bold uppercase tracking-widest bg-gray-50/30 dark:bg-bg-secondary/10">
+          Atualizado: {new Date().toLocaleTimeString('pt-BR')}
         </div>
       </div>
     </div>
