@@ -81,7 +81,7 @@ import { useState, FormEvent, useEffect } from 'react';
             <Shield className="text-primary" size={40} />
           </div>
           <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-1">FlowGuard</h1>
-          <p className="text-text-secondary font-bold text-[10px] uppercase tracking-widest opacity-60">Intelligence & Mitigation</p>
+          <p className="text-text-secondary font-bold text-[10px] uppercase tracking-widest opacity-60">Network Intelligence & DDoS Mitigation</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
