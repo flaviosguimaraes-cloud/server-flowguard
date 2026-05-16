@@ -5,12 +5,17 @@
  
  interface MitigationData {
    ip: string;
-   tipo: string;
+   tipo?: string;
+   type?: string;
    community?: string;
    desde?: string;
+   since?: string;
    fonte?: string;
-   pps?: string | number;
-   mbps?: string | number;
+   source?: string;
+   pps?: number;
+   mbps?: number;
+   direction?: 'incoming' | 'outgoing' | string;
+   reason?: string;
  }
  
  interface MitigationTooltipProps {
@@ -19,87 +24,90 @@
  }
  
  export function MitigationTooltip({ children, data }: MitigationTooltipProps) {
-    const typeInfo = (type: string) => {
-      const t = (type || '').toLowerCase();
-      if (t.includes('blackhole')) return { icon: '🛡', color: 'var(--danger)', label: 'Blackhole /32' };
-      if (t.includes('externa') || t.includes('external')) return { icon: '🔀', color: 'var(--accent)', label: 'Mitigação Externa /24' };
-      if (t.includes('flowspec')) return { icon: '⚡', color: 'var(--warning)', label: 'FlowSpec' };
-      return { icon: '🛡', color: 'var(--danger)', label: type };
-    };
- 
-   const info = typeInfo(data.tipo);
- 
-   const fmtPPS = (pps: string | number | undefined) => {
-     if (!pps) return '—';
-     if (typeof pps === 'string' && pps.includes('pps')) return pps;
-     const val = Number(pps);
-     return val > 1000 ? (val / 1000).toFixed(1) + 'k pps' : val + ' pps';
-   };
- 
-   const fmtMBPS = (mbps: string | number | undefined) => {
-     if (!mbps) return '—';
-     if (typeof mbps === 'string' && (mbps.includes('Gbps') || mbps.includes('Mbps'))) return mbps;
-     const val = Number(mbps);
-     return val > 1000 ? (val / 1000).toFixed(1) + ' Gbps' : val + ' Mbps';
-   };
- 
-   return (
-     <Tooltip>
-       <TooltipTrigger asChild>
-         {children}
-       </TooltipTrigger>
-       <TooltipContent 
-         side="top" 
-         className="p-0 border-none bg-transparent shadow-none"
-         style={{ width: 240 }}
-       >
-          <div 
-            className="bg-bg-secondary rounded-xl overflow-hidden border border-border shadow-xl backdrop-blur-md"
-          >
-            <div className="p-4 border-b border-border bg-bg-primary/20 relative overflow-hidden">
-              <div className="flex justify-between items-center mb-1 relative z-10">
-                <span className="text-[10px] font-bold uppercase tracking-widest text-text-secondary opacity-60">Proteção Ativa</span>
-                <span className="text-lg">{info.icon}</span>
-              </div>
-              <h4 className="text-base font-bold text-text-primary font-mono relative z-10 tracking-tight">{data.ip}</h4>
-            </div>
-            
-            <div className="p-4 space-y-3 relative z-10">
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] text-text-secondary font-bold uppercase tracking-wider">Tipo</span>
-                <span className="px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider" style={{ backgroundColor: `color-mix(in srgb, ${info.color}, transparent 90%)`, color: info.color }}>{info.label}</span>
-              </div>
-              
-              {data.community && (
-                <div className="flex justify-between items-center">
-                  <span className="text-[10px] text-text-secondary font-bold uppercase tracking-wider">Community</span>
-                  <span className="text-[10px] font-bold font-mono text-text-primary opacity-80">{data.community}</span>
-                </div>
-              )}
-  
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] text-text-secondary font-bold uppercase tracking-wider">Desde</span>
-                <span className="text-[10px] font-bold text-text-primary opacity-70">{data.desde || '—'}</span>
-              </div>
-  
-              <div className="flex justify-between items-center">
-                <span className="text-[10px] text-text-secondary font-bold uppercase tracking-wider">Fonte</span>
-                <span className="text-[10px] font-bold text-primary uppercase tracking-wider bg-primary/5 px-1.5 py-0.5 rounded border border-primary/10">{data.fonte || 'Manual'}</span>
-              </div>
-  
-              <div className="pt-3 mt-1 border-t border-border grid grid-cols-2 gap-3">
-                <div className="bg-bg-primary/30 p-2 rounded-lg border border-border/50">
-                  <span className="text-[9px] text-text-secondary font-bold uppercase tracking-widest block mb-1 opacity-60">PPS</span>
-                  <span className="text-xs font-bold text-text-primary tracking-tight">{fmtPPS(data.pps)}</span>
-                </div>
-                <div className="bg-bg-primary/30 p-2 rounded-lg border border-border/50">
-                  <span className="text-[9px] text-text-secondary font-bold uppercase tracking-widest block mb-1 opacity-60">VOLUME</span>
-                  <span className="text-xs font-bold text-text-primary tracking-tight">{fmtMBPS(data.mbps)}</span>
-                </div>
-              </div>
-            </div>
+  const item = {
+    ip: data.ip,
+    type: data.type || data.tipo || 'blackhole',
+    since: data.since || data.desde || '—',
+    pps: data.pps || 0,
+    mbps: data.mbps || 0,
+    source: data.source || data.fonte || 'manual',
+    reason: data.reason || '',
+    direction: data.direction || 'incoming',
+    community: data.community || '65000:666'
+  };
+
+  return (
+    <Tooltip>
+      <TooltipTrigger asChild>
+        {children}
+      </TooltipTrigger>
+      <TooltipContent 
+        side="top" 
+        className="p-4 bg-bg-secondary border border-border rounded-xl shadow-xl w-[240px] text-xs space-y-2 text-text-primary"
+      >
+        <div className="font-bold border-b border-border pb-1 mb-1">IP: {item.ip}</div>
+        <div className="flex justify-between">
+          <span className="text-text-secondary">Tipo:</span>
+          <span>Blackhole /32</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-text-secondary">Community:</span>
+          <span className="font-mono">{item.community}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-text-secondary">Início:</span>
+          <span>{item.since}</span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-text-secondary">Fonte:</span>
+          <span>
+            {item.source === 'automatic'
+              ? 'Automático (detector)'
+              : `Manual (${item.reason || 'operador'})`}
+          </span>
+        </div>
+        <div className="flex justify-between">
+          <span className="text-text-secondary">Direção:</span>
+          <span>
+            {item.direction === 'incoming'
+              ? '↓ Entrada'
+              : '↑ Saída'}
+          </span>
+        </div>
+
+        {/* Mostrar pico só se tiver valor */}
+        {item.pps > 0 && (
+          <div style={{
+            marginTop: 8,
+            padding: '6px 8px',
+            background: '#3b1212',
+            borderRadius: 4,
+            color: '#ef4444',
+            fontSize: 11
+          }}>
+            Pico no ban:
+            {item.pps > 1000
+              ? ` ${(item.pps/1000).toFixed(1)}k pps`
+              : ` ${item.pps} pps`}
+            {item.mbps > 0
+              ? ` · ${item.mbps} Mbps`
+              : ''}
           </div>
-       </TooltipContent>
-     </Tooltip>
-   );
+        )}
+
+        {/* Se pps = 0 e source = manual */}
+        {item.pps === 0 &&
+         item.source === 'manual' && (
+          <div style={{
+            marginTop: 8,
+            fontSize: 11,
+            color: '#8892a4',
+            fontStyle: 'italic'
+          }}>
+            Bloqueio aplicado manualmente
+          </div>
+        )}
+      </TooltipContent>
+    </Tooltip>
+  );
  }
