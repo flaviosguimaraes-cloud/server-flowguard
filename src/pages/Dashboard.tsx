@@ -2,10 +2,13 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { useTranslation } from '../hooks/useTranslation';
- import { 
-   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-   BarChart, Bar, Cell, AreaChart, Area
- } from 'recharts';
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+  BarChart, Bar, Cell, AreaChart, Area
+} from 'recharts';
+import { 
+  Tooltip, TooltipTrigger, TooltipContent, TooltipProvider 
+} from '../components/ui/tooltip';
 import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon, Settings2, Info } from 'lucide-react';
 import { Skeleton } from '../components/Skeleton';
 import Flag from '../components/Flag';
@@ -593,7 +596,7 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#2a2d3e" vertical={false} />
                 <XAxis dataKey="time" hide />
                 <YAxis tick={{fontSize:10,fill:'#8892a4'}} tickLine={false} axisLine={false} tickFormatter={v => `${v}M`} />
-                <Tooltip
+                <RechartsTooltip
                   contentStyle={{ background:'#1e2130', border:'1px solid #2a2d3e', borderRadius:6, fontSize:11 }}
                   formatter={(v: number, name: string) => {
                     const ifName = name.replace('_in', '').replace('_out', '');
@@ -640,7 +643,7 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#2a2d3e" vertical={false} />
                 <XAxis dataKey="time" tick={{fontSize:10,fill:'#8892a4'}} tickLine={false} axisLine={false} interval={4} />
                 <YAxis tick={{fontSize:10,fill:'#8892a4'}} tickLine={false} axisLine={false} tickFormatter={v => `${v}M`} />
-                <Tooltip
+                <RechartsTooltip
                   contentStyle={{ background:'#1e2130', border:'1px solid #2a2d3e', borderRadius:6, fontSize:11 }}
                   formatter={(v: number, name: string) => {
                     const ifName = name.replace('_out', '');
@@ -859,8 +862,9 @@ export default function Dashboard() {
          </div>
       </div>
 
-       {/* Active Connections Table */}
-      <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
+        {/* Active Connections Table */}
+      <TooltipProvider>
+       <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-200 dark:border-border flex flex-wrap justify-between items-center bg-gray-50/50 dark:bg-bg-secondary/30 gap-4">
            <div className="flex flex-col gap-1">
              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('active_connections')}</h2>
@@ -929,7 +933,7 @@ export default function Dashboard() {
                 <th className="px-6 py-3 border-b border-border">Serviço</th>
                 <th className="px-6 py-3 border-b border-border">Empresa</th>
                 <th className="px-6 py-3 border-b border-border">{t('protocol')}</th>
-                <th className="px-6 py-3 border-b border-border text-right">{t('bytes')}</th>
+                <th className="px-6 py-3 border-b border-border text-right">VOLUME (2 min)</th>
                 <th className="px-6 py-3 border-b border-border text-right">{t('pps')}</th>
               </tr>
             </thead>
@@ -987,7 +991,16 @@ export default function Dashboard() {
                         {protoName(item.proto)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right font-bold text-gray-900 dark:text-gray-100">{fmtBytes(item.bytes)}</td>
+                    <td className="px-6 py-4 text-right font-bold text-gray-900 dark:text-gray-100">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">{fmtBytes(item.bytes)}</span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Volume transferido nos últimos 2 minutos (estimado com sampling 1:1000)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </td>
                     <td className="px-6 py-4 text-right text-text-secondary">{calcPPS(item.packets)}</td>
                   </tr>
                 );
@@ -1012,6 +1025,7 @@ export default function Dashboard() {
           Última atualização: {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR') : '—'}
         </p>
       </div>
+      </TooltipProvider>
     </div>
   );
 }
