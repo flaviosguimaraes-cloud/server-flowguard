@@ -50,11 +50,19 @@
      }
    };
  
-   const logout = () => {
-     localStorage.clear();
-     setUser(null);
-     navigate({ to: '/login' });
-   };
+    const logout = () => {
+      // Apagar só dados de sessão
+      localStorage.removeItem('access_token');
+      localStorage.removeItem('refresh_token');
+      localStorage.removeItem('username');
+      localStorage.removeItem('role');
+      
+      // NÃO apagar preferências do usuário como:
+      // theme, language, fg_collector, fg_ifaces, fg_traffic_source
+      
+      setUser(null);
+      navigate({ to: '/login' });
+    };
  
    const isAdmin = () => user?.role === 'admin';
  
