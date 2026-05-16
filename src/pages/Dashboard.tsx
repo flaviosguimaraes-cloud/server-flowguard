@@ -136,7 +136,47 @@ export default function Dashboard() {
     enabled: !!selectedCollector,
   });
 
-  const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
+   const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
+   const [period, setPeriod] = useState<'realtime' | '5m' | '15m'>('realtime');
+ 
+   const { data: metricsHistory } = useQuery({
+     queryKey: ['iface-metrics', selectedCollector, period],
+     queryFn: async () => {
+       if (period === 'realtime') return null;
+       const mins = period === '5m' ? 5 : 15;
+       const r = await api.get(`/api/collectors/${selectedCollector}/metrics?minutes=${mins}`);
+       return r.data;
+     },
+     enabled: period !== 'realtime' && !!selectedCollector,
+     refetchInterval: 30000,
+   });
+ 
+   // MELHORIA 1 — Gráfico de interface carrega imediatamente
+   useEffect(() => {
+     if (!interfaces?.interfaces?.length || period !== 'realtime') return;
+ 
+     setHistory(prev => {
+       const hasData = Object.values(prev).some(arr => arr.length > 0);
+       if (hasData) return prev;
+ 
+       const now = new Date();
+       const next: typeof prev = {};
+ 
+       interfaces.interfaces.forEach((iface: any) => {
+         const name = iface.display_name || iface.if_name;
+         if (!name) return;
+ 
+         next[name] = Array.from({length: 10}, (_, i) => ({
+           time: new Date(now.getTime() - (9-i) * 30000).toLocaleTimeString('pt-BR', {
+             hour: '2-digit', minute: '2-digit', second: '2-digit'
+           }),
+           in_bps: iface.in_bps || 0,
+           out_bps: iface.out_bps || 0,
+         }));
+       });
+       return next;
+     });
+   }, [interfaces, period]);
 
   useEffect(() => {
     if (selectedCollector) {
@@ -148,8 +188,8 @@ export default function Dashboard() {
     localStorage.setItem('fg_ifaces', JSON.stringify(selectedIfaces));
   }, [selectedIfaces]);
 
-  useEffect(() => {
-    if (!interfaces?.interfaces) return;
+   useEffect(() => {
+     if (!interfaces?.interfaces || period !== 'realtime') return;
 
     const now = new Date().toLocaleTimeString('pt-BR', {
       hour: '2-digit', minute: '2-digit', second: '2-digit'
