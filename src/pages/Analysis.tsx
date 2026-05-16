@@ -86,6 +86,28 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     const [sortField, setSortField] = useState('bytes');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [groupByIP, setGroupByIP] = useState(false);
+    const [hoveredMitIP, setHoveredMitIP] = useState<string | null>(null);
+
+    const SortHeader = ({ field, label, align = 'left' }: { field: string, label: string, align?: 'left' | 'right' | 'center' }) => (
+      <th 
+        className={clsx("px-6 py-4 border-b border-border cursor-pointer hover:bg-bg-secondary transition-colors", align === 'right' && 'text-right', align === 'center' && 'text-center')}
+        onClick={() => {
+          if (sortField === field) {
+            setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+          } else {
+            setSortField(field);
+            setSortOrder('desc');
+          }
+        }}
+      >
+        <div className={clsx("flex items-center gap-1", align === 'right' && 'justify-end')}>
+          {label}
+          {sortField === field && (
+            sortOrder === 'desc' ? <ArrowDown size={12} /> : <ArrowUp size={12} />
+          )}
+        </div>
+      </th>
+    );
 
     const periods = [
       { label: '5 min', value: 5 },
