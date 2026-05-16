@@ -142,16 +142,18 @@ export default function Dashboard() {
     }
   }, [interfaces, trafficSource, selectedIfaces.length]);
 
-   const { data: connections } = useQuery({
-     queryKey: ['connections', tick],
-     queryFn: async () => {
-       const r = await api.get('/api/flows/connections?limit=10');
-       console.log('connections raw:', r.data);
-       return r.data;
-     },
-     refetchInterval: 30000,
-     staleTime: 0,
-   });
+  const { data: connections, dataUpdatedAt } = useQuery({
+    queryKey: ['connections'],
+    queryFn: async () => {
+      const r = await api.get('/api/flows/connections?limit=10');
+      return r.data;
+    },
+    refetchInterval: REFETCH_INTERVAL,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+  });
 
    console.log('protocols:', protocols);
    console.log('countries:', countries);
