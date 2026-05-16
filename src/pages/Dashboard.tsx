@@ -580,12 +580,15 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height={140}>
               <AreaChart data={chartData} margin={{top:10,right:10,left:30,bottom:0}}>
                 <defs>
-                  {selectedIfaces.map((name, idx) => (
-                    <linearGradient key={`rx_${name}`} id={`grad_rx_${idx}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={COLORS[idx%8]} stopOpacity={0.6}/>
-                      <stop offset="95%" stopColor={COLORS[idx%8]} stopOpacity={0.1}/>
-                    </linearGradient>
-                  ))}
+                  {selectedIfaces.map((name, idx) => {
+                    const color = RX_COLORS[idx % RX_COLORS.length];
+                    return (
+                      <linearGradient key={`rx_${name}`} id={`grad_rx_${idx}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={color} stopOpacity={0.6}/>
+                        <stop offset="95%" stopColor={color} stopOpacity={0.1}/>
+                      </linearGradient>
+                    );
+                  })}
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2a2d3e" vertical={false} />
                 <XAxis dataKey="time" hide />
@@ -598,19 +601,22 @@ export default function Dashboard() {
                     return [`${v} Mbps ↓`, ifName];
                   }}
                 />
-                {selectedIfaces.map((name, idx) => (
-                  <Area 
-                    key={`${name}_in`} 
-                    type="monotone" 
-                    dataKey={`${name}_in`} 
-                    stackId="rx" 
-                    stroke={COLORS[idx%8]} 
-                    strokeWidth={1.5} 
-                    fill={`url(#grad_rx_${idx})`} 
-                    name={`${name}_in`} 
-                    isAnimationActive={false}
-                  />
-                ))}
+                {selectedIfaces.map((name, idx) => {
+                  const color = RX_COLORS[idx % RX_COLORS.length];
+                  return (
+                    <Area 
+                      key={`${name}_in`} 
+                      type="monotone" 
+                      dataKey={`${name}_in`} 
+                      stackId="rx" 
+                      stroke={color} 
+                      strokeWidth={1.5} 
+                      fill={`url(#grad_rx_${idx})`} 
+                      name="↓ RX" 
+                      isAnimationActive={false}
+                    />
+                  );
+                })}
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -623,12 +629,15 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height={140}>
               <AreaChart data={chartData} margin={{top:0,right:10,left:30,bottom:10}}>
                 <defs>
-                  {selectedIfaces.map((name, idx) => (
-                    <linearGradient key={`tx_${name}`} id={`grad_tx_${idx}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={COLORS[idx%8]} stopOpacity={0.6}/>
-                      <stop offset="95%" stopColor={COLORS[idx%8]} stopOpacity={0.1}/>
-                    </linearGradient>
-                  ))}
+                  {selectedIfaces.map((name, idx) => {
+                    const color = TX_COLORS[idx % TX_COLORS.length];
+                    return (
+                      <linearGradient key={`tx_${name}`} id={`grad_tx_${idx}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={color} stopOpacity={0.6}/>
+                        <stop offset="95%" stopColor={color} stopOpacity={0.1}/>
+                      </linearGradient>
+                    );
+                  })}
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2a2d3e" vertical={false} />
                 <XAxis dataKey="time" tick={{fontSize:10,fill:'#8892a4'}} tickLine={false} axisLine={false} interval={4} />
@@ -641,19 +650,22 @@ export default function Dashboard() {
                     return [`${v} Mbps ↑`, ifName];
                   }}
                 />
-                {selectedIfaces.map((name, idx) => (
-                  <Area 
-                    key={`${name}_out`} 
-                    type="monotone" 
-                    dataKey={`${name}_out`} 
-                    stackId="tx" 
-                    stroke={COLORS[idx%8]} 
-                    strokeWidth={1.5} 
-                    fill={`url(#grad_tx_${idx})`} 
-                    name={`${name}_out`}
-                    isAnimationActive={false}
-                  />
-                ))}
+                {selectedIfaces.map((name, idx) => {
+                  const color = TX_COLORS[idx % TX_COLORS.length];
+                  return (
+                    <Area 
+                      key={`${name}_out`} 
+                      type="monotone" 
+                      dataKey={`${name}_out`} 
+                      stackId="tx" 
+                      stroke={color} 
+                      strokeWidth={1.5} 
+                      fill={`url(#grad_tx_${idx})`} 
+                      name="↑ TX"
+                      isAnimationActive={false}
+                    />
+                  );
+                })}
               </AreaChart>
             </ResponsiveContainer>
           </div>
