@@ -21,6 +21,7 @@
    const [activeTab, setActiveTab] = useState<'blackhole' | 'flowspec' | 'routes'>('blackhole');
    const [isMitigationOpen, setIsMitigationOpen] = useState(false);
    const [isFlowSpecOpen, setIsFlowSpecOpen] = useState(false);
+   const [hoveredIP, setHoveredIP] = useState<string | null>(null);
  
     const { data: blackholes, isLoading: bhLoading } = useQuery({
       queryKey: ['mitigation-active'],
@@ -144,7 +145,7 @@
                <thead>
                  <tr className="bg-gray-50 dark:bg-bg-secondary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
                    <th className="px-6 py-4 border-b border-border">IP em Blackhole</th>
-                   <th className="px-6 py-4 border-b border-border">Desde</th>
+                    <th className="px-6 py-4 border-b border-border">INÍCIO</th>
                    <th className="px-6 py-4 border-b border-border">Volume</th>
                    <th className="px-6 py-4 border-b border-border">Tipo</th>
                    {isAdmin && <th className="px-6 py-4 border-b border-border text-center">Ações</th>}
@@ -160,20 +161,63 @@
                  ) : (
                    (blackholes.items || []).map((item: any, i: number) => (
                      <tr key={i} className="hover:bg-danger/5 transition-colors group">
-                        <td className="px-6 py-4 font-mono font-bold text-gray-900 dark:text-gray-100">
-                          <MitigationTooltip data={{
-                            ip: item.ip,
-                            tipo: 'Blackhole /32',
-                            desde: item.since,
-                            pps: item.pps,
-                            mbps: item.mbps,
-                            fonte: item.source || 'Manual (admin)'
-                          }}>
-                            <span className="flex items-center gap-2 cursor-help">
-                              <div className="w-2 h-2 rounded-full bg-danger animate-pulse" />
-                              {item.ip}
-                            </span>
-                          </MitigationTooltip>
+                        <td className="px-6 py-4 font-mono font-bold text-gray-900 dark:text-gray-100 relative">
+                          <div 
+                            onMouseEnter={() => setHoveredIP(item.ip)}
+                            onMouseLeave={() => setHoveredIP(null)}
+                            className="flex items-center gap-2 cursor-help"
+                          >
+                            <div className="w-2 h-2 rounded-full bg-danger animate-pulse" />
+                            {item.ip}
+                            
+                            {hoveredIP === item.ip && (
+                              <div style={{
+                                position: 'absolute',
+                                zIndex: 100,
+                                background: '#1e2130',
+                                border: '1px solid #ef4444',
+                                borderRadius: 8,
+                                padding: '12px',
+                                width: 220,
+                                boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+                                top: '100%',
+                                left: 0,
+                                marginTop: 4,
+                              }}>
+                                <div style={{fontSize:12, color:'#8892a4', marginBottom:8}}>
+                                  Detalhes da Mitigação
+                                </div>
+                                <div style={{fontSize:13, color:'#e2e8f0', fontFamily:'monospace', marginBottom:4}}>
+                                  {item.ip}
+                                </div>
+                                <div style={{fontSize:11, color:'#8892a4'}}>
+                                  Tipo: {item.type || 'Blackhole /32'}
+                                </div>
+                                <div style={{fontSize:11, color:'#8892a4'}}>
+                                  Community: 65000:666
+                                </div>
+                                <div style={{fontSize:11, color:'#8892a4'}}>
+                                  Início: {item.since}
+                                </div>
+                                <div style={{fontSize:11, color:'#8892a4'}}>
+                                  Fonte: {item.source === 'automatic' ? 'Automático (detector)' : 'Manual (operador)'}
+                                </div>
+                                {item.pps > 0 && (
+                                  <div style={{
+                                    marginTop:8,
+                                    padding:'6px 8px',
+                                    background:'#3b1212',
+                                    borderRadius:4,
+                                    fontSize:11,
+                                    color:'#ef4444'
+                                  }}>
+                                    Pico: {item.pps > 1000 ? (item.pps/1000).toFixed(1)+'k' : item.pps} pps 
+                                    · {item.mbps} Mbps
+                                  </div>
+                                )}
+                              </div>
+                            )}
+                          </div>
                         </td>
                        <td className="px-6 py-4 text-text-secondary whitespace-nowrap"><Clock size={14} className="inline mr-1" /> {item.since || 'Recente'}</td>
                        <td className="px-6 py-4">

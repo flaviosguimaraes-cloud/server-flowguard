@@ -3,8 +3,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
  import api from '../services/api';
  import { useTranslation } from '../hooks/useTranslation';
   import { 
-    Search, Filter, X, Shield, Globe, Users, 
-    ArrowRight, AlertCircle, Download, MoreHorizontal
+    Search, Filter, X, Shield, Globe, Users, Activity,
+    ArrowRight, AlertCircle, Download, MoreHorizontal,
+    ArrowUp, ArrowDown, LayoutGrid, List
   } from 'lucide-react';
   import Flag from '../components/Flag';
  import { Skeleton } from '../components/Skeleton';
@@ -20,6 +21,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
     const [proto, setProto] = useState('Todos');
     const [country, setCountry] = useState('Todos');
     const [minutes, setMinutes] = useState(5);
+    const [sortField, setSortField] = useState('bytes');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [groupByIP, setGroupByIP] = useState(false);
 
     const periods = [
       { label: '5 min', value: 5 },
@@ -63,9 +67,75 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
       refetchInterval: 30000,
     });
  
-   const connectionItems = useMemo(() => {
-     return Array.isArray(connections) ? connections : (connections?.items || connections?.data || []);
-   }, [connections]);
+    const connectionItems = useMemo(() => {
+      let items = Array.isArray(connections) ? [...connections] : [...(connections?.items || connections?.data || [])];
+      
+      // Advanced Search (Frontend Filtering)
+      if (search) {
+        const s = search.toLowerCase();
+        items = items.filter((i: any) => {
+          const srcPortStr = String(i.src_port);
+          const dstPortStr = String(i.dst_port);
+          const service = getService(i.dst_port).toLowerCase();
+          return (
+            i.src_addr?.toLowerCase().includes(s) ||
+            i.dst_addr?.toLowerCase().includes(s) ||
+            i.src_org?.toLowerCase().includes(s) ||
+            i.dst_org?.toLowerCase().includes(s) ||
+            i.src_country?.toLowerCase() === s ||
+            i.dst_country?.toLowerCase() === s ||
+            srcPortStr === s ||
+            dstPortStr === s ||
+            service.includes(s) ||
+            (s.startsWith('as') && (i.src_org?.toLowerCase().includes(s) || i.dst_org?.toLowerCase().includes(s)))
+          );
+        });
+      }
+
+      // Group by IP
+      if (groupByIP) {
+        const groups: Record<string, any> = {};
+        items.forEach((item: any) => {
+          const ip = shouldFlip(item) ? item.dst_addr : item.src_addr;
+          if (!groups[ip]) {
+            groups[ip] = {
+              ...item,
+              src_addr: ip,
+              dst_addr: 'Múltiplos',
+              dst_port: 0,
+              bytes: 0,
+              packets: 0,
+              count: 0
+            };
+          }
+          groups[ip].bytes += item.bytes || 0;
+          groups[ip].packets += item.packets || 0;
+          groups[ip].count += 1;
+        });
+        items = Object.values(groups);
+      }
+
+      // Sort
+      items.sort((a: any, b: any) => {
+        let valA = a[sortField];
+        let valB = b[sortField];
+        
+        if (sortField === 'pps') {
+          valA = a.packets || 0;
+          valB = b.packets || 0;
+        }
+
+        if (typeof valA === 'string') {
+          return sortOrder === 'asc' 
+            ? valA.localeCompare(valB)
+            : valB.localeCompare(valA);
+        }
+        
+        return sortOrder === 'asc' ? valA - valB : valB - valA;
+      });
+
+      return items;
+    }, [connections, search, groupByIP, sortField, sortOrder]);
  
    const metrics = useMemo(() => {
      const items = connectionItems;
@@ -120,13 +190,81 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
     queryClient.invalidateQueries({ queryKey: ['detection-stats'] });
   }, [queryClient]);
 
+  const exportCSV = () => {
+    const headers = ["IP Origem", "IP Destino", "Serviço", "Empresa", "Protocolo", "Bytes", "PPS", "Última vez visto"];
+    const rows = connectionItems.map((i: any) => [
+      i.src_addr,
+      i.dst_addr,
+      getService(i.dst_port),
+      i.dst_org || '',
+      protoName(i.proto),
+      i.bytes,
+      Math.round((i.packets || 0) / 1800),
+      i.time_received || ''
+    ]);
+    
+    const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
+    const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement("a");
+    const url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", `analise-conexoes-${new Date().toISOString()}.csv`);
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  };
+
+  const SortHeader = ({ field, label, align = 'left' }: { field: string, label: string, align?: 'left' | 'right' | 'center' }) => (
+    <th 
+      className={clsx("px-6 py-4 border-b border-border cursor-pointer hover:bg-bg-secondary transition-colors", align === 'right' && 'text-right', align === 'center' && 'text-center')}
+      onClick={() => {
+        if (sortField === field) {
+          setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+        } else {
+          setSortField(field);
+          setSortOrder('desc');
+        }
+      }}
+    >
+      <div className={clsx("flex items-center gap-1", align === 'right' && 'justify-end')}>
+        {label}
+        {sortField === field && (
+          sortOrder === 'desc' ? <ArrowDown size={12} /> : <ArrowUp size={12} />
+        )}
+      </div>
+    </th>
+  );
+
+  const PPSIntensity = ({ pps }: { pps: number }) => {
+    const color = pps < 10000 ? '#22c55e' : pps < 50000 ? '#f59e0b' : '#ef4444';
+    return (
+      <div className="flex items-center gap-2 justify-end">
+        <span className="text-right w-12 font-mono text-[11px]">{pps > 1000 ? (pps/1000).toFixed(1)+'k' : pps}</span>
+        <div className="w-8 h-1 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden">
+          <div 
+            className="h-full transition-all duration-500" 
+            style={{ 
+              width: `${Math.min((pps/100000)*100, 100)}%`,
+              backgroundColor: color
+            }} 
+          />
+        </div>
+      </div>
+    );
+  };
+
    return (
      <div className="space-y-6 animate-in fade-in duration-500">
        <div className="flex justify-between items-center">
          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('analysis')}</h1>
          <div className="flex gap-2">
-           <button className="p-2 bg-white dark:bg-[#1e2130] border border-gray-200 dark:border-[#2a2d3e] rounded-lg text-text-secondary hover:text-text-primary transition-colors shadow-sm">
+            <button 
+              onClick={exportCSV}
+              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1e2130] border border-gray-200 dark:border-[#2a2d3e] rounded-lg text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a2d3e] transition-all shadow-sm"
+            >
              <Download size={20} />
+              Exportar CSV
            </button>
          </div>
        </div>
@@ -204,13 +342,28 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
             </div>
          </div>
          
-         <div className="flex justify-between items-center pt-2">
-           <button 
-             onClick={() => { setSearch(''); setProto('Todos'); setCountry('Todos'); }}
-             className="text-xs font-bold text-text-secondary hover:text-accent flex items-center gap-1 transition-colors"
-           >
-             <X size={14} /> Limpar filtros
-           </button>
+          <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-[#2a2d3e]">
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setGroupByIP(!groupByIP)}
+                className={clsx(
+                  "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                  groupByIP 
+                    ? "bg-accent text-white shadow-md" 
+                    : "bg-gray-100 dark:bg-[#2a2d3e] text-text-secondary hover:text-text-primary"
+                )}
+              >
+                {groupByIP ? <LayoutGrid size={14} /> : <List size={14} />}
+                Agrupar por IP
+              </button>
+
+              <button 
+                onClick={() => { setSearch(''); setProto('Todos'); setCountry('Todos'); }}
+                className="text-xs font-bold text-text-secondary hover:text-accent flex items-center gap-1 transition-colors"
+              >
+                <X size={14} /> Limpar filtros
+              </button>
+            </div>
             <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
               {connectionItems.length} conexões nos últimos {minutes < 60 ? `${minutes} minutos` : `${minutes/60} hora(s)`}
             </p>
@@ -221,18 +374,19 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
        <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
          <div className="overflow-x-auto">
            <table className="w-full text-left border-collapse min-w-[1000px]">
-             <thead>
-               <tr className="bg-gray-50 dark:bg-bg-secondary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-                 <th className="px-6 py-4 border-b border-border">{t('source_ip')}</th>
-                 <th className="px-6 py-4 border-b border-border">{t('dest_ip')}</th>
-                 <th className="px-6 py-4 border-b border-border">Serviço</th>
-                 <th className="px-6 py-4 border-b border-border">Empresa</th>
-                 <th className="px-6 py-4 border-b border-border">{t('protocol')}</th>
-                 <th className="px-6 py-4 border-b border-border text-right">{t('bytes')}</th>
-                 <th className="px-6 py-4 border-b border-border text-right">{t('pps')}</th>
-                 {isAdmin && <th className="px-6 py-4 border-b border-border text-center">Ação</th>}
-               </tr>
-             </thead>
+              <thead>
+                <tr className="bg-gray-50 dark:bg-bg-secondary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+                  <SortHeader field="src_addr" label={t('source_ip')} />
+                  <SortHeader field="dst_addr" label={t('dest_ip')} />
+                  <th className="px-6 py-4 border-b border-border">Serviço</th>
+                  <th className="px-6 py-4 border-b border-border">Empresa</th>
+                  <th className="px-6 py-4 border-b border-border">{t('protocol')}</th>
+                  <SortHeader field="bytes" label={t('bytes')} align="right" />
+                  <SortHeader field="pps" label={t('pps')} align="right" />
+                  <th className="px-6 py-4 border-b border-border text-center">Última vez visto</th>
+                  {isAdmin && <th className="px-6 py-4 border-b border-border text-center">Ação</th>}
+                </tr>
+              </thead>
              <tbody className="text-sm divide-y divide-border/50">
                {isLoading ? (
                  Array.from({ length: 5 }).map((_, i) => (
@@ -260,8 +414,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
                             <Flag code={srcCountry} />
-                            <span className="font-medium text-gray-900 dark:text-gray-100">{src}</span>
-                            <span className="text-text-secondary text-xs">:{srcPort}</span>
+                             <span className="font-medium text-gray-900 dark:text-gray-100">{src}</span>
+                             {!groupByIP && <span className="text-text-secondary text-xs">:{srcPort}</span>}
+                             {groupByIP && <span className="ml-2 px-1.5 py-0.5 bg-accent/10 text-accent text-[9px] rounded-full">{item.count} conexões</span>}
                           </div>
                         </td>
                         <td className="px-6 py-4">
@@ -290,8 +445,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
                            {protoName(item.proto)}
                          </span>
                        </td>
-                       <td className="px-6 py-4 text-right font-bold text-gray-900 dark:text-gray-100">{fmtBytes(item.bytes)}</td>
-                       <td className="px-6 py-4 text-right text-text-secondary">{calcPPS(item.packets)}</td>
+                         <td className="px-6 py-4 text-right font-bold text-gray-900 dark:text-gray-100">{fmtBytes(item.bytes)}</td>
+                         <td className="px-6 py-4 text-right text-text-secondary">
+                           <PPSIntensity pps={Math.round((item.packets || 0) / (minutes * 60))} />
+                         </td>
+                         <td className="px-6 py-4 text-center text-[10px] text-text-secondary font-mono">
+                           {item.time_received ? new Date(item.time_received).toLocaleTimeString('pt-BR') : '—'}
+                         </td>
                        {isAdmin && (
                          <td className="px-6 py-4 text-center">
                            <button 
@@ -340,4 +500,3 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
    );
  }
  
- import { Activity } from 'lucide-react';
