@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
  import api from '../services/api';
  import { useTranslation } from '../hooks/useTranslation';
@@ -10,7 +10,41 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
   import Flag from '../components/Flag';
  import { Skeleton } from '../components/Skeleton';
  import { clsx } from 'clsx';
- import MitigationModal from '../components/MitigationModal';
+import MitigationModal from '../components/MitigationModal';
+
+function MetricCard({ title, value, icon }: any) {
+  return (
+    <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm flex flex-col justify-between transition-all hover:border-accent/50 group">
+      <div className="flex justify-between items-start">
+        <div className="p-2.5 bg-gray-50 dark:bg-bg-secondary rounded-xl group-hover:bg-accent/10 transition-colors">
+          {icon}
+        </div>
+      </div>
+      <div className="mt-4">
+        <p className="text-gray-500 dark:text-text-secondary text-[11px] font-bold uppercase tracking-wider">{title}</p>
+        <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mt-1">{value}</h3>
+      </div>
+    </div>
+  );
+}
+
+const PPSIntensity = ({ pps }: { pps: number }) => {
+  const color = pps < 10000 ? '#22c55e' : pps < 50000 ? '#f59e0b' : '#ef4444';
+  return (
+    <div className="flex items-center gap-2 justify-end">
+      <span className="text-right w-12 font-mono text-[11px]">{pps > 1000 ? (pps/1000).toFixed(1)+'k' : pps}</span>
+      <div className="w-8 h-1 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden">
+        <div 
+          className="h-full transition-all duration-500" 
+          style={{ 
+            width: `${Math.min((pps/100000)*100, 100)}%`,
+            backgroundColor: color
+          }} 
+        />
+      </div>
+    </div>
+  );
+};
  
  export default function Analysis() {
    const { t } = useTranslation();
@@ -448,19 +482,4 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
    );
  }
  
- function MetricCard({ title, value, icon }: any) {
-   return (
-     <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm flex flex-col justify-between transition-all hover:border-accent/50 group">
-       <div className="flex justify-between items-start">
-         <div className="p-2.5 bg-gray-50 dark:bg-bg-secondary rounded-xl group-hover:bg-accent/10 transition-colors">
-           {icon}
-         </div>
-       </div>
-       <div className="mt-4">
-         <p className="text-gray-500 dark:text-text-secondary text-[11px] font-bold uppercase tracking-wider">{title}</p>
-         <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mt-1">{value}</h3>
-       </div>
-     </div>
-   );
- }
  
