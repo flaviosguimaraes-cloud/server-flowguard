@@ -153,7 +153,7 @@ export default function Dashboard() {
   const { data: connections, dataUpdatedAt } = useQuery({
     queryKey: ['connections'],
     queryFn: () =>
-      api.get('/api/flows/connections?limit=10')
+      api.get('/api/flows/connections?limit=10&minutes=5')
         .then(r => r.data),
     staleTime: 0,
     gcTime: 0,
@@ -684,7 +684,12 @@ export default function Dashboard() {
        {/* Active Connections Table */}
       <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-200 dark:border-border flex justify-between items-center bg-gray-50/50 dark:bg-bg-secondary/30">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('active_connections')}</h2>
+          <div className="flex flex-col">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('active_connections')}</h2>
+            <span style={{fontSize:11, color:'#8892a4'}}>
+              Últimos 5 minutos · atualizado a cada 30s
+            </span>
+          </div>
           <button className="text-text-secondary hover:text-text-primary transition-colors">
             <MoreVertical size={20} />
           </button>
