@@ -512,11 +512,30 @@ export default function Dashboard() {
           value={detection?.incoming_pps > 1000 ? (detection.incoming_pps / 1000).toFixed(1) + 'k' : detection?.incoming_pps || '0'} 
           icon={<Activity className="text-warning" size={20} />} 
         />
-        <StatCard 
-          title={t('active_mitigations')} 
-          value={detection?.active_mitigations || '0'} 
-          icon={<Shield className="text-danger" size={20} />} 
-        />
+         <StatCard 
+           title={t('active_mitigations')} 
+           value={detection?.active_mitigations || '0'} 
+           icon={<Shield className="text-danger" size={20} />} 
+           subtitle={activeMitigations?.items?.length > 0 && (
+             <div className="flex flex-wrap gap-1 mt-1">
+               {activeMitigations.items.slice(0, 2).map((m: any) => (
+                 <MitigationTooltip key={m.ip} data={{
+                   ip: m.ip,
+                   tipo: 'Blackhole /32',
+                   desde: m.since,
+                   pps: m.pps,
+                   mbps: m.mbps,
+                   fonte: m.source || 'Manual (admin)'
+                 }}>
+                   <span className="text-[9px] font-mono font-bold text-danger border border-danger/20 px-1 rounded bg-danger/5 cursor-help hover:bg-danger/10 transition-colors">
+                     {m.ip}
+                   </span>
+                 </MitigationTooltip>
+               ))}
+               {activeMitigations.items.length > 2 && <span className="text-[9px] text-text-secondary">+{activeMitigations.items.length - 2}</span>}
+             </div>
+           )}
+         />
       </div>
 
       {/* Main Chart: Tráfego da Interface */}
