@@ -80,7 +80,7 @@ function RootComponent() {
     return (
       <>
         <Outlet />
-        <Toaster position="top-right" theme="dark" />
+         <Toaster position="top-right" theme="dark" closeButton />
       </>
     );
   }
@@ -94,7 +94,7 @@ function RootComponent() {
           <Outlet />
         </main>
       </div>
-      <Toaster position="top-right" theme="dark" />
+       <Toaster position="top-right" theme="dark" closeButton />
     </div>
   );
 }
