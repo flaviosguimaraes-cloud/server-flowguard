@@ -862,8 +862,9 @@ export default function Dashboard() {
          </div>
       </div>
 
-       {/* Active Connections Table */}
-      <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
+        {/* Active Connections Table */}
+      <TooltipProvider>
+       <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-200 dark:border-border flex flex-wrap justify-between items-center bg-gray-50/50 dark:bg-bg-secondary/30 gap-4">
            <div className="flex flex-col gap-1">
              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('active_connections')}</h2>
@@ -932,7 +933,7 @@ export default function Dashboard() {
                 <th className="px-6 py-3 border-b border-border">Serviço</th>
                 <th className="px-6 py-3 border-b border-border">Empresa</th>
                 <th className="px-6 py-3 border-b border-border">{t('protocol')}</th>
-                <th className="px-6 py-3 border-b border-border text-right">{t('bytes')}</th>
+                <th className="px-6 py-3 border-b border-border text-right">VOLUME (2 min)</th>
                 <th className="px-6 py-3 border-b border-border text-right">{t('pps')}</th>
               </tr>
             </thead>
@@ -990,7 +991,16 @@ export default function Dashboard() {
                         {protoName(item.proto)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right font-bold text-gray-900 dark:text-gray-100">{fmtBytes(item.bytes)}</td>
+                    <td className="px-6 py-4 text-right font-bold text-gray-900 dark:text-gray-100">
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <span className="cursor-help">{fmtBytes(item.bytes)}</span>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Volume transferido nos últimos 2 minutos (estimado com sampling 1:1000)</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </td>
                     <td className="px-6 py-4 text-right text-text-secondary">{calcPPS(item.packets)}</td>
                   </tr>
                 );
@@ -1052,6 +1062,7 @@ function StatCard({ title, value, unit, icon, trend, tooltip }: any) {
              {tooltip}
            </div>
         </div>
+      </TooltipProvider>
       )}
     </div>
   );
