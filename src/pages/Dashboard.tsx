@@ -1007,7 +1007,7 @@ export default function Dashboard() {
                      if (serviceFilter === 'TCP') return item.proto === 6;
                      return service === serviceFilter;
                    }) || [];
-                  return `${list.length} conexões detectadas · amostragem 1:1000`;
+                  return `${list.length} conexões · Top conexões por volume · últimos 2 min · atualizado a cada 30s`;
                })()}
              </span>
            </div>
