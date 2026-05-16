@@ -770,27 +770,46 @@ export default function Dashboard() {
 
           {/* TX Chart */}
           <div className="relative">
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 origin-left text-[10px] font-black text-text-secondary uppercase tracking-widest pointer-events-none">
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 origin-left text-[9px] font-black text-text-secondary uppercase tracking-widest pointer-events-none opacity-40 ml-1">
               TX (↑)
             </div>
-            <ResponsiveContainer width="100%" height={140}>
-              <AreaChart data={chartData} margin={{top:0,right:10,left:30,bottom:10}}>
+            <ResponsiveContainer width="100%" height={150}>
+              <AreaChart data={chartData} margin={{top:0,right:10,left:35,bottom:10}}>
                 <defs>
                   {selectedIfaces.map((name, idx) => {
                     const color = TX_COLORS[idx % TX_COLORS.length];
                     return (
                       <linearGradient key={`tx_${name}`} id={`grad_tx_${idx}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={color} stopOpacity={0.6}/>
-                        <stop offset="95%" stopColor={color} stopOpacity={0.1}/>
+                        <stop offset="5%" stopColor={color} stopOpacity={isDark ? 0.5 : 0.3}/>
+                        <stop offset="95%" stopColor={color} stopOpacity={0}/>
                       </linearGradient>
                     );
                   })}
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="#2a2d3e" vertical={false} />
-                <XAxis dataKey="time" tick={{fontSize:10,fill:'#8892a4'}} tickLine={false} axisLine={false} interval={4} />
-                <YAxis tick={{fontSize:10,fill:'#8892a4'}} tickLine={false} axisLine={false} tickFormatter={v => `${v}M`} />
+                <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#334155" : "#E2E8F0"} vertical={false} opacity={isDark ? 0.3 : 0.6} />
+                <XAxis 
+                  dataKey="time" 
+                  tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
+                  tickLine={false} 
+                  axisLine={false} 
+                  interval={4} 
+                />
+                <YAxis 
+                  tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
+                  tickLine={false} 
+                  axisLine={false} 
+                  tickFormatter={v => `${v}M`} 
+                />
                 <RechartsTooltip
-                  contentStyle={{ background:'#1e2130', border:'1px solid #2a2d3e', borderRadius:6, fontSize:11 }}
+                  contentStyle={{ 
+                    background: isDark ? '#1E293B' : '#FFFFFF', 
+                    border: `1px solid ${isDark ? '#334155' : '#E2E8F0'}`, 
+                    borderRadius: '12px', 
+                    fontSize: '11px',
+                    boxShadow: isDark ? 'none' : '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                    padding: '8px 12px'
+                  }}
+                  itemStyle={{ fontWeight: 700 }}
                   formatter={(v: number, name: string) => {
                     const ifName = name.replace('_out', '');
                     return [`${v} Mbps ↑ TX`, ifName];
@@ -805,7 +824,7 @@ export default function Dashboard() {
                       dataKey={`${name}_out`} 
                       stackId="tx" 
                       stroke={color} 
-                      strokeWidth={1.5} 
+                      strokeWidth={2} 
                       fill={`url(#grad_tx_${idx})`} 
                       isAnimationActive={false}
                     />
