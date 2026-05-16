@@ -338,28 +338,51 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                </select>
              </div>
 
-            <div className="col-span-1 lg:col-span-1">
-              <label style={{fontSize:11, color:'#8892a4', display:'block', marginBottom:6}}>Período</label>
-              <div style={{display:'flex', gap:4, flexWrap: 'wrap'}}>
-                {periods.map(p => (
-                  <button
-                    key={p.value}
-                    onClick={() => setMinutes(p.value)}
-                    style={{
-                      padding:'5px 8px',
-                      borderRadius:6,
-                      border: `1px solid ${minutes === p.value ? '#3b82f6' : '#2a2d3e'}`,
-                      background: minutes === p.value ? '#1e3a5f' : 'transparent',
-                      color: minutes === p.value ? '#3b82f6' : '#8892a4',
-                      cursor:'pointer', fontSize:11,
-                      fontWeight: minutes === p.value ? 600 : 400
-                    }}>
-                    {p.label}
-                  </button>
-                ))}
-              </div>
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-4 border-t border-border pt-4">
+            <div className="flex items-center gap-2 mr-auto">
+               <span className="text-[11px] font-bold text-text-secondary uppercase tracking-widest opacity-60">Período:</span>
+               <div className="flex gap-1.5 flex-wrap">
+                  {periods.map(p => (
+                    <button
+                      key={p.value}
+                      onClick={() => setMinutes(p.value)}
+                      className={clsx(
+                        "px-2.5 py-1 rounded-md text-[10px] font-bold border transition-all uppercase tracking-wider",
+                        minutes === p.value 
+                          ? "bg-primary/10 border-primary/20 text-primary" 
+                          : "bg-bg-primary/50 border-border text-text-secondary hover:text-text-primary"
+                      )}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+               </div>
             </div>
-         </div>
+
+            <div className="flex items-center gap-3">
+               <button 
+                 onClick={() => setGroupByIP(!groupByIP)}
+                 className={clsx(
+                   "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all uppercase tracking-wider border shadow-sm",
+                   groupByIP 
+                     ? "bg-primary border-primary text-white" 
+                     : "bg-bg-primary/50 border-border text-text-secondary hover:text-text-primary"
+                 )}
+               >
+                 {groupByIP ? <LayoutGrid size={13} /> : <List size={13} />}
+                 Agrupar por IP
+               </button>
+
+               <button 
+                 onClick={() => { setSearch(''); setProto('Todos'); setCountry('Todos'); }}
+                 className="text-[11px] font-bold text-text-secondary hover:text-primary flex items-center gap-1.5 transition-colors uppercase tracking-wider"
+               >
+                 <X size={14} /> Limpar
+               </button>
+            </div>
+          </div>
          
           <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-[#2a2d3e]">
             <div className="flex items-center gap-4">
