@@ -25,36 +25,38 @@ const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'
 function StatCard({ title, value, unit, icon, trend, tooltip, subtitle }: any) {
   return (
     <div 
-      className="bg-bg-secondary p-6 rounded-2xl border border-border shadow-sm shadow-black/5 flex flex-col justify-between min-h-[140px] transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 group relative"
+      className="bg-bg-secondary p-6 rounded-[24px] border border-border shadow-2xl shadow-black/20 flex flex-col justify-between min-h-[160px] transition-all duration-500 hover:border-primary/40 hover:-translate-y-1 hover:shadow-primary/5 group relative overflow-hidden"
       title={tooltip}
     >
-      <div className="flex justify-between items-start">
-        <div className="p-2.5 bg-bg-primary rounded-xl group-hover:bg-primary/10 transition-colors border border-border/50 group-hover:border-primary/20">
+      <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-8 -mt-8 blur-2xl transition-all group-hover:bg-primary/10" />
+      
+      <div className="flex justify-between items-start relative z-10">
+        <div className="p-3 bg-bg-primary rounded-2xl group-hover:bg-primary/20 transition-all duration-300 border border-border/50 group-hover:border-primary/30 group-hover:scale-110 group-hover:rotate-3 shadow-inner">
           {icon}
         </div>
         {trend && typeof trend === 'string' && (
           <span className={clsx(
-            "text-[10px] font-bold px-2.5 py-1 rounded-full border",
-            trend.startsWith('+') ? "bg-success-bg text-success border-success/10" : 
-            trend.startsWith('-') ? "bg-danger-bg text-danger border-danger/10" : "bg-accent-bg text-accent border-accent/10"
+            "text-[10px] font-black px-3 py-1 rounded-full border-2 uppercase tracking-tighter shadow-sm",
+            trend.startsWith('+') ? "bg-success-bg text-success border-success/20" : 
+            trend.startsWith('-') ? "bg-danger-bg text-danger border-danger/20" : "bg-accent-bg text-accent border-accent/20"
           )}>
             {trend}
           </span>
         )}
       </div>
-      <div className="mt-4">
-        <p className="text-text-secondary text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">{title}</p>
-        <div className="flex items-baseline gap-1.5">
-          <h3 className="text-3xl font-black text-text-primary tracking-tight leading-none">{value}</h3>
-          {unit && <span className="text-xs font-bold text-text-secondary opacity-60">{unit}</span>}
+      <div className="mt-6 relative z-10">
+        <p className="text-text-secondary text-[10px] font-black uppercase tracking-[0.15em] opacity-60 mb-2 group-hover:text-text-primary transition-colors">{title}</p>
+        <div className="flex items-baseline gap-2">
+          <h3 className="text-4xl font-black text-text-primary tracking-tighter leading-none group-hover:text-primary transition-colors">{value}</h3>
+          {unit && <span className="text-xs font-black text-text-secondary opacity-40 uppercase tracking-widest">{unit}</span>}
         </div>
          {subtitle && (
-           <div className="text-[10px] text-text-secondary font-semibold mt-2 opacity-70 italic">{subtitle}</div>
+           <div className="text-[10px] text-text-secondary font-bold mt-3 opacity-50 border-t border-border/50 pt-2 line-clamp-1">{subtitle}</div>
          )}
       </div>
       {tooltip && (
-        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:translate-y-0">
-           <div className="bg-text-primary text-bg-secondary text-[10px] font-bold py-1.5 px-3 rounded-lg whitespace-nowrap shadow-xl">
+        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+           <div className="bg-primary text-white text-[10px] font-black py-1.5 px-3 rounded-lg whitespace-nowrap shadow-xl border border-white/10 uppercase tracking-widest">
              {tooltip}
            </div>
         </div>
