@@ -25,36 +25,36 @@ const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'
 function StatCard({ title, value, unit, icon, trend, tooltip, subtitle }: any) {
   return (
     <div 
-      className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm flex flex-col justify-between min-h-[120px] transition-all hover:border-accent/50 group relative"
+      className="bg-bg-secondary p-6 rounded-2xl border border-border shadow-sm shadow-black/5 flex flex-col justify-between min-h-[140px] transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 group relative"
       title={tooltip}
     >
       <div className="flex justify-between items-start">
-        <div className="p-2.5 bg-gray-50 dark:bg-bg-secondary rounded-xl group-hover:bg-accent/10 transition-colors">
+        <div className="p-2.5 bg-bg-primary rounded-xl group-hover:bg-primary/10 transition-colors border border-border/50 group-hover:border-primary/20">
           {icon}
         </div>
         {trend && typeof trend === 'string' && (
           <span className={clsx(
-            "text-[10px] font-bold px-2 py-0.5 rounded-full",
-            trend.startsWith('+') ? "bg-success-bg text-success" : 
-            trend.startsWith('-') ? "bg-danger-bg text-danger" : "bg-accent-bg text-accent"
+            "text-[10px] font-bold px-2.5 py-1 rounded-full border",
+            trend.startsWith('+') ? "bg-success-bg text-success border-success/10" : 
+            trend.startsWith('-') ? "bg-danger-bg text-danger border-danger/10" : "bg-accent-bg text-accent border-accent/10"
           )}>
             {trend}
           </span>
         )}
       </div>
       <div className="mt-4">
-        <p className="text-gray-500 dark:text-text-secondary text-[11px] font-bold uppercase tracking-wider">{title}</p>
-        <div className="flex items-baseline gap-1 mt-1">
-          <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">{value}</h3>
-          {unit && <span className="text-xs font-bold text-gray-500 dark:text-text-secondary">{unit}</span>}
+        <p className="text-text-secondary text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">{title}</p>
+        <div className="flex items-baseline gap-1.5">
+          <h3 className="text-3xl font-black text-text-primary tracking-tight leading-none">{value}</h3>
+          {unit && <span className="text-xs font-bold text-text-secondary opacity-60">{unit}</span>}
         </div>
          {subtitle && (
-           <div className="text-[10px] text-text-secondary font-medium mt-0.5">{subtitle}</div>
+           <div className="text-[10px] text-text-secondary font-semibold mt-2 opacity-70 italic">{subtitle}</div>
          )}
       </div>
       {tooltip && (
-        <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
-           <div className="bg-gray-800 text-white text-[10px] py-1 px-2 rounded whitespace-nowrap shadow-lg">
+        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:translate-y-0">
+           <div className="bg-text-primary text-bg-secondary text-[10px] font-bold py-1.5 px-3 rounded-lg whitespace-nowrap shadow-xl">
              {tooltip}
            </div>
         </div>
