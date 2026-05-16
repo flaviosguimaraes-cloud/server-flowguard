@@ -7,8 +7,9 @@ import {
   BarChart, Bar, Cell, AreaChart, Area
 } from 'recharts';
 import { 
-  Tooltip, TooltipTrigger, TooltipContent, TooltipProvider 
-} from '../components/ui/tooltip';
+   Tooltip, TooltipTrigger, TooltipContent, TooltipProvider 
+ } from '../components/ui/tooltip';
+ import { MitigationTooltip } from '../components/MitigationTooltip';
 import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon, Settings2, Info, ArrowRight } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { Skeleton } from '../components/Skeleton';
@@ -239,6 +240,12 @@ export default function Dashboard() {
     }
   }, [interfaces]);
 
+   const { data: activeMitigations } = useQuery({
+     queryKey: ['mitigation-active-dashboard'],
+     queryFn: () => api.get('/api/mitigation/active').then(r => r.data),
+     refetchInterval: 30000,
+   });
+ 
    const { data: connections, dataUpdatedAt } = useQuery({
      queryKey: ['connections'],
      queryFn: () =>
@@ -462,8 +469,9 @@ export default function Dashboard() {
     );
   }
 
-   return (
-     <div className="space-y-6 animate-in fade-in duration-500">
+    return (
+      <TooltipProvider>
+      <div className="space-y-6 animate-in fade-in duration-500">
        <style>{`
          @keyframes pulse {
            0%, 100% { opacity: 1; }
@@ -505,11 +513,30 @@ export default function Dashboard() {
           value={detection?.incoming_pps > 1000 ? (detection.incoming_pps / 1000).toFixed(1) + 'k' : detection?.incoming_pps || '0'} 
           icon={<Activity className="text-warning" size={20} />} 
         />
-        <StatCard 
-          title={t('active_mitigations')} 
-          value={detection?.active_mitigations || '0'} 
-          icon={<Shield className="text-danger" size={20} />} 
-        />
+         <StatCard 
+           title={t('active_mitigations')} 
+           value={detection?.active_mitigations || '0'} 
+           icon={<Shield className="text-danger" size={20} />} 
+           subtitle={activeMitigations?.items?.length > 0 && (
+             <div className="flex flex-wrap gap-1 mt-1">
+               {activeMitigations.items.slice(0, 2).map((m: any) => (
+                 <MitigationTooltip key={m.ip} data={{
+                   ip: m.ip,
+                   tipo: 'Blackhole /32',
+                   desde: m.since,
+                   pps: m.pps,
+                   mbps: m.mbps,
+                   fonte: m.source || 'Manual (admin)'
+                 }}>
+                   <span className="text-[9px] font-mono font-bold text-danger border border-danger/20 px-1 rounded bg-danger/5 cursor-help hover:bg-danger/10 transition-colors">
+                     {m.ip}
+                   </span>
+                 </MitigationTooltip>
+               ))}
+               {activeMitigations.items.length > 2 && <span className="text-[9px] text-text-secondary">+{activeMitigations.items.length - 2}</span>}
+             </div>
+           )}
+         />
       </div>
 
       {/* Main Chart: Tráfego da Interface */}
@@ -894,8 +921,7 @@ export default function Dashboard() {
       </div>
 
         {/* Active Connections Table */}
-      <TooltipProvider>
-       <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-200 dark:border-border flex flex-wrap justify-between items-center bg-gray-50/50 dark:bg-bg-secondary/30 gap-4">
            <div className="flex flex-col gap-1">
              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Top Fluxos IPv4 (2 min)</h2>
@@ -978,26 +1004,60 @@ export default function Dashboard() {
                 const srcCountry = flipped ? item.dst_country : item.src_country;
                 
                 const dst = flipped ? item.src_addr : item.dst_addr;
-                const dstPort = flipped ? item.src_port : item.dst_port;
-                const dstCountry = flipped ? item.src_country : item.dst_country;
-                const dstOrg = flipped ? item.src_org : item.dst_org;
+                 const dstPort = flipped ? item.src_port : item.dst_port;
+                 const dstCountry = flipped ? item.src_country : item.dst_country;
+                 const dstOrg = flipped ? item.src_org : item.dst_org;
+ 
+                 const bannedList = activeMitigations?.items || [];
+                 const srcMitigation = bannedList.find((m: any) => m.ip === src);
+                 const dstMitigation = bannedList.find((m: any) => m.ip === dst);
 
                 return (
                   <tr key={i} className="hover:bg-accent/5 transition-colors group">
+                     <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <Flag code={srcCountry} />
+                        {srcMitigation ? (
+                          <MitigationTooltip data={{
+                            ip: srcMitigation.ip,
+                            tipo: 'Blackhole /32',
+                            desde: srcMitigation.since,
+                            pps: srcMitigation.pps,
+                            mbps: srcMitigation.mbps,
+                            fonte: srcMitigation.source || 'Manual (admin)'
+                          }}>
+                            <span className="font-bold text-danger cursor-help flex items-center gap-1">
+                              🛡 {src}
+                            </span>
+                          </MitigationTooltip>
+                        ) : (
+                          <span className="font-medium text-gray-900 dark:text-gray-100">{src}</span>
+                        )}
+                        <span className="text-text-secondary text-xs">:{srcPort}</span>
+                      </div>
+                    </td>
                     <td className="px-6 py-4">
-                     <div className="flex items-center gap-2">
-                       <Flag code={srcCountry} />
-                       <span className="font-medium text-gray-900 dark:text-gray-100">{src}</span>
-                       <span className="text-text-secondary text-xs">:{srcPort}</span>
-                     </div>
-                   </td>
-                   <td className="px-6 py-4">
-                     <div className="flex items-center gap-2">
-                       <Flag code={dstCountry} />
-                       <span className="text-gray-900 dark:text-gray-100">{dst}</span>
-                       <span className="text-text-secondary text-xs">:{dstPort}</span>
-                     </div>
-                   </td>
+                      <div className="flex items-center gap-2">
+                        <Flag code={dstCountry} />
+                        {dstMitigation ? (
+                          <MitigationTooltip data={{
+                            ip: dstMitigation.ip,
+                            tipo: 'Blackhole /32',
+                            desde: dstMitigation.since,
+                            pps: dstMitigation.pps,
+                            mbps: dstMitigation.mbps,
+                            fonte: dstMitigation.source || 'Manual (admin)'
+                          }}>
+                            <span className="font-bold text-danger cursor-help flex items-center gap-1">
+                              🛡 {dst}
+                            </span>
+                          </MitigationTooltip>
+                        ) : (
+                          <span className="text-gray-900 dark:text-gray-100">{dst}</span>
+                        )}
+                        <span className="text-text-secondary text-xs">:{dstPort}</span>
+                      </div>
+                    </td>
                     <td className="px-6 py-4">
                       <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{getService(dstPort)}</span>
                     </td>
@@ -1056,11 +1116,11 @@ export default function Dashboard() {
             Última atualização: {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR') : '—'}
           </p>
         </div>
-      </div>
-      </TooltipProvider>
-    </div>
-  );
-}
+        </div>
+       </div>
+       </TooltipProvider>
+     );
+   }
 
 function StatCard({ title, value, unit, icon, trend, tooltip, subtitle }: any) {
   return (
@@ -1088,9 +1148,9 @@ function StatCard({ title, value, unit, icon, trend, tooltip, subtitle }: any) {
           <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">{value}</h3>
           {unit && <span className="text-xs font-bold text-gray-500 dark:text-text-secondary">{unit}</span>}
         </div>
-        {subtitle && (
-          <p className="text-[10px] text-text-secondary font-medium mt-0.5">{subtitle}</p>
-        )}
+         {subtitle && (
+           <div className="text-[10px] text-text-secondary font-medium mt-0.5">{subtitle}</div>
+         )}
       </div>
       {tooltip && (
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
