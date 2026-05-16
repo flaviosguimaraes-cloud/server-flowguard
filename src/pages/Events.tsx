@@ -1,4 +1,4 @@
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
  import api from '../services/api';
  import { useTranslation } from '../hooks/useTranslation';
@@ -17,6 +17,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
    const [isMitigationOpen, setIsMitigationOpen] = useState(false);
    const [targetIP, setTargetIP] = useState('');
  
+    const [now, setNow] = useState(Date.now());
+    useEffect(() => {
+      const timer = setInterval(() => setNow(Date.now()), 1000);
+      return () => clearInterval(timer);
+    }, []);
+
     const { data: stats, isLoading: statsLoading, dataUpdatedAt } = useQuery({
      queryKey: ['detection-stats-events'],
      queryFn: async () => {
@@ -110,7 +116,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
               </div>
               {dataUpdatedAt && (
                 <p className="text-[10px] text-text-secondary mt-1 font-medium uppercase tracking-wider">
-                  Atualizado há {Math.floor((Date.now() - dataUpdatedAt) / 1000)}s
+                  Atualizado há {Math.floor((now - dataUpdatedAt) / 1000)}s
                 </p>
               )}
            </div>
