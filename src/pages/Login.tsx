@@ -59,7 +59,8 @@ import { useState, FormEvent, useEffect } from 'react';
  
   return (
     <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4 transition-colors">
-      <div className="max-w-md w-full bg-bg-card p-8 rounded-xl shadow-2xl border border-border transition-colors">
+      <div className="max-w-md w-full bg-bg-secondary p-10 rounded-3xl shadow-2xl shadow-black/50 border border-border transition-all duration-500 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-2">
             <Globe className="text-text-secondary" size={18} />
@@ -76,11 +77,11 @@ import { useState, FormEvent, useEffect } from 'react';
         </div>
 
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center p-3 bg-accent/10 rounded-2xl mb-4">
-            <Shield className="text-accent" size={40} />
+          <div className="inline-flex items-center justify-center p-4 bg-primary/10 rounded-[24px] mb-6 shadow-inner border border-primary/20">
+            <Shield className="text-primary" size={48} />
           </div>
-          <h1 className="text-3xl font-bold text-accent tracking-tight">FlowGuard</h1>
-          <p className="text-text-secondary mt-2">Network Intelligence & DDoS Mitigation</p>
+          <h1 className="text-4xl font-black text-text-primary tracking-tighter uppercase mb-2">FlowGuard</h1>
+          <p className="text-text-secondary font-bold text-xs uppercase tracking-widest opacity-60">Network Intelligence & DDoS Mitigation</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -126,7 +127,7 @@ import { useState, FormEvent, useEffect } from 'react';
 
           <button 
             disabled={loading}
-            className="w-full bg-accent hover:bg-accent/90 text-white font-bold py-3 rounded-lg transition-all shadow-lg shadow-accent/20 active:scale-[0.98] mt-2 flex items-center justify-center disabled:opacity-70"
+            className="w-full bg-primary hover:bg-primary/90 text-white font-black py-3.5 rounded-xl transition-all shadow-xl shadow-primary/30 active:scale-[0.98] mt-4 flex items-center justify-center disabled:opacity-70 uppercase tracking-widest text-xs"
           >
             {loading ? (
               <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
