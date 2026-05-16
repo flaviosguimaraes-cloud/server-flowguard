@@ -14,16 +14,15 @@ import MitigationModal from '../components/MitigationModal';
 
 function MetricCard({ title, value, icon }: any) {
   return (
-    <div className="bg-bg-secondary p-6 rounded-[24px] border border-border shadow-2xl shadow-black/20 flex flex-col justify-between min-h-[160px] transition-all duration-500 hover:border-primary/40 hover:-translate-y-1 hover:shadow-primary/5 group relative overflow-hidden">
-      <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-8 -mt-8 blur-2xl transition-all group-hover:bg-primary/10" />
+    <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm flex flex-col justify-between min-h-[120px] transition-all duration-300 hover:border-primary/30 group relative">
       <div className="flex justify-between items-start relative z-10">
-        <div className="p-3 bg-bg-primary rounded-2xl group-hover:bg-primary/20 transition-all duration-300 border border-border/50 group-hover:border-primary/30 group-hover:scale-110 group-hover:rotate-3 shadow-inner">
+        <div className="p-2.5 bg-bg-primary rounded-lg text-primary border border-border/40 group-hover:bg-primary/5 group-hover:border-primary/20">
           {icon}
         </div>
       </div>
-      <div className="mt-6 relative z-10">
-        <p className="text-text-secondary text-[10px] font-black uppercase tracking-[0.15em] opacity-60 mb-2 group-hover:text-text-primary transition-colors">{title}</p>
-        <h3 className="text-4xl font-black text-text-primary tracking-tighter leading-none group-hover:text-primary transition-colors">{value}</h3>
+      <div className="mt-4 relative z-10">
+        <p className="text-text-secondary text-[11px] font-bold uppercase tracking-wider opacity-70 mb-1">{title}</p>
+        <h3 className="text-2xl font-bold text-text-primary tracking-tight leading-none">{value}</h3>
       </div>
     </div>
   );
@@ -298,69 +297,92 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
        </div>
  
        {/* Filters */}
-       <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm transition-colors space-y-4">
-          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
-           <div className="relative col-span-1 lg:col-span-2">
-             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
-             <input
-               type="text"
-               placeholder="Buscar por IP, Empresa ou Porta..."
-               className="w-full bg-bg-primary border border-border rounded-lg py-2 pl-10 pr-4 outline-none focus:ring-2 focus:ring-accent/50 transition-all text-text-primary"
-               value={search}
-               onChange={(e) => setSearch(e.target.value)}
-             />
-           </div>
-           
-           <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
-             {['Todos', 'TCP', 'UDP', 'ICMP'].map((p) => (
-               <button
-                 key={p}
-                 onClick={() => setProto(p)}
-                 className={clsx(
-                   "flex-1 px-3 py-1 text-[10px] font-bold rounded-md transition-all uppercase tracking-wider",
-                   proto === p ? "bg-white dark:bg-accent text-accent dark:text-white shadow-sm" : "text-text-secondary hover:text-text-primary"
-                 )}>
-                 {p}
-               </button>
-             ))}
-           </div>
- 
-            <div className="relative">
-              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
-              <select
-                className="w-full bg-bg-primary border border-border rounded-lg py-2 pl-10 pr-4 outline-none focus:ring-2 focus:ring-accent/50 appearance-none text-text-primary"
-                value={country}
-                onChange={(e) => setCountry(e.target.value)}
-              >
-                <option value="Todos">Todos os Países</option>
-                {countryList.map((c: string) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+        <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm space-y-5">
+           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div className="relative md:col-span-2">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
+              <input
+                type="text"
+                placeholder="Buscar por IP, Empresa ou Porta..."
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 pl-9 pr-4 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+              />
+            </div>
+            
+            <div className="flex bg-bg-primary/50 p-1 rounded-lg border border-border">
+              {['Todos', 'TCP', 'UDP', 'ICMP'].map((p) => (
+                <button
+                  key={p}
+                  onClick={() => setProto(p)}
+                  className={clsx(
+                    "flex-1 px-2 py-1 text-[10px] font-bold rounded-md transition-all uppercase tracking-wider",
+                    proto === p ? "bg-white dark:bg-primary text-primary dark:text-white shadow-sm" : "text-text-secondary hover:text-text-primary"
+                  )}>
+                  {p}
+                </button>
+              ))}
+            </div>
+  
+             <div className="relative">
+               <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
+               <select
+                 className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 pl-9 pr-4 outline-none focus:ring-2 focus:ring-primary/20 appearance-none text-sm text-text-primary"
+                 value={country}
+                 onChange={(e) => setCountry(e.target.value)}
+               >
+                 <option value="Todos">Todos os Países</option>
+                 {countryList.map((c: string) => (
+                   <option key={c} value={c}>{c}</option>
+                 ))}
+               </select>
+             </div>
+
+          </div>
+          
+          <div className="flex flex-wrap items-center gap-4 border-t border-border pt-4">
+            <div className="flex items-center gap-2 mr-auto">
+               <span className="text-[11px] font-bold text-text-secondary uppercase tracking-widest opacity-60">Período:</span>
+               <div className="flex gap-1.5 flex-wrap">
+                  {periods.map(p => (
+                    <button
+                      key={p.value}
+                      onClick={() => setMinutes(p.value)}
+                      className={clsx(
+                        "px-2.5 py-1 rounded-md text-[10px] font-bold border transition-all uppercase tracking-wider",
+                        minutes === p.value 
+                          ? "bg-primary/10 border-primary/20 text-primary" 
+                          : "bg-bg-primary/50 border-border text-text-secondary hover:text-text-primary"
+                      )}
+                    >
+                      {p.label}
+                    </button>
+                  ))}
+               </div>
             </div>
 
-            <div className="col-span-1 lg:col-span-1">
-              <label style={{fontSize:11, color:'#8892a4', display:'block', marginBottom:6}}>Período</label>
-              <div style={{display:'flex', gap:4, flexWrap: 'wrap'}}>
-                {periods.map(p => (
-                  <button
-                    key={p.value}
-                    onClick={() => setMinutes(p.value)}
-                    style={{
-                      padding:'5px 8px',
-                      borderRadius:6,
-                      border: `1px solid ${minutes === p.value ? '#3b82f6' : '#2a2d3e'}`,
-                      background: minutes === p.value ? '#1e3a5f' : 'transparent',
-                      color: minutes === p.value ? '#3b82f6' : '#8892a4',
-                      cursor:'pointer', fontSize:11,
-                      fontWeight: minutes === p.value ? 600 : 400
-                    }}>
-                    {p.label}
-                  </button>
-                ))}
-              </div>
+            <div className="flex items-center gap-3">
+               <button 
+                 onClick={() => setGroupByIP(!groupByIP)}
+                 className={clsx(
+                   "flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[11px] font-bold transition-all uppercase tracking-wider border shadow-sm",
+                   groupByIP 
+                     ? "bg-primary border-primary text-white" 
+                     : "bg-bg-primary/50 border-border text-text-secondary hover:text-text-primary"
+                 )}
+               >
+                 {groupByIP ? <LayoutGrid size={13} /> : <List size={13} />}
+                 Agrupar por IP
+               </button>
+
+               <button 
+                 onClick={() => { setSearch(''); setProto('Todos'); setCountry('Todos'); }}
+                 className="text-[11px] font-bold text-text-secondary hover:text-primary flex items-center gap-1.5 transition-colors uppercase tracking-wider"
+               >
+                 <X size={14} /> Limpar
+               </button>
             </div>
-         </div>
+          </div>
          
           <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-[#2a2d3e]">
             <div className="flex items-center gap-4">

@@ -39,7 +39,7 @@ export const Header = () => {
   const userInitial = user?.username?.charAt(0).toUpperCase() || 'U';
 
   return (
-    <header className="h-[72px] bg-bg-secondary/70 backdrop-blur-xl border-b border-border flex items-center justify-between px-8 sticky top-0 z-40 transition-all duration-300 shadow-sm shadow-black/5">
+    <header className="h-[72px] bg-bg-secondary/80 backdrop-blur-md border-b border-border flex items-center justify-between px-6 sticky top-0 z-40 transition-all duration-200 shadow-sm">
       <style>{`
         @keyframes spin-custom {
           from { transform: rotate(0deg); }
@@ -49,9 +49,9 @@ export const Header = () => {
       <div className="flex items-center gap-4">
         <button 
           onClick={toggleSidebar}
-          className="p-2.5 hover:bg-bg-primary rounded-2xl text-text-secondary hover:text-text-primary transition-all duration-300 border border-transparent hover:border-border shadow-sm active:scale-95"
+          className="p-2 hover:bg-bg-primary rounded-lg text-text-secondary hover:text-text-primary transition-all duration-200 border border-transparent hover:border-border active:scale-95"
         >
-          <Menu size={22} />
+          <Menu size={20} />
         </button>
       </div>
 
@@ -60,23 +60,23 @@ export const Header = () => {
           onClick={handleRefresh}
           title="Atualizar dados"
           className={clsx(
-            "flex items-center gap-2.5 px-4 py-2 rounded-xl border border-border bg-bg-primary/50 transition-all duration-300 shadow-sm active:scale-95 group",
-            isRefreshing ? "text-primary border-primary/40 bg-primary/5" : "text-text-secondary hover:border-text-secondary/20"
+            "flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-bg-secondary transition-all duration-200 hover:bg-bg-primary active:scale-95 group",
+            isRefreshing ? "text-primary border-primary/20 bg-primary/5" : "text-text-secondary"
           )}
         >
           <RefreshCw 
-            size={16}
-            className={clsx(isRefreshing ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500")}
+            size={14}
+            className={clsx(isRefreshing ? "animate-spin" : "transition-transform duration-500")}
           />
-          <span className="font-mono tabular-nums text-xs font-bold">{countdown}s</span>
+          <span className="font-mono tabular-nums text-[11px] font-semibold">{countdown}s</span>
         </button>
 
-        <div className="flex items-center gap-2.5 text-text-secondary bg-bg-primary/50 px-4 py-2 rounded-xl border border-border shadow-sm">
-          <Globe size={16} />
+        <div className="flex items-center gap-2 text-text-secondary bg-bg-secondary px-3 py-1.5 rounded-lg border border-border">
+          <Globe size={14} />
           <select 
             value={lang} 
             onChange={(e) => changeLanguage(e.target.value as any)}
-            className="bg-transparent border-none outline-none text-xs font-black cursor-pointer uppercase appearance-none hover:text-text-primary transition-colors"
+            className="bg-transparent border-none outline-none text-[11px] font-bold cursor-pointer uppercase appearance-none hover:text-text-primary transition-colors"
           >
             <option value="pt-BR">PT</option>
             <option value="en">EN</option>
@@ -86,17 +86,17 @@ export const Header = () => {
 
         <button 
           onClick={toggleTheme}
-          className="p-2.5 hover:bg-bg-primary rounded-2xl text-text-secondary hover:text-primary transition-all duration-300 border border-transparent hover:border-border shadow-sm active:scale-95"
+          className="p-2 hover:bg-bg-primary rounded-lg text-text-secondary hover:text-primary transition-all duration-200 border border-transparent hover:border-border active:scale-95"
         >
-          {theme === 'dark' ? <Sun size={22} /> : <Moon size={22} />}
+          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
         </button>
 
-        <div className="flex items-center gap-4 pl-6 border-l border-border ml-2 group cursor-pointer">
-          <div className="text-right hidden sm:block transition-all group-hover:-translate-x-1">
-            <p className="text-sm font-black text-text-primary leading-none mb-1.5">{user?.username}</p>
-            <p className="text-[10px] text-primary uppercase tracking-widest font-black opacity-90">{user?.role}</p>
+        <div className="flex items-center gap-3 pl-4 border-l border-border ml-2 group cursor-pointer">
+          <div className="text-right hidden sm:block">
+            <p className="text-sm font-semibold text-text-primary leading-tight">{user?.username}</p>
+            <p className="text-[10px] text-primary uppercase tracking-wider font-bold opacity-80">{user?.role}</p>
           </div>
-          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white font-black text-base shadow-xl shadow-primary/30 transition-all group-hover:scale-110 group-hover:rotate-3 border-2 border-white/10">
+          <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm shadow-md shadow-primary/20 transition-all group-hover:bg-primary/90 border border-white/10">
             {userInitial}
           </div>
         </div>

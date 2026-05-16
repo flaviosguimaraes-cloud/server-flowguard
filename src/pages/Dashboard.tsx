@@ -25,42 +25,33 @@ const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'
 function StatCard({ title, value, unit, icon, trend, tooltip, subtitle }: any) {
   return (
     <div 
-      className="bg-bg-secondary p-6 rounded-[24px] border border-border shadow-2xl shadow-black/20 flex flex-col justify-between min-h-[160px] transition-all duration-500 hover:border-primary/40 hover:-translate-y-1 hover:shadow-primary/5 group relative overflow-hidden"
+      className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm flex flex-col justify-between min-h-[140px] transition-all duration-300 hover:border-primary/30 group relative overflow-hidden"
       title={tooltip}
     >
-      <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-8 -mt-8 blur-2xl transition-all group-hover:bg-primary/10" />
-      
       <div className="flex justify-between items-start relative z-10">
-        <div className="p-3 bg-bg-primary rounded-2xl group-hover:bg-primary/20 transition-all duration-300 border border-border/50 group-hover:border-primary/30 group-hover:scale-110 group-hover:rotate-3 shadow-inner">
+        <div className="p-2.5 bg-bg-primary rounded-lg text-primary transition-all duration-200 border border-border/40 group-hover:bg-primary/5 group-hover:border-primary/20">
           {icon}
         </div>
         {trend && typeof trend === 'string' && (
           <span className={clsx(
-            "text-[10px] font-black px-3 py-1 rounded-full border-2 uppercase tracking-tighter shadow-sm",
-            trend.startsWith('+') ? "bg-success-bg text-success border-success/20" : 
-            trend.startsWith('-') ? "bg-danger-bg text-danger border-danger/20" : "bg-accent-bg text-accent border-accent/20"
+            "text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider",
+            trend.startsWith('+') ? "bg-success-bg text-success border-success/10" : 
+            trend.startsWith('-') ? "bg-danger-bg text-danger border-danger/10" : "bg-accent-bg text-accent border-accent/10"
           )}>
             {trend}
           </span>
         )}
       </div>
-      <div className="mt-6 relative z-10">
-        <p className="text-text-secondary text-[10px] font-black uppercase tracking-[0.15em] opacity-60 mb-2 group-hover:text-text-primary transition-colors">{title}</p>
-        <div className="flex items-baseline gap-2">
-          <h3 className="text-4xl font-black text-text-primary tracking-tighter leading-none group-hover:text-primary transition-colors">{value}</h3>
-          {unit && <span className="text-xs font-black text-text-secondary opacity-40 uppercase tracking-widest">{unit}</span>}
+      <div className="mt-4 relative z-10">
+        <p className="text-text-secondary text-[11px] font-bold uppercase tracking-wider opacity-70 mb-1">{title}</p>
+        <div className="flex items-baseline gap-1.5">
+          <h3 className="text-3xl font-bold text-text-primary tracking-tight leading-none">{value}</h3>
+          {unit && <span className="text-[11px] font-bold text-text-secondary opacity-50 uppercase tracking-wider">{unit}</span>}
         </div>
          {subtitle && (
-           <div className="text-[10px] text-text-secondary font-bold mt-3 opacity-50 border-t border-border/50 pt-2 line-clamp-1">{subtitle}</div>
+            <div className="text-[10px] text-text-secondary font-medium mt-2.5 opacity-60 border-t border-border/40 pt-2 line-clamp-1">{subtitle}</div>
          )}
       </div>
-      {tooltip && (
-        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
-           <div className="bg-primary text-white text-[10px] font-black py-1.5 px-3 rounded-lg whitespace-nowrap shadow-xl border border-white/10 uppercase tracking-widest">
-             {tooltip}
-           </div>
-        </div>
-      )}
     </div>
   );
 }
@@ -861,104 +852,104 @@ export default function Dashboard() {
        {/* Secondary Grids */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
          {/* Top Protocols */}
-         <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm">
-            <h2 className="text-lg font-bold mb-6 text-text-primary">{t('protocols')}</h2>
-            <div className="space-y-2">
+         <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm">
+            <h2 className="text-base font-bold mb-5 text-text-primary">{t('protocols')}</h2>
+            <div className="space-y-1.5">
               {protoData.map((p: any, i: number) => (
                 <div key={i} className={clsx(
-                  "flex items-center gap-[10px] py-[6px]",
-                  i < protoData.length - 1 && "border-b border-gray-100 dark:border-[#2a2d3e]"
+                  "flex items-center gap-3 py-1.5",
+                  i < protoData.length - 1 && "border-b border-border/40"
                 )}>
-                  <span className="min-w-[45px] text-[13px] font-medium text-gray-700 dark:text-[#e2e8f0]">{p.name}</span>
-                  <div className="flex-1 h-[6px] bg-bg-primary rounded-[3px] overflow-hidden">
+                  <span className="min-w-[40px] text-xs font-semibold text-text-primary">{p.name}</span>
+                  <div className="flex-1 h-1.5 bg-bg-primary rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-accent rounded-[3px]"
+                      className="h-full bg-primary rounded-full transition-all duration-700"
                       style={{ width: p.pct + '%' }}
                     />
                   </div>
-                  <span className="text-[12px] text-text-secondary min-w-[40px] text-right">{p.pct}%</span>
+                  <span className="text-[11px] text-text-secondary font-bold min-w-[35px] text-right">{p.pct}%</span>
                 </div>
-             ))}
-           </div>
-         </div>
+              ))}
+            </div>
+          </div>
  
           {/* Top Countries */}
-         <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm">
-            <h2 className="text-lg font-bold mb-6 text-text-primary">{t('countries')}</h2>
+         <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm">
+            <h2 className="text-base font-bold mb-5 text-text-primary">{t('countries')}</h2>
             <div className="space-y-1">
               {countryData.map((c: any, i: number) => (
                 <div key={i} className={clsx(
-                  "flex items-center gap-[8px] py-[5px]",
-                   i < countryData.length - 1 && "border-b border-gray-100 dark:border-[#2a2d3e]"
+                  "flex items-center gap-2 py-1.5",
+                   i < countryData.length - 1 && "border-b border-border/40"
                  )}>
-                   <Flag code={c.code} size={18} />
-                   <span className="text-[12px] text-gray-700 dark:text-[#e2e8f0] min-w-[30px] font-medium ml-1">{c.code}</span>
-                  <div className="flex-1 h-[6px] bg-bg-primary rounded-[3px] overflow-hidden">
+                   <Flag code={c.code} size={16} />
+                   <span className="text-xs text-text-primary min-w-[28px] font-semibold ml-1">{c.code}</span>
+                  <div className="flex-1 h-1.5 bg-bg-primary rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-accent rounded-[3px]"
+                      className="h-full bg-primary rounded-full transition-all duration-700"
                       style={{ width: c.pct + '%' }}
                     />
                   </div>
-                  <span className="text-[12px] text-text-secondary min-w-[35px] text-right">{c.pct}%</span>
+                  <span className="text-[11px] text-text-secondary font-bold min-w-[35px] text-right">{c.pct}%</span>
                 </div>
-             ))}
-           </div>
-         </div>
+              ))}
+            </div>
+          </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Port Panels */}
-          <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm space-y-8">
+          <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm space-y-6">
             {/* PAINEL 1 — Portas mais consumidas */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <h2 className="text-lg font-bold text-text-primary">Portas mais consumidas</h2>
-                <p className="text-xs text-text-secondary">O que seus clientes estão acessando na internet</p>
+                <h2 className="text-base font-bold text-text-primary">Portas mais consumidas</h2>
+                <p className="text-[10px] text-text-secondary font-medium uppercase tracking-wider opacity-60 mt-0.5">Destino Internet</p>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {portDataDst.map((p: any, i: number) => (
                   <div key={i} className="space-y-1">
-                    <div className="flex justify-between text-[11px] font-bold">
+                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-tight">
                       <span className="text-text-primary">{p.name}</span>
-                      <span className="text-text-secondary">{fmtBytes(p.bytes)}</span>
+                      <span className="text-text-secondary opacity-70">{fmtBytes(p.bytes)}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="flex-1 h-3 bg-bg-primary rounded-full overflow-hidden">
+                      <div className="flex-1 h-1.5 bg-bg-primary rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-blue-500 rounded-full transition-all duration-1000"
+                          className="h-full bg-primary rounded-full transition-all duration-700"
                           style={{ width: `${p.pct}%` }}
                         />
                       </div>
-                      <span className="text-[11px] font-bold text-text-primary min-w-[35px] text-right">{p.pct}%</span>
+                      <span className="text-[10px] font-bold text-text-primary min-w-[30px] text-right">{p.pct}%</span>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-
-            <div className="border-t border-gray-100 dark:border-[#2a2d3e] pt-8" />
-
+ 
+            <div className="border-t border-border/40 pt-6" />
+ 
             {/* PAINEL 2 — Serviços mais servidos */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <h2 className="text-lg font-bold text-text-primary">Serviços mais servidos</h2>
-                <p className="text-xs text-text-secondary">O que sua rede está entregando para a internet</p>
+                <h2 className="text-base font-bold text-text-primary">Serviços mais servidos</h2>
+                <p className="text-[10px] text-text-secondary font-medium uppercase tracking-wider opacity-60 mt-0.5">Origem Rede</p>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {portDataSrc.map((p: any, i: number) => (
                   <div key={i} className="space-y-1">
-                    <div className="flex justify-between text-[11px] font-bold">
+                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-tight">
                       <span className="text-text-primary">{p.name}</span>
-                      <span className="text-text-secondary">{fmtBytes(p.bytes)}</span>
+                      <span className="text-text-secondary opacity-70">{fmtBytes(p.bytes)}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="flex-1 h-3 bg-bg-primary rounded-full overflow-hidden">
+                      <div className="flex-1 h-1.5 bg-bg-primary rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-green-500 rounded-full transition-all duration-1000"
+                          className="h-full bg-success rounded-full transition-all duration-700"
                           style={{ width: `${p.pct}%` }}
                         />
                       </div>
-                      <span className="text-[11px] font-bold text-text-primary min-w-[35px] text-right">{p.pct}%</span>
+                      <span className="text-[10px] font-bold text-text-primary min-w-[30px] text-right">{p.pct}%</span>
                     </div>
                   </div>
                 ))}
@@ -967,28 +958,28 @@ export default function Dashboard() {
           </div>
  
           {/* SNMP Interfaces */}
-         <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm">
-            <h2 className="text-lg font-bold mb-6 text-text-primary">{t('top_interfaces')}</h2>
-            <div className="space-y-5">
+         <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm">
+            <h2 className="text-base font-bold mb-5 text-text-primary">{t('top_interfaces')}</h2>
+            <div className="space-y-4">
              {relevantInterfaces.map((i: any) => {
                const utilPct = i.if_speed > 0
                  ? Math.min((i.in_bps / i.if_speed) * 100, 100)
                  : 0;
                return (
-                 <div key={i.if_index || i.display_name} className="space-y-2">
+                 <div key={i.if_index || i.display_name} className="space-y-1.5">
                    <div className="flex justify-between items-end">
                      <div>
-                       <p className="text-xs font-bold text-accent uppercase tracking-tighter">{i.display_name || i.if_name}</p>
-                       <p className="text-lg font-bold text-text-primary leading-none">{fmtBps(i.in_bps)}</p>
+                       <p className="text-[10px] font-bold text-primary uppercase tracking-wider">{i.display_name || i.if_name}</p>
+                       <p className="text-base font-bold text-text-primary leading-tight">{fmtBps(i.in_bps)}</p>
                      </div>
                      <div className="text-right">
-                       <p className="text-[10px] text-text-secondary font-bold uppercase">Utilization</p>
+                       <p className="text-[9px] text-text-secondary font-bold uppercase tracking-widest opacity-60">Uso</p>
                        <p className="text-xs font-bold text-success">{utilPct.toFixed(1)}%</p>
                      </div>
                    </div>
-                   <div className="w-full bg-bg-secondary rounded-full h-2 overflow-hidden flex">
+                   <div className="w-full bg-bg-primary rounded-full h-1.5 overflow-hidden flex border border-border/10">
                      <div
-                       className="bg-accent h-full transition-all duration-1000"
+                       className="bg-primary h-full transition-all duration-1000"
                        style={{ width: `${utilPct}%` }}
                      />
                    </div>
@@ -1001,39 +992,37 @@ export default function Dashboard() {
 
         {/* Active Connections Table */}
         <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-200 dark:border-border flex flex-wrap justify-between items-center bg-gray-50/50 dark:bg-bg-secondary/30 gap-4">
-           <div className="flex flex-col gap-1">
-             <h2 className="text-lg font-bold text-text-primary">Top Fluxos IPv4 (2 min)</h2>
-             <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
-                <span style={{ fontSize: 11, color: '#8892a4' }}>
-                  {(() => {
-                    const list = (Array.isArray(connections) ? connections : (connections?.items || connections?.data || []))
-                      ?.filter((item: any) => {
-                        if (!serviceFilter) return true;
-                        const flipped = shouldFlip(item);
-                        const dstPort = flipped ? item.src_port : item.dst_port;
-                        const service = getService(dstPort).split(' ')[0];
-                        if (serviceFilter === 'UDP') return item.proto === 17;
-                        if (serviceFilter === 'TCP') return item.proto === 6;
-                        return service === serviceFilter;
-                      }) || [];
-                     return `${list.length} conexões · Top conexões por volume · últimos 2 min · atualizado a cada 30s`;
-                  })()}
-                </span>
-             </div>
+        <div className="p-5 border-b border-border flex flex-wrap justify-between items-center bg-bg-primary/30 gap-4">
+           <div className="flex flex-col gap-0.5">
+             <h2 className="text-base font-bold text-text-primary">Top Fluxos IPv4 (2 min)</h2>
+             <span className="text-[10px] text-text-secondary font-bold uppercase tracking-wider opacity-60">
+               {(() => {
+                 const list = (Array.isArray(connections) ? connections : (connections?.items || connections?.data || []))
+                   ?.filter((item: any) => {
+                     if (!serviceFilter) return true;
+                     const flipped = shouldFlip(item);
+                     const dstPort = flipped ? item.src_port : item.dst_port;
+                     const service = getService(dstPort).split(' ')[0];
+                     if (serviceFilter === 'UDP') return item.proto === 17;
+                     if (serviceFilter === 'TCP') return item.proto === 6;
+                     return service === serviceFilter;
+                   }) || [];
+                  return `${list.length} conexões detectadas · amostragem 1:1000`;
+               })()}
+             </span>
            </div>
-           <span style={{fontSize:11, color:'#8892a4'}}>
-             Próxima atualização: {countdown}s
-           </span>
-          <div className="flex items-center gap-2">
-            <button className="text-text-secondary hover:text-text-primary transition-colors">
-              <MoreVertical size={20} />
-            </button>
-          </div>
+           <div className="flex items-center gap-4">
+              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest bg-bg-primary px-2 py-1 rounded border border-border">
+                Refresh em {countdown}s
+              </span>
+              <button className="text-text-secondary hover:text-text-primary transition-colors">
+                <MoreVertical size={18} />
+              </button>
+           </div>
         </div>
 
         {/* Filtros rápidos */}
-        <div className="flex flex-wrap gap-2 px-6 py-3 border-b border-gray-100 dark:border-[#2a2d3e] bg-gray-50/30 dark:bg-bg-secondary/10">
+        <div className="flex flex-wrap gap-2 px-5 py-2.5 border-b border-border bg-bg-primary/10">
           {['Todos', 'HTTP', 'HTTPS', 'DNS', 'Steam', 'UDP', 'TCP'].map(label => {
             const value = label === 'Todos' ? null : label;
             const isActive = serviceFilter === value;
@@ -1042,10 +1031,10 @@ export default function Dashboard() {
                 key={label}
                 onClick={() => setServiceFilter(value)}
                 className={clsx(
-                  "px-3 py-1 rounded-md text-[11px] font-bold transition-all",
+                  "px-2.5 py-1 rounded-md text-[10px] font-bold transition-all uppercase tracking-wider",
                   isActive 
-                    ? "bg-accent/10 text-accent border border-accent/30 shadow-sm" 
-                    : "text-text-secondary hover:text-text-primary border border-transparent hover:bg-gray-100 dark:hover:bg-[#2a2d3e]"
+                    ? "bg-primary text-white shadow-sm" 
+                    : "text-text-secondary hover:text-text-primary hover:bg-bg-primary"
                 )}
               >
                 {label}
@@ -1062,11 +1051,11 @@ export default function Dashboard() {
                 <th className="px-6 py-3 border-b border-border">Serviço</th>
                 <th className="px-6 py-3 border-b border-border">Empresa</th>
                 <th className="px-6 py-3 border-b border-border">{t('protocol')}</th>
-                <th className="px-6 py-3 border-b border-border text-right">VOLUME (2 min)</th>
+                <th className="px-6 py-3 border-b border-border text-right">VOLUME</th>
                 <th className="px-6 py-3 border-b border-border text-right">{t('pps')}</th>
               </tr>
             </thead>
-            <tbody className="text-sm divide-y divide-border/50">
+            <tbody className="text-sm divide-y divide-border/30">
               {((Array.isArray(connections) ? connections : (connections?.items || connections?.data || []))
                 ?.filter((item: any) => {
                   if (!serviceFilter) return true;
@@ -1092,10 +1081,10 @@ export default function Dashboard() {
                  const dstMitigation = bannedList.find((m: any) => m.ip === dst);
 
                 return (
-                  <tr key={i} className="hover:bg-accent/5 transition-colors group">
-                     <td className="px-6 py-4">
+                  <tr key={i} className="hover:bg-bg-primary/30 transition-colors group">
+                     <td className="px-6 py-3.5">
                       <div className="flex items-center gap-2">
-                        <Flag code={srcCountry} />
+                        <Flag code={srcCountry} size={14} />
                         {srcMitigation ? (
                           <MitigationTooltip data={{
                             ip: srcMitigation.ip,
@@ -1105,19 +1094,19 @@ export default function Dashboard() {
                             mbps: srcMitigation.mbps,
                             fonte: srcMitigation.source || 'Manual (admin)'
                           }}>
-                            <span className="font-bold text-danger cursor-help flex items-center gap-1">
+                            <span className="font-bold text-danger cursor-help flex items-center gap-1 text-xs">
                               🛡 {src}
                             </span>
                           </MitigationTooltip>
                         ) : (
-                          <span className="font-medium text-text-primary">{src}</span>
+                          <span className="font-semibold text-text-primary text-xs">{src}</span>
                         )}
-                        <span className="text-text-secondary text-xs">:{srcPort}</span>
+                        <span className="text-text-secondary text-[10px] opacity-60">:{srcPort}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-3.5">
                       <div className="flex items-center gap-2">
-                        <Flag code={dstCountry} />
+                        <Flag code={dstCountry} size={14} />
                         {dstMitigation ? (
                           <MitigationTooltip data={{
                             ip: dstMitigation.ip,
@@ -1127,44 +1116,44 @@ export default function Dashboard() {
                             mbps: dstMitigation.mbps,
                             fonte: dstMitigation.source || 'Manual (admin)'
                           }}>
-                            <span className="font-bold text-danger cursor-help flex items-center gap-1">
+                            <span className="font-bold text-danger cursor-help flex items-center gap-1 text-xs">
                               🛡 {dst}
                             </span>
                           </MitigationTooltip>
                         ) : (
-                          <span className="text-text-primary">{dst}</span>
+                          <span className="text-text-primary text-xs font-medium">{dst}</span>
                         )}
-                        <span className="text-text-secondary text-xs">:{dstPort}</span>
+                        <span className="text-text-secondary text-[10px] opacity-60">:{dstPort}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="text-xs font-medium text-text-primary">{getService(dstPort)}</span>
+                    <td className="px-6 py-3.5">
+                      <span className="text-[11px] font-semibold text-text-primary">{getService(dstPort)}</span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="text-[11px] text-text-secondary" title={dstOrg}>{getOrg(dstOrg)}</span>
+                    <td className="px-6 py-3.5">
+                      <span className="text-[10px] font-medium text-text-secondary" title={dstOrg}>{getOrg(dstOrg)}</span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-3.5">
                       <span className={clsx(
-                        "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
-                        item.proto === 6 ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
-                        item.proto === 17 ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" :
-                        item.proto === 1 ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
-                        "bg-gray-100 text-gray-700 dark:bg-bg-secondary dark:text-text-secondary"
+                        "px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider",
+                        item.proto === 6 ? "bg-primary/10 text-primary border border-primary/10" :
+                        item.proto === 17 ? "bg-purple-500/10 text-purple-500 border border-purple-500/10" :
+                        item.proto === 1 ? "bg-warning/10 text-warning border border-warning/10" :
+                        "bg-bg-primary text-text-secondary"
                       )}>
                         {protoName(item.proto)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right font-bold text-text-primary">
+                    <td className="px-6 py-3.5 text-right font-bold text-text-primary text-xs">
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span className="cursor-help">{fmtBytes(item.bytes)}</span>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Volume transferido nos últimos 2 minutos (estimado com sampling 1:1000)</p>
+                          <p>Volume transferido (2 min)</p>
                         </TooltipContent>
                       </Tooltip>
                     </td>
-                    <td className="px-6 py-4 text-right text-text-secondary">{calcPPS(item.packets)}</td>
+                    <td className="px-6 py-3.5 text-right text-text-secondary text-xs font-medium">{calcPPS(item.packets)}</td>
                   </tr>
                 );
               })}
