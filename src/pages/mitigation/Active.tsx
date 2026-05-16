@@ -192,11 +192,11 @@ function TabButton({ active, onClick, icon, label, count }: any) {
                              onMouseLeave={() => setHoveredIP(null)}
                              className="flex items-center gap-2 cursor-help"
                            >
-                             <div className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse" />
-                             {item.ip}
-                             
                               <MitigationTooltip data={item}>
-                                <span>{item.ip}</span>
+                                <div className="flex items-center gap-2">
+                                  <div className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse" />
+                                  <span>{item.ip}</span>
+                                </div>
                               </MitigationTooltip>
                            </div>
                          </td>
