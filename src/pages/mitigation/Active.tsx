@@ -6,6 +6,8 @@
    Shield, Zap, Globe, Trash2, Plus, Clock, 
    Activity, Server, Network, Filter, RefreshCw
  } from 'lucide-react';
+ import { TooltipProvider } from '../../components/ui/tooltip';
+ import { MitigationTooltip } from '../../components/MitigationTooltip';
  import { Skeleton } from '../../components/Skeleton';
  import { clsx } from 'clsx';
  import { toast } from 'sonner';
@@ -134,6 +136,7 @@
        </div>
  
        {/* Content */}
+       <TooltipProvider>
        <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
          {activeTab === 'blackhole' && (
            <div className="overflow-x-auto">
@@ -157,12 +160,21 @@
                  ) : (
                    (blackholes.items || []).map((item: any, i: number) => (
                      <tr key={i} className="hover:bg-danger/5 transition-colors group">
-                       <td className="px-6 py-4 font-mono font-bold text-gray-900 dark:text-gray-100">
-                         <span className="flex items-center gap-2">
-                           <div className="w-2 h-2 rounded-full bg-danger animate-pulse" />
-                           {item.ip}
-                         </span>
-                       </td>
+                        <td className="px-6 py-4 font-mono font-bold text-gray-900 dark:text-gray-100">
+                          <MitigationTooltip data={{
+                            ip: item.ip,
+                            tipo: 'Blackhole /32',
+                            desde: item.since,
+                            pps: item.pps,
+                            mbps: item.mbps,
+                            fonte: item.source || 'Manual (admin)'
+                          }}>
+                            <span className="flex items-center gap-2 cursor-help">
+                              <div className="w-2 h-2 rounded-full bg-danger animate-pulse" />
+                              {item.ip}
+                            </span>
+                          </MitigationTooltip>
+                        </td>
                        <td className="px-6 py-4 text-text-secondary whitespace-nowrap"><Clock size={14} className="inline mr-1" /> {item.since || 'Recente'}</td>
                        <td className="px-6 py-4">
                          <p className="font-bold text-gray-900 dark:text-gray-100">{item.pps ? (item.pps / 1000).toFixed(1) + 'k' : '0'} PPS</p>
@@ -266,9 +278,21 @@
                     </tr>
                   </thead>
                   <tbody className="text-sm divide-y divide-border/50">
-                    {routesList.map((route: any, idx: number) => (
-                      <tr key={idx} className="hover:bg-accent/5 transition-colors">
-                        <td className="px-6 py-4 font-mono font-bold text-gray-900 dark:text-gray-100">{route.prefix}</td>
+                     {routesList.map((route: any, idx: number) => (
+                       <tr key={idx} className="hover:bg-accent/5 transition-colors">
+                         <td className="px-6 py-4 font-mono font-bold text-gray-900 dark:text-gray-100">
+                           <MitigationTooltip data={{
+                             ip: route.prefix,
+                             tipo: route.type || 'Mitigação Externa /24',
+                             community: route.community,
+                             desde: route.age,
+                             pps: '—',
+                             mbps: '—',
+                             fonte: 'Manual (admin)'
+                           }}>
+                             <span className="cursor-help">{route.prefix}</span>
+                           </MitigationTooltip>
+                         </td>
                         <td className="px-6 py-4 text-text-secondary font-mono text-xs">{route.nexthop}</td>
                         <td className="px-6 py-4">
                           <span style={{
@@ -301,9 +325,9 @@
                 </table>
               )}
             </div>
-          )}
+        )}
        </div>
- 
+       </TooltipProvider>
       <MitigationModal 
         isOpen={isMitigationOpen} 
         onClose={() => setIsMitigationOpen(false)} 
