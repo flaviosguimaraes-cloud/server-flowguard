@@ -68,7 +68,7 @@ export const Sidebar = () => {
 
   return (
     <div className={clsx(
-      "h-screen transition-all duration-300 flex flex-col z-50",
+      "h-screen sticky top-0 transition-all duration-300 flex flex-col z-50 shrink-0",
       "bg-bg-secondary border-r border-border shadow-sm",
       collapsed ? "w-[72px]" : "w-[260px]"
     )}>
