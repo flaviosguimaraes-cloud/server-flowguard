@@ -13,6 +13,8 @@ import Flag from '../components/Flag';
 import { clsx } from 'clsx';
 
 const REFETCH_INTERVAL = 30000;
+const RX_COLORS = ['#3b82f6', '#1d4ed8', '#60a5fa', '#93c5fd', '#bfdbfe'];
+const TX_COLORS = ['#22c55e', '#16a34a', '#4ade80', '#86efac', '#bbf7d0'];
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
 
 export default function Dashboard() {
@@ -92,15 +94,16 @@ export default function Dashboard() {
     refetchOnWindowFocus: true,
   });
 
-  const { data: ports } = useQuery({
-    queryKey: ['ports'],
-    queryFn: async () => {
-      const r = await api.get('/api/flows/ports?minutes=30');
-      return r.data;
-    },
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnWindowFocus: true,
+  const { data: portsDst } = useQuery({
+    queryKey: ['ports-dst'],
+    queryFn: () => api.get('/api/flows/ports?minutes=30&direction=dst').then(r => r.data),
+    refetchInterval: 30000,
+  });
+
+  const { data: portsSrc } = useQuery({
+    queryKey: ['ports-src'],
+    queryFn: () => api.get('/api/flows/ports?minutes=30&direction=src').then(r => r.data),
+    refetchInterval: 30000,
   });
 
   const [selectedCollector, setSelectedCollector] = useState<number>(() => {
@@ -136,7 +139,8 @@ export default function Dashboard() {
     enabled: !!selectedCollector,
   });
 
-   const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
+    const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
+    const [serviceFilter, setServiceFilter] = useState<string | null>(null);
    const [period, setPeriod] = useState<'realtime' | '5m' | '15m'>('realtime');
  
    const { data: metricsHistory } = useQuery({
@@ -342,19 +346,25 @@ export default function Dashboard() {
 
     const getService = (port: number) => {
       const s: Record<number, string> = {
-        80:'HTTP', 443:'HTTPS', 53:'DNS',
-        22:'SSH', 25:'SMTP', 110:'POP3',
-        143:'IMAP', 3389:'RDP', 8080:'HTTP-Alt',
-        123:'NTP', 179:'BGP', 161:'SNMP',
-        3306:'MySQL', 5432:'PG', 27000:'Steam',
-        1194:'VPN', 500:'IPSec', 1723:'PPTP',
-        8443:'HTTPS-Alt', 465:'SMTP-SSL',
-        993:'IMAP-SSL', 995:'POP3-SSL',
-        21:'FTP', 23:'Telnet', 3478:'STUN',
-        5060:'SIP', 5061:'SIP-TLS',
-        19522:'UDP-Game', 25461:'Game',
+        80: 'HTTP', 443: 'HTTPS', 53: 'DNS',
+        22: 'SSH', 25: 'SMTP', 110: 'POP3',
+        143: 'IMAP', 3389: 'RDP',
+        8080: 'HTTP-Alt', 123: 'NTP',
+        179: 'BGP', 161: 'SNMP',
+        3306: 'MySQL', 5432: 'PostgreSQL',
+        27000: 'Steam', 1194: 'VPN',
+        500: 'IPSec', 1723: 'PPTP',
+        8443: 'HTTPS-Alt', 465: 'SMTP-SSL',
+        993: 'IMAP-SSL', 995: 'POP3-SSL',
+        21: 'FTP', 23: 'Telnet',
+        3478: 'STUN', 5060: 'SIP',
+        19132: 'Minecraft', 25565: 'Minecraft',
+        6881: 'BitTorrent', 1935: 'RTMP',
+        554: 'RTSP', 8888: 'HTTP-Alt2',
       };
-      return s[port] || String(port);
+      return s[port]
+        ? `${s[port]} (${port})`
+        : String(port);
     };
 
     const getOrg = (org: string) => {
@@ -383,17 +393,19 @@ export default function Dashboard() {
      1194: 'VPN', 3306: 'MySQL', 5432: 'PG'
    };
 
-    const portItems = ports?.items || ports?.data || (Array.isArray(ports) ? ports : []);
-    const totalPortBytes = portItems.reduce((a: number, b: any) => a + b.bytes, 0);
-
-    const portData = portItems
-      .slice(0, 6)
-      .map((p: any) => ({
+    const processPortData = (data: any) => {
+      const items = data?.items || data?.data || (Array.isArray(data) ? data : []);
+      const total = items.reduce((a: number, b: any) => a + (b.bytes || 0), 0);
+      return items.slice(0, 6).map((p: any) => ({
         port: p.port,
-        name: portMap[p.port] || String(p.port),
+        name: getService(p.port),
         bytes: p.bytes,
-        pct: totalPortBytes > 0 ? ((p.bytes / totalPortBytes) * 100).toFixed(1) : 0
+        pct: total > 0 ? ((p.bytes / total) * 100).toFixed(1) : "0"
       }));
+    };
+
+    const portDataDst = processPortData(portsDst);
+    const portDataSrc = processPortData(portsSrc);
 
     const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
 
