@@ -210,9 +210,8 @@ export default function Dashboard() {
     }, [timeline]);
 
     const selectedIfaceData = useMemo(() => {
-      if (!interfaces?.interfaces) return [];
-      return (interfaces.interfaces || [])
-        .filter((i: any) => selectedIfaces.includes(i.display_name || i.if_name));
+      const list = Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [];
+      return list.filter((i: any) => selectedIfaces.includes(i.display_name || i.if_name));
     }, [interfaces, selectedIfaces]);
 
     const timePoints = useMemo(() => {
@@ -324,15 +323,15 @@ export default function Dashboard() {
     const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
 
     const ifaceColors = ['#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
-   const relevantInterfaces = (interfaces?.interfaces || [])
-     .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
-     .filter((i: any) => {
-       const name = (i.display_name || i.if_name || '').toLowerCase();
-       return !name.includes('null') && !name.includes('loopback') && !name.includes('virtual') &&
-         !name.includes('template') && !name.includes('inloop');
-     })
-     .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
-     .slice(0, 6);
+    const relevantInterfaces = (Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
+      .filter((i: any) => (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0)
+      .filter((i: any) => {
+        const name = (i.display_name || i.if_name || '').toLowerCase();
+        return !name.includes('null') && !name.includes('loopback') && !name.includes('virtual') &&
+          !name.includes('template') && !name.includes('inloop');
+      })
+      .sort((a: any, b: any) => ((b.in_bps || 0) + (b.out_bps || 0)) - ((a.in_bps || 0) + (a.out_bps || 0)))
+      .slice(0, 6);
 
   const fmtBps = (bps: number) => {
     if (!bps || bps === 0) return '0 bps';
@@ -456,7 +455,7 @@ export default function Dashboard() {
             </div>
             <div className="flex flex-col items-end">
               <span className="text-[10px] uppercase font-bold text-text-secondary">Interfaces</span>
-              <span className="text-sm font-black text-gray-900 dark:text-gray-100">{selectedIfaces.length} de {(interfaces?.interfaces || []).length}</span>
+              <span className="text-sm font-black text-gray-900 dark:text-gray-100">{selectedIfaces.length} de {(Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : []).length}</span>
             </div>
           </div>
         </div>
@@ -551,8 +550,8 @@ export default function Dashboard() {
 
         {/* Interface Legend / Selector */}
         <div className="mt-6 flex flex-wrap gap-2 max-h-[200px] overflow-y-auto custom-scrollbar pt-2 border-t border-gray-100 dark:border-[#2a2d3e]">
-          {(interfaces?.interfaces || [])
-            .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
+          {(Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
+            .filter((i: any) => (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0)
             .filter((i: any) => {
               const n = (i.display_name || i.if_name || '').toLowerCase();
               return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
