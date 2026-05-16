@@ -2,10 +2,13 @@ import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { useTranslation } from '../hooks/useTranslation';
- import { 
-   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
-   BarChart, Bar, Cell, AreaChart, Area
- } from 'recharts';
+import { 
+  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
+  BarChart, Bar, Cell, AreaChart, Area
+} from 'recharts';
+import { 
+  Tooltip, TooltipTrigger, TooltipContent, TooltipProvider 
+} from '../components/ui/tooltip';
 import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon, Settings2, Info } from 'lucide-react';
 import { Skeleton } from '../components/Skeleton';
 import Flag from '../components/Flag';
