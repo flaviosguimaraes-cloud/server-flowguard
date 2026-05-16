@@ -1118,9 +1118,8 @@ export default function Dashboard() {
         </div>
        </div>
        </TooltipProvider>
-    </div>
-  );
-}
+     );
+   }
 
 function StatCard({ title, value, unit, icon, trend, tooltip, subtitle }: any) {
   return (
