@@ -216,44 +216,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
     document.body.removeChild(link);
   };
 
-  const SortHeader = ({ field, label, align = 'left' }: { field: string, label: string, align?: 'left' | 'right' | 'center' }) => (
-    <th 
-      className={clsx("px-6 py-4 border-b border-border cursor-pointer hover:bg-bg-secondary transition-colors", align === 'right' && 'text-right', align === 'center' && 'text-center')}
-      onClick={() => {
-        if (sortField === field) {
-          setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
-        } else {
-          setSortField(field);
-          setSortOrder('desc');
-        }
-      }}
-    >
-      <div className={clsx("flex items-center gap-1", align === 'right' && 'justify-end')}>
-        {label}
-        {sortField === field && (
-          sortOrder === 'desc' ? <ArrowDown size={12} /> : <ArrowUp size={12} />
-        )}
-      </div>
-    </th>
-  );
-
-  const PPSIntensity = ({ pps }: { pps: number }) => {
-    const color = pps < 10000 ? '#22c55e' : pps < 50000 ? '#f59e0b' : '#ef4444';
-    return (
-      <div className="flex items-center gap-2 justify-end">
-        <span className="text-right w-12 font-mono text-[11px]">{pps > 1000 ? (pps/1000).toFixed(1)+'k' : pps}</span>
-        <div className="w-8 h-1 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden">
-          <div 
-            className="h-full transition-all duration-500" 
-            style={{ 
-              width: `${Math.min((pps/100000)*100, 100)}%`,
-              backgroundColor: color
-            }} 
-          />
-        </div>
-      </div>
-    );
-  };
+  const [hoveredMitIP, setHoveredMitIP] = useState<string | null>(null);
 
    return (
      <div className="space-y-6 animate-in fade-in duration-500">
