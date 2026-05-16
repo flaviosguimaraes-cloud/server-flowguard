@@ -152,21 +152,21 @@ export const Sidebar = () => {
       </nav>
 
       {/* Footer / Toggle */}
-      <div className="p-4 border-t border-border">
+      <div className="p-3 border-t border-border">
         <button 
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-center py-2 text-text-secondary hover:text-text-primary hover:bg-bg-secondary rounded-lg transition-all duration-200"
+          className="w-full flex items-center justify-center py-1.5 text-text-secondary hover:text-text-primary hover:bg-bg-primary rounded-lg transition-all duration-200 mb-1"
         >
-          {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+          {collapsed ? <ChevronRight size={18} /> : <ChevronLeft size={18} />}
         </button>
         <button 
           onClick={logout}
           className={clsx(
-            "w-full flex items-center py-2.5 text-danger hover:bg-danger-bg rounded-lg transition-all duration-200 mt-2",
+            "w-full flex items-center py-2 text-danger hover:bg-danger/5 rounded-lg transition-all duration-200",
             collapsed ? "justify-center px-0" : "px-3 gap-3"
           )}
         >
-          <LogOut size={20} />
+          <LogOut size={18} />
           {!collapsed && <span className="text-sm font-semibold">{t('logout')}</span>}
         </button>
       </div>
