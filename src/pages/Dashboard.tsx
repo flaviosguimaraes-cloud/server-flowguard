@@ -573,50 +573,39 @@ export default function Dashboard() {
                     </span>
                     
                     {hoveredIP === m.ip && (
-                      <div style={{
-                        position: 'absolute',
-                        zIndex: 100,
-                        background: '#1e2130',
-                        border: '1px solid #ef4444',
-                        borderRadius: 8,
-                        padding: '12px',
-                        width: 220,
-                        boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
-                        top: '100%',
-                        left: 0,
-                        marginTop: 4,
-                      }}>
-                        <div style={{fontSize:12, color:'#8892a4', marginBottom:8}}>
+                      <div className="absolute z-[100] bg-bg-secondary border border-danger/50 rounded-xl p-4 w-[240px] shadow-2xl shadow-black/50 top-full left-0 mt-2 backdrop-blur-md animate-in fade-in zoom-in duration-200">
+                        <div className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mb-2 opacity-70 border-b border-border pb-1">
                           Detalhes da Mitigação
                         </div>
-                        <div style={{fontSize:13, color:'#e2e8f0', fontFamily:'monospace', marginBottom:4}}>
+                        <div className="text-sm font-black text-text-primary font-mono mb-2">
                           {m.ip}
                         </div>
-                        <div style={{fontSize:11, color:'#8892a4'}}>
-                          Tipo: {m.type || 'Blackhole /32'}
-                        </div>
-                        <div style={{fontSize:11, color:'#8892a4'}}>
-                          Community: 65000:666
-                        </div>
-                        <div style={{fontSize:11, color:'#8892a4'}}>
-                          Início: {m.since}
-                        </div>
-                        <div style={{fontSize:11, color:'#8892a4'}}>
-                          Fonte: {m.source === 'automatic' ? 'Automático (detector)' : 'Manual (operador)'}
-                        </div>
-                        {m.pps > 0 && (
-                          <div style={{
-                            marginTop:8,
-                            padding:'6px 8px',
-                            background:'#3b1212',
-                            borderRadius:4,
-                            fontSize:11,
-                            color:'#ef4444'
-                          }}>
-                            Pico: {m.pps > 1000 ? (m.pps/1000).toFixed(1)+'k' : m.pps} pps 
-                            · {m.mbps} Mbps
+                        <div className="space-y-1">
+                          <div className="text-[11px] text-text-secondary flex justify-between">
+                            <span>Tipo:</span>
+                            <span className="text-text-primary font-bold">{m.type || 'Blackhole /32'}</span>
                           </div>
-                        )}
+                          <div className="text-[11px] text-text-secondary flex justify-between">
+                            <span>Community:</span>
+                            <span className="text-text-primary font-bold">65000:666</span>
+                          </div>
+                          <div className="text-[11px] text-text-secondary flex justify-between">
+                            <span>Início:</span>
+                            <span className="text-text-primary font-bold">{m.since}</span>
+                          </div>
+                          <div className="text-[11px] text-text-secondary flex justify-between">
+                            <span>Fonte:</span>
+                            <span className="text-text-primary font-bold">
+                              {m.source === 'automatic' ? 'Automático (detector)' : 'Manual (operador)'}
+                            </span>
+                          </div>
+                          {m.pps > 0 && (
+                            <div className="mt-3 p-2 bg-danger-bg border border-danger/20 rounded-lg text-[10px] text-danger font-bold flex justify-between">
+                              <span>Pico:</span>
+                              <span>{m.pps > 1000 ? (m.pps/1000).toFixed(1)+'k' : m.pps} pps · {m.mbps} Mbps</span>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     )}
                   </div>

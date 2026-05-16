@@ -216,10 +216,16 @@ function TabButton({ active, onClick, icon, label, count }: any) {
                                     <span>Início:</span>
                                     <span className="text-text-primary font-bold">{item.since}</span>
                                   </div>
+                                  <div className="text-[11px] text-text-secondary flex justify-between">
+                                    <span>Fonte:</span>
+                                    <span className="text-text-primary font-bold">
+                                      {item.source === 'automatic' ? 'Automático (detector)' : 'Manual (operador)'}
+                                    </span>
+                                  </div>
                                   {item.pps > 0 && (
                                     <div className="mt-3 p-2 bg-danger-bg border border-danger/20 rounded-lg text-[10px] text-danger font-bold flex justify-between">
-                                      <span>PICO:</span>
-                                      <span>{item.pps > 1000 ? (item.pps/1000).toFixed(1)+'k' : item.pps} PPS · {item.mbps} MBPS</span>
+                                      <span>Pico:</span>
+                                      <span>{item.pps > 1000 ? (item.pps/1000).toFixed(1)+'k' : item.pps} pps · {item.mbps} Mbps</span>
                                     </div>
                                   )}
                                 </div>

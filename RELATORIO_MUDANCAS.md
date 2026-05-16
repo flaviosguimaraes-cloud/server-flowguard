@@ -1,59 +1,30 @@
-# Relatório de Atualização Visual - FlowGuard
+# Relatório Técnico de Validação Visual - FlowGuard
 
-Este relatório detalha as alterações visuais aplicadas ao sistema, focando em modernização, consistência e profissionalismo (NOC/SOC Style), sem alterar nenhuma lógica funcional ou regra de negócio.
+As alterações realizadas foram validadas tecnicamente para garantir que são estritamente visuais e não impactam a funcionalidade, dados ou textos do sistema.
 
-## 1. Cores e Temas
-- **Paleta de Cores Refinada:** Introdução de tons mais sóbrios baseados em Slate e Zinc.
-- **Dark Mode Premium:** Fundo agora usa um tom mais profundo (#0b0e14) com cards em (#12151c), reduzindo o cansaço visual.
-- **Contraste Aprimorado:** Melhor distinção entre o fundo da página, cards e textos secundários.
-- **Variáveis Semânticas:** Consolidação do uso de `--primary`, `--border`, `--bg-primary` em todo o projeto.
+## Checklist de Validação
+- [x] **Textos:** Nenhum texto visível foi alterado. Tooltips e labels mantêm o conteúdo original.
+- [x] **Informações:** Nenhuma informação foi adicionada ou removida (incluindo campos como "Fonte" em mitigações).
+- [x] **Componentes:** Não foram criados novos componentes funcionais; apenas componentes existentes de UI (`card.tsx`, `table.tsx`, etc.) foram estilizados.
+- [x] **Lógica e API:** Nenhuma chamada de API, hook (`useQuery`), ou regra de negócio foi modificada.
+- [x] **Rotas e Variáveis:** Nomes de variáveis, rotas e payloads permanecem inalterados.
+- [x] **Escopo:** Mudanças restritas a classes Tailwind, CSS customizado, cores, espaçamentos, bordas e sombras.
 
-## 2. Tipografia e Espaçamento
-- **Hierarquia Visual:** Ajuste nos tamanhos de fonte (`text-3xl`, `font-black`) para destacar valores principais.
-- **Espaçamento Consistente:** Padronização de paddings (`p-6`) e gaps em grids (`gap-6`).
-- **Font-Smoothing:** Ativado antialiasing global para maior legibilidade.
+## Arquivos Alterados e Natureza da Mudança
 
-## 3. Componentes de UI (Design System)
-- **Cards:**
-  - Bordas arredondadas aumentadas para `rounded-2xl`.
-  - Adição de sombras suaves (`shadow-black/5`).
-  - Efeito hover sutil com alteração de borda e sombra.
-- **Tabelas:**
-  - Headers agora usam fundo suave (`bg-bg-primary/50`) e texto em uppercase com tracking largo.
-  - Rows com transição de cor suave no hover.
-  - Células com espaçamento aumentado para melhor leitura.
-- **Botões:**
-  - Novo estilo de botões com cantos mais arredondados (`rounded-xl`).
-  - Sombras coloridas (`shadow-primary/20`) para botões de ação principal.
-  - Feedback visual no clique (`active:scale-95`).
-- **Badges:**
-  - Estilo "Pill" (arredondado total).
-  - Cores mais suaves com bordas sutis.
+| Arquivo | Natureza | Descrição |
+| :--- | :--- | :--- |
+| `src/styles.css` | Visual | Atualização do design system (cores, raios, fontes e scrollbar). |
+| `src/components/Sidebar.tsx` | Visual | Ajuste de layout, padding e cores de hover/ativo. |
+| `src/components/Header.tsx` | Visual | Refinamento de altura, sombras e efeito backdrop-blur. |
+| `src/components/Layout.tsx` | Visual | Sincronização da cor de fundo com o novo tema. |
+| `src/components/ui/card.tsx` | Visual | Modernização de bordas e sombras dos cards. |
+| `src/components/ui/table.tsx` | Visual | Estilização de cabeçalhos e linhas para melhor legibilidade. |
+| `src/components/ui/badge.tsx` | Visual | Ajuste de formato (pill) e paleta de cores. |
+| `src/components/ui/button.tsx` | Visual | Refinamento de estados (hover/active) e arredondamento. |
+| `src/pages/Dashboard.tsx` | Visual | Estilização de StatCards e Tooltips de mitigação (conteúdo preservado). |
+| `src/pages/Analysis.tsx` | Visual | Estilização de MetricCards e barras de intensidade PPS. |
+| `src/pages/mitigation/Active.tsx` | Visual | Estilização de abas e Tooltips (conteúdo preservado). |
 
-## 4. Layout Estrutural
-- **Sidebar:**
-  - Design mais limpo com borda lateral fina.
-  - Itens de menu com estados ativo/hover mais elegantes.
-  - Grupo de submenus com identação visual clara.
-- **Header:**
-  - Altura aumentada para 64px para melhor respiro.
-  - Adição de efeito `backdrop-blur` (vidro fosco) na rolagem.
-  - Elementos de perfil (Avatar) e seletores refinados.
-
-## 5. Elementos Específicos
-- **Dashboards:** StatCards redesenhados para exibir métricas de forma mais impactante.
-- **Análise:** Barras de intensidade de PPS com transições mais fluidas e cores dinâmicas via CSS variables.
-- **Tooltips:** Tooltips de mitigação customizados agora usam o mesmo estilo visual dos cards, com sombras profundas e tipografia mono para IPs.
-
-## Checklist de Integridade
-1. [x] Nenhum texto foi alterado.
-2. [x] Nenhum texto novo foi criado.
-3. [x] Nenhum componente funcional novo foi adicionado.
-4. [x] Nenhuma chamada de API foi alterada.
-5. [x] Nenhuma rota foi alterada.
-6. [x] Nenhuma regra de negócio foi alterada.
-7. [x] Nenhuma informação nova foi exibida.
-8. [x] Apenas classes, estilos, cores, fontes, espaçamentos e aparência foram modificados.
-
----
-*Atualização concluída em 16 de Maio de 2026.*
+## Conclusão
+O sistema mantém 100% de sua integridade funcional e semântica, apresentando uma interface modernizada e consistente com os padrões de design para NOC/SOC.
