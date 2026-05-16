@@ -13,6 +13,7 @@ import Flag from '../components/Flag';
 import { clsx } from 'clsx';
 
 const REFETCH_INTERVAL = 30000;
+const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -207,8 +208,27 @@ export default function Dashboard() {
     const selectedIfaceData = useMemo(() => {
       if (!interfaces?.interfaces) return [];
       return (interfaces.interfaces || [])
-        .filter((i: any) => selectedIfaces.includes(i.display_name));
+        .filter((i: any) => selectedIfaces.includes(i.display_name || i.if_name));
     }, [interfaces, selectedIfaces]);
+
+    const timePoints = useMemo(() => {
+      const firstSelected = selectedIfaces[0];
+      return history[firstSelected]?.map(p => p.time) || [];
+    }, [history, selectedIfaces]);
+
+    const chartData = useMemo(() => {
+      return timePoints.map((time, idx) => {
+        const point: Record<string, any> = { time };
+        selectedIfaces.forEach(name => {
+          const h = history[name];
+          if (h && h[idx]) {
+            point[`${name}_in`] = Math.round(h[idx].in_bps / 1e6);
+            point[`${name}_out`] = Math.round(h[idx].out_bps / 1e6);
+          }
+        });
+        return point;
+      });
+    }, [timePoints, selectedIfaces, history]);
 
     const protoMap: Record<number, string> = {
      6: 'TCP', 17: 'UDP', 1: 'ICMP',
