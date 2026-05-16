@@ -66,16 +66,22 @@
            originalRequest.headers.Authorization =
              `Bearer ${newToken}`;
            return api(originalRequest);
-         } catch (refreshError) {
-           // Refresh falhou — aí sim desloga
-           localStorage.clear();
-           window.location.href = '/login';
-           return Promise.reject(refreshError);
-         }
-       } else {
-         localStorage.clear();
-         window.location.href = '/login';
-       }
+          } catch (refreshError) {
+            // Refresh falhou — aí sim desloga
+            localStorage.removeItem('access_token');
+            localStorage.removeItem('refresh_token');
+            localStorage.removeItem('username');
+            localStorage.removeItem('role');
+            window.location.href = '/login';
+            return Promise.reject(refreshError);
+          }
+        } else {
+          localStorage.removeItem('access_token');
+          localStorage.removeItem('refresh_token');
+          localStorage.removeItem('username');
+          localStorage.removeItem('role');
+          window.location.href = '/login';
+        }
      }
  
      return Promise.reject(error);
