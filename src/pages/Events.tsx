@@ -274,28 +274,22 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 
     const risk = getRisk(host.pps);
     
-    const riskBadge = {
+    const riskBadgeConfig = {
       high: {
         label: 'RISCO ALTO',
-        bg: 'var(--danger-bg)',
-        color: 'var(--danger)',
-        border: 'rgba(214, 57, 57, 0.1)'
+        className: "bg-danger-bg text-danger border-danger/20 dark:bg-danger/10 dark:text-danger dark:border-danger/20"
       },
       medium: {
         label: 'RISCO MÉDIO',
-        bg: 'var(--warning-bg)',
-        color: 'var(--warning)',
-        border: 'rgba(247, 103, 7, 0.1)'
+        className: "bg-warning-bg text-warning border-warning/20 dark:bg-warning/10 dark:text-warning dark:border-warning/20"
       },
       low: {
         label: 'RISCO BAIXO',
-        bg: 'var(--success-bg)',
-        color: 'var(--success)',
-        border: 'rgba(47, 179, 68, 0.1)'
+        className: "bg-success-bg text-success border-success/20 dark:bg-success/10 dark:text-success dark:border-success/20"
       },
     };
 
-    const badge = riskBadge[risk];
+    const badge = riskBadgeConfig[risk];
     
     const barWidth = maxPps > 0
       ? Math.max((host.pps / maxPps) * 100, 2)
@@ -335,16 +329,15 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
              </span>
            )}
           
-          <span className="text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider" style={{
-            borderColor: badge.border,
-            background: badge.bg,
-            color: badge.color,
-          }}>
+          <span className={clsx(
+            "text-[9px] font-bold px-1.5 py-0.5 rounded border uppercase tracking-wider",
+            badge.className
+          )}>
             {badge.label}
           </span>
 
           {isBanned && (
-            <span className="px-1.5 py-0.5 bg-danger text-white rounded text-[9px] font-bold uppercase tracking-wider shadow-sm">
+            <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20 rounded text-[9px] font-bold uppercase tracking-wider shadow-sm">
               EM MITIGAÇÃO
             </span>
           )}
