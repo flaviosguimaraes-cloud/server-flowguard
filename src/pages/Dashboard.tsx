@@ -780,7 +780,7 @@ export default function Dashboard() {
                 <p className="text-xs text-text-secondary">O que seus clientes estão acessando na internet</p>
               </div>
               <div className="space-y-3">
-                {portDataDst.map((p, i) => (
+                {portDataDst.map((p: any, i: number) => (
                   <div key={i} className="space-y-1">
                     <div className="flex justify-between text-[11px] font-bold">
                       <span className="text-text-primary">{p.name}</span>
@@ -809,7 +809,7 @@ export default function Dashboard() {
                 <p className="text-xs text-text-secondary">O que sua rede está entregando para a internet</p>
               </div>
               <div className="space-y-3">
-                {portDataSrc.map((p, i) => (
+                {portDataSrc.map((p: any, i: number) => (
                   <div key={i} className="space-y-1">
                     <div className="flex justify-between text-[11px] font-bold">
                       <span className="text-text-primary">{p.name}</span>
