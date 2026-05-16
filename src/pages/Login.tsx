@@ -2,7 +2,8 @@ import { useState, FormEvent, useEffect } from 'react';
  import { useTranslation } from '../hooks/useTranslation';
  import api from '../services/api';
  import { toast } from 'sonner';
-  import { Lock, User, Shield, Globe } from 'lucide-react';
+   import { Lock, User, Shield, Globe, Sun, Moon } from 'lucide-react';
+   import { useTheme } from '../contexts/ThemeContext';
  
  export default function Login() {
    const [username, setUsername] = useState('');
@@ -10,6 +11,7 @@ import { useState, FormEvent, useEffect } from 'react';
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
    const { t, lang, changeLanguage } = useTranslation();
+  const { theme, toggleTheme } = useTheme();
  
   // Limpar erro ao digitar
   useEffect(() => {
@@ -61,7 +63,7 @@ import { useState, FormEvent, useEffect } from 'react';
     <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4 transition-colors">
       <div className="max-w-md w-full bg-bg-secondary p-10 rounded-2xl shadow-xl border border-border transition-all duration-300 relative overflow-hidden">
         <div className="absolute top-0 left-0 w-full h-1 bg-primary/20" />
-        <div className="flex justify-between items-center mb-6">
+        <div className="flex justify-between items-center mb-10">
           <div className="flex items-center gap-2">
             <Globe className="text-text-secondary" size={18} />
             <select 
@@ -74,6 +76,14 @@ import { useState, FormEvent, useEffect } from 'react';
               <option value="es">ES</option>
             </select>
           </div>
+
+          <button 
+            type="button"
+            onClick={toggleTheme}
+            className="p-2 hover:bg-bg-primary rounded-lg text-text-secondary hover:text-primary transition-all duration-200 border border-transparent hover:border-border active:scale-95"
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
         </div>
 
         <div className="text-center mb-8">

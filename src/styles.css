@@ -41,8 +41,11 @@ aside:has(a[href*="lovable.dev"]) {
   --color-text-primary: var(--text-primary);
   --color-text-secondary: var(--text-secondary);
   --color-accent-bg: var(--accent-bg);
+  --color-danger: var(--danger);
   --color-danger-bg: var(--danger-bg);
+  --color-success: var(--success);
   --color-success-bg: var(--success-bg);
+  --color-warning: var(--warning);
   --color-warning-bg: var(--warning-bg);
 
   --color-background: var(--background);
