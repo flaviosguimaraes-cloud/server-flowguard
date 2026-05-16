@@ -992,35 +992,33 @@ export default function Dashboard() {
 
         {/* Active Connections Table */}
         <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-200 dark:border-border flex flex-wrap justify-between items-center bg-gray-50/50 dark:bg-bg-secondary/30 gap-4">
-           <div className="flex flex-col gap-1">
-             <h2 className="text-lg font-bold text-text-primary">Top Fluxos IPv4 (2 min)</h2>
-             <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
-                <span style={{ fontSize: 11, color: '#8892a4' }}>
-                  {(() => {
-                    const list = (Array.isArray(connections) ? connections : (connections?.items || connections?.data || []))
-                      ?.filter((item: any) => {
-                        if (!serviceFilter) return true;
-                        const flipped = shouldFlip(item);
-                        const dstPort = flipped ? item.src_port : item.dst_port;
-                        const service = getService(dstPort).split(' ')[0];
-                        if (serviceFilter === 'UDP') return item.proto === 17;
-                        if (serviceFilter === 'TCP') return item.proto === 6;
-                        return service === serviceFilter;
-                      }) || [];
-                     return `${list.length} conexões · Top conexões por volume · últimos 2 min · atualizado a cada 30s`;
-                  })()}
-                </span>
-             </div>
+        <div className="p-5 border-b border-border flex flex-wrap justify-between items-center bg-bg-primary/30 gap-4">
+           <div className="flex flex-col gap-0.5">
+             <h2 className="text-base font-bold text-text-primary">Top Fluxos IPv4 (2 min)</h2>
+             <span className="text-[10px] text-text-secondary font-bold uppercase tracking-wider opacity-60">
+               {(() => {
+                 const list = (Array.isArray(connections) ? connections : (connections?.items || connections?.data || []))
+                   ?.filter((item: any) => {
+                     if (!serviceFilter) return true;
+                     const flipped = shouldFlip(item);
+                     const dstPort = flipped ? item.src_port : item.dst_port;
+                     const service = getService(dstPort).split(' ')[0];
+                     if (serviceFilter === 'UDP') return item.proto === 17;
+                     if (serviceFilter === 'TCP') return item.proto === 6;
+                     return service === serviceFilter;
+                   }) || [];
+                  return `${list.length} conexões detectadas · amostragem 1:1000`;
+               })()}
+             </span>
            </div>
-           <span style={{fontSize:11, color:'#8892a4'}}>
-             Próxima atualização: {countdown}s
-           </span>
-          <div className="flex items-center gap-2">
-            <button className="text-text-secondary hover:text-text-primary transition-colors">
-              <MoreVertical size={20} />
-            </button>
-          </div>
+           <div className="flex items-center gap-4">
+              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest bg-bg-primary px-2 py-1 rounded border border-border">
+                Refresh em {countdown}s
+              </span>
+              <button className="text-text-secondary hover:text-text-primary transition-colors">
+                <MoreVertical size={18} />
+              </button>
+           </div>
         </div>
 
         {/* Filtros rápidos */}
