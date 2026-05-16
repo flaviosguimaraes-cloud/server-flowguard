@@ -419,9 +419,9 @@ export default function Dashboard() {
               ) : (
                 <div className="h-full flex flex-col justify-center space-y-10 py-4">
                   {(() => {
-                    const totalRx = selectedIfaceData.reduce((a, b) => a + (b.in_bps || 0), 0);
-                    const totalTx = selectedIfaceData.reduce((a, b) => a + (b.out_bps || 0), 0);
-                    const totalSpeed = selectedIfaceData.reduce((a, b) => a + (b.if_speed || 0), 0);
+                    const totalRx = selectedIfaceData.reduce((a: number, b: any) => a + (b.in_bps || 0), 0);
+                    const totalTx = selectedIfaceData.reduce((a: number, b: any) => a + (b.out_bps || 0), 0);
+                    const totalSpeed = selectedIfaceData.reduce((a: number, b: any) => a + (b.if_speed || 0), 0);
                     const totalInPct = totalSpeed > 0 ? Math.min((totalRx / totalSpeed) * 100, 100) : 0;
                     const totalOutPct = totalSpeed > 0 ? Math.min((totalTx / totalSpeed) * 100, 100) : 0;
                     return (
