@@ -68,27 +68,27 @@ export const Sidebar = () => {
 
   return (
     <div className={clsx(
-      "h-screen transition-all duration-300 flex flex-col z-50",
-      "bg-white dark:bg-[#0b0e14] border-r border-border",
-      collapsed ? "w-[72px]" : "w-[260px]"
+      "h-screen transition-all duration-500 flex flex-col z-50 shadow-2xl shadow-black/20",
+      "bg-bg-secondary border-r border-border",
+      collapsed ? "w-[80px]" : "w-[280px]"
     )}>
       {/* Logo */}
       <div className={clsx(
-        "h-[64px] flex items-center gap-3 border-b border-border transition-all duration-300", 
-        collapsed ? "justify-center" : "px-6"
+        "h-[72px] flex items-center gap-3 border-b border-border transition-all duration-300", 
+        collapsed ? "justify-center" : "px-8"
       )}>
-        <div className="bg-primary/10 p-1.5 rounded-xl shadow-sm">
-          <Shield className="text-primary" size={24} />
+        <div className="bg-primary/20 p-2 rounded-2xl shadow-lg shadow-primary/10 border border-primary/20">
+          <Shield className="text-primary" size={26} />
         </div>
         {!collapsed && (
-          <span className="font-bold text-lg tracking-tight text-foreground bg-clip-text">
+          <span className="font-black text-xl tracking-tighter text-text-primary uppercase bg-gradient-to-br from-text-primary to-text-secondary bg-clip-text text-transparent">
             FlowGuard
           </span>
         )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 mt-6 px-3 overflow-y-auto overflow-x-hidden custom-scrollbar space-y-1">
+      <nav className="flex-1 mt-8 px-4 overflow-y-auto overflow-x-hidden custom-scrollbar space-y-2">
         {navItems.map((item) => {
           if (item.children) {
             const isOpen = openGroups.includes(item.id);
@@ -99,9 +99,9 @@ export const Sidebar = () => {
                 <button 
                   onClick={() => toggleGroup(item.id)}
                   className={clsx(
-                    "w-full flex items-center py-2.5 transition-all duration-200 rounded-lg group",
-                    collapsed ? "justify-center" : "justify-between px-3",
-                    groupActive && !isOpen ? "text-primary bg-primary/5" : "text-text-secondary hover:bg-bg-secondary"
+                    "w-full flex items-center py-3 transition-all duration-300 rounded-xl group relative overflow-hidden",
+                    collapsed ? "justify-center" : "justify-between px-4",
+                    groupActive && !isOpen ? "text-primary bg-primary/10" : "text-text-secondary hover:bg-bg-primary"
                   )}
                 >
                   <div className="flex items-center gap-3">
@@ -138,13 +138,14 @@ export const Sidebar = () => {
               key={item.path} 
               to={item.path} 
               className={clsx(
-                "flex items-center py-2.5 transition-all duration-200 rounded-lg group",
-                collapsed ? "justify-center px-0" : "px-3 gap-3",
-                active ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-text-secondary hover:bg-bg-secondary"
+                "flex items-center py-3 transition-all duration-300 rounded-xl group relative overflow-hidden",
+                collapsed ? "justify-center px-0" : "px-4 gap-4",
+                active ? "bg-primary text-white shadow-xl shadow-primary/30" : "text-text-secondary hover:bg-bg-primary"
               )}
             >
-              <item.icon size={20} className={clsx("transition-colors", active ? "text-white" : "group-hover:text-text-primary")} />
-              {!collapsed && <span className="text-sm font-semibold">{item.label}</span>}
+              <item.icon size={22} className={clsx("transition-transform duration-300", active ? "text-white scale-110" : "group-hover:text-text-primary group-hover:scale-110")} />
+              {!collapsed && <span className={clsx("text-sm font-bold tracking-tight", active ? "text-white" : "group-hover:text-text-primary")}>{item.label}</span>}
+              {active && !collapsed && <div className="absolute right-0 w-1.5 h-6 bg-white rounded-l-full" />}
             </Link>
           );
         })}
