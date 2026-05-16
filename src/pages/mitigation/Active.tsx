@@ -98,13 +98,14 @@ function TabButton({ active, onClick, icon, label, count }: any) {
            }
          }
        );
-        if (source === 'automatic') {
-          toast.success(
-            'Anúncio BGP removido. ' +
-            'O bloqueio no detector de ataques ' +
-            'expira automaticamente em até 5 minutos.'
-          );
-        } else {
+         if (source === 'automatic') {
+           toast.success(
+             'Anúncio BGP removido. ' +
+             'O bloqueio no detector de ataques ' +
+             'expira automaticamente em até 5 minutos.',
+             { duration: 20000 }
+           );
+         } else {
           toast.success(`Mitigação removida: ${cleanIP}`);
         }
        queryClient.invalidateQueries({ queryKey: ['mitigation-active'] });
