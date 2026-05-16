@@ -160,10 +160,6 @@ export default function Dashboard() {
     refetchOnWindowFocus: true,
   });
 
-   console.log('protocols:', protocols);
-   console.log('countries:', countries);
-   console.log('ports:', ports);
-   console.log('connections:', connections);
 
     const flowData = useMemo(() => {
       return (timeline || []).map((d: any) => ({
