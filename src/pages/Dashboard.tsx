@@ -26,6 +26,7 @@ export default function Dashboard() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [countdown, setCountdown] = useState(30);
+  const [hoveredIP, setHoveredIP] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   // Timer visual
@@ -520,18 +521,64 @@ export default function Dashboard() {
            subtitle={activeMitigations?.items?.length > 0 && (
              <div className="flex flex-wrap gap-1 mt-1">
                {activeMitigations.items.slice(0, 2).map((m: any) => (
-                 <MitigationTooltip key={m.ip} data={{
-                   ip: m.ip,
-                   tipo: 'Blackhole /32',
-                   desde: m.since,
-                   pps: m.pps,
-                   mbps: m.mbps,
-                   fonte: m.source || 'Manual (admin)'
-                 }}>
-                   <span className="text-[9px] font-mono font-bold text-danger border border-danger/20 px-1 rounded bg-danger/5 cursor-help hover:bg-danger/10 transition-colors">
-                     {m.ip}
-                   </span>
-                 </MitigationTooltip>
+                  <div 
+                    key={m.ip} 
+                    className="relative"
+                    onMouseEnter={() => setHoveredIP(m.ip)}
+                    onMouseLeave={() => setHoveredIP(null)}
+                  >
+                    <span className="text-[9px] font-mono font-bold text-danger border border-danger/20 px-1 rounded bg-danger/5 cursor-help hover:bg-danger/10 transition-colors">
+                      {m.ip}
+                    </span>
+                    
+                    {hoveredIP === m.ip && (
+                      <div style={{
+                        position: 'absolute',
+                        zIndex: 100,
+                        background: '#1e2130',
+                        border: '1px solid #ef4444',
+                        borderRadius: 8,
+                        padding: '12px',
+                        width: 220,
+                        boxShadow: '0 4px 20px rgba(0,0,0,0.5)',
+                        top: '100%',
+                        left: 0,
+                        marginTop: 4,
+                      }}>
+                        <div style={{fontSize:12, color:'#8892a4', marginBottom:8}}>
+                          Detalhes da Mitigação
+                        </div>
+                        <div style={{fontSize:13, color:'#e2e8f0', fontFamily:'monospace', marginBottom:4}}>
+                          {m.ip}
+                        </div>
+                        <div style={{fontSize:11, color:'#8892a4'}}>
+                          Tipo: {m.type || 'Blackhole /32'}
+                        </div>
+                        <div style={{fontSize:11, color:'#8892a4'}}>
+                          Community: 65000:666
+                        </div>
+                        <div style={{fontSize:11, color:'#8892a4'}}>
+                          Início: {m.since}
+                        </div>
+                        <div style={{fontSize:11, color:'#8892a4'}}>
+                          Fonte: {m.source === 'automatic' ? 'Automático (detector)' : 'Manual (operador)'}
+                        </div>
+                        {m.pps > 0 && (
+                          <div style={{
+                            marginTop:8,
+                            padding:'6px 8px',
+                            background:'#3b1212',
+                            borderRadius:4,
+                            fontSize:11,
+                            color:'#ef4444'
+                          }}>
+                            Pico: {m.pps > 1000 ? (m.pps/1000).toFixed(1)+'k' : m.pps} pps 
+                            · {m.mbps} Mbps
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </div>
                ))}
                {activeMitigations.items.length > 2 && <span className="text-[9px] text-text-secondary">+{activeMitigations.items.length - 2}</span>}
              </div>
