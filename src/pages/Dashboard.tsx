@@ -836,7 +836,7 @@ export default function Dashboard() {
         </div>
 
         {/* Interface Legend / Selector */}
-        <div className="mt-6 flex flex-wrap gap-2 max-h-[200px] overflow-y-auto custom-scrollbar pt-2 border-t border-gray-100 dark:border-[#2a2d3e]">
+        <div className="mt-6 flex flex-wrap gap-2 max-h-[200px] overflow-y-auto custom-scrollbar pt-4 border-t border-border/40">
           {(Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
             .filter((i: any) => (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0)
             .filter((i: any) => {
@@ -860,10 +860,10 @@ export default function Dashboard() {
                     );
                   }}
                   className={clsx(
-                    "inline-flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all text-[11px] font-bold",
+                    "inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border transition-all text-[10px] font-black uppercase tracking-tight",
                     isActive 
-                      ? "border-accent/30 bg-accent/5 text-accent shadow-sm" 
-                      : "border-border text-text-secondary opacity-60 hover:opacity-100"
+                      ? "shadow-sm" 
+                      : "border-border/60 bg-bg-primary/30 text-text-secondary hover:border-border hover:bg-bg-primary/50"
                   )}
                   style={{
                     borderColor: isActive ? color + '50' : undefined,
