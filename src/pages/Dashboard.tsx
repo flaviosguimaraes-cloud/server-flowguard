@@ -1148,9 +1148,9 @@ function StatCard({ title, value, unit, icon, trend, tooltip, subtitle }: any) {
           <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">{value}</h3>
           {unit && <span className="text-xs font-bold text-gray-500 dark:text-text-secondary">{unit}</span>}
         </div>
-        {subtitle && (
-          <p className="text-[10px] text-text-secondary font-medium mt-0.5">{subtitle}</p>
-        )}
+         {subtitle && (
+           <div className="text-[10px] text-text-secondary font-medium mt-0.5">{subtitle}</div>
+         )}
       </div>
       {tooltip && (
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
