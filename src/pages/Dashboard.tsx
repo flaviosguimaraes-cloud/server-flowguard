@@ -262,19 +262,42 @@ export default function Dashboard() {
       return history[firstSelected]?.map(p => p.time) || [];
     }, [history, selectedIfaces]);
 
-    const chartData = useMemo(() => {
-      return timePoints.map((time, idx) => {
-        const point: Record<string, any> = { time };
-        selectedIfaces.forEach(name => {
-          const h = history[name];
-          if (h && h[idx]) {
-            point[`${name}_in`] = Math.round(h[idx].in_bps / 1e6);
-            point[`${name}_out`] = Math.round(h[idx].out_bps / 1e6);
-          }
-        });
-        return point;
-      });
-    }, [timePoints, selectedIfaces, history]);
+     const chartData = useMemo(() => {
+       if (period === 'realtime') {
+         return timePoints.map((time, idx) => {
+           const point: Record<string, any> = { time };
+           selectedIfaces.forEach(name => {
+             const h = history[name];
+             if (h && h[idx]) {
+               point[`${name}_in`] = Math.round(h[idx].in_bps / 1e6);
+               point[`${name}_out`] = Math.round(h[idx].out_bps / 1e6);
+             }
+           });
+           return point;
+         });
+       } else {
+         if (!metricsHistory || !Array.isArray(metricsHistory)) return [];
+         
+         const timeMap: Record<string, any> = {};
+         metricsHistory.forEach((m: any) => {
+           const time = new Date(m.collected_at).toLocaleTimeString('pt-BR', {
+             hour: '2-digit', minute: '2-digit'
+           });
+           if (!timeMap[time]) timeMap[time] = { time };
+           
+           // The endpoint uses if_name, we might need to match with display_name
+           // but the user's selectedIfaces are based on display_name || if_name.
+           // Let's check both.
+           const ifName = m.if_name;
+           if (selectedIfaces.includes(ifName)) {
+             timeMap[time][`${ifName}_in`] = Math.round(m.in_bps / 1e6);
+             timeMap[time][`${ifName}_out`] = Math.round(m.out_bps / 1e6);
+           }
+         });
+         
+         return Object.values(timeMap).sort((a: any, b: any) => a.time.localeCompare(b.time));
+       }
+     }, [timePoints, selectedIfaces, history, period, metricsHistory]);
 
     const protoMap: Record<number, string> = {
      6: 'TCP', 17: 'UDP', 1: 'ICMP',
