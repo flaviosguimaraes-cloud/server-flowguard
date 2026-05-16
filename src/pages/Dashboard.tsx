@@ -103,14 +103,16 @@ export default function Dashboard() {
     refetchOnWindowFocus: true,
   });
 
-  const [selectedCollector, setSelectedCollector] = useState<number | null>(() => {
+  const [selectedCollector, setSelectedCollector] = useState<number>(() => {
     const saved = localStorage.getItem('fg_collector');
-    return saved ? parseInt(saved) : 1;
+    const parsed = saved ? parseInt(saved) : 1;
+    return isNaN(parsed) ? 1 : parsed;
   });
   const [selectedIfaces, setSelectedIfaces] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('fg_ifaces');
-      return saved ? JSON.parse(saved) : [];
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
     }
@@ -155,8 +157,12 @@ export default function Dashboard() {
 
     setHistory(prev => {
       const next = { ...prev };
-      interfaces.interfaces.forEach((iface: any) => {
+      const ifaceList = Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [];
+      
+      ifaceList.forEach((iface: any) => {
         const name = iface.display_name || iface.if_name;
+        if (!name) return;
+        
         if (!next[name]) next[name] = [];
         next[name] = [
           ...next[name].slice(-19),
@@ -171,9 +177,9 @@ export default function Dashboard() {
     });
 
     // Default selection (top 8) if none selected
-    if (selectedIfaces.length === 0) {
-      const top8 = (interfaces.interfaces || [])
-        .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
+    if (selectedIfaces.length === 0 && interfaces?.interfaces) {
+      const top8 = (Array.isArray(interfaces.interfaces) ? interfaces.interfaces : [])
+        .filter((i: any) => (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0)
         .filter((i: any) => {
           const n = (i.display_name || i.if_name || '').toLowerCase();
           return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
@@ -198,7 +204,8 @@ export default function Dashboard() {
 
 
     const flowData = useMemo(() => {
-      return (timeline || []).map((d: any) => ({
+      const list = Array.isArray(timeline) ? timeline : (timeline?.items || timeline?.data || []);
+      return list.map((d: any) => ({
         time: d.time ? d.time.substring(11, 16) : '',
         rx: parseFloat((d.rx_bytes / 1e9).toFixed(2)),
         tx: parseFloat((d.tx_bytes / 1e9).toFixed(2)),
@@ -206,9 +213,8 @@ export default function Dashboard() {
     }, [timeline]);
 
     const selectedIfaceData = useMemo(() => {
-      if (!interfaces?.interfaces) return [];
-      return (interfaces.interfaces || [])
-        .filter((i: any) => selectedIfaces.includes(i.display_name || i.if_name));
+      const list = Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [];
+      return list.filter((i: any) => selectedIfaces.includes(i.display_name || i.if_name));
     }, [interfaces, selectedIfaces]);
 
     const timePoints = useMemo(() => {
@@ -320,15 +326,15 @@ export default function Dashboard() {
     const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
 
     const ifaceColors = ['#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
-   const relevantInterfaces = (interfaces?.interfaces || [])
-     .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
-     .filter((i: any) => {
-       const name = (i.display_name || i.if_name || '').toLowerCase();
-       return !name.includes('null') && !name.includes('loopback') && !name.includes('virtual') &&
-         !name.includes('template') && !name.includes('inloop');
-     })
-     .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
-     .slice(0, 6);
+    const relevantInterfaces = (Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
+      .filter((i: any) => (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0)
+      .filter((i: any) => {
+        const name = (i.display_name || i.if_name || '').toLowerCase();
+        return !name.includes('null') && !name.includes('loopback') && !name.includes('virtual') &&
+          !name.includes('template') && !name.includes('inloop');
+      })
+      .sort((a: any, b: any) => ((b.in_bps || 0) + (b.out_bps || 0)) - ((a.in_bps || 0) + (a.out_bps || 0)))
+      .slice(0, 6);
 
   const fmtBps = (bps: number) => {
     if (!bps || bps === 0) return '0 bps';
@@ -398,7 +404,7 @@ export default function Dashboard() {
                 onChange={(e) => setSelectedCollector(Number(e.target.value))}
                 className="bg-transparent text-[11px] font-bold text-text-primary focus:outline-none cursor-pointer"
               >
-                {collectors?.map((c: any) => (
+                {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).map((c: any) => (
                   <option key={c.id} value={c.id}>{c.name} ({c.host})</option>
                 ))}
               </select>
@@ -435,8 +441,8 @@ export default function Dashboard() {
           <div className="flex items-center gap-2 text-xs text-text-secondary">
             <Info size={14} />
             <span className="font-medium">
-              {collectors?.find((c: any) => c.id === selectedCollector)?.name || 'NE-20'} · 
-              {collectors?.find((c: any) => c.id === selectedCollector)?.host || '45.175.50.209'} · 
+              {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).find((c: any) => c.id === selectedCollector)?.name || 'NE-20'} · 
+              {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).find((c: any) => c.id === selectedCollector)?.host || '45.175.50.209'} · 
               SNMP v2c
             </span>
           </div>
@@ -452,7 +458,7 @@ export default function Dashboard() {
             </div>
             <div className="flex flex-col items-end">
               <span className="text-[10px] uppercase font-bold text-text-secondary">Interfaces</span>
-              <span className="text-sm font-black text-gray-900 dark:text-gray-100">{selectedIfaces.length} de {(interfaces?.interfaces || []).length}</span>
+              <span className="text-sm font-black text-gray-900 dark:text-gray-100">{selectedIfaces.length} de {(Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : []).length}</span>
             </div>
           </div>
         </div>
@@ -547,8 +553,8 @@ export default function Dashboard() {
 
         {/* Interface Legend / Selector */}
         <div className="mt-6 flex flex-wrap gap-2 max-h-[200px] overflow-y-auto custom-scrollbar pt-2 border-t border-gray-100 dark:border-[#2a2d3e]">
-          {(interfaces?.interfaces || [])
-            .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
+          {(Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
+            .filter((i: any) => (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0)
             .filter((i: any) => {
               const n = (i.display_name || i.if_name || '').toLowerCase();
               return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
@@ -821,7 +827,7 @@ function StatCard({ title, value, unit, icon, trend, tooltip }: any) {
         <div className="p-2.5 bg-gray-50 dark:bg-bg-secondary rounded-xl group-hover:bg-accent/10 transition-colors">
           {icon}
         </div>
-        {trend && (
+        {trend && typeof trend === 'string' && (
           <span className={clsx(
             "text-[10px] font-bold px-2 py-0.5 rounded-full",
             trend.startsWith('+') ? "bg-success-bg text-success" : 
