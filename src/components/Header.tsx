@@ -39,7 +39,7 @@ export const Header = () => {
   const userInitial = user?.username?.charAt(0).toUpperCase() || 'U';
 
   return (
-    <header className="h-[64px] bg-white/80 dark:bg-[#0b0e14]/80 backdrop-blur-md border-b border-border flex items-center justify-between px-6 sticky top-0 z-40 transition-all duration-300">
+    <header className="h-[72px] bg-bg-secondary/70 backdrop-blur-xl border-b border-border flex items-center justify-between px-8 sticky top-0 z-40 transition-all duration-300 shadow-sm shadow-black/5">
       <style>{`
         @keyframes spin-custom {
           from { transform: rotate(0deg); }
@@ -49,9 +49,9 @@ export const Header = () => {
       <div className="flex items-center gap-4">
         <button 
           onClick={toggleSidebar}
-          className="p-2 hover:bg-bg-secondary rounded-xl text-text-secondary hover:text-text-primary transition-all duration-200 border border-transparent hover:border-border"
+          className="p-2.5 hover:bg-bg-primary rounded-2xl text-text-secondary hover:text-text-primary transition-all duration-300 border border-transparent hover:border-border shadow-sm active:scale-95"
         >
-          <Menu size={20} />
+          <Menu size={22} />
         </button>
       </div>
 
@@ -60,23 +60,23 @@ export const Header = () => {
           onClick={handleRefresh}
           title="Atualizar dados"
           className={clsx(
-            "flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-bg-secondary/50 transition-all duration-200",
-            isRefreshing ? "text-primary border-primary/30" : "text-text-secondary"
+            "flex items-center gap-2.5 px-4 py-2 rounded-xl border border-border bg-bg-primary/50 transition-all duration-300 shadow-sm active:scale-95 group",
+            isRefreshing ? "text-primary border-primary/40 bg-primary/5" : "text-text-secondary hover:border-text-secondary/20"
           )}
         >
           <RefreshCw 
-            size={14}
-            className={clsx(isRefreshing && "animate-spin")}
+            size={16}
+            className={clsx(isRefreshing ? "animate-spin" : "group-hover:rotate-180 transition-transform duration-500")}
           />
-          <span className="font-mono tabular-nums text-xs font-semibold">{countdown}s</span>
+          <span className="font-mono tabular-nums text-xs font-bold">{countdown}s</span>
         </button>
 
-        <div className="flex items-center gap-2 text-text-secondary bg-bg-secondary/50 px-3 py-1.5 rounded-lg border border-border">
-          <Globe size={14} />
+        <div className="flex items-center gap-2.5 text-text-secondary bg-bg-primary/50 px-4 py-2 rounded-xl border border-border shadow-sm">
+          <Globe size={16} />
           <select 
             value={lang} 
             onChange={(e) => changeLanguage(e.target.value as any)}
-            className="bg-transparent border-none outline-none text-xs font-bold cursor-pointer uppercase appearance-none"
+            className="bg-transparent border-none outline-none text-xs font-black cursor-pointer uppercase appearance-none hover:text-text-primary transition-colors"
           >
             <option value="pt-BR">PT</option>
             <option value="en">EN</option>
