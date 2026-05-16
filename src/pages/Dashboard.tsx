@@ -568,43 +568,12 @@ export default function Dashboard() {
                       {m.ip}
                     </span>
                     
-                    {hoveredIP === m.ip && (
-                      <div className="absolute z-[100] bg-bg-secondary border border-danger/50 rounded-xl p-4 w-[240px] shadow-2xl shadow-black/50 top-full left-0 mt-2 backdrop-blur-md animate-in fade-in zoom-in duration-200">
-                        <div className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mb-2 opacity-70 border-b border-border pb-1">
-                          Detalhes da Mitigação
-                        </div>
-                        <div className="text-sm font-black text-text-primary font-mono mb-2">
-                          {m.ip}
-                        </div>
-                        <div className="space-y-1">
-                          <div className="text-[11px] text-text-secondary flex justify-between">
-                            <span>Tipo:</span>
-                            <span className="text-text-primary font-bold">{m.type || 'Blackhole /32'}</span>
-                          </div>
-                          <div className="text-[11px] text-text-secondary flex justify-between">
-                            <span>Community:</span>
-                            <span className="text-text-primary font-bold">65000:666</span>
-                          </div>
-                          <div className="text-[11px] text-text-secondary flex justify-between">
-                            <span>Início:</span>
-                            <span className="text-text-primary font-bold">{m.since}</span>
-                          </div>
-                          <div className="text-[11px] text-text-secondary flex justify-between">
-                            <span>Fonte:</span>
-                            <span className="text-text-primary font-bold">
-                              {m.source === 'automatic' ? 'Automático (detector)' : 'Manual (operador)'}
-                            </span>
-                          </div>
-                          {m.pps > 0 && (
-                            <div className="mt-3 p-2 bg-danger-bg border border-danger/20 rounded-lg text-[10px] text-danger font-bold flex justify-between">
-                              <span>Pico:</span>
-                              <span>{m.pps > 1000 ? (m.pps/1000).toFixed(1)+'k' : m.pps} pps · {m.mbps} Mbps</span>
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    )}
-                  </div>
+                     <MitigationTooltip data={m}>
+                       <span className="text-[9px] font-mono font-bold text-danger border border-danger/20 px-1 rounded bg-danger/5 cursor-help hover:bg-danger/10 transition-colors">
+                         {m.ip}
+                       </span>
+                     </MitigationTooltip>
+                   </div>
                ))}
                {activeMitigations.items.length > 2 && <span className="text-[9px] text-text-secondary">+{activeMitigations.items.length - 2}</span>}
              </div>
@@ -1127,8 +1096,8 @@ export default function Dashboard() {
                             ip: srcMitigation.ip,
                             tipo: 'Blackhole /32',
                             desde: srcMitigation.since,
-                            pps: srcMitigation.pps,
-                            mbps: srcMitigation.mbps,
+                             pps: Number(srcMitigation.pps || 0),
+                             mbps: Number(srcMitigation.mbps || 0),
                             fonte: srcMitigation.source || 'Manual (admin)'
                           }}>
                             <span className="font-bold text-danger cursor-help flex items-center gap-1 text-xs">
@@ -1149,8 +1118,8 @@ export default function Dashboard() {
                             ip: dstMitigation.ip,
                             tipo: 'Blackhole /32',
                             desde: dstMitigation.since,
-                            pps: dstMitigation.pps,
-                            mbps: dstMitigation.mbps,
+                             pps: Number(dstMitigation.pps || 0),
+                             mbps: Number(dstMitigation.mbps || 0),
                             fonte: dstMitigation.source || 'Manual (admin)'
                           }}>
                             <span className="font-bold text-danger cursor-help flex items-center gap-1 text-xs">
