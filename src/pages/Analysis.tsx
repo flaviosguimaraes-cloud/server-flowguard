@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback } from 'react';
+import { useState, useMemo, useCallback, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
  import api from '../services/api';
  import { useTranslation } from '../hooks/useTranslation';
@@ -10,13 +10,75 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
   import Flag from '../components/Flag';
  import { Skeleton } from '../components/Skeleton';
  import { clsx } from 'clsx';
- import MitigationModal from '../components/MitigationModal';
+import MitigationModal from '../components/MitigationModal';
+
+function MetricCard({ title, value, icon }: any) {
+  return (
+    <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm flex flex-col justify-between transition-all hover:border-accent/50 group">
+      <div className="flex justify-between items-start">
+        <div className="p-2.5 bg-gray-50 dark:bg-bg-secondary rounded-xl group-hover:bg-accent/10 transition-colors">
+          {icon}
+        </div>
+      </div>
+      <div className="mt-4">
+        <p className="text-gray-500 dark:text-text-secondary text-[11px] font-bold uppercase tracking-wider">{title}</p>
+        <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mt-1">{value}</h3>
+      </div>
+    </div>
+  );
+}
+
+const PPSIntensity = ({ pps }: { pps: number }) => {
+  const color = pps < 10000 ? '#22c55e' : pps < 50000 ? '#f59e0b' : '#ef4444';
+  return (
+    <div className="flex items-center gap-2 justify-end">
+      <span className="text-right w-12 font-mono text-[11px]">{pps > 1000 ? (pps/1000).toFixed(1)+'k' : pps}</span>
+      <div className="w-8 h-1 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden">
+        <div 
+          className="h-full transition-all duration-500" 
+          style={{ 
+            width: `${Math.min((pps/100000)*100, 100)}%`,
+            backgroundColor: color
+          }} 
+        />
+      </div>
+    </div>
+  );
+};
  
  export default function Analysis() {
    const { t } = useTranslation();
    const isAdmin = localStorage.getItem('role') === 'admin';
   const queryClient = useQueryClient();
    
+    const isLocalIP = (ip: string) => ip?.startsWith('45.175.50.');
+    const shouldFlip = (item: any) => !isLocalIP(item.src_addr) && isLocalIP(item.dst_addr);
+    const getService = (port: number) => {
+      const s: Record<number, string> = {
+        80:'HTTP', 443:'HTTPS', 53:'DNS', 22:'SSH', 25:'SMTP', 110:'POP3',
+        143:'IMAP', 3389:'RDP', 8080:'HTTP-Alt', 123:'NTP', 179:'BGP', 161:'SNMP',
+        3306:'MySQL', 5432:'PG', 27000:'Steam', 1194:'VPN', 500:'IPSec', 1723:'PPTP',
+        8443:'HTTPS-Alt', 465:'SMTP-SSL', 993:'IMAP-SSL', 995:'POP3-SSL',
+        21:'FTP', 23:'Telnet', 3478:'STUN', 5060:'SIP', 5061:'SIP-TLS',
+        19522:'UDP-Game', 25461:'Game'
+      };
+      return s[port] || String(port);
+    };
+    const fmtBytes = (b: number) => {
+      if (!b) return '—';
+      if (b > 1e12) return (b / 1e12).toFixed(1) + ' TB';
+      if (b > 1e9) return (b / 1e9).toFixed(1) + ' GB';
+      if (b > 1e6) return (b / 1e6).toFixed(0) + ' MB';
+      if (b > 1e3) return (b / 1e3).toFixed(0) + ' KB';
+      return b + ' B';
+    };
+    const calcPPS = (packets: number) => {
+      if (!packets) return '—';
+      const pps = Math.round(packets / 1800);
+      return pps > 1000 ? (pps / 1000).toFixed(1) + 'k' : String(pps);
+    };
+    const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
+
     const [search, setSearch] = useState('');
     const [proto, setProto] = useState('Todos');
     const [country, setCountry] = useState('Todos');
@@ -24,6 +86,28 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
     const [sortField, setSortField] = useState('bytes');
     const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
     const [groupByIP, setGroupByIP] = useState(false);
+    const [hoveredMitIP, setHoveredMitIP] = useState<string | null>(null);
+
+    const SortHeader = ({ field, label, align = 'left' }: { field: string, label: string, align?: 'left' | 'right' | 'center' }) => (
+      <th 
+        className={clsx("px-6 py-4 border-b border-border cursor-pointer hover:bg-bg-secondary transition-colors", align === 'right' && 'text-right', align === 'center' && 'text-center')}
+        onClick={() => {
+          if (sortField === field) {
+            setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
+          } else {
+            setSortField(field);
+            setSortOrder('desc');
+          }
+        }}
+      >
+        <div className={clsx("flex items-center gap-1", align === 'right' && 'justify-end')}>
+          {label}
+          {sortField === field && (
+            sortOrder === 'desc' ? <ArrowDown size={12} /> : <ArrowUp size={12} />
+          )}
+        </div>
+      </th>
+    );
 
     const periods = [
       { label: '5 min', value: 5 },
@@ -145,33 +229,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
      return { total: items.length, uniqueIPs, distinctCountries, suspicious };
    }, [connectionItems]);
  
-   const isLocalIP = (ip: string) => ip?.startsWith('45.175.50.');
-   const shouldFlip = (item: any) => !isLocalIP(item.src_addr) && isLocalIP(item.dst_addr);
-   const getService = (port: number) => {
-     const s: Record<number, string> = {
-       80:'HTTP', 443:'HTTPS', 53:'DNS', 22:'SSH', 25:'SMTP', 110:'POP3',
-       143:'IMAP', 3389:'RDP', 8080:'HTTP-Alt', 123:'NTP', 179:'BGP', 161:'SNMP',
-       3306:'MySQL', 5432:'PG', 27000:'Steam', 1194:'VPN', 500:'IPSec', 1723:'PPTP',
-       8443:'HTTPS-Alt', 465:'SMTP-SSL', 993:'IMAP-SSL', 995:'POP3-SSL',
-       21:'FTP', 23:'Telnet', 3478:'STUN', 5060:'SIP', 5061:'SIP-TLS',
-       19522:'UDP-Game', 25461:'Game'
-     };
-     return s[port] || String(port);
-   };
-   const fmtBytes = (b: number) => {
-     if (!b) return '—';
-     if (b > 1e12) return (b / 1e12).toFixed(1) + ' TB';
-     if (b > 1e9) return (b / 1e9).toFixed(1) + ' GB';
-     if (b > 1e6) return (b / 1e6).toFixed(0) + ' MB';
-     if (b > 1e3) return (b / 1e3).toFixed(0) + ' KB';
-     return b + ' B';
-   };
-   const calcPPS = (packets: number) => {
-     if (!packets) return '—';
-     const pps = Math.round(packets / 1800);
-     return pps > 1000 ? (pps / 1000).toFixed(1) + 'k' : String(pps);
-   };
-   const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
  
    const handleMitigate = (item: any) => {
      const flipped = shouldFlip(item);
@@ -215,44 +272,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
     document.body.removeChild(link);
   };
 
-  const SortHeader = ({ field, label, align = 'left' }: { field: string, label: string, align?: 'left' | 'right' | 'center' }) => (
-    <th 
-      className={clsx("px-6 py-4 border-b border-border cursor-pointer hover:bg-bg-secondary transition-colors", align === 'right' && 'text-right', align === 'center' && 'text-center')}
-      onClick={() => {
-        if (sortField === field) {
-          setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
-        } else {
-          setSortField(field);
-          setSortOrder('desc');
-        }
-      }}
-    >
-      <div className={clsx("flex items-center gap-1", align === 'right' && 'justify-end')}>
-        {label}
-        {sortField === field && (
-          sortOrder === 'desc' ? <ArrowDown size={12} /> : <ArrowUp size={12} />
-        )}
-      </div>
-    </th>
-  );
-
-  const PPSIntensity = ({ pps }: { pps: number }) => {
-    const color = pps < 10000 ? '#22c55e' : pps < 50000 ? '#f59e0b' : '#ef4444';
-    return (
-      <div className="flex items-center gap-2 justify-end">
-        <span className="text-right w-12 font-mono text-[11px]">{pps > 1000 ? (pps/1000).toFixed(1)+'k' : pps}</span>
-        <div className="w-8 h-1 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden">
-          <div 
-            className="h-full transition-all duration-500" 
-            style={{ 
-              width: `${Math.min((pps/100000)*100, 100)}%`,
-              backgroundColor: color
-            }} 
-          />
-        </div>
-      </div>
-    );
-  };
 
    return (
      <div className="space-y-6 animate-in fade-in duration-500">
@@ -484,19 +503,4 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
    );
  }
  
- function MetricCard({ title, value, icon }: any) {
-   return (
-     <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm flex flex-col justify-between transition-all hover:border-accent/50 group">
-       <div className="flex justify-between items-start">
-         <div className="p-2.5 bg-gray-50 dark:bg-bg-secondary rounded-xl group-hover:bg-accent/10 transition-colors">
-           {icon}
-         </div>
-       </div>
-       <div className="mt-4">
-         <p className="text-gray-500 dark:text-text-secondary text-[11px] font-bold uppercase tracking-wider">{title}</p>
-         <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mt-1">{value}</h3>
-       </div>
-     </div>
-   );
- }
  

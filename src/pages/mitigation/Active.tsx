@@ -14,6 +14,31 @@
  import MitigationModal from '../../components/MitigationModal';
  import FlowSpecModal from '../../components/FlowSpecModal';
  
+function TabButton({ active, onClick, icon, label, count }: any) {
+  return (
+    <button
+      onClick={onClick}
+      className={clsx(
+        "px-6 py-4 flex items-center gap-2 border-b-2 transition-all relative font-bold text-sm",
+        active 
+          ? "border-accent text-accent bg-accent/5" 
+          : "border-transparent text-text-secondary hover:text-text-primary hover:bg-gray-50 dark:hover:bg-[#1e2130]"
+      )}
+    >
+      {icon}
+      {label}
+      {count !== undefined && (
+        <span className={clsx(
+          "px-1.5 py-0.5 rounded-full text-[10px] ml-1",
+          active ? "bg-accent text-white" : "bg-gray-100 dark:bg-[#2a2d3e] text-text-secondary"
+        )}>
+          {count}
+        </span>
+      )}
+    </button>
+  );
+}
+
  export default function ActiveMitigation() {
    const { t } = useTranslation();
    const isAdmin = localStorage.getItem('role') === 'admin';
@@ -393,27 +418,3 @@
    );
  }
  
- function TabButton({ active, onClick, icon, label, count }: any) {
-   return (
-     <button
-       onClick={onClick}
-       className={clsx(
-         "px-6 py-4 flex items-center gap-2 border-b-2 transition-all relative font-bold text-sm",
-         active 
-           ? "border-accent text-accent bg-accent/5" 
-           : "border-transparent text-text-secondary hover:text-text-primary hover:bg-gray-50 dark:hover:bg-[#1e2130]"
-       )}
-     >
-       {icon}
-       {label}
-       {count !== undefined && (
-         <span className={clsx(
-           "px-1.5 py-0.5 rounded-full text-[10px] ml-1",
-           active ? "bg-accent text-white" : "bg-gray-100 dark:bg-[#2a2d3e] text-text-secondary"
-         )}>
-           {count}
-         </span>
-       )}
-     </button>
-   );
- }
