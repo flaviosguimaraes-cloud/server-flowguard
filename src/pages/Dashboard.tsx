@@ -421,8 +421,14 @@ export default function Dashboard() {
     );
   }
 
-  return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+   return (
+     <div className="space-y-6 animate-in fade-in duration-500">
+       <style>{`
+         @keyframes pulse {
+           0%, 100% { opacity: 1; }
+           50% { opacity: 0.3; }
+         }
+       `}</style>
       {/* Top Stats */}
        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
          <StatCard 
@@ -801,12 +807,24 @@ export default function Dashboard() {
        {/* Active Connections Table */}
       <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-200 dark:border-border flex justify-between items-center bg-gray-50/50 dark:bg-bg-secondary/30">
-          <div className="flex flex-col">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('active_connections')}</h2>
-            <span style={{fontSize:11, color:'#8892a4'}}>
-              Últimos 5 minutos · atualizado a cada 30s
-            </span>
-          </div>
+           <div className="flex flex-col gap-1">
+             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('active_connections')}</h2>
+             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+               <span style={{
+                 width: 8, height: 8,
+                 borderRadius: '50%',
+                 background: '#22c55e',
+                 display: 'inline-block',
+                 animation: 'pulse 2s infinite'
+               }} />
+               <span style={{ fontSize: 11, color: '#8892a4' }}>
+                 Ao vivo · últimos 2 minutos · atualizado a cada 30s
+               </span>
+             </div>
+           </div>
+           <span style={{fontSize:11, color:'#8892a4'}}>
+             Próxima atualização: {countdown}s
+           </span>
           <button className="text-text-secondary hover:text-text-primary transition-colors">
             <MoreVertical size={20} />
           </button>
