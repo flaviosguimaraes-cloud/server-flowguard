@@ -20,14 +20,15 @@
    const [isMitigationOpen, setIsMitigationOpen] = useState(false);
    const [isFlowSpecOpen, setIsFlowSpecOpen] = useState(false);
  
-   const { data: blackholes, isLoading: bhLoading } = useQuery({
-     queryKey: ['mitigation-active'],
-     queryFn: async () => {
-       const r = await api.get('/api/mitigation/active');
-       return r.data;
-     },
-     refetchInterval: 30000,
-   });
+    const { data: blackholes, isLoading: bhLoading } = useQuery({
+      queryKey: ['mitigation-active'],
+      queryFn: () =>
+        api.get('/api/mitigation/active')
+          .then(r => r.data),
+      refetchOnMount: true,
+      refetchInterval: 30000,
+      staleTime: 0,
+    });
  
    const { data: flowspec, isLoading: fsLoading } = useQuery({
      queryKey: ['bgp-flowspec'],
@@ -38,41 +39,45 @@
      refetchInterval: 30000,
    });
  
-   const { data: routes, isLoading: rtLoading } = useQuery({
-     queryKey: ['bgp-routes'],
-     queryFn: async () => {
-       const r = await api.get('/api/bgp/routes');
-       return r.data;
-     },
-     refetchInterval: 30000,
-   });
+    const { data: routes, isLoading: rtLoading } = useQuery({
+      queryKey: ['bgp-routes'],
+      queryFn: () =>
+        api.get('/api/bgp/routes')
+          .then(r => r.data),
+      refetchOnMount: true,
+      refetchInterval: 30000,
+      staleTime: 0,
+    });
  
-  const handleRemove = async (ip: string) => {
-    if (!window.confirm(`Tem certeza que deseja remover a mitigação para ${ip}?`)) {
-      return;
-    }
+   const handleRemove = async (ip: string) => {
+     const cleanIP = ip.replace('/32', '').trim();
 
-    try {
-      const response = await api.post(
-        '/api/mitigation/remove',
-        { ip },
-        {
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        }
-      );
-      toast.success('Mitigação removida com sucesso');
-      queryClient.invalidateQueries({ queryKey: ['mitigation-active'] });
-      queryClient.invalidateQueries({ queryKey: ['bgp-flowspec'] });
-      queryClient.invalidateQueries({ queryKey: ['detection-stats'] });
-    } catch (error: any) {
-      toast.error(
-        error.response?.data?.detail || 
-        'Erro ao remover mitigação'
-      );
-    }
-  };
+     if (!window.confirm(`Tem certeza que deseja remover a mitigação para ${cleanIP}?`)) {
+       return;
+     }
+ 
+     try {
+       await api.post(
+         '/api/mitigation/remove',
+         { ip: cleanIP },
+         {
+           headers: {
+             'Content-Type': 'application/json'
+           }
+         }
+       );
+       toast.success(`Mitigação removida: ${cleanIP}`);
+       queryClient.invalidateQueries({ queryKey: ['mitigation-active'] });
+       queryClient.invalidateQueries({ queryKey: ['bgp-routes'] });
+       queryClient.invalidateQueries({ queryKey: ['bgp-flowspec'] });
+       queryClient.invalidateQueries({ queryKey: ['detection-stats'] });
+     } catch (error: any) {
+       toast.error(
+         error.response?.data?.detail || 
+         'Erro ao remover mitigação'
+       );
+     }
+   };
  
    return (
      <div className="space-y-6 animate-in fade-in duration-500">
