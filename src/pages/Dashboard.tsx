@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useMemo, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { useTranslation } from '../hooks/useTranslation';
  import { 
@@ -12,81 +12,98 @@ import Flag from '../components/Flag';
 
 import { clsx } from 'clsx';
 
+const REFETCH_INTERVAL = 30000;
+
 export default function Dashboard() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [lastUpdate, setLastUpdate] = useState(new Date());
 
-  const [tick, setTick] = useState(0);
   useEffect(() => {
-    const timer = setInterval(() => {
-      setTick(t => t + 1);
-    }, 30000);
-    return () => clearInterval(timer);
-  }, []);
+    const interval = setInterval(() => {
+      queryClient.invalidateQueries();
+      setLastUpdate(new Date());
+    }, REFETCH_INTERVAL);
+    return () => clearInterval(interval);
+  }, [queryClient]);
 
   const { data: detection, isLoading: statsLoading } = useQuery({
-     queryKey: ['detection-stats', tick],
-     queryFn: async () => {
-       const r = await api.get('/api/detection/stats');
-       return r.data;
-     },
-     refetchInterval: 30000,
-     staleTime: 0,
-     retry: 1,
-   });
- 
-   const { data: timeline } = useQuery({
-     queryKey: ['timeline', tick],
-     queryFn: async () => {
-       const r = await api.get('/api/flows/timeline?minutes=30');
-       return r.data;
-     },
-     refetchInterval: 30000,
-     staleTime: 0,
-     retry: 1,
-   });
- 
-   const { data: protocols } = useQuery({
-     queryKey: ['protocols', tick],
-     queryFn: async () => {
-       const r = await api.get('/api/flows/protocols?minutes=30');
-       console.log('protocols raw:', r.data);
-       return r.data;
-     },
-     refetchInterval: 30000,
-     staleTime: 0,
-   });
+    queryKey: ['detection-stats'],
+    queryFn: async () => {
+      const r = await api.get('/api/detection/stats');
+      return r.data;
+    },
+    refetchInterval: REFETCH_INTERVAL,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+  });
 
-   const { data: countries } = useQuery({
-     queryKey: ['countries', tick],
-     queryFn: async () => {
-       const r = await api.get('/api/flows/countries?minutes=30');
-       console.log('countries raw:', r.data);
-       return r.data;
-     },
-     refetchInterval: 30000,
-     staleTime: 0,
-   });
+  const { data: timeline } = useQuery({
+    queryKey: ['timeline'],
+    queryFn: async () => {
+      const r = await api.get('/api/flows/timeline?minutes=30');
+      return r.data;
+    },
+    refetchInterval: REFETCH_INTERVAL,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+  });
 
-   const { data: ports } = useQuery({
-     queryKey: ['ports', tick],
-     queryFn: async () => {
-       const r = await api.get('/api/flows/ports?minutes=30');
-       console.log('ports raw:', r.data);
-       return r.data;
-     },
-     refetchInterval: 30000,
-     staleTime: 0,
-   });
- 
-    const { data: interfaces } = useQuery({
-       queryKey: ['interfaces', tick],
-      queryFn: async () => {
-        const r = await api.get('/api/collectors/1/interfaces/summary');
-        return r.data;
-      },
-      refetchInterval: 30000,
-       staleTime: 0,
-    });
+  const { data: protocols } = useQuery({
+    queryKey: ['protocols'],
+    queryFn: async () => {
+      const r = await api.get('/api/flows/protocols?minutes=30');
+      return r.data;
+    },
+    refetchInterval: REFETCH_INTERVAL,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+  });
+
+  const { data: countries } = useQuery({
+    queryKey: ['countries'],
+    queryFn: async () => {
+      const r = await api.get('/api/flows/countries?minutes=30');
+      return r.data;
+    },
+    refetchInterval: REFETCH_INTERVAL,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+  });
+
+  const { data: ports } = useQuery({
+    queryKey: ['ports'],
+    queryFn: async () => {
+      const r = await api.get('/api/flows/ports?minutes=30');
+      return r.data;
+    },
+    refetchInterval: REFETCH_INTERVAL,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+  });
+
+  const { data: interfaces } = useQuery({
+    queryKey: ['interfaces'],
+    queryFn: async () => {
+      const r = await api.get('/api/collectors/1/interfaces/summary');
+      return r.data;
+    },
+    refetchInterval: REFETCH_INTERVAL,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+  });
 
   const [trafficSource, setTrafficSource] = useState<'flow' | 'snmp'>(() =>
     localStorage.getItem('fg_traffic_source') as 'flow' | 'snmp' || 'snmp'
