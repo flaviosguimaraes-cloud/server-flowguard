@@ -3,7 +3,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
  import api from '../services/api';
  import { useTranslation } from '../hooks/useTranslation';
   import { 
-    Search, Filter, X, Shield, Globe, Users,
+    Search, Filter, X, Shield, Globe, Users, Activity,
     ArrowRight, AlertCircle, Download, MoreHorizontal,
     ArrowUp, ArrowDown, LayoutGrid, List
   } from 'lucide-react';
