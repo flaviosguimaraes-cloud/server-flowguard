@@ -14,15 +14,16 @@ import MitigationModal from '../components/MitigationModal';
 
 function MetricCard({ title, value, icon }: any) {
   return (
-    <div className="bg-bg-secondary p-6 rounded-2xl border border-border shadow-sm shadow-black/5 flex flex-col justify-between transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 group min-h-[140px]">
-      <div className="flex justify-between items-start">
-        <div className="p-2.5 bg-bg-primary rounded-xl group-hover:bg-primary/10 transition-colors border border-border/50 group-hover:border-primary/20">
+    <div className="bg-bg-secondary p-6 rounded-[24px] border border-border shadow-2xl shadow-black/20 flex flex-col justify-between min-h-[160px] transition-all duration-500 hover:border-primary/40 hover:-translate-y-1 hover:shadow-primary/5 group relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-8 -mt-8 blur-2xl transition-all group-hover:bg-primary/10" />
+      <div className="flex justify-between items-start relative z-10">
+        <div className="p-3 bg-bg-primary rounded-2xl group-hover:bg-primary/20 transition-all duration-300 border border-border/50 group-hover:border-primary/30 group-hover:scale-110 group-hover:rotate-3 shadow-inner">
           {icon}
         </div>
       </div>
-      <div className="mt-4">
-        <p className="text-text-secondary text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">{title}</p>
-        <h3 className="text-3xl font-black text-text-primary tracking-tight leading-none">{value}</h3>
+      <div className="mt-6 relative z-10">
+        <p className="text-text-secondary text-[10px] font-black uppercase tracking-[0.15em] opacity-60 mb-2 group-hover:text-text-primary transition-colors">{title}</p>
+        <h3 className="text-4xl font-black text-text-primary tracking-tighter leading-none group-hover:text-primary transition-colors">{value}</h3>
       </div>
     </div>
   );
