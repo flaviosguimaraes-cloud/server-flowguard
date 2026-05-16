@@ -774,15 +774,15 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
-        <div style={{
+        <p style={{
           fontSize: 11,
           color: '#8892a4',
           textAlign: 'right',
           marginTop: 6,
           padding: '0 24px 16px'
         }}>
-          Atualizado às {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR') : '—'}
-        </div>
+          Última atualização: {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR') : '—'}
+        </p>
       </div>
     </div>
   );
