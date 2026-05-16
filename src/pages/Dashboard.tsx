@@ -172,16 +172,6 @@ export default function Dashboard() {
         pct: totalBytes > 0 ? ((p.bytes / totalBytes) * 100).toFixed(1) : 0
       }));
 
-    const flagMap: Record<string, string> = {
-      BR:'🇧🇷', US:'🇺🇸', CN:'🇨🇳', RU:'🇷🇺', DE:'🇩🇪', FR:'🇫🇷',
-      GB:'🇬🇧', JP:'🇯🇵', KR:'🇰🇷', AR:'🇦🇷', CL:'🇨🇱', MX:'🇲🇽',
-      HK:'🇭🇰', SG:'🇸🇬', NL:'🇳🇱', CA:'🇨🇦', AU:'🇦🇺', IN:'🇮🇳',
-      UA:'🇺🇦', TR:'🇹🇷', ES:'🇪🇸', IT:'🇮🇹', PT:'🇵🇹', PL:'🇵🇱',
-      SE:'🇸🇪', NO:'🇳🇴', CH:'🇨🇭', ZA:'🇿🇦', AE:'🇦🇪', SA:'🇸🇦',
-      TH:'🇹🇭', VN:'🇻🇳', ID:'🇮🇩', MY:'🇲🇾', PH:'🇵🇭', TW:'🇹🇼',
-      CO:'🇨🇴', PE:'🇵🇪', IL:'🇮🇱', EG:'🇪🇬', NG:'🇳🇬', IE:'🇮🇪',
-    };
-
     const countryItems = countries?.items || countries?.data || (Array.isArray(countries) ? countries : []);
     const totalCountryBytes = countryItems.reduce((a: number, b: any) => a + b.bytes, 0);
 
