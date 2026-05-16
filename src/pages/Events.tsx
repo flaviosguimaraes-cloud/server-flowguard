@@ -17,13 +17,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
    const [isMitigationOpen, setIsMitigationOpen] = useState(false);
    const [targetIP, setTargetIP] = useState('');
  
-   const { data: stats, isLoading: statsLoading } = useQuery({
+    const { data: stats, isLoading: statsLoading, dataUpdatedAt } = useQuery({
      queryKey: ['detection-stats-events'],
      queryFn: async () => {
        const r = await api.get('/api/detection/stats');
        return r.data;
      },
-     refetchInterval: 30000,
+      refetchInterval: 5000,
+      staleTime: 0,
    });
  
    const { data: activeMitigations } = useQuery({
@@ -101,10 +102,17 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
  
        {/* Real-time Detections Section */}
        <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
-         <div className="p-6 border-b border-gray-100 dark:border-[#2a2d3e] flex justify-between items-center">
-           <div className="flex items-center gap-2">
-             <Activity className="text-accent" size={20} />
-             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Detecções em Tempo Real</h2>
+          <div className="p-6 border-b border-gray-100 dark:border-[#2a2d3e] flex flex-col md:flex-row md:justify-between md:items-center gap-4">
+            <div className="flex flex-col">
+              <div className="flex items-center gap-2">
+                <Activity className="text-accent" size={20} />
+                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Detecções em Tempo Real</h2>
+              </div>
+              {dataUpdatedAt && (
+                <p className="text-[10px] text-text-secondary mt-1 font-medium uppercase tracking-wider">
+                  Atualizado há {Math.floor((Date.now() - dataUpdatedAt) / 1000)}s
+                </p>
+              )}
            </div>
            <div className="flex gap-4 text-xs font-bold">
              <div className="flex items-center gap-1 text-accent">
@@ -123,13 +131,26 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
                <ArrowDown size={16} className="text-accent" /> Top Hosts de Entrada
              </h3>
              <div className="space-y-6">
-               {(stats?.top_hosts_in || []).length === 0 ? (
-                 <p className="text-center py-8 text-text-secondary italic text-sm">Nenhuma anomalia de entrada</p>
-               ) : (
-                 stats.top_hosts_in.map((host: any, i: number) => (
-                   <HostItem key={i} host={host} onMitigate={handleMitigate} isAdmin={isAdmin} />
-                 ))
-               )}
+                {(() => {
+                  const hosts = stats?.top_hosts_in || [];
+                  const maxPps = Math.max(...hosts.map((h: any) => h.pps || 0), 0);
+                  const bannedIPs = new Set((activeMitigations?.routes || activeMitigations?.items || []).map((i: any) => i.ip || i.prefix?.split('/')[0]));
+
+                  if (hosts.length === 0) {
+                    return <p className="text-center py-8 text-text-secondary italic text-sm">Nenhuma anomalia de entrada</p>;
+                  }
+
+                  return hosts.map((host: any, i: number) => (
+                    <HostItem 
+                      key={i} 
+                      host={host} 
+                      onMitigate={handleMitigate} 
+                      isAdmin={isAdmin} 
+                      maxPps={maxPps}
+                      isBanned={bannedIPs.has(host.ip)}
+                    />
+                  ));
+                })()}
              </div>
            </div>
  
@@ -139,13 +160,26 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
                <ArrowUp size={16} className="text-success" /> Top Hosts de Saída
              </h3>
              <div className="space-y-6">
-               {(stats?.top_hosts_out || []).length === 0 ? (
-                 <p className="text-center py-8 text-text-secondary italic text-sm">Nenhuma anomalia de saída</p>
-               ) : (
-                 stats.top_hosts_out.map((host: any, i: number) => (
-                   <HostItem key={i} host={host} onMitigate={handleMitigate} isAdmin={isAdmin} />
-                 ))
-               )}
+                {(() => {
+                  const hosts = stats?.top_hosts_out || [];
+                  const maxPps = Math.max(...hosts.map((h: any) => h.pps || 0), 0);
+                  const bannedIPs = new Set((activeMitigations?.routes || activeMitigations?.items || []).map((i: any) => i.ip || i.prefix?.split('/')[0]));
+
+                  if (hosts.length === 0) {
+                    return <p className="text-center py-8 text-text-secondary italic text-sm">Nenhuma anomalia de saída</p>;
+                  }
+
+                  return hosts.map((host: any, i: number) => (
+                    <HostItem 
+                      key={i} 
+                      host={host} 
+                      onMitigate={handleMitigate} 
+                      isAdmin={isAdmin} 
+                      maxPps={maxPps}
+                      isBanned={bannedIPs.has(host.ip)}
+                    />
+                  ));
+                })()}
              </div>
            </div>
          </div>
@@ -206,52 +240,123 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
          targetIP={targetIP}
         onSuccess={handleMitigationSuccess}
        />
+
+        <style>{`
+          @keyframes pulse-bar {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.6; }
+          }
+        `}</style>
      </div>
    );
  }
  
- function HostItem({ host, onMitigate, isAdmin }: any) {
-   const riskLevel = host.pps > 50000 ? 'Alto' : host.pps > 10000 ? 'Médio' : 'Baixo';
-   const maxPPS = 100000;
-   const pct = Math.min((host.pps / maxPPS) * 100, 100);
+  function HostItem({ host, onMitigate, isAdmin, maxPps, isBanned }: any) {
+    const getRisk = (pps: number) => {
+      if (isBanned || pps >= 80000) return 'high';
+      if (pps >= 30000) return 'medium';
+      return 'low';
+    };
+
+    const risk = getRisk(host.pps);
+    
+    const riskBadge = {
+      high: {
+        label: 'RISCO ALTO',
+        bg: '#3b1212',
+        color: '#ef4444',
+        border: '#ef4444'
+      },
+      medium: {
+        label: 'RISCO MÉDIO',
+        bg: '#2d1f0a',
+        color: '#f59e0b',
+        border: '#f59e0b'
+      },
+      low: {
+        label: 'RISCO BAIXO',
+        bg: '#0f2d1a',
+        color: '#22c55e',
+        border: '#22c55e'
+      },
+    };
+
+    const badge = riskBadge[risk];
+    
+    const barWidth = maxPps > 0
+      ? Math.max((host.pps / maxPps) * 100, 2)
+      : 0;
+
+    const riskColor = risk === 'high'
+      ? '#ef4444'
+      : risk === 'medium'
+        ? '#f59e0b'
+        : '#22c55e';
  
    return (
-     <div className="space-y-2 group">
+      <div className={clsx(
+        "space-y-2 group p-3 rounded-lg transition-all",
+        isBanned && "bg-[#1a0a0a] border-l-[3px] border-l-[#ef4444]"
+      )}>
        <div className="flex justify-between items-end">
          <div>
-           <p className="text-sm font-bold text-gray-900 dark:text-gray-100 font-mono flex items-center gap-2">
-             {host.ip}
-             <span className={clsx(
-               "px-1.5 py-0.5 rounded text-[9px] font-bold uppercase",
-               riskLevel === 'Alto' ? "bg-danger text-white" : 
-               riskLevel === 'Médio' ? "bg-warning text-white" : "bg-success text-white"
-             )}>
-               Risco {riskLevel}
+            <div className="flex items-center gap-2 mb-1 flex-wrap">
+              <span className="text-sm font-bold text-gray-900 dark:text-gray-100 font-mono flex items-center gap-1">
+                {isBanned && <span title="Em mitigação">🔒</span>}
+                {host.ip}
              </span>
-           </p>
-           <p className="text-xs text-text-secondary mt-1">
+              
+              <span style={{
+                fontSize: 10,
+                padding: '2px 6px',
+                borderRadius: 4,
+                border: `1px solid ${badge.border}`,
+                background: badge.bg,
+                color: badge.color,
+                fontWeight: 600,
+                letterSpacing: '0.5px',
+              }}>
+                {badge.label}
+              </span>
+
+              {isBanned && (
+                <span className="px-2 py-0.5 bg-danger/20 text-danger border border-danger/30 rounded text-[9px] font-black uppercase">
+                  EM MITIGAÇÃO
+                </span>
+              )}
+            </div>
+            <p className="text-xs text-text-secondary">
              <span className="font-bold text-text-primary">{(host.pps / 1000).toFixed(1)}k</span> PPS • 
              <span className="font-bold text-text-primary ml-2">{host.mbps > 1000 ? (host.mbps / 1000).toFixed(1) + ' Gbps' : host.mbps + ' Mbps'}</span>
            </p>
          </div>
-         {isAdmin && (
+          {isAdmin && !isBanned && (
            <button 
              onClick={() => onMitigate(host.ip)}
-             className="px-3 py-1.5 bg-danger hover:bg-danger/90 text-white text-[10px] font-bold rounded-lg shadow-sm active:scale-95 transition-all flex items-center gap-1 opacity-0 group-hover:opacity-100"
+              className="px-3 py-1.5 bg-danger hover:bg-danger/90 text-white text-[10px] font-bold rounded-lg shadow-sm active:scale-95 transition-all flex items-center gap-1 md:opacity-0 group-hover:opacity-100"
            >
              <Shield size={12} /> Mitigar
            </button>
          )}
        </div>
-       <div className="w-full bg-gray-100 dark:bg-[#2a2d3e] h-1.5 rounded-full overflow-hidden">
-         <div 
-           className={clsx(
-             "h-full transition-all duration-1000",
-             riskLevel === 'Alto' ? "bg-danger" : 
-             riskLevel === 'Médio' ? "bg-warning" : "bg-accent"
-           )}
-           style={{ width: `${pct}%` }}
-         />
+        <div style={{
+          height: 6,
+          background: '#2a2d3e',
+          borderRadius: 3,
+          overflow: 'hidden',
+          marginTop: 6,
+        }}>
+          <div style={{
+            width: `${barWidth}%`,
+            height: '100%',
+            background: riskColor,
+            borderRadius: 3,
+            transition: 'width 0.5s ease',
+            animation: risk === 'high'
+              ? 'pulse-bar 1s infinite' : 'none',
+            boxShadow: risk === 'high'
+              ? `0 0 8px ${riskColor}` : 'none',
+          }} />
        </div>
      </div>
    );
