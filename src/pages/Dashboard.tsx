@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { useTranslation } from '../hooks/useTranslation';
@@ -18,7 +18,9 @@ export default function Dashboard() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [countdown, setCountdown] = useState(30);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
+  // Timer visual
   useEffect(() => {
     const timer = setInterval(() => {
       setCountdown(c => (c <= 1 ? 30 : c - 1));
@@ -26,11 +28,24 @@ export default function Dashboard() {
     return () => clearInterval(timer);
   }, []);
 
+  // Forçar invalidação manual a cada 30s
   useEffect(() => {
-    if (countdown === 30) {
-      queryClient.invalidateQueries();
-    }
-  }, [countdown, queryClient]);
+    intervalRef.current = setInterval(() => {
+      queryClient.invalidateQueries({ queryKey: ['connections'] });
+      queryClient.invalidateQueries({ queryKey: ['detection-stats'] });
+      queryClient.invalidateQueries({ queryKey: ['timeline'] });
+      queryClient.invalidateQueries({ queryKey: ['protocols'] });
+      queryClient.invalidateQueries({ queryKey: ['countries'] });
+      queryClient.invalidateQueries({ queryKey: ['ports'] });
+      queryClient.invalidateQueries({ queryKey: ['interfaces'] });
+    }, 30000);
+
+    return () => {
+      if (intervalRef.current) {
+        clearInterval(intervalRef.current);
+      }
+    };
+  }, [queryClient]);
 
   const { data: detection, isLoading: statsLoading } = useQuery({
     queryKey: ['detection-stats'],
@@ -38,8 +53,6 @@ export default function Dashboard() {
       const r = await api.get('/api/detection/stats');
       return r.data;
     },
-    refetchInterval: REFETCH_INTERVAL,
-    refetchIntervalInBackground: true,
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true,
@@ -51,8 +64,6 @@ export default function Dashboard() {
       const r = await api.get('/api/flows/timeline?minutes=30');
       return r.data;
     },
-    refetchInterval: REFETCH_INTERVAL,
-    refetchIntervalInBackground: true,
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true,
@@ -64,8 +75,6 @@ export default function Dashboard() {
       const r = await api.get('/api/flows/protocols?minutes=30');
       return r.data;
     },
-    refetchInterval: REFETCH_INTERVAL,
-    refetchIntervalInBackground: true,
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true,
@@ -77,8 +86,6 @@ export default function Dashboard() {
       const r = await api.get('/api/flows/countries?minutes=30');
       return r.data;
     },
-    refetchInterval: REFETCH_INTERVAL,
-    refetchIntervalInBackground: true,
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true,
@@ -90,8 +97,6 @@ export default function Dashboard() {
       const r = await api.get('/api/flows/ports?minutes=30');
       return r.data;
     },
-    refetchInterval: REFETCH_INTERVAL,
-    refetchIntervalInBackground: true,
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true,
@@ -103,8 +108,6 @@ export default function Dashboard() {
       const r = await api.get('/api/collectors/1/interfaces/summary');
       return r.data;
     },
-    refetchInterval: REFETCH_INTERVAL,
-    refetchIntervalInBackground: true,
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true,
@@ -149,14 +152,12 @@ export default function Dashboard() {
 
   const { data: connections, dataUpdatedAt } = useQuery({
     queryKey: ['connections'],
-    queryFn: async () => {
-      const r = await api.get('/api/flows/connections?limit=10');
-      return r.data;
-    },
-    refetchInterval: REFETCH_INTERVAL,
-    refetchIntervalInBackground: true,
+    queryFn: () =>
+      api.get('/api/flows/connections?limit=10')
+        .then(r => r.data),
     staleTime: 0,
     gcTime: 0,
+    refetchOnMount: true,
     refetchOnWindowFocus: true,
   });
 
@@ -761,15 +762,15 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
-        <div style={{
+        <p style={{
           fontSize: 11,
           color: '#8892a4',
           textAlign: 'right',
           marginTop: 6,
           padding: '0 24px 16px'
         }}>
-          Atualizado às {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR') : '—'}
-        </div>
+          Última atualização: {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR') : '—'}
+        </p>
       </div>
     </div>
   );
