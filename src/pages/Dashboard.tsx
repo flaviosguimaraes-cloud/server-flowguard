@@ -479,9 +479,8 @@ export default function Dashboard() {
                         </div>
                       </div>
 
-                      <div className="flex justify-between text-[10px] text-[#8892a4] font-medium border-t border-gray-100 dark:border-[#2a2d3e] pt-2">
-                        <span>Capacidade: {fmtBps(iface.if_speed)}</span>
-                        <span>Utilização: {((iface.in_bps / speed) * 100).toFixed(1)}%</span>
+                      <div className="text-[10px] text-[#8892a4] font-medium border-t border-gray-100 dark:border-[#2a2d3e] pt-2">
+                        Capacidade: {fmtBps(iface.if_speed)} — Util: {((Math.max(iface.in_bps, iface.out_bps) / speed) * 100).toFixed(1)}%
                       </div>
                     </div>
                   );
