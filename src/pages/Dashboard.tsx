@@ -609,12 +609,12 @@ export default function Dashboard() {
          />
       </div>
 
-      {/* Main Chart: Tráfego da Interface */}
-      <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm transition-colors">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b border-gray-100 dark:border-[#2a2d3e] pb-4">
+      {/* Main Chart: Tráfego da Interface - Refined Light Theme Visuals */}
+      <div className="bg-white dark:bg-bg-secondary p-6 rounded-2xl border border-border shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none transition-all">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 gap-4 border-b border-border/50 pb-5">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-bold text-text-primary">Tráfego da Interface</h2>
-            <div className="px-2 py-0.5 rounded bg-accent/10 text-accent text-[10px] font-bold uppercase">SNMP Realtime</div>
+            <div className="px-2.5 py-1 rounded-full bg-accent/10 text-accent text-[9px] font-black uppercase tracking-wider">SNMP Realtime</div>
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
@@ -676,33 +676,35 @@ export default function Dashboard() {
         </div>
 
         {/* Collector Info & Metrics Summary */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
-          <div className="flex items-center gap-2 text-xs text-text-secondary">
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
+          <div className="flex items-center gap-2 text-xs text-text-secondary opacity-80">
             <Info size={14} />
             <span className="font-medium">
-              {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).find((c: any) => c.id === selectedCollector)?.name || 'NE-20'} · 
-              {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).find((c: any) => c.id === selectedCollector)?.host || '45.175.50.209'} · 
-              SNMP v2c
+              {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).find((c: any) => c.id === selectedCollector)?.name || 'NE-20'} 
+              <span className="mx-2 opacity-30">|</span>
+              {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).find((c: any) => c.id === selectedCollector)?.host || '45.175.50.209'} 
+              <span className="mx-2 opacity-30">|</span>
+              v2c
             </span>
           </div>
 
-          <div className="flex items-center gap-6">
-            <div className="flex flex-col items-end">
-              <span className="text-[10px] uppercase font-bold text-text-secondary">Total RX</span>
-              <span className="text-sm font-black text-accent">{fmtBps(selectedIfaceData.reduce((a: number, b: any) => a + (b.in_bps || 0), 0))}</span>
+          <div className="flex items-center gap-4">
+            <div className="flex flex-col items-end px-3 py-1.5 bg-bg-primary/50 rounded-lg border border-border/30">
+              <span className="text-[9px] uppercase font-black text-text-secondary opacity-60 leading-none mb-1">Total RX</span>
+              <span className="text-xs font-black text-accent">{fmtBps(selectedIfaceData.reduce((a: number, b: any) => a + (b.in_bps || 0), 0))}</span>
             </div>
-            <div className="flex flex-col items-end">
-              <span className="text-[10px] uppercase font-bold text-text-secondary">Total TX</span>
-              <span className="text-sm font-black text-success">{fmtBps(selectedIfaceData.reduce((a: number, b: any) => a + (b.out_bps || 0), 0))}</span>
+            <div className="flex flex-col items-end px-3 py-1.5 bg-bg-primary/50 rounded-lg border border-border/30">
+              <span className="text-[9px] uppercase font-black text-text-secondary opacity-60 leading-none mb-1">Total TX</span>
+              <span className="text-xs font-black text-success">{fmtBps(selectedIfaceData.reduce((a: number, b: any) => a + (b.out_bps || 0), 0))}</span>
             </div>
-            <div className="flex flex-col items-end">
-              <span className="text-[10px] uppercase font-bold text-text-secondary">Interfaces</span>
-              <span className="text-sm font-black text-text-primary">{selectedIfaces.length} de {(Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : []).length}</span>
+            <div className="flex flex-col items-end px-3 py-1.5 bg-bg-primary/50 rounded-lg border border-border/30">
+              <span className="text-[9px] uppercase font-black text-text-secondary opacity-60 leading-none mb-1">Interfaces</span>
+              <span className="text-xs font-black text-text-primary">{selectedIfaces.length}<span className="text-[10px] opacity-40 mx-0.5">/</span>{(Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : []).length}</span>
             </div>
           </div>
         </div>
 
-        <div className="space-y-4">
+        <div className="space-y-2 bg-[#F8FAFC] dark:bg-[#0f172a]/40 p-4 rounded-xl border border-border/50">
           {/* RX Chart */}
           <div className="relative">
             <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 origin-left text-[10px] font-black text-text-secondary uppercase tracking-widest pointer-events-none">
