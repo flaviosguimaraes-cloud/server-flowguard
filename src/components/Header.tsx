@@ -38,7 +38,7 @@ export const Header = () => {
   const userInitial = user?.username?.charAt(0).toUpperCase() || 'U';
 
   return (
-    <header className="h-[52px] bg-white dark:bg-[#1a1d27] border-b border-border flex items-center justify-between px-4 sticky top-0 z-40 transition-colors">
+    <header className="h-[64px] bg-white/80 dark:bg-[#0b0e14]/80 backdrop-blur-md border-b border-border flex items-center justify-between px-6 sticky top-0 z-40 transition-all duration-300">
       <style>{`
         @keyframes spin-custom {
           from { transform: rotate(0deg); }
@@ -48,7 +48,7 @@ export const Header = () => {
       <div className="flex items-center gap-4">
         <button 
           onClick={toggleSidebar}
-          className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-secondary hover:text-text-primary transition-colors"
+          className="p-2 hover:bg-bg-secondary rounded-xl text-text-secondary hover:text-text-primary transition-all duration-200 border border-transparent hover:border-border"
         >
           <Menu size={20} />
         </button>
@@ -58,27 +58,24 @@ export const Header = () => {
         <button
           onClick={handleRefresh}
           title="Atualizar dados"
-          className="flex items-center gap-1.5 bg-none border-none cursor-pointer transition-colors"
-          style={{ 
-            color: isRefreshing ? '#3b82f6' : '#8892a4',
-            fontSize: '12px'
-          }}
+          className={clsx(
+            "flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-bg-secondary/50 transition-all duration-200",
+            isRefreshing ? "text-primary border-primary/30" : "text-text-secondary"
+          )}
         >
           <RefreshCw 
             size={14}
-            style={{
-              animation: isRefreshing ? 'spin-custom 1s linear infinite' : 'none'
-            }}
+            className={clsx(isRefreshing && "animate-spin")}
           />
-          <span className="font-mono tabular-nums">{countdown}s</span>
+          <span className="font-mono tabular-nums text-xs font-semibold">{countdown}s</span>
         </button>
 
-        <div className="flex items-center gap-2 text-text-secondary border-r border-border pr-4 mr-1">
-          <Globe size={16} />
+        <div className="flex items-center gap-2 text-text-secondary bg-bg-secondary/50 px-3 py-1.5 rounded-lg border border-border">
+          <Globe size={14} />
           <select 
             value={lang} 
             onChange={(e) => changeLanguage(e.target.value as any)}
-            className="bg-transparent border-none outline-none text-xs font-semibold cursor-pointer uppercase"
+            className="bg-transparent border-none outline-none text-xs font-bold cursor-pointer uppercase appearance-none"
           >
             <option value="pt-BR">PT</option>
             <option value="en">EN</option>
@@ -88,17 +85,17 @@ export const Header = () => {
 
         <button 
           onClick={toggleTheme}
-          className="p-1.5 hover:bg-bg-secondary rounded-lg text-text-secondary hover:text-accent transition-colors"
+          className="p-2 hover:bg-bg-secondary rounded-xl text-text-secondary hover:text-primary transition-all duration-200 border border-transparent hover:border-border"
         >
           {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
         </button>
 
-        <div className="flex items-center gap-3 pl-2 border-l border-border">
+        <div className="flex items-center gap-3 pl-4 border-l border-border ml-2">
           <div className="text-right hidden sm:block">
-            <p className="text-xs font-bold text-text-primary leading-tight">{user?.username}</p>
-            <p className="text-[10px] text-text-secondary uppercase tracking-tighter font-semibold">{user?.role}</p>
+            <p className="text-sm font-bold text-text-primary leading-none mb-1">{user?.username}</p>
+            <p className="text-[10px] text-text-secondary uppercase tracking-wider font-bold opacity-80">{user?.role}</p>
           </div>
-          <div className="w-8 h-8 rounded-full bg-accent flex items-center justify-center text-white font-bold text-sm shadow-sm shadow-accent/20">
+          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20 transition-transform hover:scale-105">
             {userInitial}
           </div>
         </div>
