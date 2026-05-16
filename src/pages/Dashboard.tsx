@@ -1025,6 +1025,7 @@ export default function Dashboard() {
           Última atualização: {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR') : '—'}
         </p>
       </div>
+      </TooltipProvider>
     </div>
   );
 }
@@ -1062,7 +1063,6 @@ function StatCard({ title, value, unit, icon, trend, tooltip }: any) {
              {tooltip}
            </div>
         </div>
-      </TooltipProvider>
       )}
     </div>
   );
