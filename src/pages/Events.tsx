@@ -276,19 +276,19 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
     
     const riskBadge = {
       high: {
-        label: 'Crítico',
+        label: 'RISCO ALTO',
         bg: 'var(--danger-bg)',
         color: 'var(--danger)',
         border: 'rgba(214, 57, 57, 0.1)'
       },
       medium: {
-        label: 'Alerta',
+        label: 'RISCO MÉDIO',
         bg: 'var(--warning-bg)',
         color: 'var(--warning)',
         border: 'rgba(247, 103, 7, 0.1)'
       },
       low: {
-        label: 'Normal',
+        label: 'RISCO BAIXO',
         bg: 'var(--success-bg)',
         color: 'var(--success)',
         border: 'rgba(47, 179, 68, 0.1)'
@@ -345,7 +345,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 
           {isBanned && (
             <span className="px-1.5 py-0.5 bg-danger text-white rounded text-[9px] font-bold uppercase tracking-wider shadow-sm">
-              Mitigado
+              EM MITIGAÇÃO
             </span>
           )}
             </div>

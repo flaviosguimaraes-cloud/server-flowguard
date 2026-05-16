@@ -972,10 +972,10 @@ export default function Dashboard() {
                        <p className="text-[10px] font-bold text-primary uppercase tracking-wider">{i.display_name || i.if_name}</p>
                        <p className="text-base font-bold text-text-primary leading-tight">{fmtBps(i.in_bps)}</p>
                      </div>
-                     <div className="text-right">
-                       <p className="text-[9px] text-text-secondary font-bold uppercase tracking-widest opacity-60">Uso</p>
-                       <p className="text-xs font-bold text-success">{utilPct.toFixed(1)}%</p>
-                     </div>
+                      <div className="text-right">
+                        <p className="text-[9px] text-text-secondary font-bold uppercase tracking-widest opacity-60">Utilization</p>
+                        <p className="text-xs font-bold text-success">{utilPct.toFixed(1)}%</p>
+                      </div>
                    </div>
                    <div className="w-full bg-bg-primary rounded-full h-1.5 overflow-hidden flex border border-border/10">
                      <div
@@ -1007,14 +1007,14 @@ export default function Dashboard() {
                      if (serviceFilter === 'TCP') return item.proto === 6;
                      return service === serviceFilter;
                    }) || [];
-                  return `${list.length} conexões detectadas · amostragem 1:1000`;
+                  return `${list.length} conexões · Top conexões por volume · últimos 2 min · atualizado a cada 30s`;
                })()}
              </span>
            </div>
-           <div className="flex items-center gap-4">
-              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest bg-bg-primary px-2 py-1 rounded border border-border">
-                Refresh em {countdown}s
-              </span>
+            <div className="flex items-center gap-4">
+               <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest bg-bg-primary px-2 py-1 rounded border border-border">
+                 Próxima atualização: {countdown}s
+               </span>
               <button className="text-text-secondary hover:text-text-primary transition-colors">
                 <MoreVertical size={18} />
               </button>
@@ -1051,7 +1051,7 @@ export default function Dashboard() {
                 <th className="px-6 py-3 border-b border-border">Serviço</th>
                 <th className="px-6 py-3 border-b border-border">Empresa</th>
                 <th className="px-6 py-3 border-b border-border">{t('protocol')}</th>
-                <th className="px-6 py-3 border-b border-border text-right">VOLUME</th>
+                <th className="px-6 py-3 border-b border-border text-right">VOLUME (2 min)</th>
                 <th className="px-6 py-3 border-b border-border text-right">{t('pps')}</th>
               </tr>
             </thead>
@@ -1149,7 +1149,7 @@ export default function Dashboard() {
                           <span className="cursor-help">{fmtBytes(item.bytes)}</span>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Volume transferido (2 min)</p>
+                          <p>Volume transferido nos últimos 2 minutos (estimado com sampling 1:1000)</p>
                         </TooltipContent>
                       </Tooltip>
                     </td>
