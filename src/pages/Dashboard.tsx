@@ -469,8 +469,9 @@ export default function Dashboard() {
     );
   }
 
-   return (
-     <div className="space-y-6 animate-in fade-in duration-500">
+    return (
+      <TooltipProvider>
+      <div className="space-y-6 animate-in fade-in duration-500">
        <style>{`
          @keyframes pulse {
            0%, 100% { opacity: 1; }
@@ -920,8 +921,7 @@ export default function Dashboard() {
       </div>
 
         {/* Active Connections Table */}
-      <TooltipProvider>
-       <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-200 dark:border-border flex flex-wrap justify-between items-center bg-gray-50/50 dark:bg-bg-secondary/30 gap-4">
            <div className="flex flex-col gap-1">
              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Top Fluxos IPv4 (2 min)</h2>
@@ -1116,8 +1116,8 @@ export default function Dashboard() {
             Última atualização: {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR') : '—'}
           </p>
         </div>
-      </div>
-      </TooltipProvider>
+       </div>
+       </TooltipProvider>
     </div>
   );
 }
