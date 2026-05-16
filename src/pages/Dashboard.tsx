@@ -398,7 +398,7 @@ export default function Dashboard() {
                 onChange={(e) => setSelectedCollector(Number(e.target.value))}
                 className="bg-transparent text-[11px] font-bold text-text-primary focus:outline-none cursor-pointer"
               >
-                {collectors?.map((c: any) => (
+                {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).map((c: any) => (
                   <option key={c.id} value={c.id}>{c.name} ({c.host})</option>
                 ))}
               </select>
@@ -435,8 +435,8 @@ export default function Dashboard() {
           <div className="flex items-center gap-2 text-xs text-text-secondary">
             <Info size={14} />
             <span className="font-medium">
-              {collectors?.find((c: any) => c.id === selectedCollector)?.name || 'NE-20'} · 
-              {collectors?.find((c: any) => c.id === selectedCollector)?.host || '45.175.50.209'} · 
+              {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).find((c: any) => c.id === selectedCollector)?.name || 'NE-20'} · 
+              {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).find((c: any) => c.id === selectedCollector)?.host || '45.175.50.209'} · 
               SNMP v2c
             </span>
           </div>
