@@ -771,38 +771,64 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Top Ports */}
-         <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm">
-            <h2 className="text-lg font-bold mb-6 text-gray-900 dark:text-gray-100">{t('port')}s</h2>
-            <div className="h-[180px] w-full">
-             <ResponsiveContainer width="100%" height="100%">
-               <BarChart data={portData}
-                 margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                 <XAxis
-                   dataKey="name"
-                   tick={{ fontSize: 10, fill: '#8892a4' }}
-                   tickLine={false} axisLine={false} />
-                 <YAxis
-                   tick={{ fontSize: 10, fill: '#8892a4' }}
-                   tickLine={false} axisLine={false}
-                   tickFormatter={v => v + '%'} />
-                 <Tooltip
-                   formatter={v => [v + '%']}
-                  contentStyle={{
-                    backgroundColor: 'var(--bg-card)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 6, fontSize: 12,
-                    color: 'var(--text-primary)'
-                  }}
-                  itemStyle={{ color: 'var(--text-primary)' }}
-                  labelStyle={{ color: 'var(--text-secondary)' }}
-                />
-                 <Bar dataKey="pct" fill="#3b82f6"
-                   radius={[3, 3, 0, 0]} />
-               </BarChart>
-             </ResponsiveContainer>
-           </div>
-         </div>
+          {/* Port Panels */}
+          <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm space-y-8">
+            {/* PAINEL 1 — Portas mais consumidas */}
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Portas mais consumidas</h2>
+                <p className="text-xs text-text-secondary">O que seus clientes estão acessando na internet</p>
+              </div>
+              <div className="space-y-3">
+                {portDataDst.map((p, i) => (
+                  <div key={i} className="space-y-1">
+                    <div className="flex justify-between text-[11px] font-bold">
+                      <span className="text-text-primary">{p.name}</span>
+                      <span className="text-text-secondary">{fmtBytes(p.bytes)}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-3 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-blue-500 rounded-full transition-all duration-1000"
+                          style={{ width: `${p.pct}%` }}
+                        />
+                      </div>
+                      <span className="text-[11px] font-bold text-text-primary min-w-[35px] text-right">{p.pct}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="border-t border-gray-100 dark:border-[#2a2d3e] pt-8" />
+
+            {/* PAINEL 2 — Serviços mais servidos */}
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Serviços mais servidos</h2>
+                <p className="text-xs text-text-secondary">O que sua rede está entregando para a internet</p>
+              </div>
+              <div className="space-y-3">
+                {portDataSrc.map((p, i) => (
+                  <div key={i} className="space-y-1">
+                    <div className="flex justify-between text-[11px] font-bold">
+                      <span className="text-text-primary">{p.name}</span>
+                      <span className="text-text-secondary">{fmtBytes(p.bytes)}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-3 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-green-500 rounded-full transition-all duration-1000"
+                          style={{ width: `${p.pct}%` }}
+                        />
+                      </div>
+                      <span className="text-[11px] font-bold text-text-primary min-w-[35px] text-right">{p.pct}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
  
           {/* SNMP Interfaces */}
          <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm">
@@ -839,7 +865,7 @@ export default function Dashboard() {
 
        {/* Active Connections Table */}
       <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-200 dark:border-border flex justify-between items-center bg-gray-50/50 dark:bg-bg-secondary/30">
+        <div className="p-6 border-b border-gray-200 dark:border-border flex flex-wrap justify-between items-center bg-gray-50/50 dark:bg-bg-secondary/30 gap-4">
            <div className="flex flex-col gap-1">
              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('active_connections')}</h2>
              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -850,17 +876,53 @@ export default function Dashboard() {
                  display: 'inline-block',
                  animation: 'pulse 2s infinite'
                }} />
-               <span style={{ fontSize: 11, color: '#8892a4' }}>
-                 Ao vivo · últimos 2 minutos · atualizado a cada 30s
-               </span>
+                <span style={{ fontSize: 11, color: '#8892a4' }}>
+                  {(() => {
+                    const list = (Array.isArray(connections) ? connections : (connections?.items || connections?.data || []))
+                      ?.filter((item: any) => {
+                        if (!serviceFilter) return true;
+                        const flipped = shouldFlip(item);
+                        const dstPort = flipped ? item.src_port : item.dst_port;
+                        const service = getService(dstPort).split(' ')[0];
+                        if (serviceFilter === 'UDP') return item.proto === 17;
+                        if (serviceFilter === 'TCP') return item.proto === 6;
+                        return service === serviceFilter;
+                      }) || [];
+                    return `${list.length} conexões · últimos 2 min · ao vivo`;
+                  })()}
+                </span>
              </div>
            </div>
            <span style={{fontSize:11, color:'#8892a4'}}>
              Próxima atualização: {countdown}s
            </span>
-          <button className="text-text-secondary hover:text-text-primary transition-colors">
-            <MoreVertical size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button className="text-text-secondary hover:text-text-primary transition-colors">
+              <MoreVertical size={20} />
+            </button>
+          </div>
+        </div>
+
+        {/* Filtros rápidos */}
+        <div className="flex flex-wrap gap-2 px-6 py-3 border-b border-gray-100 dark:border-[#2a2d3e] bg-gray-50/30 dark:bg-bg-secondary/10">
+          {['Todos', 'HTTP', 'HTTPS', 'DNS', 'Steam', 'UDP', 'TCP'].map(label => {
+            const value = label === 'Todos' ? null : label;
+            const isActive = serviceFilter === value;
+            return (
+              <button
+                key={label}
+                onClick={() => setServiceFilter(value)}
+                className={clsx(
+                  "px-3 py-1 rounded-md text-[11px] font-bold transition-all",
+                  isActive 
+                    ? "bg-accent/10 text-accent border border-accent/30 shadow-sm" 
+                    : "text-text-secondary hover:text-text-primary border border-transparent hover:bg-gray-100 dark:hover:bg-[#2a2d3e]"
+                )}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[800px]">
@@ -876,7 +938,16 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody className="text-sm divide-y divide-border/50">
-              {(Array.isArray(connections) ? connections : (connections?.items || connections?.data || [])).map((item: any, i: number) => {
+              {((Array.isArray(connections) ? connections : (connections?.items || connections?.data || []))
+                ?.filter((item: any) => {
+                  if (!serviceFilter) return true;
+                  const flipped = shouldFlip(item);
+                  const dstPort = flipped ? item.src_port : item.dst_port;
+                  const service = getService(dstPort).split(' ')[0];
+                  if (serviceFilter === 'UDP') return item.proto === 17;
+                  if (serviceFilter === 'TCP') return item.proto === 6;
+                  return service === serviceFilter;
+                }) || []).map((item: any, i: number) => {
                 const flipped = shouldFlip(item);
                 const src = flipped ? item.dst_addr : item.src_addr;
                 const srcPort = flipped ? item.dst_port : item.src_port;
