@@ -81,7 +81,7 @@ function TabButton({ active, onClick, icon, label, count }: any) {
     console.log('bgp routes data:', routes);
     const routesList = routes?.routes || [];
 
-   const handleRemove = async (ip: string) => {
+   const handleRemove = async (ip: string, source?: string) => {
      const cleanIP = ip.replace('/32', '').trim();
 
      if (!window.confirm(`Tem certeza que deseja remover a mitigação para ${cleanIP}?`)) {
@@ -98,7 +98,15 @@ function TabButton({ active, onClick, icon, label, count }: any) {
            }
          }
        );
-       toast.success(`Mitigação removida: ${cleanIP}`);
+        if (source === 'automatic') {
+          toast.success(
+            'Anúncio BGP removido. ' +
+            'O bloqueio no detector de ataques ' +
+            'expira automaticamente em até 5 minutos.'
+          );
+        } else {
+          toast.success(`Mitigação removida: ${cleanIP}`);
+        }
        queryClient.invalidateQueries({ queryKey: ['mitigation-active'] });
        queryClient.invalidateQueries({ queryKey: ['bgp-routes'] });
        queryClient.invalidateQueries({ queryKey: ['bgp-flowspec'] });
@@ -222,7 +230,7 @@ function TabButton({ active, onClick, icon, label, count }: any) {
                         {isAdmin && (
                           <td className="px-6 py-3.5 text-center">
                             <button 
-                              onClick={() => handleRemove(item.ip)}
+                              onClick={() => handleRemove(item.ip, item.source)}
                               className="p-1.5 text-text-secondary hover:text-danger hover:bg-danger/10 rounded-lg transition-all"
                             >
                               <Trash2 size={16} />
