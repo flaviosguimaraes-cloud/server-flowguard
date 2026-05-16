@@ -184,19 +184,23 @@ export default function MitigationModal({ isOpen, onClose, targetIP, onSuccess, 
           )}
          </div>
  
-         <div className="p-6 bg-gray-50/50 dark:bg-bg-secondary/30 border-t border-gray-100 dark:border-[#2a2d3e] flex gap-3">
+          <div className="p-6 bg-gray-50/50 dark:bg-bg-secondary/30 border-t border-border/50 flex gap-3">
            <button
             onClick={step === 1 ? onClose : () => setStep(1)}
-             className="flex-1 px-4 py-2.5 rounded-lg font-bold text-text-secondary hover:bg-gray-100 dark:hover:bg-[#2a2d3e] transition-all"
+              className="flex-1 px-4 py-2.5 rounded-lg font-bold text-text-secondary hover:bg-gray-100 dark:hover:bg-[#2a2d3e] hover:text-text-primary transition-all border border-border/50"
            >
             {step === 1 ? 'Cancelar' : 'Voltar'}
            </button>
            <button
              onClick={handleMitigate}
              disabled={loading}
-             className={`flex-1 px-4 py-2.5 rounded-lg font-bold text-white transition-all flex items-center justify-center ${
-               type === 'blackhole' ? 'bg-danger hover:bg-danger/90' : 'bg-warning hover:bg-warning/90'
-             } disabled:opacity-50`}
+              className={`flex-1 px-4 py-2.5 rounded-lg font-bold text-white transition-all flex items-center justify-center shadow-lg shadow-primary/10 ${
+                step === 1 
+                  ? 'bg-primary hover:bg-primary/90' 
+                  : type === 'blackhole' 
+                    ? 'bg-danger hover:bg-danger/90' 
+                    : 'bg-warning hover:bg-warning/90'
+              } disabled:bg-slate-200 dark:disabled:bg-slate-800 disabled:text-slate-400 dark:disabled:text-slate-500 disabled:cursor-not-allowed disabled:shadow-none`}
            >
             {loading ? (
               <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
