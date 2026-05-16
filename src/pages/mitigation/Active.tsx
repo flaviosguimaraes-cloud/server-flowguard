@@ -120,13 +120,13 @@
            label="Regras FlowSpec"
            count={flowspec?.total || flowspec?.items?.length || flowspec?.length}
          />
-         <TabButton 
-           active={activeTab === 'routes'} 
-           onClick={() => setActiveTab('routes')}
-           icon={<Network size={18} />}
-           label="Rotas BGP"
-           count={routes?.total || routes?.items?.length || routes?.length}
-         />
+          <TabButton 
+            active={activeTab === 'routes'} 
+            onClick={() => setActiveTab('routes')}
+            icon={<Network size={18} />}
+            label="Rotas BGP"
+            count={routes?.total || (Array.isArray(routes?.routes) ? routes.routes.length : 0)}
+          />
        </div>
  
        {/* Content */}
@@ -247,46 +247,46 @@
          {activeTab === 'routes' && (
            <div className="overflow-x-auto">
              <table className="w-full text-left border-collapse">
-               <thead>
-                 <tr className="bg-gray-50 dark:bg-bg-secondary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-                   <th className="px-6 py-4 border-b border-border">Prefixo</th>
-                   <th className="px-6 py-4 border-b border-border">Next-hop</th>
-                   <th className="px-6 py-4 border-b border-border">Community</th>
-                   <th className="px-6 py-4 border-b border-border">AS Path</th>
-                   <th className="px-6 py-4 border-b border-border text-center">Tipo</th>
-                 </tr>
-               </thead>
-               <tbody className="text-sm divide-y divide-border/50">
-                 {rtLoading ? (
-                   Array.from({ length: 3 }).map((_, i) => (
-                     <tr key={i}><td colSpan={5} className="px-6 py-4"><Skeleton count={1} className="h-8 w-full bg-gray-50 dark:bg-[#2a2d3e] rounded" /></td></tr>
-                   ))
-                 ) : (Array.isArray(routes) ? routes : (routes?.items || [])).length === 0 ? (
-                   <tr><td colSpan={5} className="px-6 py-12 text-center text-text-secondary italic">Nenhuma rota BGP anunciada</td></tr>
-                 ) : (
-                   (Array.isArray(routes) ? routes : (routes?.items || [])).map((route: any, i: number) => (
-                     <tr key={i} className="hover:bg-accent/5 transition-colors">
-                       <td className="px-6 py-4 font-mono font-bold text-gray-900 dark:text-gray-100">{route.prefix}</td>
-                       <td className="px-6 py-4 text-text-secondary">{route.next_hop || '—'}</td>
-                       <td className="px-6 py-4">
-                         <code className="text-[10px] bg-gray-50 dark:bg-bg-secondary px-1.5 py-0.5 rounded text-accent font-bold">
-                           {route.community || '—'}
-                         </code>
-                       </td>
-                       <td className="px-6 py-4 text-[10px] text-text-secondary font-mono">{route.as_path || 'Self'}</td>
-                       <td className="px-6 py-4 text-center">
-                         <span className={clsx(
-                           "px-2 py-0.5 text-[10px] font-bold rounded uppercase",
-                           route.type === 'blackhole' ? "bg-danger/10 text-danger" : 
-                           route.type === 'mitigation' ? "bg-warning/10 text-warning" : "bg-success/10 text-success"
-                         )}>
-                           {route.type || 'Normal'}
-                         </span>
-                       </td>
-                     </tr>
-                   ))
-                 )}
-               </tbody>
+                <thead>
+                  <tr className="bg-gray-50 dark:bg-bg-secondary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+                    <th className="px-6 py-4 border-b border-border">Prefixo</th>
+                    <th className="px-6 py-4 border-b border-border">Tipo</th>
+                    <th className="px-6 py-4 border-b border-border">Community</th>
+                    <th className="px-6 py-4 border-b border-border">Age</th>
+                    <th className="px-6 py-4 border-b border-border">Nexthop</th>
+                  </tr>
+                </thead>
+                <tbody className="text-sm divide-y divide-border/50">
+                  {rtLoading ? (
+                    Array.from({ length: 3 }).map((_, i) => (
+                      <tr key={i}><td colSpan={5} className="px-6 py-4"><Skeleton count={1} className="h-8 w-full bg-gray-50 dark:bg-[#2a2d3e] rounded" /></td></tr>
+                    ))
+                  ) : (Array.isArray(routes?.routes) ? routes.routes : []).length === 0 ? (
+                    <tr><td colSpan={5} className="px-6 py-12 text-center text-text-secondary italic">Nenhuma rota BGP anunciada</td></tr>
+                  ) : (
+                    (Array.isArray(routes?.routes) ? routes.routes : []).map((route: any, i: number) => (
+                      <tr key={i} className="hover:bg-accent/5 transition-colors">
+                        <td className="px-6 py-4 font-mono font-bold text-gray-900 dark:text-gray-100">{route.prefix}</td>
+                        <td className="px-6 py-4">
+                          <span className={clsx(
+                            "px-2 py-0.5 text-[10px] font-bold rounded uppercase",
+                            route.type === 'blackhole' ? "bg-danger/10 text-danger" : 
+                            route.type === 'mitigation' ? "bg-warning/10 text-warning" : "bg-success/10 text-success"
+                          )}>
+                            {route.type || 'Normal'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <code className="text-[10px] bg-gray-50 dark:bg-bg-secondary px-1.5 py-0.5 rounded text-accent font-bold">
+                            {route.community || '—'}
+                          </code>
+                        </td>
+                        <td className="px-6 py-4 text-text-secondary text-xs">{route.age || '—'}</td>
+                        <td className="px-6 py-4 text-text-secondary font-mono text-xs">{route.nexthop || '—'}</td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
              </table>
            </div>
          )}
