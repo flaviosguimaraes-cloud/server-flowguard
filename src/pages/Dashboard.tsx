@@ -9,7 +9,8 @@ import {
 import { 
   Tooltip, TooltipTrigger, TooltipContent, TooltipProvider 
 } from '../components/ui/tooltip';
-import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon, Settings2, Info } from 'lucide-react';
+import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon, Settings2, Info, ArrowRight } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
 import { Skeleton } from '../components/Skeleton';
 import Flag from '../components/Flag';
 
@@ -897,15 +898,8 @@ export default function Dashboard() {
        <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-200 dark:border-border flex flex-wrap justify-between items-center bg-gray-50/50 dark:bg-bg-secondary/30 gap-4">
            <div className="flex flex-col gap-1">
-             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('active_connections')}</h2>
-             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-               <span style={{
-                 width: 8, height: 8,
-                 borderRadius: '50%',
-                 background: '#22c55e',
-                 display: 'inline-block',
-                 animation: 'pulse 2s infinite'
-               }} />
+             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Top Fluxos IPv4 (2 min)</h2>
+             <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
                 <span style={{ fontSize: 11, color: '#8892a4' }}>
                   {(() => {
                     const list = (Array.isArray(connections) ? connections : (connections?.items || connections?.data || []))
@@ -918,7 +912,7 @@ export default function Dashboard() {
                         if (serviceFilter === 'TCP') return item.proto === 6;
                         return service === serviceFilter;
                       }) || [];
-                    return `${list.length} conexões · últimos 2 min · ao vivo`;
+                     return `${list.length} conexões · Top conexões por volume · últimos 2 min · atualizado a cada 30s`;
                   })()}
                 </span>
              </div>
@@ -1045,15 +1039,23 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
-        <p style={{
-          fontSize: 11,
-          color: '#8892a4',
-          textAlign: 'right',
-          marginTop: 6,
-          padding: '0 24px 16px'
-        }}>
-          Última atualização: {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR') : '—'}
-        </p>
+        <div className="px-6 py-4 bg-gray-50/30 dark:bg-bg-secondary/10 border-t border-gray-100 dark:border-[#2a2d3e] flex justify-between items-center">
+          <Link 
+            to="/analysis"
+            search={{ minutes: 5 }}
+            className="text-[11px] font-bold text-accent hover:text-accent/80 transition-colors flex items-center gap-1.5"
+          >
+            Ver análise em tempo real
+            <ArrowRight size={12} />
+          </Link>
+          <p style={{
+            fontSize: 11,
+            color: '#8892a4',
+            textAlign: 'right',
+          }}>
+            Última atualização: {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR') : '—'}
+          </p>
+        </div>
       </div>
       </TooltipProvider>
     </div>
