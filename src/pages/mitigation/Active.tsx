@@ -214,8 +214,8 @@ function TabButton({ active, onClick, icon, label, count }: any) {
                                    </div>
                                    <div className="text-[11px] text-text-secondary flex justify-between">
                                      <span>Fonte:</span>
-                                     <span className="text-text-primary font-bold uppercase text-[9px]">
-                                       {item.source === 'automatic' ? 'Detector' : 'Operador'}
+                                     <span className="text-text-primary font-bold">
+                                       {item.source === 'automatic' ? 'Automático (detector)' : 'Manual (operador)'}
                                      </span>
                                    </div>
                                    {item.pps > 0 && (
