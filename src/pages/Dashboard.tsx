@@ -1116,6 +1116,7 @@ export default function Dashboard() {
             Última atualização: {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR') : '—'}
           </p>
         </div>
+        </div>
        </div>
        </TooltipProvider>
      );
