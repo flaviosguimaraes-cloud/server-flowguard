@@ -86,17 +86,17 @@ export const Header = () => {
 
         <button 
           onClick={toggleTheme}
-          className="p-2 hover:bg-bg-secondary rounded-xl text-text-secondary hover:text-primary transition-all duration-200 border border-transparent hover:border-border"
+          className="p-2.5 hover:bg-bg-primary rounded-2xl text-text-secondary hover:text-primary transition-all duration-300 border border-transparent hover:border-border shadow-sm active:scale-95"
         >
-          {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+          {theme === 'dark' ? <Sun size={22} /> : <Moon size={22} />}
         </button>
 
-        <div className="flex items-center gap-3 pl-4 border-l border-border ml-2">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-bold text-text-primary leading-none mb-1">{user?.username}</p>
-            <p className="text-[10px] text-text-secondary uppercase tracking-wider font-bold opacity-80">{user?.role}</p>
+        <div className="flex items-center gap-4 pl-6 border-l border-border ml-2 group cursor-pointer">
+          <div className="text-right hidden sm:block transition-all group-hover:-translate-x-1">
+            <p className="text-sm font-black text-text-primary leading-none mb-1.5">{user?.username}</p>
+            <p className="text-[10px] text-primary uppercase tracking-widest font-black opacity-90">{user?.role}</p>
           </div>
-          <div className="w-9 h-9 rounded-xl bg-primary flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20 transition-transform hover:scale-105">
+          <div className="w-11 h-11 rounded-2xl bg-gradient-to-br from-primary to-blue-600 flex items-center justify-center text-white font-black text-base shadow-xl shadow-primary/30 transition-all group-hover:scale-110 group-hover:rotate-3 border-2 border-white/10">
             {userInitial}
           </div>
         </div>
