@@ -198,54 +198,54 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
          </div>
        </div>
  
-       {/* Anomaly History Section */}
-       <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
-         <div className="p-6 border-b border-gray-100 dark:border-[#2a2d3e] flex items-center gap-2">
-           <History className="text-warning" size={20} />
-           <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Histórico de Anomalias</h2>
-         </div>
-         <div className="overflow-x-auto">
-           <table className="w-full text-left border-collapse">
-             <thead>
-               <tr className="bg-gray-50 dark:bg-bg-secondary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-                 <th className="px-6 py-4 border-b border-border">Data/Hora</th>
-                 <th className="px-6 py-4 border-b border-border">IP Mitigado</th>
-                 <th className="px-6 py-4 border-b border-border">Ação</th>
-                 <th className="px-6 py-4 border-b border-border">Operador</th>
-                 <th className="px-6 py-4 border-b border-border text-center">Status</th>
-               </tr>
-             </thead>
-             <tbody className="text-sm divide-y divide-border/50">
-               {(Array.isArray(auditLogs) ? auditLogs : (auditLogs?.items || [])).map((log: any, i: number) => (
-                 <tr key={i} className="hover:bg-gray-50 dark:hover:bg-accent/5 transition-colors">
-                   <td className="px-6 py-4 flex items-center gap-2 text-text-secondary whitespace-nowrap">
-                     <Clock size={14} /> {log.timestamp || log.created_at}
-                   </td>
-                   <td className="px-6 py-4 font-mono font-bold text-gray-900 dark:text-gray-100">{log.target || log.ip || '—'}</td>
-                   <td className="px-6 py-4">
-                     <span className="flex items-center gap-1.5 text-accent font-medium">
-                       <Zap size={14} /> {log.action_type || 'BGP Blackhole'}
-                     </span>
-                   </td>
-                   <td className="px-6 py-4 text-text-secondary">{log.username || 'System'}</td>
-                   <td className="px-6 py-4 text-center">
-                     <span className="px-2 py-1 bg-success/10 text-success text-[10px] font-bold rounded-full uppercase">
-                       Resolvido
-                     </span>
-                   </td>
-                 </tr>
-               ))}
-               {(!auditLogs || (Array.isArray(auditLogs) && auditLogs.length === 0)) && (
-                 <tr>
-                   <td colSpan={5} className="px-6 py-12 text-center text-text-secondary italic">
-                     Nenhum histórico de mitigação encontrado
-                   </td>
-                 </tr>
-               )}
-             </tbody>
-           </table>
-         </div>
-       </div>
+        {/* Anomaly History Section */}
+        <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
+          <div className="p-5 border-b border-border flex items-center gap-2 bg-bg-primary/30">
+            <History className="text-warning" size={18} />
+            <h2 className="text-base font-bold text-text-primary">Histórico de Anomalias</h2>
+          </div>
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+                  <th className="px-6 py-3 border-b border-border">Data/Hora</th>
+                  <th className="px-6 py-3 border-b border-border">IP Mitigado</th>
+                  <th className="px-6 py-3 border-b border-border">Ação</th>
+                  <th className="px-6 py-3 border-b border-border">Operador</th>
+                  <th className="px-6 py-3 border-b border-border text-center">Status</th>
+                </tr>
+              </thead>
+              <tbody className="text-sm divide-y divide-border/50">
+                {(Array.isArray(auditLogs) ? auditLogs : (auditLogs?.items || [])).map((log: any, i: number) => (
+                  <tr key={i} className="hover:bg-bg-primary/50 transition-colors group">
+                    <td className="px-6 py-3.5 flex items-center gap-2 text-text-secondary whitespace-nowrap text-xs">
+                      <Clock size={13} opacity={0.5} /> {log.timestamp || log.created_at}
+                    </td>
+                    <td className="px-6 py-3.5 font-mono font-bold text-text-primary text-xs">{log.target || log.ip || '—'}</td>
+                    <td className="px-6 py-3.5">
+                      <span className="flex items-center gap-1.5 text-primary font-semibold text-xs">
+                        <Zap size={13} /> {log.action_type || 'BGP Blackhole'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3.5 text-text-secondary text-xs">{log.username || 'System'}</td>
+                    <td className="px-6 py-3.5 text-center">
+                      <span className="px-2 py-0.5 bg-success/10 text-success text-[10px] font-bold rounded uppercase">
+                        Resolvido
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+                {(!auditLogs || (Array.isArray(auditLogs) && auditLogs.length === 0)) && (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-12 text-center text-text-secondary italic text-xs">
+                      Nenhum histórico de mitigação encontrado
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
  
        <MitigationModal
          isOpen={isMitigationOpen}
