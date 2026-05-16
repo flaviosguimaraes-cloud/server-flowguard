@@ -14,15 +14,16 @@ import MitigationModal from '../components/MitigationModal';
 
 function MetricCard({ title, value, icon }: any) {
   return (
-    <div className="bg-bg-secondary p-6 rounded-2xl border border-border shadow-sm shadow-black/5 flex flex-col justify-between transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 group min-h-[140px]">
-      <div className="flex justify-between items-start">
-        <div className="p-2.5 bg-bg-primary rounded-xl group-hover:bg-primary/10 transition-colors border border-border/50 group-hover:border-primary/20">
+    <div className="bg-bg-secondary p-6 rounded-[24px] border border-border shadow-2xl shadow-black/20 flex flex-col justify-between min-h-[160px] transition-all duration-500 hover:border-primary/40 hover:-translate-y-1 hover:shadow-primary/5 group relative overflow-hidden">
+      <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-8 -mt-8 blur-2xl transition-all group-hover:bg-primary/10" />
+      <div className="flex justify-between items-start relative z-10">
+        <div className="p-3 bg-bg-primary rounded-2xl group-hover:bg-primary/20 transition-all duration-300 border border-border/50 group-hover:border-primary/30 group-hover:scale-110 group-hover:rotate-3 shadow-inner">
           {icon}
         </div>
       </div>
-      <div className="mt-4">
-        <p className="text-text-secondary text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">{title}</p>
-        <h3 className="text-3xl font-black text-text-primary tracking-tight leading-none">{value}</h3>
+      <div className="mt-6 relative z-10">
+        <p className="text-text-secondary text-[10px] font-black uppercase tracking-[0.15em] opacity-60 mb-2 group-hover:text-text-primary transition-colors">{title}</p>
+        <h3 className="text-4xl font-black text-text-primary tracking-tighter leading-none group-hover:text-primary transition-colors">{value}</h3>
       </div>
     </div>
   );
@@ -276,11 +277,11 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
    return (
      <div className="space-y-6 animate-in fade-in duration-500">
        <div className="flex justify-between items-center">
-         <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('analysis')}</h1>
+         <h1 className="text-2xl font-bold text-text-primary">{t('analysis')}</h1>
          <div className="flex gap-2">
             <button 
               onClick={exportCSV}
-              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1e2130] border border-gray-200 dark:border-[#2a2d3e] rounded-lg text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a2d3e] transition-all shadow-sm"
+              className="flex items-center gap-2 px-4 py-2 bg-bg-secondary border border-border rounded-lg text-sm font-bold text-text-primary hover:bg-gray-50 dark:hover:bg-[#2a2d3e] transition-all shadow-sm"
             >
              <Download size={20} />
               Exportar CSV
@@ -297,20 +298,20 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
        </div>
  
        {/* Filters */}
-       <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm transition-colors space-y-4">
+       <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm transition-colors space-y-4">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
            <div className="relative col-span-1 lg:col-span-2">
              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
              <input
                type="text"
                placeholder="Buscar por IP, Empresa ou Porta..."
-               className="w-full bg-gray-50 dark:bg-bg-secondary border border-gray-200 dark:border-[#2a2d3e] rounded-lg py-2 pl-10 pr-4 outline-none focus:ring-2 focus:ring-accent/50 transition-all text-text-primary"
+               className="w-full bg-bg-primary border border-border rounded-lg py-2 pl-10 pr-4 outline-none focus:ring-2 focus:ring-accent/50 transition-all text-text-primary"
                value={search}
                onChange={(e) => setSearch(e.target.value)}
              />
            </div>
            
-           <div className="flex bg-gray-50 dark:bg-bg-secondary p-1 rounded-lg border border-gray-200 dark:border-[#2a2d3e]">
+           <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
              {['Todos', 'TCP', 'UDP', 'ICMP'].map((p) => (
                <button
                  key={p}
@@ -327,7 +328,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
             <div className="relative">
               <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
               <select
-                className="w-full bg-gray-50 dark:bg-bg-secondary border border-gray-200 dark:border-[#2a2d3e] rounded-lg py-2 pl-10 pr-4 outline-none focus:ring-2 focus:ring-accent/50 appearance-none text-text-primary"
+                className="w-full bg-bg-primary border border-border rounded-lg py-2 pl-10 pr-4 outline-none focus:ring-2 focus:ring-accent/50 appearance-none text-text-primary"
                 value={country}
                 onChange={(e) => setCountry(e.target.value)}
               >
@@ -369,7 +370,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                   "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
                   groupByIP 
                     ? "bg-accent text-white shadow-md" 
-                    : "bg-gray-100 dark:bg-[#2a2d3e] text-text-secondary hover:text-text-primary"
+                    : "bg-bg-primary text-text-secondary hover:text-text-primary"
                 )}
               >
                 {groupByIP ? <LayoutGrid size={14} /> : <List size={14} />}
@@ -390,11 +391,11 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
        </div>
  
        {/* Table */}
-       <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
+       <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
          <div className="overflow-x-auto">
            <table className="w-full text-left border-collapse min-w-[1000px]">
               <thead>
-                <tr className="bg-gray-50 dark:bg-bg-secondary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+                <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
                   <SortHeader field="src_addr" label={t('source_ip')} />
                   <SortHeader field="dst_addr" label={t('dest_ip')} />
                   <th className="px-6 py-4 border-b border-border">Serviço</th>
@@ -409,7 +410,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
              <tbody className="text-sm divide-y divide-border/50">
                {isLoading ? (
                  Array.from({ length: 5 }).map((_, i) => (
-                   <tr key={i}><td colSpan={8} className="px-6 py-4"><div className="w-full h-8 bg-gray-100 dark:bg-[#2a2d3e] rounded animate-pulse" /></td></tr>
+                   <tr key={i}><td colSpan={8} className="px-6 py-4"><div className="w-full h-8 bg-bg-primary rounded animate-pulse" /></td></tr>
                  ))
                ) : connectionItems.length === 0 ? (
                  <tr>
@@ -433,7 +434,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
                             <Flag code={srcCountry} />
-                             <span className="font-medium text-gray-900 dark:text-gray-100">{src}</span>
+                             <span className="font-medium text-text-primary">{src}</span>
                              {!groupByIP && <span className="text-text-secondary text-xs">:{srcPort}</span>}
                              {groupByIP && <span className="ml-2 px-1.5 py-0.5 bg-accent/10 text-accent text-[9px] rounded-full">{item.count} conexões</span>}
                           </div>
@@ -441,12 +442,12 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
                             <Flag code={dstCountry} />
-                            <span className="text-gray-900 dark:text-gray-100">{dst}</span>
+                            <span className="text-text-primary">{dst}</span>
                             <span className="text-text-secondary text-xs">:{dstPort}</span>
                           </div>
                         </td>
                        <td className="px-6 py-4">
-                         <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{getService(dstPort)}</span>
+                         <span className="text-xs font-medium text-text-primary">{getService(dstPort)}</span>
                        </td>
                        <td className="px-6 py-4">
                          <span className="text-[11px] text-text-secondary font-medium" title={dstOrg}>
@@ -464,7 +465,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                            {protoName(item.proto)}
                          </span>
                        </td>
-                         <td className="px-6 py-4 text-right font-bold text-gray-900 dark:text-gray-100">{fmtBytes(item.bytes)}</td>
+                         <td className="px-6 py-4 text-right font-bold text-text-primary">{fmtBytes(item.bytes)}</td>
                          <td className="px-6 py-4 text-right text-text-secondary">
                            <PPSIntensity pps={Math.round((item.packets || 0) / (minutes * 60))} />
                          </td>

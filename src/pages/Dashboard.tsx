@@ -25,36 +25,38 @@ const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4'
 function StatCard({ title, value, unit, icon, trend, tooltip, subtitle }: any) {
   return (
     <div 
-      className="bg-bg-secondary p-6 rounded-2xl border border-border shadow-sm shadow-black/5 flex flex-col justify-between min-h-[140px] transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 group relative"
+      className="bg-bg-secondary p-6 rounded-[24px] border border-border shadow-2xl shadow-black/20 flex flex-col justify-between min-h-[160px] transition-all duration-500 hover:border-primary/40 hover:-translate-y-1 hover:shadow-primary/5 group relative overflow-hidden"
       title={tooltip}
     >
-      <div className="flex justify-between items-start">
-        <div className="p-2.5 bg-bg-primary rounded-xl group-hover:bg-primary/10 transition-colors border border-border/50 group-hover:border-primary/20">
+      <div className="absolute top-0 right-0 w-24 h-24 bg-primary/5 rounded-full -mr-8 -mt-8 blur-2xl transition-all group-hover:bg-primary/10" />
+      
+      <div className="flex justify-between items-start relative z-10">
+        <div className="p-3 bg-bg-primary rounded-2xl group-hover:bg-primary/20 transition-all duration-300 border border-border/50 group-hover:border-primary/30 group-hover:scale-110 group-hover:rotate-3 shadow-inner">
           {icon}
         </div>
         {trend && typeof trend === 'string' && (
           <span className={clsx(
-            "text-[10px] font-bold px-2.5 py-1 rounded-full border",
-            trend.startsWith('+') ? "bg-success-bg text-success border-success/10" : 
-            trend.startsWith('-') ? "bg-danger-bg text-danger border-danger/10" : "bg-accent-bg text-accent border-accent/10"
+            "text-[10px] font-black px-3 py-1 rounded-full border-2 uppercase tracking-tighter shadow-sm",
+            trend.startsWith('+') ? "bg-success-bg text-success border-success/20" : 
+            trend.startsWith('-') ? "bg-danger-bg text-danger border-danger/20" : "bg-accent-bg text-accent border-accent/20"
           )}>
             {trend}
           </span>
         )}
       </div>
-      <div className="mt-4">
-        <p className="text-text-secondary text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">{title}</p>
-        <div className="flex items-baseline gap-1.5">
-          <h3 className="text-3xl font-black text-text-primary tracking-tight leading-none">{value}</h3>
-          {unit && <span className="text-xs font-bold text-text-secondary opacity-60">{unit}</span>}
+      <div className="mt-6 relative z-10">
+        <p className="text-text-secondary text-[10px] font-black uppercase tracking-[0.15em] opacity-60 mb-2 group-hover:text-text-primary transition-colors">{title}</p>
+        <div className="flex items-baseline gap-2">
+          <h3 className="text-4xl font-black text-text-primary tracking-tighter leading-none group-hover:text-primary transition-colors">{value}</h3>
+          {unit && <span className="text-xs font-black text-text-secondary opacity-40 uppercase tracking-widest">{unit}</span>}
         </div>
          {subtitle && (
-           <div className="text-[10px] text-text-secondary font-semibold mt-2 opacity-70 italic">{subtitle}</div>
+           <div className="text-[10px] text-text-secondary font-bold mt-3 opacity-50 border-t border-border/50 pt-2 line-clamp-1">{subtitle}</div>
          )}
       </div>
       {tooltip && (
-        <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-y-1 group-hover:translate-y-0">
-           <div className="bg-text-primary text-bg-secondary text-[10px] font-bold py-1.5 px-3 rounded-lg whitespace-nowrap shadow-xl">
+        <div className="absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition-all duration-300 transform translate-x-2 group-hover:translate-x-0">
+           <div className="bg-primary text-white text-[10px] font-black py-1.5 px-3 rounded-lg whitespace-nowrap shadow-xl border border-white/10 uppercase tracking-widest">
              {tooltip}
            </div>
         </div>
@@ -617,15 +619,15 @@ export default function Dashboard() {
       </div>
 
       {/* Main Chart: Tráfego da Interface */}
-      <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm transition-colors">
+      <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm transition-colors">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b border-gray-100 dark:border-[#2a2d3e] pb-4">
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Tráfego da Interface</h2>
+            <h2 className="text-lg font-bold text-text-primary">Tráfego da Interface</h2>
             <div className="px-2 py-0.5 rounded bg-accent/10 text-accent text-[10px] font-bold uppercase">SNMP Realtime</div>
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-bg-secondary rounded-lg border border-gray-200 dark:border-[#2a2d3e]">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-bg-primary rounded-lg border border-border">
               <Settings2 size={14} className="text-text-secondary" />
               <select 
                 value={selectedCollector || ''} 
@@ -639,7 +641,7 @@ export default function Dashboard() {
             </div>
 
              {/* MELHORIA 2 — Seletor de período */}
-             <div className="flex bg-gray-50 dark:bg-bg-secondary p-1 rounded-lg border border-gray-200 dark:border-[#2a2d3e]">
+             <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
                {(['realtime', '5m', '15m'] as const).map((p) => (
                  <button
                    key={p}
@@ -661,7 +663,7 @@ export default function Dashboard() {
                  queryClient.invalidateQueries();
                  setCountdown(30);
                }}
-               className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-bg-secondary hover:bg-gray-100 dark:hover:bg-[#2a2d3e] text-text-secondary hover:text-text-primary rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider border border-gray-200 dark:border-[#2a2d3e]"
+               className="flex items-center gap-2 px-3 py-1.5 bg-bg-primary hover:bg-gray-100 dark:hover:bg-[#2a2d3e] text-text-secondary hover:text-text-primary rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider border border-border"
              >
                <svg 
                  xmlns="http://www.w3.org/2000/svg" 
@@ -704,7 +706,7 @@ export default function Dashboard() {
             </div>
             <div className="flex flex-col items-end">
               <span className="text-[10px] uppercase font-bold text-text-secondary">Interfaces</span>
-              <span className="text-sm font-black text-gray-900 dark:text-gray-100">{selectedIfaces.length} de {(Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : []).length}</span>
+              <span className="text-sm font-black text-text-primary">{selectedIfaces.length} de {(Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : []).length}</span>
             </div>
           </div>
         </div>
@@ -833,7 +835,7 @@ export default function Dashboard() {
                     "inline-flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all text-[11px] font-bold",
                     isActive 
                       ? "border-accent/30 bg-accent/5 text-accent shadow-sm" 
-                      : "border-gray-200 dark:border-[#2a2d3e] text-text-secondary opacity-60 hover:opacity-100"
+                      : "border-border text-text-secondary opacity-60 hover:opacity-100"
                   )}
                   style={{
                     borderColor: isActive ? color + '50' : undefined,
@@ -859,8 +861,8 @@ export default function Dashboard() {
        {/* Secondary Grids */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
          {/* Top Protocols */}
-         <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm">
-            <h2 className="text-lg font-bold mb-6 text-gray-900 dark:text-gray-100">{t('protocols')}</h2>
+         <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm">
+            <h2 className="text-lg font-bold mb-6 text-text-primary">{t('protocols')}</h2>
             <div className="space-y-2">
               {protoData.map((p: any, i: number) => (
                 <div key={i} className={clsx(
@@ -868,7 +870,7 @@ export default function Dashboard() {
                   i < protoData.length - 1 && "border-b border-gray-100 dark:border-[#2a2d3e]"
                 )}>
                   <span className="min-w-[45px] text-[13px] font-medium text-gray-700 dark:text-[#e2e8f0]">{p.name}</span>
-                  <div className="flex-1 h-[6px] bg-gray-100 dark:bg-[#2a2d3e] rounded-[3px] overflow-hidden">
+                  <div className="flex-1 h-[6px] bg-bg-primary rounded-[3px] overflow-hidden">
                     <div 
                       className="h-full bg-accent rounded-[3px]"
                       style={{ width: p.pct + '%' }}
@@ -881,8 +883,8 @@ export default function Dashboard() {
          </div>
  
           {/* Top Countries */}
-         <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm">
-            <h2 className="text-lg font-bold mb-6 text-gray-900 dark:text-gray-100">{t('countries')}</h2>
+         <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm">
+            <h2 className="text-lg font-bold mb-6 text-text-primary">{t('countries')}</h2>
             <div className="space-y-1">
               {countryData.map((c: any, i: number) => (
                 <div key={i} className={clsx(
@@ -891,7 +893,7 @@ export default function Dashboard() {
                  )}>
                    <Flag code={c.code} size={18} />
                    <span className="text-[12px] text-gray-700 dark:text-[#e2e8f0] min-w-[30px] font-medium ml-1">{c.code}</span>
-                  <div className="flex-1 h-[6px] bg-gray-100 dark:bg-[#2a2d3e] rounded-[3px] overflow-hidden">
+                  <div className="flex-1 h-[6px] bg-bg-primary rounded-[3px] overflow-hidden">
                     <div 
                       className="h-full bg-accent rounded-[3px]"
                       style={{ width: c.pct + '%' }}
@@ -906,11 +908,11 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Port Panels */}
-          <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm space-y-8">
+          <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm space-y-8">
             {/* PAINEL 1 — Portas mais consumidas */}
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Portas mais consumidas</h2>
+                <h2 className="text-lg font-bold text-text-primary">Portas mais consumidas</h2>
                 <p className="text-xs text-text-secondary">O que seus clientes estão acessando na internet</p>
               </div>
               <div className="space-y-3">
@@ -921,7 +923,7 @@ export default function Dashboard() {
                       <span className="text-text-secondary">{fmtBytes(p.bytes)}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="flex-1 h-3 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden">
+                      <div className="flex-1 h-3 bg-bg-primary rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-blue-500 rounded-full transition-all duration-1000"
                           style={{ width: `${p.pct}%` }}
@@ -939,7 +941,7 @@ export default function Dashboard() {
             {/* PAINEL 2 — Serviços mais servidos */}
             <div className="space-y-4">
               <div>
-                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Serviços mais servidos</h2>
+                <h2 className="text-lg font-bold text-text-primary">Serviços mais servidos</h2>
                 <p className="text-xs text-text-secondary">O que sua rede está entregando para a internet</p>
               </div>
               <div className="space-y-3">
@@ -950,7 +952,7 @@ export default function Dashboard() {
                       <span className="text-text-secondary">{fmtBytes(p.bytes)}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="flex-1 h-3 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden">
+                      <div className="flex-1 h-3 bg-bg-primary rounded-full overflow-hidden">
                         <div 
                           className="h-full bg-green-500 rounded-full transition-all duration-1000"
                           style={{ width: `${p.pct}%` }}
@@ -965,8 +967,8 @@ export default function Dashboard() {
           </div>
  
           {/* SNMP Interfaces */}
-         <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm">
-            <h2 className="text-lg font-bold mb-6 text-gray-900 dark:text-gray-100">{t('top_interfaces')}</h2>
+         <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm">
+            <h2 className="text-lg font-bold mb-6 text-text-primary">{t('top_interfaces')}</h2>
             <div className="space-y-5">
              {relevantInterfaces.map((i: any) => {
                const utilPct = i.if_speed > 0
@@ -998,10 +1000,10 @@ export default function Dashboard() {
       </div>
 
         {/* Active Connections Table */}
-        <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
+        <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-200 dark:border-border flex flex-wrap justify-between items-center bg-gray-50/50 dark:bg-bg-secondary/30 gap-4">
            <div className="flex flex-col gap-1">
-             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Top Fluxos IPv4 (2 min)</h2>
+             <h2 className="text-lg font-bold text-text-primary">Top Fluxos IPv4 (2 min)</h2>
              <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
                 <span style={{ fontSize: 11, color: '#8892a4' }}>
                   {(() => {
@@ -1054,7 +1056,7 @@ export default function Dashboard() {
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[800px]">
             <thead>
-              <tr className="bg-gray-50 dark:bg-bg-secondary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+              <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
                 <th className="px-6 py-3 border-b border-border">{t('source_ip')}</th>
                 <th className="px-6 py-3 border-b border-border">{t('dest_ip')}</th>
                 <th className="px-6 py-3 border-b border-border">Serviço</th>
@@ -1108,7 +1110,7 @@ export default function Dashboard() {
                             </span>
                           </MitigationTooltip>
                         ) : (
-                          <span className="font-medium text-gray-900 dark:text-gray-100">{src}</span>
+                          <span className="font-medium text-text-primary">{src}</span>
                         )}
                         <span className="text-text-secondary text-xs">:{srcPort}</span>
                       </div>
@@ -1130,13 +1132,13 @@ export default function Dashboard() {
                             </span>
                           </MitigationTooltip>
                         ) : (
-                          <span className="text-gray-900 dark:text-gray-100">{dst}</span>
+                          <span className="text-text-primary">{dst}</span>
                         )}
                         <span className="text-text-secondary text-xs">:{dstPort}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
-                      <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{getService(dstPort)}</span>
+                      <span className="text-xs font-medium text-text-primary">{getService(dstPort)}</span>
                     </td>
                     <td className="px-6 py-4">
                       <span className="text-[11px] text-text-secondary" title={dstOrg}>{getOrg(dstOrg)}</span>
@@ -1152,7 +1154,7 @@ export default function Dashboard() {
                         {protoName(item.proto)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right font-bold text-gray-900 dark:text-gray-100">
+                    <td className="px-6 py-4 text-right font-bold text-text-primary">
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span className="cursor-help">{fmtBytes(item.bytes)}</span>
