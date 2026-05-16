@@ -958,28 +958,28 @@ export default function Dashboard() {
           </div>
  
           {/* SNMP Interfaces */}
-         <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm">
-            <h2 className="text-lg font-bold mb-6 text-text-primary">{t('top_interfaces')}</h2>
-            <div className="space-y-5">
+         <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm">
+            <h2 className="text-base font-bold mb-5 text-text-primary">{t('top_interfaces')}</h2>
+            <div className="space-y-4">
              {relevantInterfaces.map((i: any) => {
                const utilPct = i.if_speed > 0
                  ? Math.min((i.in_bps / i.if_speed) * 100, 100)
                  : 0;
                return (
-                 <div key={i.if_index || i.display_name} className="space-y-2">
+                 <div key={i.if_index || i.display_name} className="space-y-1.5">
                    <div className="flex justify-between items-end">
                      <div>
-                       <p className="text-xs font-bold text-accent uppercase tracking-tighter">{i.display_name || i.if_name}</p>
-                       <p className="text-lg font-bold text-text-primary leading-none">{fmtBps(i.in_bps)}</p>
+                       <p className="text-[10px] font-bold text-primary uppercase tracking-wider">{i.display_name || i.if_name}</p>
+                       <p className="text-base font-bold text-text-primary leading-tight">{fmtBps(i.in_bps)}</p>
                      </div>
                      <div className="text-right">
-                       <p className="text-[10px] text-text-secondary font-bold uppercase">Utilization</p>
+                       <p className="text-[9px] text-text-secondary font-bold uppercase tracking-widest opacity-60">Uso</p>
                        <p className="text-xs font-bold text-success">{utilPct.toFixed(1)}%</p>
                      </div>
                    </div>
-                   <div className="w-full bg-bg-secondary rounded-full h-2 overflow-hidden flex">
+                   <div className="w-full bg-bg-primary rounded-full h-1.5 overflow-hidden flex border border-border/10">
                      <div
-                       className="bg-accent h-full transition-all duration-1000"
+                       className="bg-primary h-full transition-all duration-1000"
                        style={{ width: `${utilPct}%` }}
                      />
                    </div>
