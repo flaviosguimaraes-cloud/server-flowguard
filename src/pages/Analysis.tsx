@@ -14,28 +14,28 @@ import MitigationModal from '../components/MitigationModal';
 
 function MetricCard({ title, value, icon }: any) {
   return (
-    <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm flex flex-col justify-between transition-all hover:border-accent/50 group">
+    <div className="bg-bg-secondary p-6 rounded-2xl border border-border shadow-sm shadow-black/5 flex flex-col justify-between transition-all duration-300 hover:border-primary/30 hover:shadow-lg hover:shadow-primary/5 group min-h-[140px]">
       <div className="flex justify-between items-start">
-        <div className="p-2.5 bg-gray-50 dark:bg-bg-secondary rounded-xl group-hover:bg-accent/10 transition-colors">
+        <div className="p-2.5 bg-bg-primary rounded-xl group-hover:bg-primary/10 transition-colors border border-border/50 group-hover:border-primary/20">
           {icon}
         </div>
       </div>
       <div className="mt-4">
-        <p className="text-gray-500 dark:text-text-secondary text-[11px] font-bold uppercase tracking-wider">{title}</p>
-        <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight mt-1">{value}</h3>
+        <p className="text-text-secondary text-[10px] font-bold uppercase tracking-widest opacity-80 mb-1">{title}</p>
+        <h3 className="text-3xl font-black text-text-primary tracking-tight leading-none">{value}</h3>
       </div>
     </div>
   );
 }
 
 const PPSIntensity = ({ pps }: { pps: number }) => {
-  const color = pps < 10000 ? '#22c55e' : pps < 50000 ? '#f59e0b' : '#ef4444';
+  const color = pps < 10000 ? 'var(--success)' : pps < 50000 ? 'var(--warning)' : 'var(--danger)';
   return (
-    <div className="flex items-center gap-2 justify-end">
-      <span className="text-right w-12 font-mono text-[11px]">{pps > 1000 ? (pps/1000).toFixed(1)+'k' : pps}</span>
-      <div className="w-8 h-1 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden">
+    <div className="flex items-center gap-3 justify-end">
+      <span className="text-right w-14 font-mono text-[11px] font-bold text-text-primary">{pps > 1000 ? (pps/1000).toFixed(1)+'k' : pps}</span>
+      <div className="w-10 h-1.5 bg-bg-primary rounded-full overflow-hidden border border-border/30">
         <div 
-          className="h-full transition-all duration-500" 
+          className="h-full transition-all duration-700 ease-out shadow-[0_0_8px_rgba(0,0,0,0.2)]" 
           style={{ 
             width: `${Math.min((pps/100000)*100, 100)}%`,
             backgroundColor: color
