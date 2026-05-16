@@ -259,8 +259,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
        <div className="flex justify-between items-center">
          <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('analysis')}</h1>
          <div className="flex gap-2">
-           <button className="p-2 bg-white dark:bg-[#1e2130] border border-gray-200 dark:border-[#2a2d3e] rounded-lg text-text-secondary hover:text-text-primary transition-colors shadow-sm">
+            <button 
+              onClick={exportCSV}
+              className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1e2130] border border-gray-200 dark:border-[#2a2d3e] rounded-lg text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a2d3e] transition-all shadow-sm"
+            >
              <Download size={20} />
+              Exportar CSV
            </button>
          </div>
        </div>
@@ -338,13 +342,28 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
             </div>
          </div>
          
-         <div className="flex justify-between items-center pt-2">
-           <button 
-             onClick={() => { setSearch(''); setProto('Todos'); setCountry('Todos'); }}
-             className="text-xs font-bold text-text-secondary hover:text-accent flex items-center gap-1 transition-colors"
-           >
-             <X size={14} /> Limpar filtros
-           </button>
+          <div className="flex justify-between items-center pt-2 border-t border-gray-100 dark:border-[#2a2d3e]">
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setGroupByIP(!groupByIP)}
+                className={clsx(
+                  "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all",
+                  groupByIP 
+                    ? "bg-accent text-white shadow-md" 
+                    : "bg-gray-100 dark:bg-[#2a2d3e] text-text-secondary hover:text-text-primary"
+                )}
+              >
+                {groupByIP ? <LayoutGrid size={14} /> : <List size={14} />}
+                Agrupar por IP
+              </button>
+
+              <button 
+                onClick={() => { setSearch(''); setProto('Todos'); setCountry('Todos'); }}
+                className="text-xs font-bold text-text-secondary hover:text-accent flex items-center gap-1 transition-colors"
+              >
+                <X size={14} /> Limpar filtros
+              </button>
+            </div>
             <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
               {connectionItems.length} conexões nos últimos {minutes < 60 ? `${minutes} minutos` : `${minutes/60} hora(s)`}
             </p>
@@ -355,18 +374,19 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
        <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
          <div className="overflow-x-auto">
            <table className="w-full text-left border-collapse min-w-[1000px]">
-             <thead>
-               <tr className="bg-gray-50 dark:bg-bg-secondary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-                 <th className="px-6 py-4 border-b border-border">{t('source_ip')}</th>
-                 <th className="px-6 py-4 border-b border-border">{t('dest_ip')}</th>
-                 <th className="px-6 py-4 border-b border-border">Serviço</th>
-                 <th className="px-6 py-4 border-b border-border">Empresa</th>
-                 <th className="px-6 py-4 border-b border-border">{t('protocol')}</th>
-                 <th className="px-6 py-4 border-b border-border text-right">{t('bytes')}</th>
-                 <th className="px-6 py-4 border-b border-border text-right">{t('pps')}</th>
-                 {isAdmin && <th className="px-6 py-4 border-b border-border text-center">Ação</th>}
-               </tr>
-             </thead>
+              <thead>
+                <tr className="bg-gray-50 dark:bg-bg-secondary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+                  <SortHeader field="src_addr" label={t('source_ip')} />
+                  <SortHeader field="dst_addr" label={t('dest_ip')} />
+                  <th className="px-6 py-4 border-b border-border">Serviço</th>
+                  <th className="px-6 py-4 border-b border-border">Empresa</th>
+                  <th className="px-6 py-4 border-b border-border">{t('protocol')}</th>
+                  <SortHeader field="bytes" label={t('bytes')} align="right" />
+                  <SortHeader field="pps" label={t('pps')} align="right" />
+                  <th className="px-6 py-4 border-b border-border text-center">Última vez visto</th>
+                  {isAdmin && <th className="px-6 py-4 border-b border-border text-center">Ação</th>}
+                </tr>
+              </thead>
              <tbody className="text-sm divide-y divide-border/50">
                {isLoading ? (
                  Array.from({ length: 5 }).map((_, i) => (
@@ -394,8 +414,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
                         <td className="px-6 py-4">
                           <div className="flex items-center gap-2">
                             <Flag code={srcCountry} />
-                            <span className="font-medium text-gray-900 dark:text-gray-100">{src}</span>
-                            <span className="text-text-secondary text-xs">:{srcPort}</span>
+                             <span className="font-medium text-gray-900 dark:text-gray-100">{src}</span>
+                             {!groupByIP && <span className="text-text-secondary text-xs">:{srcPort}</span>}
+                             {groupByIP && <span className="ml-2 px-1.5 py-0.5 bg-accent/10 text-accent text-[9px] rounded-full">{item.count} conexões</span>}
                           </div>
                         </td>
                         <td className="px-6 py-4">
@@ -424,8 +445,13 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
                            {protoName(item.proto)}
                          </span>
                        </td>
-                       <td className="px-6 py-4 text-right font-bold text-gray-900 dark:text-gray-100">{fmtBytes(item.bytes)}</td>
-                       <td className="px-6 py-4 text-right text-text-secondary">{calcPPS(item.packets)}</td>
+                         <td className="px-6 py-4 text-right font-bold text-gray-900 dark:text-gray-100">{fmtBytes(item.bytes)}</td>
+                         <td className="px-6 py-4 text-right text-text-secondary">
+                           <PPSIntensity pps={Math.round((item.packets || 0) / (minutes * 60))} />
+                         </td>
+                         <td className="px-6 py-4 text-center text-[10px] text-text-secondary font-mono">
+                           {item.time_received ? new Date(item.time_received).toLocaleTimeString('pt-BR') : '—'}
+                         </td>
                        {isAdmin && (
                          <td className="px-6 py-4 text-center">
                            <button 
