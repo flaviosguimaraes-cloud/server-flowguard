@@ -120,10 +120,10 @@
 }
 
 .dark {
-   --bg-primary: #05070a;
-   --bg-secondary: #0c0f16;
-   --bg-card: #0c0f16;
-   --border: #1a1f2e;
+   --bg-primary: #020408;
+   --bg-secondary: #0a0d14;
+   --bg-card: #0a0d14;
+   --border: #161b28;
    --text-primary: #f8fafc;
    --text-secondary: #94a3b8;
    --accent: #3b82f6;
