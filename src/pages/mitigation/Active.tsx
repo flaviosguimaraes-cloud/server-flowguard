@@ -195,47 +195,28 @@ function TabButton({ active, onClick, icon, label, count }: any) {
                              <div className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse" />
                              {item.ip}
                              
-                             {hoveredIP === item.ip && (
-                               <div className="absolute z-[100] bg-bg-secondary border border-border rounded-xl p-4 w-[240px] shadow-xl top-full left-0 mt-2 animate-in fade-in zoom-in duration-150">
-                                 <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 opacity-60 border-b border-border pb-1">
-                                   Detalhes da Mitigação
-                                 </div>
-                                 <div className="text-sm font-bold text-text-primary font-mono mb-2">
-                                   {item.ip}
-                                 </div>
-                                 <div className="space-y-1.5">
-                                   <div className="text-[11px] text-text-secondary flex justify-between">
-                                     <span>Tipo:</span>
-                                     <span className="text-text-primary font-bold">{item.type || 'Blackhole /32'}</span>
-                                   </div>
-                                   <div className="text-[11px] text-text-secondary flex justify-between">
-                                     <span>Início:</span>
-                                     <span className="text-text-primary font-bold">{item.since}</span>
-                                   </div>
-                                   <div className="text-[11px] text-text-secondary flex justify-between">
-                                     <span>Fonte:</span>
-                                     <span className="text-text-primary font-bold">
-                                       {item.source === 'automatic' ? 'Automático (detector)' : 'Manual (operador)'}
-                                     </span>
-                                   </div>
-                                   {item.pps > 0 && (
-                                     <div className="mt-2 p-2 bg-danger/5 border border-danger/10 rounded-lg text-[10px] text-danger font-bold flex justify-between">
-                                       <span>Pico:</span>
-                                       <span>{item.pps > 1000 ? (item.pps/1000).toFixed(1)+'k' : item.pps} pps</span>
-                                     </div>
-                                   )}
-                                 </div>
-                               </div>
-                             )}
+                              <MitigationTooltip data={item}>
+                                <span>{item.ip}</span>
+                              </MitigationTooltip>
                            </div>
                          </td>
-                        <td className="px-6 py-3.5 text-text-secondary text-xs whitespace-nowrap flex items-center gap-1.5">
-                          <Clock size={13} opacity={0.5} /> {item.since || 'Recente'}
-                        </td>
-                        <td className="px-6 py-3.5">
-                          <p className="font-bold text-text-primary text-xs">{item.pps ? (item.pps / 1000).toFixed(1) + 'k' : '0'} PPS</p>
-                          <p className="text-[10px] text-text-secondary font-medium uppercase tracking-tighter">{item.mbps || 0} Mbps</p>
-                        </td>
+                         <td className="px-6 py-3.5 text-text-secondary text-xs whitespace-nowrap">
+                           <div className="flex items-center gap-1.5">
+                             <Clock size={13} opacity={0.5} /> {item.since || 'Recente'}
+                           </div>
+                         </td>
+                         <td className="px-6 py-3.5">
+                           {item.pps > 0 ? (
+                             <div>
+                               <p className="font-bold text-text-primary text-xs">{(item.pps / 1000).toFixed(1)}k pps</p>
+                               <p className="text-[10px] text-text-secondary font-medium uppercase tracking-tighter">{item.mbps || 0} Mbps</p>
+                             </div>
+                           ) : item.source === 'manual' ? (
+                             <span className="px-1.5 py-0.5 bg-bg-primary text-text-secondary border border-border text-[10px] font-bold rounded uppercase">Manual</span>
+                           ) : (
+                             <span className="text-text-secondary italic text-[10px]">Aguardando dados</span>
+                           )}
+                         </td>
                         <td className="px-6 py-3.5">
                           <span className="px-1.5 py-0.5 bg-danger/5 text-danger border border-danger/10 text-[10px] font-bold rounded uppercase tracking-wider">Blackhole</span>
                         </td>
@@ -342,8 +323,8 @@ function TabButton({ active, onClick, icon, label, count }: any) {
                              tipo: route.type || 'Mitigação Externa /24',
                              community: route.community,
                              desde: route.age,
-                             pps: '—',
-                             mbps: '—',
+                             pps: 0,
+                             mbps: 0,
                              fonte: 'Manual (admin)'
                            }}>
                              <span className="cursor-help">{route.prefix}</span>
