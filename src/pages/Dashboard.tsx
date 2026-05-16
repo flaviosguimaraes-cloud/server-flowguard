@@ -9,7 +9,8 @@ import {
 import { 
   Tooltip, TooltipTrigger, TooltipContent, TooltipProvider 
 } from '../components/ui/tooltip';
-import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon, Settings2, Info } from 'lucide-react';
+import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon, Settings2, Info, ArrowRight } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
 import { Skeleton } from '../components/Skeleton';
 import Flag from '../components/Flag';
 
@@ -413,15 +414,31 @@ export default function Dashboard() {
     const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
 
     const ifaceColors = ['#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
-    const relevantInterfaces = (Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
-      .filter((i: any) => (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0)
-      .filter((i: any) => {
-        const name = (i.display_name || i.if_name || '').toLowerCase();
-        return !name.includes('null') && !name.includes('loopback') && !name.includes('virtual') &&
-          !name.includes('template') && !name.includes('inloop');
-      })
-      .sort((a: any, b: any) => ((b.in_bps || 0) + (b.out_bps || 0)) - ((a.in_bps || 0) + (a.out_bps || 0)))
-      .slice(0, 6);
+  const snmpTotals = useMemo(() => {
+    const list = Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [];
+    let rx = 0;
+    let tx = 0;
+    list.forEach((i: any) => {
+      const name = (i.display_name || i.if_name || '').toLowerCase();
+      if (!name || name.includes('null') || name.includes('loopback') || name.includes('virtual')) return;
+      rx += (i.in_bps || 0);
+      tx += (i.out_bps || 0);
+    });
+    return {
+      rx: rx / 1e9,
+      tx: tx / 1e9
+    };
+  }, [interfaces]);
+
+  const relevantInterfaces = (Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
+    .filter((i: any) => (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0)
+    .filter((i: any) => {
+      const name = (i.display_name || i.if_name || '').toLowerCase();
+      return !name.includes('null') && !name.includes('loopback') && !name.includes('virtual') &&
+        !name.includes('template') && !name.includes('inloop');
+    })
+    .sort((a: any, b: any) => ((b.in_bps || 0) + (b.out_bps || 0)) - ((a.in_bps || 0) + (a.out_bps || 0)))
+    .slice(0, 6);
 
   const fmtBps = (bps: number) => {
     if (!bps || bps === 0) return '0 bps';
@@ -454,32 +471,46 @@ export default function Dashboard() {
          }
        `}</style>
       {/* Top Stats */}
-       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-         <StatCard 
-            title={t('traffic_in')} 
-            value={(detection?.incoming_mbps / 1000).toFixed(1)} 
-            unit="Gbps" 
-            icon={<ArrowDown className="text-accent" size={20} />} 
-            tooltip="Baseado em Flow — amostragem 1:500"
-          />
-          <StatCard 
-            title={t('traffic_out')} 
-            value={(detection?.outgoing_mbps / 1000).toFixed(1)} 
-            unit="Gbps" 
-            icon={<ArrowUp className="text-success" size={20} />} 
-            tooltip="Baseado em Flow — amostragem 1:500"
-          />
-         <StatCard 
-           title={t('active_flows')} 
-           value={detection?.incoming_pps > 1000 ? (detection.incoming_pps / 1000).toFixed(1) + 'k' : detection?.incoming_pps || '0'} 
-           icon={<Activity className="text-warning" size={20} />} 
-         />
-         <StatCard 
-           title={t('active_mitigations')} 
-           value={detection?.active_mitigations || '0'} 
-           icon={<Shield className="text-danger" size={20} />} 
-         />
-       </div>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+        <StatCard 
+          title="FLOW IPv4 ↓" 
+          value={(detection?.incoming_mbps / 1000).toFixed(1)} 
+          unit="Gbps" 
+          icon={<ArrowDown className="text-accent" size={20} />} 
+          subtitle="Estimado via Flow · sampling 1:1000"
+        />
+        <StatCard 
+          title="FLOW IPv4 ↑" 
+          value={(detection?.outgoing_mbps / 1000).toFixed(1)} 
+          unit="Gbps" 
+          icon={<ArrowUp className="text-success" size={20} />} 
+          subtitle="Estimado via Flow · sampling 1:1000"
+        />
+        <StatCard 
+          title="SNMP ↓ Total" 
+          value={snmpTotals.rx.toFixed(1)} 
+          unit="Gbps" 
+          icon={<ArrowDown className="text-blue-500" size={20} />} 
+          subtitle="Tráfego real · todas interfaces"
+        />
+        <StatCard 
+          title="SNMP ↑ Total" 
+          value={snmpTotals.tx.toFixed(1)} 
+          unit="Gbps" 
+          icon={<ArrowUp className="text-green-500" size={20} />} 
+          subtitle="Tráfego real · todas interfaces"
+        />
+        <StatCard 
+          title={t('active_flows')} 
+          value={detection?.incoming_pps > 1000 ? (detection.incoming_pps / 1000).toFixed(1) + 'k' : detection?.incoming_pps || '0'} 
+          icon={<Activity className="text-warning" size={20} />} 
+        />
+        <StatCard 
+          title={t('active_mitigations')} 
+          value={detection?.active_mitigations || '0'} 
+          icon={<Shield className="text-danger" size={20} />} 
+        />
+      </div>
 
       {/* Main Chart: Tráfego da Interface */}
       <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm transition-colors">
@@ -867,15 +898,8 @@ export default function Dashboard() {
        <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-200 dark:border-border flex flex-wrap justify-between items-center bg-gray-50/50 dark:bg-bg-secondary/30 gap-4">
            <div className="flex flex-col gap-1">
-             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('active_connections')}</h2>
-             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-               <span style={{
-                 width: 8, height: 8,
-                 borderRadius: '50%',
-                 background: '#22c55e',
-                 display: 'inline-block',
-                 animation: 'pulse 2s infinite'
-               }} />
+             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Top Fluxos IPv4 (2 min)</h2>
+             <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
                 <span style={{ fontSize: 11, color: '#8892a4' }}>
                   {(() => {
                     const list = (Array.isArray(connections) ? connections : (connections?.items || connections?.data || []))
@@ -888,7 +912,7 @@ export default function Dashboard() {
                         if (serviceFilter === 'TCP') return item.proto === 6;
                         return service === serviceFilter;
                       }) || [];
-                    return `${list.length} conexões · últimos 2 min · ao vivo`;
+                     return `${list.length} conexões · Top conexões por volume · últimos 2 min · atualizado a cada 30s`;
                   })()}
                 </span>
              </div>
@@ -1015,22 +1039,30 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
-        <p style={{
-          fontSize: 11,
-          color: '#8892a4',
-          textAlign: 'right',
-          marginTop: 6,
-          padding: '0 24px 16px'
-        }}>
-          Última atualização: {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR') : '—'}
-        </p>
+        <div className="px-6 py-4 bg-gray-50/30 dark:bg-bg-secondary/10 border-t border-gray-100 dark:border-[#2a2d3e] flex justify-between items-center">
+          <Link 
+            to="/analysis"
+            search={{ minutes: 5 }}
+            className="text-[11px] font-bold text-accent hover:text-accent/80 transition-colors flex items-center gap-1.5"
+          >
+            Ver análise em tempo real
+            <ArrowRight size={12} />
+          </Link>
+          <p style={{
+            fontSize: 11,
+            color: '#8892a4',
+            textAlign: 'right',
+          }}>
+            Última atualização: {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR') : '—'}
+          </p>
+        </div>
       </div>
       </TooltipProvider>
     </div>
   );
 }
 
-function StatCard({ title, value, unit, icon, trend, tooltip }: any) {
+function StatCard({ title, value, unit, icon, trend, tooltip, subtitle }: any) {
   return (
     <div 
       className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm flex flex-col justify-between min-h-[120px] transition-all hover:border-accent/50 group relative"
@@ -1056,6 +1088,9 @@ function StatCard({ title, value, unit, icon, trend, tooltip }: any) {
           <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">{value}</h3>
           {unit && <span className="text-xs font-bold text-gray-500 dark:text-text-secondary">{unit}</span>}
         </div>
+        {subtitle && (
+          <p className="text-[10px] text-text-secondary font-medium mt-0.5">{subtitle}</p>
+        )}
       </div>
       {tooltip && (
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
