@@ -69,19 +69,26 @@ export const Sidebar = () => {
   return (
     <div className={clsx(
       "h-screen transition-all duration-300 flex flex-col z-50",
-      "bg-[#1e293b] dark:bg-[#13151f]", // Specification: bg-[#13151f] (dark) or #1e293b (light)
-      collapsed ? "w-[60px]" : "w-[220px]"
+      "bg-white dark:bg-[#0b0e14] border-r border-border",
+      collapsed ? "w-[72px]" : "w-[260px]"
     )}>
       {/* Logo */}
-      <div className={clsx("p-4 flex items-center gap-3 border-b border-white/5", collapsed ? "justify-center" : "justify-start")}>
-        <div className="bg-accent/10 p-1.5 rounded-lg">
-          <Shield className="text-accent" size={24} />
+      <div className={clsx(
+        "h-[64px] flex items-center gap-3 border-b border-border transition-all duration-300", 
+        collapsed ? "justify-center" : "px-6"
+      )}>
+        <div className="bg-primary/10 p-1.5 rounded-xl shadow-sm">
+          <Shield className="text-primary" size={24} />
         </div>
-        {!collapsed && <span className="font-bold text-xl tracking-tight text-accent">FlowGuard</span>}
+        {!collapsed && (
+          <span className="font-bold text-lg tracking-tight text-foreground bg-clip-text">
+            FlowGuard
+          </span>
+        )}
       </div>
 
       {/* Navigation */}
-      <nav className="flex-1 mt-4 overflow-y-auto overflow-x-hidden custom-scrollbar">
+      <nav className="flex-1 mt-6 px-3 overflow-y-auto overflow-x-hidden custom-scrollbar space-y-1">
         {navItems.map((item) => {
           if (item.children) {
             const isOpen = openGroups.includes(item.id);
@@ -92,27 +99,27 @@ export const Sidebar = () => {
                 <button 
                   onClick={() => toggleGroup(item.id)}
                   className={clsx(
-                    "w-full flex items-center p-3 transition-colors hover:bg-white/5",
-                    collapsed ? "justify-center" : "justify-between px-4",
-                    groupActive && !isOpen && "text-accent bg-accent/10 border-r-2 border-accent"
+                    "w-full flex items-center py-2.5 transition-all duration-200 rounded-lg group",
+                    collapsed ? "justify-center" : "justify-between px-3",
+                    groupActive && !isOpen ? "text-primary bg-primary/5" : "text-text-secondary hover:bg-bg-secondary"
                   )}
                 >
                   <div className="flex items-center gap-3">
-                    <item.icon size={20} className={groupActive ? "text-accent" : "text-text-secondary"} />
-                    {!collapsed && <span className={clsx("text-sm font-medium", groupActive ? "text-accent" : "text-text-secondary")}>{item.label}</span>}
+                    <item.icon size={20} className={clsx("transition-colors", groupActive ? "text-primary" : "group-hover:text-text-primary")} />
+                    {!collapsed && <span className={clsx("text-sm font-semibold transition-colors", groupActive ? "text-primary" : "group-hover:text-text-primary")}>{item.label}</span>}
                   </div>
                   {!collapsed && (isOpen ? <ChevronDown size={14} className="text-text-secondary" /> : <ChevronRight size={14} className="text-text-secondary" />)}
                 </button>
                 
                 {!collapsed && isOpen && (
-                  <div className="bg-black/20 py-1">
+                  <div className="mt-1 space-y-1 ml-4 pl-4 border-l border-border/50">
                     {item.children.map((child) => (
                       <Link 
                         key={child.path} 
                         to={child.path} 
                         className={clsx(
-                          "flex items-center gap-3 p-2.5 pl-11 transition-colors hover:bg-white/5 text-sm",
-                          isActive(child.path) ? "text-accent bg-accent-bg font-semibold" : "text-text-secondary"
+                          "flex items-center gap-3 py-2 px-3 transition-all duration-200 rounded-lg text-sm font-medium",
+                          isActive(child.path) ? "text-primary bg-primary/10" : "text-text-secondary hover:text-text-primary hover:bg-bg-secondary"
                         )}
                       >
                         <child.icon size={16} />
@@ -131,35 +138,35 @@ export const Sidebar = () => {
               key={item.path} 
               to={item.path} 
               className={clsx(
-                "flex items-center p-3 transition-all hover:bg-white/5 group",
-                collapsed ? "justify-center" : "px-4 gap-3",
-                active ? "bg-accent-bg text-accent border-r-2 border-accent" : "text-text-secondary"
+                "flex items-center py-2.5 transition-all duration-200 rounded-lg group",
+                collapsed ? "justify-center px-0" : "px-3 gap-3",
+                active ? "bg-primary text-white shadow-lg shadow-primary/20" : "text-text-secondary hover:bg-bg-secondary"
               )}
             >
-              <item.icon size={20} className={active ? "text-accent" : "text-text-secondary group-hover:text-white transition-colors"} />
-              {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
+              <item.icon size={20} className={clsx("transition-colors", active ? "text-white" : "group-hover:text-text-primary")} />
+              {!collapsed && <span className="text-sm font-semibold">{item.label}</span>}
             </Link>
           );
         })}
       </nav>
 
       {/* Footer / Toggle */}
-      <div className="p-2 border-t border-white/5">
+      <div className="p-4 border-t border-border">
         <button 
           onClick={() => setCollapsed(!collapsed)}
-          className="w-full flex items-center justify-center p-2 text-text-secondary hover:text-white hover:bg-white/5 rounded-lg transition-colors"
+          className="w-full flex items-center justify-center py-2 text-text-secondary hover:text-text-primary hover:bg-bg-secondary rounded-lg transition-all duration-200"
         >
           {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
         </button>
         <button 
           onClick={logout}
           className={clsx(
-            "w-full flex items-center p-3 text-danger hover:bg-danger/10 rounded-lg transition-colors mt-1",
-            collapsed ? "justify-center" : "px-4 gap-3"
+            "w-full flex items-center py-2.5 text-danger hover:bg-danger-bg rounded-lg transition-all duration-200 mt-2",
+            collapsed ? "justify-center px-0" : "px-3 gap-3"
           )}
         >
           <LogOut size={20} />
-          {!collapsed && <span className="text-sm font-medium">{t('logout')}</span>}
+          {!collapsed && <span className="text-sm font-semibold">{t('logout')}</span>}
         </button>
       </div>
     </div>
