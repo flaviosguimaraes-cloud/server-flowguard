@@ -596,7 +596,7 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#2a2d3e" vertical={false} />
                 <XAxis dataKey="time" hide />
                 <YAxis tick={{fontSize:10,fill:'#8892a4'}} tickLine={false} axisLine={false} tickFormatter={v => `${v}M`} />
-                <Tooltip
+                <RechartsTooltip
                   contentStyle={{ background:'#1e2130', border:'1px solid #2a2d3e', borderRadius:6, fontSize:11 }}
                   formatter={(v: number, name: string) => {
                     const ifName = name.replace('_in', '').replace('_out', '');
@@ -643,7 +643,7 @@ export default function Dashboard() {
                 <CartesianGrid strokeDasharray="3 3" stroke="#2a2d3e" vertical={false} />
                 <XAxis dataKey="time" tick={{fontSize:10,fill:'#8892a4'}} tickLine={false} axisLine={false} interval={4} />
                 <YAxis tick={{fontSize:10,fill:'#8892a4'}} tickLine={false} axisLine={false} tickFormatter={v => `${v}M`} />
-                <Tooltip
+                <RechartsTooltip
                   contentStyle={{ background:'#1e2130', border:'1px solid #2a2d3e', borderRadius:6, fontSize:11 }}
                   formatter={(v: number, name: string) => {
                     const ifName = name.replace('_out', '');
