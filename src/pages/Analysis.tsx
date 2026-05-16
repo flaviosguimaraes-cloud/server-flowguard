@@ -16,9 +16,19 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
    const isAdmin = localStorage.getItem('role') === 'admin';
   const queryClient = useQueryClient();
    
-   const [search, setSearch] = useState('');
-   const [proto, setProto] = useState('Todos');
-   const [country, setCountry] = useState('Todos');
+    const [search, setSearch] = useState('');
+    const [proto, setProto] = useState('Todos');
+    const [country, setCountry] = useState('Todos');
+    const [minutes, setMinutes] = useState(5);
+
+    const periods = [
+      { label: '5 min', value: 5 },
+      { label: '15 min', value: 15 },
+      { label: '30 min', value: 30 },
+      { label: '1 hora', value: 60 },
+      { label: '6 horas', value: 360 },
+      { label: '24 horas', value: 1440 },
+    ];
    const [isMitigationOpen, setIsMitigationOpen] = useState(false);
    const [mitigationData, setMitigationData] = useState({ ip: '', proto: '', port: 0 });
  
@@ -35,18 +45,23 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
      return items.map((c: any) => c.country).sort();
    }, [countriesData]);
  
-   const { data: connections, isLoading } = useQuery({
-     queryKey: ['connections-analysis', search, proto, country],
-     queryFn: async () => {
-       let url = '/api/flows/connections?limit=50';
-       if (proto !== 'Todos') url += `&proto=${proto}`;
-       if (search) url += `&search=${encodeURIComponent(search)}`;
-       if (country !== 'Todos') url += `&country=${country}`;
-       const r = await api.get(url);
-       return r.data;
-     },
-     refetchInterval: 30000,
-   });
+    const { data: connections, isLoading } = useQuery({
+      queryKey: ['connections-analysis', search, proto, country, minutes],
+      queryFn: async () => {
+        const params = new URLSearchParams({
+          limit: '100',
+          minutes: String(minutes),
+        });
+        if (proto !== 'Todos') params.append('proto', proto);
+        if (search) params.append('search', search);
+        if (country !== 'Todos') params.append('country', country);
+        
+        const r = await api.get(`/api/flows/connections?${params}`);
+        return r.data;
+      },
+      staleTime: 0,
+      refetchInterval: 30000,
+    });
  
    const connectionItems = useMemo(() => {
      return Array.isArray(connections) ? connections : (connections?.items || connections?.data || []);
@@ -126,7 +141,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
  
        {/* Filters */}
        <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm transition-colors space-y-4">
-         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 lg:grid-cols-5 gap-4">
            <div className="relative col-span-1 lg:col-span-2">
              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
              <input
@@ -152,19 +167,41 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
              ))}
            </div>
  
-           <div className="relative">
-             <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
-             <select
-               className="w-full bg-gray-50 dark:bg-bg-secondary border border-gray-200 dark:border-[#2a2d3e] rounded-lg py-2 pl-10 pr-4 outline-none focus:ring-2 focus:ring-accent/50 appearance-none text-text-primary"
-               value={country}
-               onChange={(e) => setCountry(e.target.value)}
-             >
-               <option value="Todos">Todos os Países</option>
-               {countryList.map((c: string) => (
-                 <option key={c} value={c}>{c}</option>
-               ))}
-             </select>
-           </div>
+            <div className="relative">
+              <Globe className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
+              <select
+                className="w-full bg-gray-50 dark:bg-bg-secondary border border-gray-200 dark:border-[#2a2d3e] rounded-lg py-2 pl-10 pr-4 outline-none focus:ring-2 focus:ring-accent/50 appearance-none text-text-primary"
+                value={country}
+                onChange={(e) => setCountry(e.target.value)}
+              >
+                <option value="Todos">Todos os Países</option>
+                {countryList.map((c: string) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+
+            <div className="col-span-1 lg:col-span-1">
+              <label style={{fontSize:11, color:'#8892a4', display:'block', marginBottom:6}}>Período</label>
+              <div style={{display:'flex', gap:4, flexWrap: 'wrap'}}>
+                {periods.map(p => (
+                  <button
+                    key={p.value}
+                    onClick={() => setMinutes(p.value)}
+                    style={{
+                      padding:'5px 8px',
+                      borderRadius:6,
+                      border: `1px solid ${minutes === p.value ? '#3b82f6' : '#2a2d3e'}`,
+                      background: minutes === p.value ? '#1e3a5f' : 'transparent',
+                      color: minutes === p.value ? '#3b82f6' : '#8892a4',
+                      cursor:'pointer', fontSize:11,
+                      fontWeight: minutes === p.value ? 600 : 400
+                    }}>
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+            </div>
          </div>
          
          <div className="flex justify-between items-center pt-2">
