@@ -59,8 +59,8 @@ import { useState, FormEvent, useEffect } from 'react';
  
   return (
     <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4 transition-colors">
-      <div className="max-w-md w-full bg-bg-secondary p-10 rounded-3xl shadow-2xl shadow-black/50 border border-border transition-all duration-500 relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-transparent via-primary to-transparent opacity-50" />
+      <div className="max-w-md w-full bg-bg-secondary p-10 rounded-2xl shadow-xl border border-border transition-all duration-300 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-primary/20" />
         <div className="flex justify-between items-center mb-6">
           <div className="flex items-center gap-2">
             <Globe className="text-text-secondary" size={18} />
@@ -77,30 +77,30 @@ import { useState, FormEvent, useEffect } from 'react';
         </div>
 
         <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center p-4 bg-primary/10 rounded-[24px] mb-6 shadow-inner border border-primary/20">
-            <Shield className="text-primary" size={48} />
+          <div className="inline-flex items-center justify-center p-3.5 bg-primary/10 rounded-xl mb-6 border border-primary/10">
+            <Shield className="text-primary" size={40} />
           </div>
-          <h1 className="text-4xl font-black text-text-primary tracking-tighter uppercase mb-2">FlowGuard</h1>
-          <p className="text-text-secondary font-bold text-xs uppercase tracking-widest opacity-60">Network Intelligence & DDoS Mitigation</p>
+          <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-1">FlowGuard</h1>
+          <p className="text-text-secondary font-bold text-[10px] uppercase tracking-widest opacity-60">Intelligence & Mitigation</p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
           {error && (
-            <div className="bg-red-500/10 border border-red-500/50 text-red-500 p-3 rounded-lg text-sm text-center font-medium animate-in fade-in duration-300">
+            <div className="bg-danger/5 border border-danger/10 text-danger p-3 rounded-lg text-xs text-center font-bold uppercase tracking-wider animate-in fade-in duration-300">
               {error}
             </div>
           )}
 
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">
+            <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wider ml-1">
               {t('username')}
             </label>
             <div className="relative">
-              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
               <input
                 type="text"
                 placeholder={t('username')}
-                className="w-full bg-bg-secondary border border-border rounded-lg py-2.5 pl-10 pr-4 outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all text-text-primary placeholder:text-text-secondary/50"
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-2 pl-9 pr-4 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
@@ -109,15 +109,15 @@ import { useState, FormEvent, useEffect } from 'react';
           </div>
 
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-text-secondary uppercase tracking-wider ml-1">
+            <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wider ml-1">
               {t('password')}
             </label>
             <div className="relative">
-              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={18} />
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
               <input
                 type="password"
                 placeholder={t('password')}
-                className="w-full bg-bg-secondary border border-border rounded-lg py-2.5 pl-10 pr-4 outline-none focus:ring-2 focus:ring-accent/50 focus:border-accent transition-all text-text-primary placeholder:text-text-secondary/50"
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-2 pl-9 pr-4 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
@@ -127,10 +127,10 @@ import { useState, FormEvent, useEffect } from 'react';
 
           <button 
             disabled={loading}
-            className="w-full bg-primary hover:bg-primary/90 text-white font-black py-3.5 rounded-xl transition-all shadow-xl shadow-primary/30 active:scale-[0.98] mt-4 flex items-center justify-center disabled:opacity-70 uppercase tracking-widest text-xs"
+            className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-2.5 rounded-lg transition-all shadow-md shadow-primary/10 active:scale-[0.98] mt-4 flex items-center justify-center disabled:opacity-70 uppercase tracking-wider text-xs"
           >
             {loading ? (
-              <div className="w-6 h-6 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
             ) : (
               t('login')
             )}
