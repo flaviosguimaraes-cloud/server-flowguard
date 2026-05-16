@@ -116,14 +116,14 @@ function TabButton({ active, onClick, icon, label, count }: any) {
      <div className="space-y-6 animate-in fade-in duration-500">
        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
          <div>
-           <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">Mitigações Ativas</h1>
+           <h1 className="text-2xl font-bold text-text-primary">Mitigações Ativas</h1>
            <p className="text-sm text-text-secondary mt-1">Gerencie bloqueios e regras de proteção em tempo real</p>
          </div>
          {isAdmin && (
            <div className="flex gap-3">
              <button
                onClick={() => setIsFlowSpecOpen(true)}
-               className="flex items-center gap-2 px-4 py-2 bg-white dark:bg-[#1e2130] border border-gray-200 dark:border-[#2a2d3e] rounded-lg text-sm font-bold text-gray-700 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-[#2a2d3e] transition-all shadow-sm"
+               className="flex items-center gap-2 px-4 py-2 bg-bg-secondary border border-border rounded-lg text-sm font-bold text-text-primary hover:bg-gray-50 dark:hover:bg-[#2a2d3e] transition-all shadow-sm"
              >
                <Zap size={18} className="text-warning" /> Nova FlowSpec
              </button>
@@ -138,7 +138,7 @@ function TabButton({ active, onClick, icon, label, count }: any) {
        </div>
  
        {/* Tabs */}
-       <div className="flex border-b border-gray-200 dark:border-[#2a2d3e]">
+       <div className="flex border-b border-border">
          <TabButton 
            active={activeTab === 'blackhole'} 
            onClick={() => setActiveTab('blackhole')}
@@ -164,12 +164,12 @@ function TabButton({ active, onClick, icon, label, count }: any) {
  
        {/* Content */}
        <TooltipProvider>
-       <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
+       <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
          {activeTab === 'blackhole' && (
            <div className="overflow-x-auto">
              <table className="w-full text-left border-collapse">
                <thead>
-                 <tr className="bg-gray-50 dark:bg-bg-secondary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+                 <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
                    <th className="px-6 py-4 border-b border-border">IP em Blackhole</th>
                     <th className="px-6 py-4 border-b border-border">INÍCIO</th>
                    <th className="px-6 py-4 border-b border-border">Volume</th>
@@ -187,7 +187,7 @@ function TabButton({ active, onClick, icon, label, count }: any) {
                  ) : (
                    (blackholes.items || []).map((item: any, i: number) => (
                      <tr key={i} className="hover:bg-danger/5 transition-colors group">
-                        <td className="px-6 py-4 font-mono font-bold text-gray-900 dark:text-gray-100 relative">
+                        <td className="px-6 py-4 font-mono font-bold text-text-primary relative">
                           <div 
                             onMouseEnter={() => setHoveredIP(item.ip)}
                             onMouseLeave={() => setHoveredIP(null)}
@@ -236,7 +236,7 @@ function TabButton({ active, onClick, icon, label, count }: any) {
                         </td>
                        <td className="px-6 py-4 text-text-secondary whitespace-nowrap"><Clock size={14} className="inline mr-1" /> {item.since || 'Recente'}</td>
                        <td className="px-6 py-4">
-                         <p className="font-bold text-gray-900 dark:text-gray-100">{item.pps ? (item.pps / 1000).toFixed(1) + 'k' : '0'} PPS</p>
+                         <p className="font-bold text-text-primary">{item.pps ? (item.pps / 1000).toFixed(1) + 'k' : '0'} PPS</p>
                          <p className="text-[10px] text-text-secondary">{item.mbps || 0} Mbps</p>
                        </td>
                        <td className="px-6 py-4">
@@ -264,7 +264,7 @@ function TabButton({ active, onClick, icon, label, count }: any) {
            <div className="overflow-x-auto">
              <table className="w-full text-left border-collapse">
                <thead>
-                 <tr className="bg-gray-50 dark:bg-bg-secondary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+                 <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
                    <th className="px-6 py-4 border-b border-border">Nome da Regra</th>
                    <th className="px-6 py-4 border-b border-border">Prefixo</th>
                    <th className="px-6 py-4 border-b border-border">Proto/Porta</th>
@@ -282,13 +282,13 @@ function TabButton({ active, onClick, icon, label, count }: any) {
                  ) : (
                    (Array.isArray(flowspec) ? flowspec : (flowspec?.items || [])).map((rule: any, i: number) => (
                      <tr key={i} className="hover:bg-warning/5 transition-colors group">
-                       <td className="px-6 py-4 font-bold text-gray-900 dark:text-gray-100">{rule.name || 'Regra FlowSpec'}</td>
+                       <td className="px-6 py-4 font-bold text-text-primary">{rule.name || 'Regra FlowSpec'}</td>
                        <td className="px-6 py-4">
-                         <p className="text-xs text-text-secondary">Src: <span className="font-mono text-gray-900 dark:text-gray-100">{rule.src_addr || 'any'}</span></p>
-                         <p className="text-xs text-text-secondary">Dst: <span className="font-mono text-gray-900 dark:text-gray-100">{rule.dst_addr || 'any'}</span></p>
+                         <p className="text-xs text-text-secondary">Src: <span className="font-mono text-text-primary">{rule.src_addr || 'any'}</span></p>
+                         <p className="text-xs text-text-secondary">Dst: <span className="font-mono text-text-primary">{rule.dst_addr || 'any'}</span></p>
                        </td>
                        <td className="px-6 py-4">
-                         <span className="px-2 py-0.5 bg-gray-100 dark:bg-[#2a2d3e] text-text-secondary text-[10px] font-bold rounded uppercase">
+                         <span className="px-2 py-0.5 bg-bg-primary text-text-secondary text-[10px] font-bold rounded uppercase">
                            {rule.proto || 'any'} / {rule.dst_port || 'any'}
                          </span>
                        </td>
@@ -328,7 +328,7 @@ function TabButton({ active, onClick, icon, label, count }: any) {
               ) : (
                 <table className="w-full text-left border-collapse">
                   <thead>
-                    <tr className="bg-gray-50 dark:bg-bg-secondary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+                    <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
                       <th className="px-6 py-4 border-b border-border">Prefixo</th>
                       <th className="px-6 py-4 border-b border-border">Next-Hop</th>
                       <th className="px-6 py-4 border-b border-border">Community</th>
@@ -339,7 +339,7 @@ function TabButton({ active, onClick, icon, label, count }: any) {
                   <tbody className="text-sm divide-y divide-border/50">
                      {routesList.map((route: any, idx: number) => (
                        <tr key={idx} className="hover:bg-accent/5 transition-colors">
-                         <td className="px-6 py-4 font-mono font-bold text-gray-900 dark:text-gray-100">
+                         <td className="px-6 py-4 font-mono font-bold text-text-primary">
                            <MitigationTooltip data={{
                              ip: route.prefix,
                              tipo: route.type || 'Mitigação Externa /24',
