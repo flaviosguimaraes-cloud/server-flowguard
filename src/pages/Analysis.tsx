@@ -272,7 +272,6 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     document.body.removeChild(link);
   };
 
-  const [hoveredMitIP, setHoveredMitIP] = useState<string | null>(null);
 
    return (
      <div className="space-y-6 animate-in fade-in duration-500">
