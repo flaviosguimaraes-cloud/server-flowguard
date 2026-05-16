@@ -827,7 +827,7 @@ function StatCard({ title, value, unit, icon, trend, tooltip }: any) {
         <div className="p-2.5 bg-gray-50 dark:bg-bg-secondary rounded-xl group-hover:bg-accent/10 transition-colors">
           {icon}
         </div>
-        {trend && (
+        {trend && typeof trend === 'string' && (
           <span className={clsx(
             "text-[10px] font-bold px-2 py-0.5 rounded-full",
             trend.startsWith('+') ? "bg-success-bg text-success" : 
