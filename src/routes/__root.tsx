@@ -35,7 +35,8 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
        { property: "og:type", content: "website" },
      ],
      links: [
-       { rel: "stylesheet", href: appCss },
+        { rel: "stylesheet", href: appCss },
+        { rel: "stylesheet", href: "https://cdn.jsdelivr.net/gh/lipis/flag-icons@7.0.0/css/flag-icons.min.css" },
      ],
    }),
    component: RootComponent,
