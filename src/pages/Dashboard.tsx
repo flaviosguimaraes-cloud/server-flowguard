@@ -202,7 +202,8 @@ export default function Dashboard() {
 
 
     const flowData = useMemo(() => {
-      return (timeline || []).map((d: any) => ({
+      const list = Array.isArray(timeline) ? timeline : (timeline?.items || timeline?.data || []);
+      return list.map((d: any) => ({
         time: d.time ? d.time.substring(11, 16) : '',
         rx: parseFloat((d.rx_bytes / 1e9).toFixed(2)),
         tx: parseFloat((d.tx_bytes / 1e9).toFixed(2)),
