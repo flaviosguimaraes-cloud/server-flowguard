@@ -6,13 +6,14 @@ import { useTranslation } from '../hooks/useTranslation';
    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
    BarChart, Bar, Cell, AreaChart, Area
  } from 'recharts';
-import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon } from 'lucide-react';
+import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon, Settings2, Info } from 'lucide-react';
 import { Skeleton } from '../components/Skeleton';
 import Flag from '../components/Flag';
 
 import { clsx } from 'clsx';
 
 const REFETCH_INTERVAL = 30000;
+const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -102,53 +103,87 @@ export default function Dashboard() {
     refetchOnWindowFocus: true,
   });
 
-  const { data: interfaces } = useQuery({
-    queryKey: ['interfaces'],
-    queryFn: async () => {
-      const r = await api.get('/api/collectors/1/interfaces/summary');
-      return r.data;
-    },
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnWindowFocus: true,
+  const [selectedCollector, setSelectedCollector] = useState<number | null>(() => {
+    const saved = localStorage.getItem('fg_collector');
+    return saved ? parseInt(saved) : 1;
   });
-
-  const [trafficSource, setTrafficSource] = useState<'flow' | 'snmp'>(() =>
-    localStorage.getItem('fg_traffic_source') as 'flow' | 'snmp' || 'snmp'
-  );
-
   const [selectedIfaces, setSelectedIfaces] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem('fg_selected_ifaces');
+      const saved = localStorage.getItem('fg_ifaces');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
     }
   });
-  const [sumMode, setSumMode] = useState(false);
+
+  const { data: collectors } = useQuery({
+    queryKey: ['collectors'],
+    queryFn: () => api.get('/api/collectors').then(r => r.data),
+  });
+
+  const { data: interfaces } = useQuery({
+    queryKey: ['interfaces', selectedCollector],
+    queryFn: async () => {
+      if (!selectedCollector) return null;
+      const r = await api.get(`/api/collectors/${selectedCollector}/interfaces/summary`);
+      return r.data;
+    },
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+    enabled: !!selectedCollector,
+  });
+
+  const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
 
   useEffect(() => {
-    localStorage.setItem('fg_traffic_source', trafficSource);
-  }, [trafficSource]);
+    if (selectedCollector) {
+      localStorage.setItem('fg_collector', String(selectedCollector));
+    }
+  }, [selectedCollector]);
 
   useEffect(() => {
-    localStorage.setItem('fg_selected_ifaces', JSON.stringify(selectedIfaces));
+    localStorage.setItem('fg_ifaces', JSON.stringify(selectedIfaces));
   }, [selectedIfaces]);
 
   useEffect(() => {
-    if (trafficSource === 'snmp' && selectedIfaces.length === 0 && interfaces?.interfaces?.length > 0) {
-      const top3 = (interfaces.interfaces || [])
+    if (!interfaces?.interfaces) return;
+
+    const now = new Date().toLocaleTimeString('pt-BR', {
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+
+    setHistory(prev => {
+      const next = { ...prev };
+      interfaces.interfaces.forEach((iface: any) => {
+        const name = iface.display_name || iface.if_name;
+        if (!next[name]) next[name] = [];
+        next[name] = [
+          ...next[name].slice(-19),
+          {
+            time: now,
+            in_bps: iface.in_bps || 0,
+            out_bps: iface.out_bps || 0,
+          }
+        ];
+      });
+      return next;
+    });
+
+    // Default selection (top 8) if none selected
+    if (selectedIfaces.length === 0) {
+      const top8 = (interfaces.interfaces || [])
         .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
         .filter((i: any) => {
-          const n = (i.display_name || '').toLowerCase();
+          const n = (i.display_name || i.if_name || '').toLowerCase();
           return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
         })
         .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
-        .slice(0, 3)
-        .map((i: any) => i.display_name);
-      setSelectedIfaces(top3);
+        .slice(0, 8)
+        .map((i: any) => i.display_name || i.if_name);
+      setSelectedIfaces(top8);
     }
-  }, [interfaces, trafficSource, selectedIfaces.length]);
+  }, [interfaces]);
 
   const { data: connections, dataUpdatedAt } = useQuery({
     queryKey: ['connections'],
@@ -173,8 +208,27 @@ export default function Dashboard() {
     const selectedIfaceData = useMemo(() => {
       if (!interfaces?.interfaces) return [];
       return (interfaces.interfaces || [])
-        .filter((i: any) => selectedIfaces.includes(i.display_name));
+        .filter((i: any) => selectedIfaces.includes(i.display_name || i.if_name));
     }, [interfaces, selectedIfaces]);
+
+    const timePoints = useMemo(() => {
+      const firstSelected = selectedIfaces[0];
+      return history[firstSelected]?.map(p => p.time) || [];
+    }, [history, selectedIfaces]);
+
+    const chartData = useMemo(() => {
+      return timePoints.map((time, idx) => {
+        const point: Record<string, any> = { time };
+        selectedIfaces.forEach(name => {
+          const h = history[name];
+          if (h && h[idx]) {
+            point[`${name}_in`] = Math.round(h[idx].in_bps / 1e6);
+            point[`${name}_out`] = Math.round(h[idx].out_bps / 1e6);
+          }
+        });
+        return point;
+      });
+    }, [timePoints, selectedIfaces, history]);
 
     const protoMap: Record<number, string> = {
      6: 'TCP', 17: 'UDP', 1: 'ICMP',
@@ -328,12 +382,28 @@ export default function Dashboard() {
          />
        </div>
 
-      {/* Main Chart */}
+      {/* Main Chart: Tráfego da Interface */}
       <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm transition-colors">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4 border-b border-gray-100 dark:border-[#2a2d3e] pb-4">
-          <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Network Traffic</h2>
+          <div className="flex items-center gap-3">
+            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Tráfego da Interface</h2>
+            <div className="px-2 py-0.5 rounded bg-accent/10 text-accent text-[10px] font-bold uppercase">SNMP Realtime</div>
+          </div>
           
           <div className="flex flex-wrap items-center gap-3">
+            <div className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-bg-secondary rounded-lg border border-gray-200 dark:border-[#2a2d3e]">
+              <Settings2 size={14} className="text-text-secondary" />
+              <select 
+                value={selectedCollector || ''} 
+                onChange={(e) => setSelectedCollector(Number(e.target.value))}
+                className="bg-transparent text-[11px] font-bold text-text-primary focus:outline-none cursor-pointer"
+              >
+                {collectors?.map((c: any) => (
+                  <option key={c.id} value={c.id}>{c.name} ({c.host})</option>
+                ))}
+              </select>
+            </div>
+
             <button 
               onClick={() => {
                 queryClient.invalidateQueries();
@@ -357,213 +427,173 @@ export default function Dashboard() {
               </svg>
               <span>{countdown}s</span>
             </button>
+          </div>
+        </div>
 
-            <div className="flex bg-gray-100 dark:bg-bg-secondary p-1 rounded-lg">
-              <button
-                onClick={() => setTrafficSource('snmp')}
-                className={clsx(
-                  "flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-md transition-all uppercase tracking-wider",
-                  trafficSource === 'snmp' ? "bg-white dark:bg-accent text-accent dark:text-white shadow-sm" : "text-text-secondary hover:text-text-primary"
-                )}>
-                <BarChart2 size={14} /> Por Interface (SNMP)
-              </button>
-              <button
-                onClick={() => setTrafficSource('flow')}
-                className={clsx(
-                  "flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold rounded-md transition-all uppercase tracking-wider",
-                  trafficSource === 'flow' ? "bg-white dark:bg-accent text-accent dark:text-white shadow-sm" : "text-text-secondary hover:text-text-primary"
-                )}>
-                <LineChartIcon size={14} /> Timeline (Flow)
-              </button>
+        {/* Collector Info & Metrics Summary */}
+        <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
+          <div className="flex items-center gap-2 text-xs text-text-secondary">
+            <Info size={14} />
+            <span className="font-medium">
+              {collectors?.find((c: any) => c.id === selectedCollector)?.name || 'NE-20'} · 
+              {collectors?.find((c: any) => c.id === selectedCollector)?.host || '45.175.50.209'} · 
+              SNMP v2c
+            </span>
+          </div>
+
+          <div className="flex items-center gap-6">
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] uppercase font-bold text-text-secondary">Total RX</span>
+              <span className="text-sm font-black text-accent">{fmtBps(selectedIfaceData.reduce((a: number, b: any) => a + (b.in_bps || 0), 0))}</span>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] uppercase font-bold text-text-secondary">Total TX</span>
+              <span className="text-sm font-black text-success">{fmtBps(selectedIfaceData.reduce((a: number, b: any) => a + (b.out_bps || 0), 0))}</span>
+            </div>
+            <div className="flex flex-col items-end">
+              <span className="text-[10px] uppercase font-bold text-text-secondary">Interfaces</span>
+              <span className="text-sm font-black text-gray-900 dark:text-gray-100">{selectedIfaces.length} de {(interfaces?.interfaces || []).length}</span>
             </div>
           </div>
         </div>
 
-        {trafficSource === 'snmp' ? (
-          <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-            <div className="lg:col-span-1 space-y-1 max-h-[300px] overflow-y-auto pr-2 custom-scrollbar">
-              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Interfaces</p>
-              {(interfaces?.interfaces || [])
-                .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
-                .filter((i: any) => {
-                  const n = (i.display_name || '').toLowerCase();
-                  return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template') && !n.includes('inloop');
-                })
-                .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
-                .map((iface: any, idx: number) => (
-                  <label key={iface.display_name} className="flex items-center gap-2 cursor-pointer py-1.5 px-2 rounded hover:bg-gray-50 dark:hover:bg-bg-secondary transition-colors group">
-                    <input
-                      type="checkbox"
-                      checked={selectedIfaces.includes(iface.display_name)}
-                      onChange={() => {
-                        setSelectedIfaces(prev => 
-                          prev.includes(iface.display_name) 
-                            ? prev.filter(n => n !== iface.display_name)
-                            : [...prev, iface.display_name]
-                        );
-                      }}
-                      className="w-3.5 h-3.5 rounded border-gray-300 text-accent focus:ring-accent accent-accent"
-                    />
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[11px] font-bold truncate transition-colors" style={{ color: selectedIfaces.includes(iface.display_name) ? ifaceColors[idx % ifaceColors.length] : undefined }}>
-                        {iface.display_name}
-                      </p>
-                      <p className="text-[9px] text-text-secondary flex items-center gap-1">
-                        {fmtBps(iface.in_bps)} <ArrowDown size={8} /> {fmtBps(iface.out_bps)} <ArrowUp size={8} />
-                      </p>
-                    </div>
-                  </label>
-                ))
-              }
-              <button
-                onClick={() => setSumMode(m => !m)}
-                className={clsx(
-                  "w-full mt-4 py-2 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all border",
-                  sumMode ? "bg-accent/10 border-accent text-accent" : "bg-transparent border-gray-200 dark:border-[#2a2d3e] text-text-secondary hover:border-accent"
-                )}>
-                {sumMode ? '✓ Somando selecionadas' : 'Somar selecionadas'}
-              </button>
+        <div className="space-y-4">
+          {/* RX Chart */}
+          <div className="relative">
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 origin-left text-[10px] font-black text-text-secondary uppercase tracking-widest pointer-events-none">
+              RX (↓)
             </div>
-            <div className="lg:col-span-3 space-y-4 pt-2">
-              <div style={{ display: 'flex', gap: 16, marginBottom: 12, fontSize: 12 }}>
-                <span style={{ color: '#8892a4' }}>↓ Entrada (RX)</span>
-                <span style={{ color: '#8892a4', opacity: 0.6 }}>↑ Saída (TX)</span>
-                <span style={{ marginLeft: 'auto', color: '#8892a4', fontSize: 11 }}>
-                  {selectedIfaces.length} interface(s) selecionada(s)
-                  {sumMode ? ' — Somadas' : ''}
-                </span>
-              </div>
-
-              {!sumMode ? (
-                selectedIfaceData.map((iface: any, idx: number) => {
-                  const maxVal = Math.max(...selectedIfaceData.map((i: any) => i.if_speed || 0), ...selectedIfaceData.map((i: any) => Math.max(i.in_bps, i.out_bps)));
-                  const speed = iface.if_speed || maxVal || 1e9;
-                  const inPct = Math.min((iface.in_bps / speed) * 100, 100);
-                  const outPct = Math.min((iface.out_bps / speed) * 100, 100);
-                  const color = ifaceColors[idx % ifaceColors.length];
-                  
-                  return (
-                    <div key={iface.display_name} className="p-4 rounded-xl border border-gray-100 dark:border-[#2a2d3e] bg-gray-50/30 dark:bg-bg-secondary/20 space-y-3 transition-all">
-                      <p className="text-[11px] font-bold text-gray-900 dark:text-gray-100 truncate">
-                        {iface.display_name}
-                      </p>
-                      
-                      <div className="space-y-2">
-                        <div className="flex items-center gap-3">
-                          <span className="text-[10px] text-[#8892a4] w-8">↓ RX</span>
-                          <div className="flex-1 h-3 bg-gray-100 dark:bg-[#2a2d3e] rounded-[4px] overflow-hidden">
-                            <div 
-                              className="h-full transition-all duration-500 rounded-[4px]"
-                              style={{ width: inPct + '%', backgroundColor: color }}
-                            />
-                          </div>
-                          <span className="text-[11px] font-bold text-gray-700 dark:text-[#e2e8f0] min-w-[70px] text-right">
-                            {fmtBps(iface.in_bps)}
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-center gap-3">
-                          <span className="text-[10px] text-[#8892a4] w-8">↑ TX</span>
-                          <div className="flex-1 h-3 bg-gray-100 dark:bg-[#2a2d3e] rounded-[4px] overflow-hidden">
-                            <div 
-                              className="h-full transition-all duration-500 rounded-[4px] opacity-60"
-                              style={{ width: outPct + '%', backgroundColor: color }}
-                            />
-                          </div>
-                          <span className="text-[11px] font-bold text-gray-700 dark:text-[#e2e8f0] min-w-[70px] text-right">
-                            {fmtBps(iface.out_bps)}
-                          </span>
-                        </div>
-                      </div>
-
-                      <div className="text-[10px] text-[#8892a4] font-medium border-t border-gray-100 dark:border-[#2a2d3e] pt-2">
-                        Capacidade: {fmtBps(iface.if_speed)} — Util: {((Math.max(iface.in_bps, iface.out_bps) / speed) * 100).toFixed(1)}%
-                      </div>
-                    </div>
-                  );
-                })
-              ) : (
-                <div className="p-6 rounded-xl border border-accent/20 bg-accent/5 space-y-6">
-                  {(() => {
-                    const totalRx = selectedIfaceData.reduce((a: number, b: any) => a + (b.in_bps || 0), 0);
-                    const totalTx = selectedIfaceData.reduce((a: number, b: any) => a + (b.out_bps || 0), 0);
-                    const totalSpeed = selectedIfaceData.reduce((a: number, b: any) => a + (b.if_speed || 0), 0);
-                    const maxVal = totalSpeed || Math.max(totalRx, totalTx) || 1e9;
-                    
-                    return (
-                      <div className="space-y-4">
-                        <p className="text-[12px] font-black text-accent uppercase tracking-widest">
-                          TOTAL ({selectedIfaceData.length} interfaces somadas)
-                        </p>
-                        
-                        <div className="space-y-3">
-                          <div className="flex items-center gap-4">
-                            <span className="text-[11px] font-bold text-[#8892a4] w-10">↓ RX</span>
-                            <div className="flex-1 h-4 bg-gray-100 dark:bg-[#2a2d3e] rounded-[4px] overflow-hidden">
-                              <div 
-                                className="h-full bg-accent transition-all duration-500 rounded-[4px]"
-                                style={{ width: Math.min((totalRx / maxVal) * 100, 100) + '%' }}
-                              />
-                            </div>
-                            <span className="text-sm font-black text-gray-900 dark:text-gray-100 min-w-[90px] text-right">
-                              {fmtBps(totalRx)}
-                            </span>
-                          </div>
-                          
-                          <div className="flex items-center gap-4">
-                            <span className="text-[11px] font-bold text-[#8892a4] w-10">↑ TX</span>
-                            <div className="flex-1 h-4 bg-gray-100 dark:bg-[#2a2d3e] rounded-[4px] overflow-hidden">
-                              <div 
-                                className="h-full bg-accent transition-all duration-500 rounded-[4px] opacity-60"
-                                style={{ width: Math.min((totalTx / maxVal) * 100, 100) + '%' }}
-                              />
-                            </div>
-                            <span className="text-sm font-black text-gray-900 dark:text-gray-100 min-w-[90px] text-right">
-                              {fmtBps(totalTx)}
-                            </span>
-                          </div>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </div>
-              )}
-              {selectedIfaces.length === 0 && (
-                <div className="h-full flex items-center justify-center text-text-secondary italic text-sm">
-                  Selecione ao menos uma interface para visualizar
-                </div>
-              )}
-            </div>
-          </div>
-        ) : (
-          <div className="h-[300px] w-full pt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={flowData}>
+            <ResponsiveContainer width="100%" height={140}>
+              <AreaChart data={chartData} margin={{top:10,right:10,left:30,bottom:0}}>
                 <defs>
-                  <linearGradient id="colorRx" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#3b82f6" stopOpacity={0}/>
-                  </linearGradient>
-                  <linearGradient id="colorTx" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#22c55e" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="#22c55e" stopOpacity={0}/>
-                  </linearGradient>
+                  {selectedIfaces.map((name, idx) => (
+                    <linearGradient key={`rx_${name}`} id={`grad_rx_${idx}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={COLORS[idx%8]} stopOpacity={0.6}/>
+                      <stop offset="95%" stopColor={COLORS[idx%8]} stopOpacity={0.1}/>
+                    </linearGradient>
+                  ))}
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-gray-200 dark:text-[#2a2d3e]" vertical={false} />
-                <XAxis dataKey="time" tick={{ fontSize: 11, fill: '#8892a4' }} tickLine={false} axisLine={false} interval={4} />
-                <YAxis tick={{ fontSize: 11, fill: '#8892a4' }} tickLine={false} axisLine={false} tickFormatter={v => v + 'G'} />
+                <CartesianGrid strokeDasharray="3 3" stroke="#2a2d3e" vertical={false} />
+                <XAxis dataKey="time" hide />
+                <YAxis tick={{fontSize:10,fill:'#8892a4'}} tickLine={false} axisLine={false} tickFormatter={v => `${v}M`} />
                 <Tooltip
-                  formatter={(v: any, n: string) => [v + ' Gbps', n === 'rx' ? 'Entrada' : 'Saída']}
-                  contentStyle={{ backgroundColor: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 8, fontSize: 12, color: 'var(--text-primary)', boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)' }}
-                  itemStyle={{ color: 'var(--text-primary)', padding: '2px 0' }}
-                  labelStyle={{ color: 'var(--text-secondary)', marginBottom: '4px', fontWeight: 'bold' }}
+                  contentStyle={{ background:'#1e2130', border:'1px solid #2a2d3e', borderRadius:6, fontSize:11 }}
+                  formatter={(v: number, name: string) => {
+                    if (!name.endsWith('_in')) return null;
+                    const ifName = name.replace('_in', '');
+                    return [`${v} Mbps ↓`, ifName];
+                  }}
                 />
-                <Area type="monotone" dataKey="rx" stroke="#3b82f6" strokeWidth={3} fillOpacity={1} fill="url(#colorRx)" name="rx" />
-                <Area type="monotone" dataKey="tx" stroke="#22c55e" strokeWidth={3} fillOpacity={1} fill="url(#colorTx)" name="tx" />
+                {selectedIfaces.map((name, idx) => (
+                  <Area 
+                    key={`${name}_in`} 
+                    type="monotone" 
+                    dataKey={`${name}_in`} 
+                    stackId="rx" 
+                    stroke={COLORS[idx%8]} 
+                    strokeWidth={1.5} 
+                    fill={`url(#grad_rx_${idx})`} 
+                    name={`${name}_in`} 
+                    isAnimationActive={false}
+                  />
+                ))}
               </AreaChart>
             </ResponsiveContainer>
           </div>
-        )}
+
+          {/* TX Chart */}
+          <div className="relative">
+            <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 origin-left text-[10px] font-black text-text-secondary uppercase tracking-widest pointer-events-none">
+              TX (↑)
+            </div>
+            <ResponsiveContainer width="100%" height={140}>
+              <AreaChart data={chartData} margin={{top:0,right:10,left:30,bottom:10}}>
+                <defs>
+                  {selectedIfaces.map((name, idx) => (
+                    <linearGradient key={`tx_${name}`} id={`grad_tx_${idx}`} x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor={COLORS[idx%8]} stopOpacity={0.6}/>
+                      <stop offset="95%" stopColor={COLORS[idx%8]} stopOpacity={0.1}/>
+                    </linearGradient>
+                  ))}
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#2a2d3e" vertical={false} />
+                <XAxis dataKey="time" tick={{fontSize:10,fill:'#8892a4'}} tickLine={false} axisLine={false} interval={4} />
+                <YAxis tick={{fontSize:10,fill:'#8892a4'}} tickLine={false} axisLine={false} tickFormatter={v => `${v}M`} />
+                <Tooltip
+                  contentStyle={{ background:'#1e2130', border:'1px solid #2a2d3e', borderRadius:6, fontSize:11 }}
+                  formatter={(v: number, name: string) => {
+                    if (!name.endsWith('_out')) return null;
+                    const ifName = name.replace('_out', '');
+                    return [`${v} Mbps ↑`, ifName];
+                  }}
+                />
+                {selectedIfaces.map((name, idx) => (
+                  <Area 
+                    key={`${name}_out`} 
+                    type="monotone" 
+                    dataKey={`${name}_out`} 
+                    stackId="tx" 
+                    stroke={COLORS[idx%8]} 
+                    strokeWidth={1.5} 
+                    fill={`url(#grad_tx_${idx})`} 
+                    name={`${name}_out`}
+                    isAnimationActive={false}
+                  />
+                ))}
+              </AreaChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Interface Legend / Selector */}
+        <div className="mt-6 flex flex-wrap gap-2 max-h-[200px] overflow-y-auto custom-scrollbar pt-2 border-t border-gray-100 dark:border-[#2a2d3e]">
+          {(interfaces?.interfaces || [])
+            .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
+            .filter((i: any) => {
+              const n = (i.display_name || i.if_name || '').toLowerCase();
+              return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
+            })
+            .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
+            .map((iface: any) => {
+              const name = iface.display_name || iface.if_name;
+              const isActive = selectedIfaces.includes(name);
+              const color = COLORS[selectedIfaces.indexOf(name) % 8] || '#8892a4';
+
+              return (
+                <button
+                  key={name}
+                  onClick={() => {
+                    setSelectedIfaces(prev =>
+                      prev.includes(name)
+                        ? prev.filter(n => n !== name)
+                        : [...prev, name]
+                    );
+                  }}
+                  className={clsx(
+                    "inline-flex items-center gap-2 px-3 py-1.5 rounded-full border transition-all text-[11px] font-bold",
+                    isActive 
+                      ? "border-accent/30 bg-accent/5 text-accent shadow-sm" 
+                      : "border-gray-200 dark:border-[#2a2d3e] text-text-secondary opacity-60 hover:opacity-100"
+                  )}
+                  style={{
+                    borderColor: isActive ? color + '50' : undefined,
+                    backgroundColor: isActive ? color + '15' : undefined,
+                    color: isActive ? color : undefined,
+                  }}
+                >
+                  <span 
+                    className="w-2 h-2 rounded-full" 
+                    style={{ background: isActive ? color : '#8892a4' }} 
+                  />
+                  {name}
+                  <span className="text-[9px] opacity-70">
+                    {fmtBps(iface.in_bps)} ↓
+                  </span>
+                </button>
+              );
+            })
+          }
+        </div>
       </div>
 
        {/* Secondary Grids */}

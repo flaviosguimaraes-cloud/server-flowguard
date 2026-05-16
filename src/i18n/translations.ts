@@ -2,7 +2,7 @@
  
  export const translations = {
    'pt-BR': {
-     dashboard: 'Painel de Controle',
+      dashboard: 'Dashboard',
      analysis: 'Análise Avançada',
      events: 'Eventos',
      mitigation: 'Mitigação',
