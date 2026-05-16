@@ -144,7 +144,7 @@
                <thead>
                  <tr className="bg-gray-50 dark:bg-bg-secondary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
                    <th className="px-6 py-4 border-b border-border">IP em Blackhole</th>
-                   <th className="px-6 py-4 border-b border-border">Desde</th>
+                    <th className="px-6 py-4 border-b border-border">INÍCIO</th>
                    <th className="px-6 py-4 border-b border-border">Volume</th>
                    <th className="px-6 py-4 border-b border-border">Tipo</th>
                    {isAdmin && <th className="px-6 py-4 border-b border-border text-center">Ações</th>}
