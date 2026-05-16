@@ -398,75 +398,107 @@ export default function Dashboard() {
                 {sumMode ? '✓ Somando selecionadas' : 'Somar selecionadas'}
               </button>
             </div>
-            <div className="lg:col-span-3 space-y-6 pt-2">
+            <div className="lg:col-span-3 space-y-4 pt-2">
+              <div style={{ display: 'flex', gap: 16, marginBottom: 12, fontSize: 12 }}>
+                <span style={{ color: '#8892a4' }}>↓ Entrada (RX)</span>
+                <span style={{ color: '#8892a4', opacity: 0.6 }}>↑ Saída (TX)</span>
+                <span style={{ marginLeft: 'auto', color: '#8892a4', fontSize: 11 }}>
+                  {selectedIfaces.length} interface(s) selecionada(s)
+                  {sumMode ? ' — Somadas' : ''}
+                </span>
+              </div>
+
               {!sumMode ? (
                 selectedIfaceData.map((iface: any, idx: number) => {
-                  const inPct = iface.if_speed > 0 ? Math.min((iface.in_bps / iface.if_speed) * 100, 100) : 0;
-                  const outPct = iface.if_speed > 0 ? Math.min((iface.out_bps / iface.if_speed) * 100, 100) : 0;
+                  const maxVal = Math.max(...selectedIfaceData.map((i: any) => i.if_speed || 0), ...selectedIfaceData.map((i: any) => Math.max(i.in_bps, i.out_bps)));
+                  const speed = iface.if_speed || maxVal || 1e9;
+                  const inPct = Math.min((iface.in_bps / speed) * 100, 100);
+                  const outPct = Math.min((iface.out_bps / speed) * 100, 100);
+                  const color = ifaceColors[idx % ifaceColors.length];
+                  
                   return (
-                    <div key={iface.display_name} className="space-y-1.5">
-                      <div className="flex justify-between items-center text-[11px]">
-                        <span className="font-bold flex items-center gap-2" style={{ color: ifaceColors[idx % ifaceColors.length] }}>
-                          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: ifaceColors[idx % ifaceColors.length] }} />
-                          {iface.display_name}
-                        </span>
-                        <span className="text-text-secondary font-medium">
-                          {fmtBps(iface.in_bps)} <ArrowDown size={10} className="inline" /> / {fmtBps(iface.out_bps)} <ArrowUp size={10} className="inline" />
-                        </span>
-                      </div>
-                      <div className="space-y-1">
-                        <div className="h-2.5 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden shadow-inner border border-gray-200/50 dark:border-transparent">
-                          <div className="h-full transition-all duration-1000 rounded-full" style={{ width: inPct + '%', backgroundColor: ifaceColors[idx % ifaceColors.length] }} />
+                    <div key={iface.display_name} className="p-4 rounded-xl border border-gray-100 dark:border-[#2a2d3e] bg-gray-50/30 dark:bg-bg-secondary/20 space-y-3 transition-all">
+                      <p className="text-[11px] font-bold text-gray-900 dark:text-gray-100 truncate">
+                        {iface.display_name}
+                      </p>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] text-[#8892a4] w-8">↓ RX</span>
+                          <div className="flex-1 h-3 bg-gray-100 dark:bg-[#2a2d3e] rounded-[4px] overflow-hidden">
+                            <div 
+                              className="h-full transition-all duration-500 rounded-[4px]"
+                              style={{ width: inPct + '%', backgroundColor: color }}
+                            />
+                          </div>
+                          <span className="text-[11px] font-bold text-gray-700 dark:text-[#e2e8f0] min-w-[70px] text-right">
+                            {fmtBps(iface.in_bps)}
+                          </span>
                         </div>
-                        <div className="h-2.5 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden shadow-inner border border-gray-200/50 dark:border-transparent">
-                          <div className="h-full transition-all duration-1000 rounded-full opacity-60" style={{ width: outPct + '%', backgroundColor: ifaceColors[idx % ifaceColors.length] }} />
+                        
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] text-[#8892a4] w-8">↑ TX</span>
+                          <div className="flex-1 h-3 bg-gray-100 dark:bg-[#2a2d3e] rounded-[4px] overflow-hidden">
+                            <div 
+                              className="h-full transition-all duration-500 rounded-[4px] opacity-60"
+                              style={{ width: outPct + '%', backgroundColor: color }}
+                            />
+                          </div>
+                          <span className="text-[11px] font-bold text-gray-700 dark:text-[#e2e8f0] min-w-[70px] text-right">
+                            {fmtBps(iface.out_bps)}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex justify-between text-[9px] text-text-secondary font-medium px-1">
+
+                      <div className="flex justify-between text-[10px] text-[#8892a4] font-medium border-t border-gray-100 dark:border-[#2a2d3e] pt-2">
                         <span>Capacidade: {fmtBps(iface.if_speed)}</span>
-                        <span>Utilização: {inPct.toFixed(1)}% (RX) / {outPct.toFixed(1)}% (TX)</span>
+                        <span>Utilização: {((iface.in_bps / speed) * 100).toFixed(1)}%</span>
                       </div>
                     </div>
                   );
                 })
               ) : (
-                <div className="h-full flex flex-col justify-center space-y-10 py-4">
+                <div className="p-6 rounded-xl border border-accent/20 bg-accent/5 space-y-6">
                   {(() => {
                     const totalRx = selectedIfaceData.reduce((a: number, b: any) => a + (b.in_bps || 0), 0);
                     const totalTx = selectedIfaceData.reduce((a: number, b: any) => a + (b.out_bps || 0), 0);
                     const totalSpeed = selectedIfaceData.reduce((a: number, b: any) => a + (b.if_speed || 0), 0);
-                    const totalInPct = totalSpeed > 0 ? Math.min((totalRx / totalSpeed) * 100, 100) : 0;
-                    const totalOutPct = totalSpeed > 0 ? Math.min((totalTx / totalSpeed) * 100, 100) : 0;
+                    const maxVal = totalSpeed || Math.max(totalRx, totalTx) || 1e9;
+                    
                     return (
-                      <>
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-end">
-                            <div>
-                              <p className="text-xs font-bold text-accent uppercase tracking-widest mb-1">Total Entrada (RX)</p>
-                              <h3 className="text-4xl font-black text-gray-900 dark:text-gray-100">{fmtBps(totalRx)}</h3>
+                      <div className="space-y-4">
+                        <p className="text-[12px] font-black text-accent uppercase tracking-widest">
+                          TOTAL ({selectedIfaceData.length} interfaces somadas)
+                        </p>
+                        
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-4">
+                            <span className="text-[11px] font-bold text-[#8892a4] w-10">↓ RX</span>
+                            <div className="flex-1 h-4 bg-gray-100 dark:bg-[#2a2d3e] rounded-[4px] overflow-hidden">
+                              <div 
+                                className="h-full bg-accent transition-all duration-500 rounded-[4px]"
+                                style={{ width: Math.min((totalRx / maxVal) * 100, 100) + '%' }}
+                              />
                             </div>
-                            <span className="text-sm font-bold text-accent">{totalInPct.toFixed(1)}%</span>
+                            <span className="text-sm font-black text-gray-900 dark:text-gray-100 min-w-[90px] text-right">
+                              {fmtBps(totalRx)}
+                            </span>
                           </div>
-                          <div className="h-4 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden shadow-inner">
-                            <div className="h-full bg-accent transition-all duration-1000 shadow-lg shadow-accent/20" style={{ width: totalInPct + '%' }} />
-                          </div>
-                        </div>
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-end">
-                            <div>
-                              <p className="text-xs font-bold text-success uppercase tracking-widest mb-1">Total Saída (TX)</p>
-                              <h3 className="text-4xl font-black text-gray-900 dark:text-gray-100">{fmtBps(totalTx)}</h3>
+                          
+                          <div className="flex items-center gap-4">
+                            <span className="text-[11px] font-bold text-[#8892a4] w-10">↑ TX</span>
+                            <div className="flex-1 h-4 bg-gray-100 dark:bg-[#2a2d3e] rounded-[4px] overflow-hidden">
+                              <div 
+                                className="h-full bg-accent transition-all duration-500 rounded-[4px] opacity-60"
+                                style={{ width: Math.min((totalTx / maxVal) * 100, 100) + '%' }}
+                              />
                             </div>
-                            <span className="text-sm font-bold text-success">{totalOutPct.toFixed(1)}%</span>
-                          </div>
-                          <div className="h-4 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden shadow-inner">
-                            <div className="h-full bg-success transition-all duration-1000 shadow-lg shadow-success/20" style={{ width: totalOutPct + '%' }} />
+                            <span className="text-sm font-black text-gray-900 dark:text-gray-100 min-w-[90px] text-right">
+                              {fmtBps(totalTx)}
+                            </span>
                           </div>
                         </div>
-                        <div className="text-center text-[11px] text-text-secondary font-bold uppercase tracking-widest pt-4">
-                          Capacidade Combinada: {fmtBps(totalSpeed)}
-                        </div>
-                      </>
+                      </div>
                     );
                   })()}
                 </div>
