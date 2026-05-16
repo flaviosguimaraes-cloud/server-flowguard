@@ -558,22 +558,13 @@ export default function Dashboard() {
            subtitle={activeMitigations?.items?.length > 0 && (
              <div className="flex flex-wrap gap-1 mt-1">
                {activeMitigations.items.slice(0, 2).map((m: any) => (
-                  <div 
-                    key={m.ip} 
-                    className="relative"
-                    onMouseEnter={() => setHoveredIP(m.ip)}
-                    onMouseLeave={() => setHoveredIP(null)}
-                  >
-                    <span className="text-[9px] font-mono font-bold text-danger border border-danger/20 px-1 rounded bg-danger/5 cursor-help hover:bg-danger/10 transition-colors">
-                      {m.ip}
-                    </span>
-                    
-                     <MitigationTooltip data={m}>
-                       <span className="text-[9px] font-mono font-bold text-danger border border-danger/20 px-1 rounded bg-danger/5 cursor-help hover:bg-danger/10 transition-colors">
-                         {m.ip}
-                       </span>
-                     </MitigationTooltip>
-                   </div>
+                  <div key={m.ip} className="relative">
+                    <MitigationTooltip data={m}>
+                      <span className="text-[9px] font-mono font-bold text-danger border border-danger/20 px-1 rounded bg-danger/5 cursor-help hover:bg-danger/10 transition-colors">
+                        {m.ip}
+                      </span>
+                    </MitigationTooltip>
+                  </div>
                ))}
                {activeMitigations.items.length > 2 && <span className="text-[9px] text-text-secondary">+{activeMitigations.items.length - 2}</span>}
              </div>
