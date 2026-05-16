@@ -50,6 +50,9 @@
       staleTime: 0,
     });
  
+    console.log('bgp routes data:', routes);
+    const routesList = routes?.routes || [];
+
    const handleRemove = async (ip: string) => {
      const cleanIP = ip.replace('/32', '').trim();
 
@@ -245,52 +248,60 @@
            </div>
          )}
  
-         {activeTab === 'routes' && (
-           <div className="overflow-x-auto">
-             <table className="w-full text-left border-collapse">
-                <thead>
-                  <tr className="bg-gray-50 dark:bg-bg-secondary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-                    <th className="px-6 py-4 border-b border-border">Prefixo</th>
-                    <th className="px-6 py-4 border-b border-border">Tipo</th>
-                    <th className="px-6 py-4 border-b border-border">Community</th>
-                    <th className="px-6 py-4 border-b border-border">Age</th>
-                    <th className="px-6 py-4 border-b border-border">Nexthop</th>
-                  </tr>
-                </thead>
-                <tbody className="text-sm divide-y divide-border/50">
-                  {rtLoading ? (
-                    Array.from({ length: 3 }).map((_, i) => (
-                      <tr key={i}><td colSpan={5} className="px-6 py-4"><Skeleton count={1} className="h-8 w-full bg-gray-50 dark:bg-[#2a2d3e] rounded" /></td></tr>
-                    ))
-                  ) : (Array.isArray(routes?.routes) ? routes.routes : []).length === 0 ? (
-                    <tr><td colSpan={5} className="px-6 py-12 text-center text-text-secondary italic">Nenhuma rota BGP anunciada</td></tr>
-                  ) : (
-                    (Array.isArray(routes?.routes) ? routes.routes : []).map((route: any, i: number) => (
-                      <tr key={i} className="hover:bg-accent/5 transition-colors">
+          {activeTab === 'routes' && (
+            <div className="overflow-x-auto">
+              {rtLoading ? (
+                <div className="p-6"><Skeleton count={3} /></div>
+              ) : routesList.length === 0 ? (
+                <div className="px-6 py-12 text-center text-text-secondary italic">Nenhuma rota BGP anunciada</div>
+              ) : (
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-gray-50 dark:bg-bg-secondary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+                      <th className="px-6 py-4 border-b border-border">Prefixo</th>
+                      <th className="px-6 py-4 border-b border-border">Next-Hop</th>
+                      <th className="px-6 py-4 border-b border-border">Community</th>
+                      <th className="px-6 py-4 border-b border-border">Age</th>
+                      <th className="px-6 py-4 border-b border-border">Tipo</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-sm divide-y divide-border/50">
+                    {routesList.map((route: any, idx: number) => (
+                      <tr key={idx} className="hover:bg-accent/5 transition-colors">
                         <td className="px-6 py-4 font-mono font-bold text-gray-900 dark:text-gray-100">{route.prefix}</td>
+                        <td className="px-6 py-4 text-text-secondary font-mono text-xs">{route.nexthop}</td>
                         <td className="px-6 py-4">
-                          <span className={clsx(
-                            "px-2 py-0.5 text-[10px] font-bold rounded uppercase",
-                            route.type === 'blackhole' ? "bg-danger/10 text-danger" : 
-                            route.type === 'mitigation' ? "bg-warning/10 text-warning" : "bg-success/10 text-success"
-                          )}>
-                            {route.type || 'Normal'}
+                          <span style={{
+                            background: '#1e3a5f',
+                            color: '#3b82f6',
+                            padding: '2px 8px',
+                            borderRadius: 4,
+                            fontSize: 11,
+                            fontFamily: 'monospace'
+                          }}>
+                            {route.community}
                           </span>
                         </td>
+                        <td className="px-6 py-4 text-text-secondary text-xs">{route.age}</td>
                         <td className="px-6 py-4">
-                          <code className="text-[10px] bg-gray-50 dark:bg-bg-secondary px-1.5 py-0.5 rounded text-accent font-bold">
-                            {route.community || '—'}
-                          </code>
+                          <span style={{
+                            background: route.type === 'blackhole' ? '#3b1212' : '#1e2130',
+                            color: route.type === 'blackhole' ? '#ef4444' : '#8892a4',
+                            padding: '2px 8px',
+                            borderRadius: 4,
+                            fontSize: 11,
+                            textTransform: 'uppercase'
+                          }}>
+                            {route.type}
+                          </span>
                         </td>
-                        <td className="px-6 py-4 text-text-secondary text-xs">{route.age || '—'}</td>
-                        <td className="px-6 py-4 text-text-secondary font-mono text-xs">{route.nexthop || '—'}</td>
                       </tr>
-                    ))
-                  )}
-                </tbody>
-             </table>
-           </div>
-         )}
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
+          )}
        </div>
  
       <MitigationModal 
