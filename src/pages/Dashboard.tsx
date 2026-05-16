@@ -274,12 +274,16 @@ export default function Dashboard() {
      .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
      .slice(0, 6);
 
-    const fmtBps = (bps: number) => {
-      if (!bps) return '0 bps';
-      if (bps > 1e9) return (bps / 1e9).toFixed(1) + ' Gbps';
-      if (bps > 1e6) return (bps / 1e6).toFixed(0) + ' Mbps';
-      return (bps / 1e3).toFixed(0) + ' Kbps';
-    };
+  const fmtBps = (bps: number) => {
+    if (!bps || bps === 0) return '0 bps';
+    if (bps >= 1e9)
+      return (bps/1e9).toFixed(1)+' Gbps';
+    if (bps >= 1e6)
+      return (bps/1e6).toFixed(0)+' Mbps';
+    if (bps >= 1e3)
+      return (bps/1e3).toFixed(0)+' Kbps';
+    return bps+' bps';
+  };
 
   if (statsLoading) {
     return (
@@ -701,8 +705,14 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
-        <div className="p-3 border-t border-gray-100 dark:border-border text-[10px] text-text-secondary text-right font-bold uppercase tracking-widest bg-gray-50/30 dark:bg-bg-secondary/10">
-          Atualizado: {new Date().toLocaleTimeString('pt-BR')}
+        <div style={{
+          fontSize: 11,
+          color: '#8892a4',
+          textAlign: 'right',
+          marginTop: 6,
+          padding: '0 24px 16px'
+        }}>
+          Atualizado às {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR') : '—'}
         </div>
       </div>
     </div>
