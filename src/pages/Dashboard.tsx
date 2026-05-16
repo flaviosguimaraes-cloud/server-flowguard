@@ -13,6 +13,8 @@ import Flag from '../components/Flag';
 import { clsx } from 'clsx';
 
 const REFETCH_INTERVAL = 30000;
+const RX_COLORS = ['#3b82f6', '#1d4ed8', '#60a5fa', '#93c5fd', '#bfdbfe'];
+const TX_COLORS = ['#22c55e', '#16a34a', '#4ade80', '#86efac', '#bbf7d0'];
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
 
 export default function Dashboard() {
@@ -92,15 +94,16 @@ export default function Dashboard() {
     refetchOnWindowFocus: true,
   });
 
-  const { data: ports } = useQuery({
-    queryKey: ['ports'],
-    queryFn: async () => {
-      const r = await api.get('/api/flows/ports?minutes=30');
-      return r.data;
-    },
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnWindowFocus: true,
+  const { data: portsDst } = useQuery({
+    queryKey: ['ports-dst'],
+    queryFn: () => api.get('/api/flows/ports?minutes=30&direction=dst').then(r => r.data),
+    refetchInterval: 30000,
+  });
+
+  const { data: portsSrc } = useQuery({
+    queryKey: ['ports-src'],
+    queryFn: () => api.get('/api/flows/ports?minutes=30&direction=src').then(r => r.data),
+    refetchInterval: 30000,
   });
 
   const [selectedCollector, setSelectedCollector] = useState<number>(() => {
@@ -136,7 +139,8 @@ export default function Dashboard() {
     enabled: !!selectedCollector,
   });
 
-   const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
+    const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
+    const [serviceFilter, setServiceFilter] = useState<string | null>(null);
    const [period, setPeriod] = useState<'realtime' | '5m' | '15m'>('realtime');
  
    const { data: metricsHistory } = useQuery({
@@ -342,19 +346,25 @@ export default function Dashboard() {
 
     const getService = (port: number) => {
       const s: Record<number, string> = {
-        80:'HTTP', 443:'HTTPS', 53:'DNS',
-        22:'SSH', 25:'SMTP', 110:'POP3',
-        143:'IMAP', 3389:'RDP', 8080:'HTTP-Alt',
-        123:'NTP', 179:'BGP', 161:'SNMP',
-        3306:'MySQL', 5432:'PG', 27000:'Steam',
-        1194:'VPN', 500:'IPSec', 1723:'PPTP',
-        8443:'HTTPS-Alt', 465:'SMTP-SSL',
-        993:'IMAP-SSL', 995:'POP3-SSL',
-        21:'FTP', 23:'Telnet', 3478:'STUN',
-        5060:'SIP', 5061:'SIP-TLS',
-        19522:'UDP-Game', 25461:'Game',
+        80: 'HTTP', 443: 'HTTPS', 53: 'DNS',
+        22: 'SSH', 25: 'SMTP', 110: 'POP3',
+        143: 'IMAP', 3389: 'RDP',
+        8080: 'HTTP-Alt', 123: 'NTP',
+        179: 'BGP', 161: 'SNMP',
+        3306: 'MySQL', 5432: 'PostgreSQL',
+        27000: 'Steam', 1194: 'VPN',
+        500: 'IPSec', 1723: 'PPTP',
+        8443: 'HTTPS-Alt', 465: 'SMTP-SSL',
+        993: 'IMAP-SSL', 995: 'POP3-SSL',
+        21: 'FTP', 23: 'Telnet',
+        3478: 'STUN', 5060: 'SIP',
+        19132: 'Minecraft', 25565: 'Minecraft',
+        6881: 'BitTorrent', 1935: 'RTMP',
+        554: 'RTSP', 8888: 'HTTP-Alt2',
       };
-      return s[port] || String(port);
+      return s[port]
+        ? `${s[port]} (${port})`
+        : String(port);
     };
 
     const getOrg = (org: string) => {
@@ -383,17 +393,19 @@ export default function Dashboard() {
      1194: 'VPN', 3306: 'MySQL', 5432: 'PG'
    };
 
-    const portItems = ports?.items || ports?.data || (Array.isArray(ports) ? ports : []);
-    const totalPortBytes = portItems.reduce((a: number, b: any) => a + b.bytes, 0);
-
-    const portData = portItems
-      .slice(0, 6)
-      .map((p: any) => ({
+    const processPortData = (data: any) => {
+      const items = data?.items || data?.data || (Array.isArray(data) ? data : []);
+      const total = items.reduce((a: number, b: any) => a + (b.bytes || 0), 0);
+      return items.slice(0, 6).map((p: any) => ({
         port: p.port,
-        name: portMap[p.port] || String(p.port),
+        name: getService(p.port),
         bytes: p.bytes,
-        pct: totalPortBytes > 0 ? ((p.bytes / totalPortBytes) * 100).toFixed(1) : 0
+        pct: total > 0 ? ((p.bytes / total) * 100).toFixed(1) : "0"
       }));
+    };
+
+    const portDataDst = processPortData(portsDst);
+    const portDataSrc = processPortData(portsSrc);
 
     const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
 
@@ -568,12 +580,15 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height={140}>
               <AreaChart data={chartData} margin={{top:10,right:10,left:30,bottom:0}}>
                 <defs>
-                  {selectedIfaces.map((name, idx) => (
-                    <linearGradient key={`rx_${name}`} id={`grad_rx_${idx}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={COLORS[idx%8]} stopOpacity={0.6}/>
-                      <stop offset="95%" stopColor={COLORS[idx%8]} stopOpacity={0.1}/>
-                    </linearGradient>
-                  ))}
+                  {selectedIfaces.map((name, idx) => {
+                    const color = RX_COLORS[idx % RX_COLORS.length];
+                    return (
+                      <linearGradient key={`rx_${name}`} id={`grad_rx_${idx}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={color} stopOpacity={0.6}/>
+                        <stop offset="95%" stopColor={color} stopOpacity={0.1}/>
+                      </linearGradient>
+                    );
+                  })}
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2a2d3e" vertical={false} />
                 <XAxis dataKey="time" hide />
@@ -581,24 +596,25 @@ export default function Dashboard() {
                 <Tooltip
                   contentStyle={{ background:'#1e2130', border:'1px solid #2a2d3e', borderRadius:6, fontSize:11 }}
                   formatter={(v: number, name: string) => {
-                    if (!name.endsWith('_in')) return null;
-                    const ifName = name.replace('_in', '');
-                    return [`${v} Mbps ↓`, ifName];
+                    const ifName = name.replace('_in', '').replace('_out', '');
+                    return [`${v} Mbps ↓ RX`, ifName];
                   }}
                 />
-                {selectedIfaces.map((name, idx) => (
-                  <Area 
-                    key={`${name}_in`} 
-                    type="monotone" 
-                    dataKey={`${name}_in`} 
-                    stackId="rx" 
-                    stroke={COLORS[idx%8]} 
-                    strokeWidth={1.5} 
-                    fill={`url(#grad_rx_${idx})`} 
-                    name={`${name}_in`} 
-                    isAnimationActive={false}
-                  />
-                ))}
+                {selectedIfaces.map((name, idx) => {
+                  const color = RX_COLORS[idx % RX_COLORS.length];
+                  return (
+                    <Area 
+                      key={`${name}_in`} 
+                      type="monotone" 
+                      dataKey={`${name}_in`} 
+                      stackId="rx" 
+                      stroke={color} 
+                      strokeWidth={1.5} 
+                      fill={`url(#grad_rx_${idx})`} 
+                      isAnimationActive={false}
+                    />
+                  );
+                })}
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -611,12 +627,15 @@ export default function Dashboard() {
             <ResponsiveContainer width="100%" height={140}>
               <AreaChart data={chartData} margin={{top:0,right:10,left:30,bottom:10}}>
                 <defs>
-                  {selectedIfaces.map((name, idx) => (
-                    <linearGradient key={`tx_${name}`} id={`grad_tx_${idx}`} x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={COLORS[idx%8]} stopOpacity={0.6}/>
-                      <stop offset="95%" stopColor={COLORS[idx%8]} stopOpacity={0.1}/>
-                    </linearGradient>
-                  ))}
+                  {selectedIfaces.map((name, idx) => {
+                    const color = TX_COLORS[idx % TX_COLORS.length];
+                    return (
+                      <linearGradient key={`tx_${name}`} id={`grad_tx_${idx}`} x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={color} stopOpacity={0.6}/>
+                        <stop offset="95%" stopColor={color} stopOpacity={0.1}/>
+                      </linearGradient>
+                    );
+                  })}
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#2a2d3e" vertical={false} />
                 <XAxis dataKey="time" tick={{fontSize:10,fill:'#8892a4'}} tickLine={false} axisLine={false} interval={4} />
@@ -624,24 +643,25 @@ export default function Dashboard() {
                 <Tooltip
                   contentStyle={{ background:'#1e2130', border:'1px solid #2a2d3e', borderRadius:6, fontSize:11 }}
                   formatter={(v: number, name: string) => {
-                    if (!name.endsWith('_out')) return null;
                     const ifName = name.replace('_out', '');
-                    return [`${v} Mbps ↑`, ifName];
+                    return [`${v} Mbps ↑ TX`, ifName];
                   }}
                 />
-                {selectedIfaces.map((name, idx) => (
-                  <Area 
-                    key={`${name}_out`} 
-                    type="monotone" 
-                    dataKey={`${name}_out`} 
-                    stackId="tx" 
-                    stroke={COLORS[idx%8]} 
-                    strokeWidth={1.5} 
-                    fill={`url(#grad_tx_${idx})`} 
-                    name={`${name}_out`}
-                    isAnimationActive={false}
-                  />
-                ))}
+                {selectedIfaces.map((name, idx) => {
+                  const color = TX_COLORS[idx % TX_COLORS.length];
+                  return (
+                    <Area 
+                      key={`${name}_out`} 
+                      type="monotone" 
+                      dataKey={`${name}_out`} 
+                      stackId="tx" 
+                      stroke={color} 
+                      strokeWidth={1.5} 
+                      fill={`url(#grad_tx_${idx})`} 
+                      isAnimationActive={false}
+                    />
+                  );
+                })}
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -747,38 +767,64 @@ export default function Dashboard() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Top Ports */}
-         <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm">
-            <h2 className="text-lg font-bold mb-6 text-gray-900 dark:text-gray-100">{t('port')}s</h2>
-            <div className="h-[180px] w-full">
-             <ResponsiveContainer width="100%" height="100%">
-               <BarChart data={portData}
-                 margin={{ top: 0, right: 0, left: -20, bottom: 0 }}>
-                 <XAxis
-                   dataKey="name"
-                   tick={{ fontSize: 10, fill: '#8892a4' }}
-                   tickLine={false} axisLine={false} />
-                 <YAxis
-                   tick={{ fontSize: 10, fill: '#8892a4' }}
-                   tickLine={false} axisLine={false}
-                   tickFormatter={v => v + '%'} />
-                 <Tooltip
-                   formatter={v => [v + '%']}
-                  contentStyle={{
-                    backgroundColor: 'var(--bg-card)',
-                    border: '1px solid var(--border)',
-                    borderRadius: 6, fontSize: 12,
-                    color: 'var(--text-primary)'
-                  }}
-                  itemStyle={{ color: 'var(--text-primary)' }}
-                  labelStyle={{ color: 'var(--text-secondary)' }}
-                />
-                 <Bar dataKey="pct" fill="#3b82f6"
-                   radius={[3, 3, 0, 0]} />
-               </BarChart>
-             </ResponsiveContainer>
-           </div>
-         </div>
+          {/* Port Panels */}
+          <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm space-y-8">
+            {/* PAINEL 1 — Portas mais consumidas */}
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Portas mais consumidas</h2>
+                <p className="text-xs text-text-secondary">O que seus clientes estão acessando na internet</p>
+              </div>
+              <div className="space-y-3">
+                {portDataDst.map((p: any, i: number) => (
+                  <div key={i} className="space-y-1">
+                    <div className="flex justify-between text-[11px] font-bold">
+                      <span className="text-text-primary">{p.name}</span>
+                      <span className="text-text-secondary">{fmtBytes(p.bytes)}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-3 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-blue-500 rounded-full transition-all duration-1000"
+                          style={{ width: `${p.pct}%` }}
+                        />
+                      </div>
+                      <span className="text-[11px] font-bold text-text-primary min-w-[35px] text-right">{p.pct}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="border-t border-gray-100 dark:border-[#2a2d3e] pt-8" />
+
+            {/* PAINEL 2 — Serviços mais servidos */}
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Serviços mais servidos</h2>
+                <p className="text-xs text-text-secondary">O que sua rede está entregando para a internet</p>
+              </div>
+              <div className="space-y-3">
+                {portDataSrc.map((p: any, i: number) => (
+                  <div key={i} className="space-y-1">
+                    <div className="flex justify-between text-[11px] font-bold">
+                      <span className="text-text-primary">{p.name}</span>
+                      <span className="text-text-secondary">{fmtBytes(p.bytes)}</span>
+                    </div>
+                    <div className="flex items-center gap-3">
+                      <div className="flex-1 h-3 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden">
+                        <div 
+                          className="h-full bg-green-500 rounded-full transition-all duration-1000"
+                          style={{ width: `${p.pct}%` }}
+                        />
+                      </div>
+                      <span className="text-[11px] font-bold text-text-primary min-w-[35px] text-right">{p.pct}%</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
  
           {/* SNMP Interfaces */}
          <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm">
@@ -815,7 +861,7 @@ export default function Dashboard() {
 
        {/* Active Connections Table */}
       <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
-        <div className="p-6 border-b border-gray-200 dark:border-border flex justify-between items-center bg-gray-50/50 dark:bg-bg-secondary/30">
+        <div className="p-6 border-b border-gray-200 dark:border-border flex flex-wrap justify-between items-center bg-gray-50/50 dark:bg-bg-secondary/30 gap-4">
            <div className="flex flex-col gap-1">
              <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('active_connections')}</h2>
              <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
@@ -826,17 +872,53 @@ export default function Dashboard() {
                  display: 'inline-block',
                  animation: 'pulse 2s infinite'
                }} />
-               <span style={{ fontSize: 11, color: '#8892a4' }}>
-                 Ao vivo · últimos 2 minutos · atualizado a cada 30s
-               </span>
+                <span style={{ fontSize: 11, color: '#8892a4' }}>
+                  {(() => {
+                    const list = (Array.isArray(connections) ? connections : (connections?.items || connections?.data || []))
+                      ?.filter((item: any) => {
+                        if (!serviceFilter) return true;
+                        const flipped = shouldFlip(item);
+                        const dstPort = flipped ? item.src_port : item.dst_port;
+                        const service = getService(dstPort).split(' ')[0];
+                        if (serviceFilter === 'UDP') return item.proto === 17;
+                        if (serviceFilter === 'TCP') return item.proto === 6;
+                        return service === serviceFilter;
+                      }) || [];
+                    return `${list.length} conexões · últimos 2 min · ao vivo`;
+                  })()}
+                </span>
              </div>
            </div>
            <span style={{fontSize:11, color:'#8892a4'}}>
              Próxima atualização: {countdown}s
            </span>
-          <button className="text-text-secondary hover:text-text-primary transition-colors">
-            <MoreVertical size={20} />
-          </button>
+          <div className="flex items-center gap-2">
+            <button className="text-text-secondary hover:text-text-primary transition-colors">
+              <MoreVertical size={20} />
+            </button>
+          </div>
+        </div>
+
+        {/* Filtros rápidos */}
+        <div className="flex flex-wrap gap-2 px-6 py-3 border-b border-gray-100 dark:border-[#2a2d3e] bg-gray-50/30 dark:bg-bg-secondary/10">
+          {['Todos', 'HTTP', 'HTTPS', 'DNS', 'Steam', 'UDP', 'TCP'].map(label => {
+            const value = label === 'Todos' ? null : label;
+            const isActive = serviceFilter === value;
+            return (
+              <button
+                key={label}
+                onClick={() => setServiceFilter(value)}
+                className={clsx(
+                  "px-3 py-1 rounded-md text-[11px] font-bold transition-all",
+                  isActive 
+                    ? "bg-accent/10 text-accent border border-accent/30 shadow-sm" 
+                    : "text-text-secondary hover:text-text-primary border border-transparent hover:bg-gray-100 dark:hover:bg-[#2a2d3e]"
+                )}
+              >
+                {label}
+              </button>
+            );
+          })}
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse min-w-[800px]">
@@ -852,7 +934,16 @@ export default function Dashboard() {
               </tr>
             </thead>
             <tbody className="text-sm divide-y divide-border/50">
-              {(Array.isArray(connections) ? connections : (connections?.items || connections?.data || [])).map((item: any, i: number) => {
+              {((Array.isArray(connections) ? connections : (connections?.items || connections?.data || []))
+                ?.filter((item: any) => {
+                  if (!serviceFilter) return true;
+                  const flipped = shouldFlip(item);
+                  const dstPort = flipped ? item.src_port : item.dst_port;
+                  const service = getService(dstPort).split(' ')[0];
+                  if (serviceFilter === 'UDP') return item.proto === 17;
+                  if (serviceFilter === 'TCP') return item.proto === 6;
+                  return service === serviceFilter;
+                }) || []).map((item: any, i: number) => {
                 const flipped = shouldFlip(item);
                 const src = flipped ? item.dst_addr : item.src_addr;
                 const srcPort = flipped ? item.dst_port : item.src_port;
