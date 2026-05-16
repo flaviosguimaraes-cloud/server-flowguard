@@ -25,9 +25,10 @@
       queryFn: () =>
         api.get('/api/mitigation/active')
           .then(r => r.data),
-      refetchOnMount: true,
+      refetchOnMount: 'always',
       refetchInterval: 30000,
       staleTime: 0,
+      gcTime: 0,
     });
  
    const { data: flowspec, isLoading: fsLoading } = useQuery({
