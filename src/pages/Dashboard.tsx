@@ -262,6 +262,15 @@ export default function Dashboard() {
       return history[firstSelected]?.map(p => p.time) || [];
     }, [history, selectedIfaces]);
 
+     const ifaceMap = useMemo(() => {
+       const map: Record<string, string> = {};
+       const list = Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [];
+       list.forEach((i: any) => {
+         map[i.if_name] = i.display_name || i.if_name;
+       });
+       return map;
+     }, [interfaces]);
+ 
      const chartData = useMemo(() => {
        if (period === 'realtime') {
          return timePoints.map((time, idx) => {
@@ -288,11 +297,11 @@ export default function Dashboard() {
            // The endpoint uses if_name, we might need to match with display_name
            // but the user's selectedIfaces are based on display_name || if_name.
            // Let's check both.
-           const ifName = m.if_name;
-           if (selectedIfaces.includes(ifName)) {
-             timeMap[time][`${ifName}_in`] = Math.round(m.in_bps / 1e6);
-             timeMap[time][`${ifName}_out`] = Math.round(m.out_bps / 1e6);
-           }
+          const displayName = ifaceMap[m.if_name] || m.if_name;
+          if (selectedIfaces.includes(displayName)) {
+            timeMap[time][`${displayName}_in`] = Math.round(m.in_bps / 1e6);
+            timeMap[time][`${displayName}_out`] = Math.round(m.out_bps / 1e6);
+          }
          });
          
          return Object.values(timeMap).sort((a: any, b: any) => a.time.localeCompare(b.time));
