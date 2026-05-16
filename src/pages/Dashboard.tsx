@@ -53,8 +53,6 @@ export default function Dashboard() {
       const r = await api.get('/api/detection/stats');
       return r.data;
     },
-    refetchInterval: REFETCH_INTERVAL,
-    refetchIntervalInBackground: true,
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true,
@@ -66,8 +64,6 @@ export default function Dashboard() {
       const r = await api.get('/api/flows/timeline?minutes=30');
       return r.data;
     },
-    refetchInterval: REFETCH_INTERVAL,
-    refetchIntervalInBackground: true,
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true,
@@ -79,8 +75,6 @@ export default function Dashboard() {
       const r = await api.get('/api/flows/protocols?minutes=30');
       return r.data;
     },
-    refetchInterval: REFETCH_INTERVAL,
-    refetchIntervalInBackground: true,
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true,
@@ -92,8 +86,6 @@ export default function Dashboard() {
       const r = await api.get('/api/flows/countries?minutes=30');
       return r.data;
     },
-    refetchInterval: REFETCH_INTERVAL,
-    refetchIntervalInBackground: true,
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true,
@@ -105,8 +97,6 @@ export default function Dashboard() {
       const r = await api.get('/api/flows/ports?minutes=30');
       return r.data;
     },
-    refetchInterval: REFETCH_INTERVAL,
-    refetchIntervalInBackground: true,
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true,
@@ -118,8 +108,6 @@ export default function Dashboard() {
       const r = await api.get('/api/collectors/1/interfaces/summary');
       return r.data;
     },
-    refetchInterval: REFETCH_INTERVAL,
-    refetchIntervalInBackground: true,
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true,
