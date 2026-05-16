@@ -95,14 +95,14 @@ export default function Dashboard() {
   });
 
   const { data: portsDst } = useQuery({
-    queryKey: ['ports-dst'],
-    queryFn: () => api.get('/api/flows/ports?minutes=30&direction=dst').then(r => r.data),
+    queryKey: ['ports-consumed'],
+    queryFn: () => api.get('/api/flows/ports?minutes=30&direction=src').then(r => r.data),
     refetchInterval: 30000,
   });
 
   const { data: portsSrc } = useQuery({
-    queryKey: ['ports-src'],
-    queryFn: () => api.get('/api/flows/ports?minutes=30&direction=src').then(r => r.data),
+    queryKey: ['ports-served'],
+    queryFn: () => api.get('/api/flows/ports?minutes=30&direction=dst').then(r => r.data),
     refetchInterval: 30000,
   });
 
