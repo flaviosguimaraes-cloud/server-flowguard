@@ -4,7 +4,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
  import { useTranslation } from '../hooks/useTranslation';
   import { 
     Search, Filter, X, Shield, Globe, Users, 
-    ArrowRight, AlertCircle, Download, MoreHorizontal, Activity
+    ArrowRight, AlertCircle, Download, MoreHorizontal
   } from 'lucide-react';
   import Flag from '../components/Flag';
  import { Skeleton } from '../components/Skeleton';
