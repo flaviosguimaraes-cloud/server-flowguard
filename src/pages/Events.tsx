@@ -64,74 +64,74 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
     queryClient.invalidateQueries({ queryKey: ['audit-logs-mitigation'] });
   }, [queryClient]);
  
-   if (statsLoading) {
-     return (
-       <div className="space-y-6">
-         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-           <div className="bg-white dark:bg-[#1e2130] h-32 rounded-xl border border-gray-200 dark:border-[#2a2d3e] animate-pulse" />
-           <div className="bg-white dark:bg-[#1e2130] h-32 rounded-xl border border-gray-200 dark:border-[#2a2d3e] animate-pulse" />
-         </div>
-         <div className="bg-white dark:bg-[#1e2130] h-96 rounded-xl border border-gray-200 dark:border-[#2a2d3e] animate-pulse" />
-       </div>
-     );
-   }
+    if (statsLoading) {
+      return (
+        <div className="space-y-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="bg-bg-secondary h-32 rounded-xl border border-border animate-pulse" />
+            <div className="bg-bg-secondary h-32 rounded-xl border border-border animate-pulse" />
+          </div>
+          <div className="bg-bg-secondary h-96 rounded-xl border border-border animate-pulse" />
+        </div>
+      );
+    }
  
     return (
       <TooltipProvider>
       <div className="space-y-6 animate-in fade-in duration-500">
        <h1 className="text-2xl font-bold text-gray-900 dark:text-gray-100">{t('events')}</h1>
  
-       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-         {/* Active Detections Card */}
-         <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm flex items-center gap-6">
-           <div className="p-4 bg-danger/10 rounded-2xl text-danger">
-             <AlertTriangle size={32} />
-           </div>
-           <div>
-             <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-1">Detecções Ativas</p>
-             <h3 className="text-3xl font-bold text-gray-900 dark:text-gray-100">{stats?.active_detections || 0}</h3>
-             <p className="text-xs text-text-secondary mt-1">Anomalias identificadas agora</p>
-           </div>
-         </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          {/* Active Detections Card */}
+          <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm flex items-center gap-5 transition-all hover:border-danger/20">
+            <div className="p-3.5 bg-danger/5 rounded-xl text-danger border border-danger/10">
+              <AlertTriangle size={28} />
+            </div>
+            <div>
+              <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mb-1">Detecções Ativas</p>
+              <h3 className="text-2xl font-bold text-text-primary">{stats?.active_detections || 0}</h3>
+              <p className="text-[11px] text-text-secondary mt-0.5 opacity-70">Anomalias identificadas agora</p>
+            </div>
+          </div>
+  
+          {/* Active Mitigations Card */}
+          <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm flex items-center gap-5 transition-all hover:border-success/20">
+            <div className="p-3.5 bg-success/5 rounded-xl text-success border border-success/10">
+              <Shield size={28} />
+            </div>
+            <div>
+              <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mb-1">Mitigações em Curso</p>
+              <h3 className="text-2xl font-bold text-text-primary">
+                {activeMitigations?.total || activeMitigations?.items?.length || 0}
+              </h3>
+              <p className="text-[11px] text-text-secondary mt-0.5 opacity-70">Bloqueios ativos no BGP</p>
+            </div>
+          </div>
+        </div>
  
-         {/* Active Mitigations Card */}
-         <div className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm flex items-center gap-6">
-           <div className="p-4 bg-success/10 rounded-2xl text-success">
-             <Shield size={32} />
-           </div>
-           <div>
-             <p className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-1">Mitigações em Curso</p>
-             <h3 className="text-3xl font-bold text-gray-900 dark:text-gray-100">
-               {activeMitigations?.total || activeMitigations?.items?.length || 0}
-             </h3>
-             <p className="text-xs text-text-secondary mt-1">Bloqueios ativos no BGP</p>
-           </div>
-         </div>
-       </div>
- 
-       {/* Real-time Detections Section */}
-       <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
-          <div className="p-6 border-b border-gray-100 dark:border-[#2a2d3e] flex flex-col md:flex-row md:justify-between md:items-center gap-4">
-            <div className="flex flex-col">
-              <div className="flex items-center gap-2">
-                <Activity className="text-accent" size={20} />
-                <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Detecções em Tempo Real</h2>
+        {/* Real-time Detections Section */}
+        <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
+           <div className="p-5 border-b border-border flex flex-col md:flex-row md:justify-between md:items-center gap-4 bg-bg-primary/30">
+             <div className="flex flex-col">
+               <div className="flex items-center gap-2">
+                 <Activity className="text-primary" size={18} />
+                 <h2 className="text-base font-bold text-text-primary">Detecções em Tempo Real</h2>
+               </div>
+               {dataUpdatedAt && (
+                 <p className="text-[10px] text-text-secondary mt-0.5 font-bold uppercase tracking-widest opacity-60">
+                   Atualizado há {Math.floor((now - dataUpdatedAt) / 1000)}s
+                 </p>
+               )}
+            </div>
+            <div className="flex gap-4 text-[11px] font-bold">
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-primary/5 text-primary rounded-lg border border-primary/10">
+                <ArrowDown size={12} /> {(stats?.incoming_mbps / 1000).toFixed(1)} Gbps
               </div>
-              {dataUpdatedAt && (
-                <p className="text-[10px] text-text-secondary mt-1 font-medium uppercase tracking-wider">
-                  Atualizado há {Math.floor((now - dataUpdatedAt) / 1000)}s
-                </p>
-              )}
-           </div>
-           <div className="flex gap-4 text-xs font-bold">
-             <div className="flex items-center gap-1 text-accent">
-               <ArrowDown size={14} /> {(stats?.incoming_mbps / 1000).toFixed(1)} Gbps
-             </div>
-             <div className="flex items-center gap-1 text-success">
-               <ArrowUp size={14} /> {(stats?.outgoing_mbps / 1000).toFixed(1)} Gbps
-             </div>
-           </div>
-         </div>
+              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-success/5 text-success rounded-lg border border-success/10">
+                <ArrowUp size={12} /> {(stats?.outgoing_mbps / 1000).toFixed(1)} Gbps
+              </div>
+            </div>
+          </div>
  
          <div className="grid grid-cols-1 lg:grid-cols-2 divide-y lg:divide-y-0 lg:divide-x divide-gray-100 dark:divide-[#2a2d3e]">
            {/* Top Hosts Inbound */}
