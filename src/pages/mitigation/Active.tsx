@@ -208,7 +208,7 @@ function TabButton({ active, onClick, icon, label, count }: any) {
                          <td className="px-6 py-3.5">
                            {item.pps > 0 ? (
                              <p className="font-bold text-text-primary text-xs">
-                               {(item.pps / 1000).toFixed(1)}k pps · {item.mbps || 0} Mbps
+                               {item.pps > 1000 ? (item.pps / 1000).toFixed(1) + 'k' : item.pps} pps · {item.mbps || 0} Mbps
                              </p>
                            ) : item.source === 'manual' ? (
                              <span className="px-1.5 py-0.5 bg-bg-primary text-text-secondary border border-border text-[10px] font-bold rounded uppercase">Manual</span>
