@@ -852,49 +852,49 @@ export default function Dashboard() {
        {/* Secondary Grids */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
          {/* Top Protocols */}
-         <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm">
-            <h2 className="text-lg font-bold mb-6 text-text-primary">{t('protocols')}</h2>
-            <div className="space-y-2">
+         <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm">
+            <h2 className="text-base font-bold mb-5 text-text-primary">{t('protocols')}</h2>
+            <div className="space-y-1.5">
               {protoData.map((p: any, i: number) => (
                 <div key={i} className={clsx(
-                  "flex items-center gap-[10px] py-[6px]",
-                  i < protoData.length - 1 && "border-b border-gray-100 dark:border-[#2a2d3e]"
+                  "flex items-center gap-3 py-1.5",
+                  i < protoData.length - 1 && "border-b border-border/40"
                 )}>
-                  <span className="min-w-[45px] text-[13px] font-medium text-gray-700 dark:text-[#e2e8f0]">{p.name}</span>
-                  <div className="flex-1 h-[6px] bg-bg-primary rounded-[3px] overflow-hidden">
+                  <span className="min-w-[40px] text-xs font-semibold text-text-primary">{p.name}</span>
+                  <div className="flex-1 h-1.5 bg-bg-primary rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-accent rounded-[3px]"
+                      className="h-full bg-primary rounded-full transition-all duration-700"
                       style={{ width: p.pct + '%' }}
                     />
                   </div>
-                  <span className="text-[12px] text-text-secondary min-w-[40px] text-right">{p.pct}%</span>
+                  <span className="text-[11px] text-text-secondary font-bold min-w-[35px] text-right">{p.pct}%</span>
                 </div>
-             ))}
-           </div>
-         </div>
+              ))}
+            </div>
+          </div>
  
           {/* Top Countries */}
-         <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm">
-            <h2 className="text-lg font-bold mb-6 text-text-primary">{t('countries')}</h2>
+         <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm">
+            <h2 className="text-base font-bold mb-5 text-text-primary">{t('countries')}</h2>
             <div className="space-y-1">
               {countryData.map((c: any, i: number) => (
                 <div key={i} className={clsx(
-                  "flex items-center gap-[8px] py-[5px]",
-                   i < countryData.length - 1 && "border-b border-gray-100 dark:border-[#2a2d3e]"
+                  "flex items-center gap-2 py-1.5",
+                   i < countryData.length - 1 && "border-b border-border/40"
                  )}>
-                   <Flag code={c.code} size={18} />
-                   <span className="text-[12px] text-gray-700 dark:text-[#e2e8f0] min-w-[30px] font-medium ml-1">{c.code}</span>
-                  <div className="flex-1 h-[6px] bg-bg-primary rounded-[3px] overflow-hidden">
+                   <Flag code={c.code} size={16} />
+                   <span className="text-xs text-text-primary min-w-[28px] font-semibold ml-1">{c.code}</span>
+                  <div className="flex-1 h-1.5 bg-bg-primary rounded-full overflow-hidden">
                     <div 
-                      className="h-full bg-accent rounded-[3px]"
+                      className="h-full bg-primary rounded-full transition-all duration-700"
                       style={{ width: c.pct + '%' }}
                     />
                   </div>
-                  <span className="text-[12px] text-text-secondary min-w-[35px] text-right">{c.pct}%</span>
+                  <span className="text-[11px] text-text-secondary font-bold min-w-[35px] text-right">{c.pct}%</span>
                 </div>
-             ))}
-           </div>
-         </div>
+              ))}
+            </div>
+          </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
