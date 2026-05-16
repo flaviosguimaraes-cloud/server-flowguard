@@ -444,11 +444,11 @@ export default function Dashboard() {
           <div className="flex items-center gap-6">
             <div className="flex flex-col items-end">
               <span className="text-[10px] uppercase font-bold text-text-secondary">Total RX</span>
-              <span className="text-sm font-black text-accent">{fmtBps(selectedIfaceData.reduce((a, b) => a + (b.in_bps || 0), 0))}</span>
+              <span className="text-sm font-black text-accent">{fmtBps(selectedIfaceData.reduce((a: number, b: any) => a + (b.in_bps || 0), 0))}</span>
             </div>
             <div className="flex flex-col items-end">
               <span className="text-[10px] uppercase font-bold text-text-secondary">Total TX</span>
-              <span className="text-sm font-black text-success">{fmtBps(selectedIfaceData.reduce((a, b) => a + (b.out_bps || 0), 0))}</span>
+              <span className="text-sm font-black text-success">{fmtBps(selectedIfaceData.reduce((a: number, b: any) => a + (b.out_bps || 0), 0))}</span>
             </div>
             <div className="flex flex-col items-end">
               <span className="text-[10px] uppercase font-bold text-text-secondary">Interfaces</span>
