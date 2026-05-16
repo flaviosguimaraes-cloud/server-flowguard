@@ -596,9 +596,8 @@ export default function Dashboard() {
                 <Tooltip
                   contentStyle={{ background:'#1e2130', border:'1px solid #2a2d3e', borderRadius:6, fontSize:11 }}
                   formatter={(v: number, name: string) => {
-                    if (!name.endsWith('_in')) return null;
-                    const ifName = name.replace('_in', '');
-                    return [`${v} Mbps ↓`, ifName];
+                    const ifName = name.replace('_in', '').replace('_out', '');
+                    return [`${v} Mbps ↓ RX`, ifName];
                   }}
                 />
                 {selectedIfaces.map((name, idx) => {
@@ -612,7 +611,6 @@ export default function Dashboard() {
                       stroke={color} 
                       strokeWidth={1.5} 
                       fill={`url(#grad_rx_${idx})`} 
-                      name="↓ RX" 
                       isAnimationActive={false}
                     />
                   );
@@ -645,9 +643,8 @@ export default function Dashboard() {
                 <Tooltip
                   contentStyle={{ background:'#1e2130', border:'1px solid #2a2d3e', borderRadius:6, fontSize:11 }}
                   formatter={(v: number, name: string) => {
-                    if (!name.endsWith('_out')) return null;
                     const ifName = name.replace('_out', '');
-                    return [`${v} Mbps ↑`, ifName];
+                    return [`${v} Mbps ↑ TX`, ifName];
                   }}
                 />
                 {selectedIfaces.map((name, idx) => {
@@ -661,7 +658,6 @@ export default function Dashboard() {
                       stroke={color} 
                       strokeWidth={1.5} 
                       fill={`url(#grad_tx_${idx})`} 
-                      name="↑ TX"
                       isAnimationActive={false}
                     />
                   );
