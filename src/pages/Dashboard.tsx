@@ -1030,7 +1030,7 @@ export default function Dashboard() {
   );
 }
 
-function StatCard({ title, value, unit, icon, trend, tooltip }: any) {
+function StatCard({ title, value, unit, icon, trend, tooltip, subtitle }: any) {
   return (
     <div 
       className="bg-white dark:bg-[#1e2130] p-6 rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm flex flex-col justify-between min-h-[120px] transition-all hover:border-accent/50 group relative"
@@ -1056,6 +1056,9 @@ function StatCard({ title, value, unit, icon, trend, tooltip }: any) {
           <h3 className="text-2xl font-bold text-gray-900 dark:text-gray-100 tracking-tight">{value}</h3>
           {unit && <span className="text-xs font-bold text-gray-500 dark:text-text-secondary">{unit}</span>}
         </div>
+        {subtitle && (
+          <p className="text-[10px] text-text-secondary font-medium mt-0.5">{subtitle}</p>
+        )}
       </div>
       {tooltip && (
         <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
