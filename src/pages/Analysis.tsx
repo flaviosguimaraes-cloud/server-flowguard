@@ -211,9 +211,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
            >
              <X size={14} /> Limpar filtros
            </button>
-           <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
-             Mostrando {connectionItems.length} conexões recentes
-           </p>
+            <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
+              {connectionItems.length} conexões nos últimos {minutes < 60 ? `${minutes} minutos` : `${minutes/60} hora(s)`}
+            </p>
          </div>
        </div>
  
