@@ -164,6 +164,11 @@ export default function Dashboard() {
     }
   });
 
+  const [source, setSource] = useState<'snmp' | 'flow'>(() => {
+    const saved = localStorage.getItem('fg_traffic_source');
+    return (saved === 'snmp' || saved === 'flow') ? saved : 'snmp';
+  });
+
   const { data: collectors } = useQuery({
     queryKey: ['collectors'],
     queryFn: () => api.get('/api/collectors').then(r => r.data),
@@ -234,6 +239,10 @@ export default function Dashboard() {
   useEffect(() => {
     localStorage.setItem('fg_ifaces', JSON.stringify(selectedIfaces));
   }, [selectedIfaces]);
+
+  useEffect(() => {
+    localStorage.setItem('fg_traffic_source', source);
+  }, [source]);
 
    useEffect(() => {
      if (!interfaces?.interfaces || period !== 'realtime') return;
@@ -577,10 +586,30 @@ export default function Dashboard() {
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 gap-4 border-b border-border/50 pb-5">
           <div className="flex items-center gap-3">
             <h2 className="text-lg font-bold text-text-primary">Tráfego da Interface</h2>
-            <div className="px-2.5 py-1 rounded-full bg-accent/10 text-accent text-[9px] font-black uppercase tracking-wider">SNMP Realtime</div>
+            <div className="px-2.5 py-1 rounded-full bg-accent/10 text-accent text-[9px] font-black uppercase tracking-wider">
+              {source === 'snmp' ? 'SNMP Realtime' : 'FLOW IPv4'}
+            </div>
           </div>
           
           <div className="flex flex-wrap items-center gap-3">
+            {/* Seletor de Fonte */}
+            <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
+              {(['snmp', 'flow'] as const).map((s) => (
+                <button
+                  key={s}
+                  onClick={() => setSource(s)}
+                  className={clsx(
+                    "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all",
+                    source === s 
+                      ? "bg-white dark:bg-[#2a2d3e] text-accent shadow-sm" 
+                      : "text-text-secondary hover:text-text-primary"
+                  )}
+                >
+                  {s}
+                </button>
+              ))}
+            </div>
+
             <div className="flex items-center gap-2 px-3 py-1.5 bg-bg-primary rounded-lg border border-border">
               <Settings2 size={14} className="text-text-secondary" />
               <select 
