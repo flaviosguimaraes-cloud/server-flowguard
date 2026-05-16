@@ -155,8 +155,12 @@ export default function Dashboard() {
 
     setHistory(prev => {
       const next = { ...prev };
-      interfaces.interfaces.forEach((iface: any) => {
+      const ifaceList = Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [];
+      
+      ifaceList.forEach((iface: any) => {
         const name = iface.display_name || iface.if_name;
+        if (!name) return;
+        
         if (!next[name]) next[name] = [];
         next[name] = [
           ...next[name].slice(-19),
@@ -171,9 +175,9 @@ export default function Dashboard() {
     });
 
     // Default selection (top 8) if none selected
-    if (selectedIfaces.length === 0) {
-      const top8 = (interfaces.interfaces || [])
-        .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
+    if (selectedIfaces.length === 0 && interfaces?.interfaces) {
+      const top8 = (Array.isArray(interfaces.interfaces) ? interfaces.interfaces : [])
+        .filter((i: any) => (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0)
         .filter((i: any) => {
           const n = (i.display_name || i.if_name || '').toLowerCase();
           return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
