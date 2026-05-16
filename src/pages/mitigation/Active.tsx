@@ -19,19 +19,18 @@ function TabButton({ active, onClick, icon, label, count }: any) {
     <button
       onClick={onClick}
       className={clsx(
-        "px-8 py-5 flex items-center gap-3 border-b-2 transition-all duration-300 relative font-black text-sm uppercase tracking-widest overflow-hidden",
+        "px-6 py-4 flex items-center gap-2.5 border-b-2 transition-all duration-200 relative font-bold text-xs uppercase tracking-wider overflow-hidden",
         active 
-          ? "border-primary text-primary bg-primary/10" 
-          : "border-transparent text-text-secondary hover:text-text-primary hover:bg-bg-primary"
+          ? "border-primary text-primary bg-primary/5" 
+          : "border-transparent text-text-secondary hover:text-text-primary hover:bg-bg-primary/50"
       )}
     >
-      {active && <div className="absolute top-0 left-0 w-full h-1 bg-primary animate-in slide-in-from-left duration-500" />}
-      {icon}
-      <span className="tracking-tighter">{label}</span>
+      {icon && <span className={clsx("transition-colors", active ? "text-primary" : "text-text-secondary")}>{icon}</span>}
+      <span>{label}</span>
       {count !== undefined && (
         <span className={clsx(
-          "px-2.5 py-1 rounded-lg text-[10px] ml-2 font-black border transition-all duration-300",
-          active ? "bg-primary text-white border-primary shadow-lg shadow-primary/30 scale-110" : "bg-bg-primary text-text-secondary border-border"
+          "px-1.5 py-0.5 rounded text-[10px] font-bold border transition-all",
+          active ? "bg-primary text-white border-primary" : "bg-bg-primary text-text-secondary border-border"
         )}>
           {count}
         </span>
@@ -119,22 +118,22 @@ function TabButton({ active, onClick, icon, label, count }: any) {
            <h1 className="text-2xl font-bold text-text-primary">Mitigações Ativas</h1>
            <p className="text-sm text-text-secondary mt-1">Gerencie bloqueios e regras de proteção em tempo real</p>
          </div>
-         {isAdmin && (
-           <div className="flex gap-3">
-             <button
-               onClick={() => setIsFlowSpecOpen(true)}
-               className="flex items-center gap-2 px-4 py-2 bg-bg-secondary border border-border rounded-lg text-sm font-bold text-text-primary hover:bg-gray-50 dark:hover:bg-[#2a2d3e] transition-all shadow-sm"
-             >
-               <Zap size={18} className="text-warning" /> Nova FlowSpec
-             </button>
-             <button
-               onClick={() => setIsMitigationOpen(true)}
-               className="flex items-center gap-2 px-4 py-2 bg-danger hover:bg-danger/90 text-white rounded-lg text-sm font-bold transition-all shadow-lg shadow-danger/20"
-             >
-               <Plus size={18} /> Nova Mitigação
-             </button>
-           </div>
-         )}
+          {isAdmin && (
+            <div className="flex gap-3">
+              <button
+                onClick={() => setIsFlowSpecOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-bg-secondary border border-border rounded-lg text-sm font-semibold text-text-primary hover:bg-bg-primary transition-all shadow-sm"
+              >
+                <Zap size={16} className="text-warning" /> Nova FlowSpec
+              </button>
+              <button
+                onClick={() => setIsMitigationOpen(true)}
+                className="flex items-center gap-2 px-4 py-2 bg-danger hover:bg-danger/90 text-white rounded-lg text-sm font-semibold transition-all shadow-md shadow-danger/10"
+              >
+                <Plus size={16} /> Nova Mitigação
+              </button>
+            </div>
+          )}
        </div>
  
        {/* Tabs */}
