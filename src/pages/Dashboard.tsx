@@ -899,57 +899,57 @@ export default function Dashboard() {
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Port Panels */}
-          <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm space-y-8">
+          <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm space-y-6">
             {/* PAINEL 1 — Portas mais consumidas */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <h2 className="text-lg font-bold text-text-primary">Portas mais consumidas</h2>
-                <p className="text-xs text-text-secondary">O que seus clientes estão acessando na internet</p>
+                <h2 className="text-base font-bold text-text-primary">Portas mais consumidas</h2>
+                <p className="text-[10px] text-text-secondary font-medium uppercase tracking-wider opacity-60 mt-0.5">Destino Internet</p>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {portDataDst.map((p: any, i: number) => (
                   <div key={i} className="space-y-1">
-                    <div className="flex justify-between text-[11px] font-bold">
+                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-tight">
                       <span className="text-text-primary">{p.name}</span>
-                      <span className="text-text-secondary">{fmtBytes(p.bytes)}</span>
+                      <span className="text-text-secondary opacity-70">{fmtBytes(p.bytes)}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="flex-1 h-3 bg-bg-primary rounded-full overflow-hidden">
+                      <div className="flex-1 h-1.5 bg-bg-primary rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-blue-500 rounded-full transition-all duration-1000"
+                          className="h-full bg-primary rounded-full transition-all duration-700"
                           style={{ width: `${p.pct}%` }}
                         />
                       </div>
-                      <span className="text-[11px] font-bold text-text-primary min-w-[35px] text-right">{p.pct}%</span>
+                      <span className="text-[10px] font-bold text-text-primary min-w-[30px] text-right">{p.pct}%</span>
                     </div>
                   </div>
                 ))}
               </div>
             </div>
-
-            <div className="border-t border-gray-100 dark:border-[#2a2d3e] pt-8" />
-
+ 
+            <div className="border-t border-border/40 pt-6" />
+ 
             {/* PAINEL 2 — Serviços mais servidos */}
-            <div className="space-y-4">
+            <div className="space-y-3">
               <div>
-                <h2 className="text-lg font-bold text-text-primary">Serviços mais servidos</h2>
-                <p className="text-xs text-text-secondary">O que sua rede está entregando para a internet</p>
+                <h2 className="text-base font-bold text-text-primary">Serviços mais servidos</h2>
+                <p className="text-[10px] text-text-secondary font-medium uppercase tracking-wider opacity-60 mt-0.5">Origem Rede</p>
               </div>
-              <div className="space-y-3">
+              <div className="space-y-2.5">
                 {portDataSrc.map((p: any, i: number) => (
                   <div key={i} className="space-y-1">
-                    <div className="flex justify-between text-[11px] font-bold">
+                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-tight">
                       <span className="text-text-primary">{p.name}</span>
-                      <span className="text-text-secondary">{fmtBytes(p.bytes)}</span>
+                      <span className="text-text-secondary opacity-70">{fmtBytes(p.bytes)}</span>
                     </div>
                     <div className="flex items-center gap-3">
-                      <div className="flex-1 h-3 bg-bg-primary rounded-full overflow-hidden">
+                      <div className="flex-1 h-1.5 bg-bg-primary rounded-full overflow-hidden">
                         <div 
-                          className="h-full bg-green-500 rounded-full transition-all duration-1000"
+                          className="h-full bg-success rounded-full transition-all duration-700"
                           style={{ width: `${p.pct}%` }}
                         />
                       </div>
-                      <span className="text-[11px] font-bold text-text-primary min-w-[35px] text-right">{p.pct}%</span>
+                      <span className="text-[10px] font-bold text-text-primary min-w-[30px] text-right">{p.pct}%</span>
                     </div>
                   </div>
                 ))}
