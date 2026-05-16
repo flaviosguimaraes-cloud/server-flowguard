@@ -103,14 +103,16 @@ export default function Dashboard() {
     refetchOnWindowFocus: true,
   });
 
-  const [selectedCollector, setSelectedCollector] = useState<number | null>(() => {
+  const [selectedCollector, setSelectedCollector] = useState<number>(() => {
     const saved = localStorage.getItem('fg_collector');
-    return saved ? parseInt(saved) : 1;
+    const parsed = saved ? parseInt(saved) : 1;
+    return isNaN(parsed) ? 1 : parsed;
   });
   const [selectedIfaces, setSelectedIfaces] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('fg_ifaces');
-      return saved ? JSON.parse(saved) : [];
+      const parsed = saved ? JSON.parse(saved) : [];
+      return Array.isArray(parsed) ? parsed : [];
     } catch {
       return [];
     }
