@@ -3,8 +3,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
  import api from '../services/api';
  import { useTranslation } from '../hooks/useTranslation';
   import { 
-    Search, Filter, X, Shield, Globe, Users, 
-    ArrowRight, AlertCircle, Download, MoreHorizontal
+    Search, Filter, X, Shield, Globe, Users, Activity,
+    ArrowRight, AlertCircle, Download, MoreHorizontal,
+    ArrowUp, ArrowDown, LayoutGrid, List
   } from 'lucide-react';
   import Flag from '../components/Flag';
  import { Skeleton } from '../components/Skeleton';
@@ -20,6 +21,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
     const [proto, setProto] = useState('Todos');
     const [country, setCountry] = useState('Todos');
     const [minutes, setMinutes] = useState(5);
+    const [sortField, setSortField] = useState('bytes');
+    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [groupByIP, setGroupByIP] = useState(false);
 
     const periods = [
       { label: '5 min', value: 5 },
@@ -63,9 +67,75 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
       refetchInterval: 30000,
     });
  
-   const connectionItems = useMemo(() => {
-     return Array.isArray(connections) ? connections : (connections?.items || connections?.data || []);
-   }, [connections]);
+    const connectionItems = useMemo(() => {
+      let items = Array.isArray(connections) ? [...connections] : [...(connections?.items || connections?.data || [])];
+      
+      // Advanced Search (Frontend Filtering)
+      if (search) {
+        const s = search.toLowerCase();
+        items = items.filter((i: any) => {
+          const srcPortStr = String(i.src_port);
+          const dstPortStr = String(i.dst_port);
+          const service = getService(i.dst_port).toLowerCase();
+          return (
+            i.src_addr?.toLowerCase().includes(s) ||
+            i.dst_addr?.toLowerCase().includes(s) ||
+            i.src_org?.toLowerCase().includes(s) ||
+            i.dst_org?.toLowerCase().includes(s) ||
+            i.src_country?.toLowerCase() === s ||
+            i.dst_country?.toLowerCase() === s ||
+            srcPortStr === s ||
+            dstPortStr === s ||
+            service.includes(s) ||
+            (s.startsWith('as') && (i.src_org?.toLowerCase().includes(s) || i.dst_org?.toLowerCase().includes(s)))
+          );
+        });
+      }
+
+      // Group by IP
+      if (groupByIP) {
+        const groups: Record<string, any> = {};
+        items.forEach((item: any) => {
+          const ip = shouldFlip(item) ? item.dst_addr : item.src_addr;
+          if (!groups[ip]) {
+            groups[ip] = {
+              ...item,
+              src_addr: ip,
+              dst_addr: 'Múltiplos',
+              dst_port: 0,
+              bytes: 0,
+              packets: 0,
+              count: 0
+            };
+          }
+          groups[ip].bytes += item.bytes || 0;
+          groups[ip].packets += item.packets || 0;
+          groups[ip].count += 1;
+        });
+        items = Object.values(groups);
+      }
+
+      // Sort
+      items.sort((a: any, b: any) => {
+        let valA = a[sortField];
+        let valB = b[sortField];
+        
+        if (sortField === 'pps') {
+          valA = a.packets || 0;
+          valB = b.packets || 0;
+        }
+
+        if (typeof valA === 'string') {
+          return sortOrder === 'asc' 
+            ? valA.localeCompare(valB)
+            : valB.localeCompare(valA);
+        }
+        
+        return sortOrder === 'asc' ? valA - valB : valB - valA;
+      });
+
+      return items;
+    }, [connections, search, groupByIP, sortField, sortOrder]);
  
    const metrics = useMemo(() => {
      const items = connectionItems;
