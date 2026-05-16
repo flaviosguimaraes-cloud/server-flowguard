@@ -7,8 +7,9 @@ import {
   BarChart, Bar, Cell, AreaChart, Area
 } from 'recharts';
 import { 
-  Tooltip, TooltipTrigger, TooltipContent, TooltipProvider 
-} from '../components/ui/tooltip';
+   Tooltip, TooltipTrigger, TooltipContent, TooltipProvider 
+ } from '../components/ui/tooltip';
+ import { MitigationTooltip } from '../components/MitigationTooltip';
 import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon, Settings2, Info, ArrowRight } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { Skeleton } from '../components/Skeleton';
@@ -239,6 +240,12 @@ export default function Dashboard() {
     }
   }, [interfaces]);
 
+   const { data: activeMitigations } = useQuery({
+     queryKey: ['mitigation-active-dashboard'],
+     queryFn: () => api.get('/api/mitigation/active').then(r => r.data),
+     refetchInterval: 30000,
+   });
+ 
    const { data: connections, dataUpdatedAt } = useQuery({
      queryKey: ['connections'],
      queryFn: () =>
@@ -978,26 +985,60 @@ export default function Dashboard() {
                 const srcCountry = flipped ? item.dst_country : item.src_country;
                 
                 const dst = flipped ? item.src_addr : item.dst_addr;
-                const dstPort = flipped ? item.src_port : item.dst_port;
-                const dstCountry = flipped ? item.src_country : item.dst_country;
-                const dstOrg = flipped ? item.src_org : item.dst_org;
+                 const dstPort = flipped ? item.src_port : item.dst_port;
+                 const dstCountry = flipped ? item.src_country : item.dst_country;
+                 const dstOrg = flipped ? item.src_org : item.dst_org;
+ 
+                 const bannedList = activeMitigations?.items || [];
+                 const srcMitigation = bannedList.find((m: any) => m.ip === src);
+                 const dstMitigation = bannedList.find((m: any) => m.ip === dst);
 
                 return (
                   <tr key={i} className="hover:bg-accent/5 transition-colors group">
+                     <td className="px-6 py-4">
+                      <div className="flex items-center gap-2">
+                        <Flag code={srcCountry} />
+                        {srcMitigation ? (
+                          <MitigationTooltip data={{
+                            ip: srcMitigation.ip,
+                            tipo: 'Blackhole /32',
+                            desde: srcMitigation.since,
+                            pps: srcMitigation.pps,
+                            mbps: srcMitigation.mbps,
+                            fonte: srcMitigation.source || 'Manual (admin)'
+                          }}>
+                            <span className="font-bold text-danger cursor-help flex items-center gap-1">
+                              🛡 {src}
+                            </span>
+                          </MitigationTooltip>
+                        ) : (
+                          <span className="font-medium text-gray-900 dark:text-gray-100">{src}</span>
+                        )}
+                        <span className="text-text-secondary text-xs">:{srcPort}</span>
+                      </div>
+                    </td>
                     <td className="px-6 py-4">
-                     <div className="flex items-center gap-2">
-                       <Flag code={srcCountry} />
-                       <span className="font-medium text-gray-900 dark:text-gray-100">{src}</span>
-                       <span className="text-text-secondary text-xs">:{srcPort}</span>
-                     </div>
-                   </td>
-                   <td className="px-6 py-4">
-                     <div className="flex items-center gap-2">
-                       <Flag code={dstCountry} />
-                       <span className="text-gray-900 dark:text-gray-100">{dst}</span>
-                       <span className="text-text-secondary text-xs">:{dstPort}</span>
-                     </div>
-                   </td>
+                      <div className="flex items-center gap-2">
+                        <Flag code={dstCountry} />
+                        {dstMitigation ? (
+                          <MitigationTooltip data={{
+                            ip: dstMitigation.ip,
+                            tipo: 'Blackhole /32',
+                            desde: dstMitigation.since,
+                            pps: dstMitigation.pps,
+                            mbps: dstMitigation.mbps,
+                            fonte: dstMitigation.source || 'Manual (admin)'
+                          }}>
+                            <span className="font-bold text-danger cursor-help flex items-center gap-1">
+                              🛡 {dst}
+                            </span>
+                          </MitigationTooltip>
+                        ) : (
+                          <span className="text-gray-900 dark:text-gray-100">{dst}</span>
+                        )}
+                        <span className="text-text-secondary text-xs">:{dstPort}</span>
+                      </div>
+                    </td>
                     <td className="px-6 py-4">
                       <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{getService(dstPort)}</span>
                     </td>
