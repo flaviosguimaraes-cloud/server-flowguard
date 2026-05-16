@@ -6,7 +6,7 @@ import { useTranslation } from '../hooks/useTranslation';
    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
    BarChart, Bar, Cell, AreaChart, Area
  } from 'recharts';
-import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon } from 'lucide-react';
+import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon, Settings2, Info } from 'lucide-react';
 import { Skeleton } from '../components/Skeleton';
 import Flag from '../components/Flag';
 
@@ -102,53 +102,87 @@ export default function Dashboard() {
     refetchOnWindowFocus: true,
   });
 
-  const { data: interfaces } = useQuery({
-    queryKey: ['interfaces'],
-    queryFn: async () => {
-      const r = await api.get('/api/collectors/1/interfaces/summary');
-      return r.data;
-    },
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnWindowFocus: true,
+  const [selectedCollector, setSelectedCollector] = useState<number | null>(() => {
+    const saved = localStorage.getItem('fg_collector');
+    return saved ? parseInt(saved) : 1;
   });
-
-  const [trafficSource, setTrafficSource] = useState<'flow' | 'snmp'>(() =>
-    localStorage.getItem('fg_traffic_source') as 'flow' | 'snmp' || 'snmp'
-  );
-
   const [selectedIfaces, setSelectedIfaces] = useState<string[]>(() => {
     try {
-      const saved = localStorage.getItem('fg_selected_ifaces');
+      const saved = localStorage.getItem('fg_ifaces');
       return saved ? JSON.parse(saved) : [];
     } catch {
       return [];
     }
   });
-  const [sumMode, setSumMode] = useState(false);
+
+  const { data: collectors } = useQuery({
+    queryKey: ['collectors'],
+    queryFn: () => api.get('/api/collectors').then(r => r.data),
+  });
+
+  const { data: interfaces } = useQuery({
+    queryKey: ['interfaces', selectedCollector],
+    queryFn: async () => {
+      if (!selectedCollector) return null;
+      const r = await api.get(`/api/collectors/${selectedCollector}/interfaces/summary`);
+      return r.data;
+    },
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+    enabled: !!selectedCollector,
+  });
+
+  const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
 
   useEffect(() => {
-    localStorage.setItem('fg_traffic_source', trafficSource);
-  }, [trafficSource]);
+    if (selectedCollector) {
+      localStorage.setItem('fg_collector', String(selectedCollector));
+    }
+  }, [selectedCollector]);
 
   useEffect(() => {
-    localStorage.setItem('fg_selected_ifaces', JSON.stringify(selectedIfaces));
+    localStorage.setItem('fg_ifaces', JSON.stringify(selectedIfaces));
   }, [selectedIfaces]);
 
   useEffect(() => {
-    if (trafficSource === 'snmp' && selectedIfaces.length === 0 && interfaces?.interfaces?.length > 0) {
-      const top3 = (interfaces.interfaces || [])
+    if (!interfaces?.interfaces) return;
+
+    const now = new Date().toLocaleTimeString('pt-BR', {
+      hour: '2-digit', minute: '2-digit', second: '2-digit'
+    });
+
+    setHistory(prev => {
+      const next = { ...prev };
+      interfaces.interfaces.forEach((iface: any) => {
+        const name = iface.display_name || iface.if_name;
+        if (!next[name]) next[name] = [];
+        next[name] = [
+          ...next[name].slice(-19),
+          {
+            time: now,
+            in_bps: iface.in_bps || 0,
+            out_bps: iface.out_bps || 0,
+          }
+        ];
+      });
+      return next;
+    });
+
+    // Default selection (top 8) if none selected
+    if (selectedIfaces.length === 0) {
+      const top8 = (interfaces.interfaces || [])
         .filter((i: any) => i.in_bps > 0 || i.out_bps > 0)
         .filter((i: any) => {
-          const n = (i.display_name || '').toLowerCase();
+          const n = (i.display_name || i.if_name || '').toLowerCase();
           return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
         })
         .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
-        .slice(0, 3)
-        .map((i: any) => i.display_name);
-      setSelectedIfaces(top3);
+        .slice(0, 8)
+        .map((i: any) => i.display_name || i.if_name);
+      setSelectedIfaces(top8);
     }
-  }, [interfaces, trafficSource, selectedIfaces.length]);
+  }, [interfaces]);
 
   const { data: connections, dataUpdatedAt } = useQuery({
     queryKey: ['connections'],
