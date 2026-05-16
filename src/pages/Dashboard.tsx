@@ -136,7 +136,47 @@ export default function Dashboard() {
     enabled: !!selectedCollector,
   });
 
-  const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
+   const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
+   const [period, setPeriod] = useState<'realtime' | '5m' | '15m'>('realtime');
+ 
+   const { data: metricsHistory } = useQuery({
+     queryKey: ['iface-metrics', selectedCollector, period],
+     queryFn: async () => {
+       if (period === 'realtime') return null;
+       const mins = period === '5m' ? 5 : 15;
+       const r = await api.get(`/api/collectors/${selectedCollector}/metrics?minutes=${mins}`);
+       return r.data;
+     },
+     enabled: period !== 'realtime' && !!selectedCollector,
+     refetchInterval: 30000,
+   });
+ 
+   // MELHORIA 1 — Gráfico de interface carrega imediatamente
+   useEffect(() => {
+     if (!interfaces?.interfaces?.length || period !== 'realtime') return;
+ 
+     setHistory(prev => {
+       const hasData = Object.values(prev).some(arr => arr.length > 0);
+       if (hasData) return prev;
+ 
+       const now = new Date();
+       const next: typeof prev = {};
+ 
+       interfaces.interfaces.forEach((iface: any) => {
+         const name = iface.display_name || iface.if_name;
+         if (!name) return;
+ 
+         next[name] = Array.from({length: 10}, (_, i) => ({
+           time: new Date(now.getTime() - (9-i) * 30000).toLocaleTimeString('pt-BR', {
+             hour: '2-digit', minute: '2-digit', second: '2-digit'
+           }),
+           in_bps: iface.in_bps || 0,
+           out_bps: iface.out_bps || 0,
+         }));
+       });
+       return next;
+     });
+   }, [interfaces, period]);
 
   useEffect(() => {
     if (selectedCollector) {
@@ -148,8 +188,8 @@ export default function Dashboard() {
     localStorage.setItem('fg_ifaces', JSON.stringify(selectedIfaces));
   }, [selectedIfaces]);
 
-  useEffect(() => {
-    if (!interfaces?.interfaces) return;
+   useEffect(() => {
+     if (!interfaces?.interfaces || period !== 'realtime') return;
 
     const now = new Date().toLocaleTimeString('pt-BR', {
       hour: '2-digit', minute: '2-digit', second: '2-digit'
@@ -191,16 +231,16 @@ export default function Dashboard() {
     }
   }, [interfaces]);
 
-  const { data: connections, dataUpdatedAt } = useQuery({
-    queryKey: ['connections'],
-    queryFn: () =>
-      api.get('/api/flows/connections?limit=10&minutes=5')
-        .then(r => r.data),
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
-  });
+   const { data: connections, dataUpdatedAt } = useQuery({
+     queryKey: ['connections'],
+     queryFn: () =>
+       api.get('/api/flows/connections?limit=10&minutes=2')
+         .then(r => r.data),
+     staleTime: 0,
+     gcTime: 0,
+     refetchOnMount: true,
+     refetchOnWindowFocus: true,
+   });
 
 
     const flowData = useMemo(() => {
@@ -222,19 +262,51 @@ export default function Dashboard() {
       return history[firstSelected]?.map(p => p.time) || [];
     }, [history, selectedIfaces]);
 
-    const chartData = useMemo(() => {
-      return timePoints.map((time, idx) => {
-        const point: Record<string, any> = { time };
-        selectedIfaces.forEach(name => {
-          const h = history[name];
-          if (h && h[idx]) {
-            point[`${name}_in`] = Math.round(h[idx].in_bps / 1e6);
-            point[`${name}_out`] = Math.round(h[idx].out_bps / 1e6);
+     const ifaceMap = useMemo(() => {
+       const map: Record<string, string> = {};
+       const list = Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [];
+       list.forEach((i: any) => {
+         map[i.if_name] = i.display_name || i.if_name;
+       });
+       return map;
+     }, [interfaces]);
+ 
+     const chartData = useMemo(() => {
+       if (period === 'realtime') {
+         return timePoints.map((time, idx) => {
+           const point: Record<string, any> = { time };
+           selectedIfaces.forEach(name => {
+             const h = history[name];
+             if (h && h[idx]) {
+               point[`${name}_in`] = Math.round(h[idx].in_bps / 1e6);
+               point[`${name}_out`] = Math.round(h[idx].out_bps / 1e6);
+             }
+           });
+           return point;
+         });
+       } else {
+         if (!metricsHistory || !Array.isArray(metricsHistory)) return [];
+         
+         const timeMap: Record<string, any> = {};
+         metricsHistory.forEach((m: any) => {
+           const time = new Date(m.collected_at).toLocaleTimeString('pt-BR', {
+             hour: '2-digit', minute: '2-digit'
+           });
+           if (!timeMap[time]) timeMap[time] = { time };
+           
+           // The endpoint uses if_name, we might need to match with display_name
+           // but the user's selectedIfaces are based on display_name || if_name.
+           // Let's check both.
+          const displayName = ifaceMap[m.if_name] || m.if_name;
+          if (selectedIfaces.includes(displayName)) {
+            timeMap[time][`${displayName}_in`] = Math.round(m.in_bps / 1e6);
+            timeMap[time][`${displayName}_out`] = Math.round(m.out_bps / 1e6);
           }
-        });
-        return point;
-      });
-    }, [timePoints, selectedIfaces, history]);
+         });
+         
+         return Object.values(timeMap).sort((a: any, b: any) => a.time.localeCompare(b.time));
+       }
+     }, [timePoints, selectedIfaces, history, period, metricsHistory]);
 
     const protoMap: Record<number, string> = {
      6: 'TCP', 17: 'UDP', 1: 'ICMP',
@@ -358,8 +430,14 @@ export default function Dashboard() {
     );
   }
 
-  return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+   return (
+     <div className="space-y-6 animate-in fade-in duration-500">
+       <style>{`
+         @keyframes pulse {
+           0%, 100% { opacity: 1; }
+           50% { opacity: 0.3; }
+         }
+       `}</style>
       {/* Top Stats */}
        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
          <StatCard 
@@ -410,29 +488,47 @@ export default function Dashboard() {
               </select>
             </div>
 
-            <button 
-              onClick={() => {
-                queryClient.invalidateQueries();
-                setCountdown(30);
-              }}
-              className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-bg-secondary hover:bg-gray-100 dark:hover:bg-[#2a2d3e] text-text-secondary hover:text-text-primary rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider border border-gray-200 dark:border-[#2a2d3e]"
-            >
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                width="14" height="14" 
-                viewBox="0 0 24 24" fill="none" 
-                stroke="currentColor" strokeWidth="2.5" 
-                strokeLinecap="round" strokeLinejoin="round"
-                className={clsx(countdown === 30 && "animate-spin")}
-                style={{ animationDuration: '1s' }}
-              >
-                <path d="M23 4v6h-6"/>
-                <path d="M1 20v-6h6"/>
-                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/>
-                <path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/>
-              </svg>
-              <span>{countdown}s</span>
-            </button>
+             {/* MELHORIA 2 — Seletor de período */}
+             <div className="flex bg-gray-50 dark:bg-bg-secondary p-1 rounded-lg border border-gray-200 dark:border-[#2a2d3e]">
+               {(['realtime', '5m', '15m'] as const).map((p) => (
+                 <button
+                   key={p}
+                   onClick={() => setPeriod(p)}
+                   className={clsx(
+                     "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all",
+                     period === p 
+                       ? "bg-white dark:bg-[#2a2d3e] text-accent shadow-sm" 
+                       : "text-text-secondary hover:text-text-primary"
+                   )}
+                 >
+                   {p === 'realtime' ? 'Tempo Real' : p === '5m' ? '5 min' : '15 min'}
+                 </button>
+               ))}
+             </div>
+ 
+             <button 
+               onClick={() => {
+                 queryClient.invalidateQueries();
+                 setCountdown(30);
+               }}
+               className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-bg-secondary hover:bg-gray-100 dark:hover:bg-[#2a2d3e] text-text-secondary hover:text-text-primary rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider border border-gray-200 dark:border-[#2a2d3e]"
+             >
+               <svg 
+                 xmlns="http://www.w3.org/2000/svg" 
+                 width="14" height="14" 
+                 viewBox="0 0 24 24" fill="none" 
+                 stroke="currentColor" strokeWidth="2.5" 
+                 strokeLinecap="round" strokeLinejoin="round"
+                 className={clsx(countdown === 30 && "animate-spin")}
+                 style={{ animationDuration: '1s' }}
+               >
+                 <path d="M23 4v6h-6"/>
+                 <path d="M1 20v-6h6"/>
+                 <path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/>
+                 <path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/>
+               </svg>
+               <span>{countdown}s</span>
+             </button>
           </div>
         </div>
 
@@ -720,12 +816,24 @@ export default function Dashboard() {
        {/* Active Connections Table */}
       <div className="bg-white dark:bg-[#1e2130] rounded-xl border border-gray-200 dark:border-[#2a2d3e] shadow-sm overflow-hidden">
         <div className="p-6 border-b border-gray-200 dark:border-border flex justify-between items-center bg-gray-50/50 dark:bg-bg-secondary/30">
-          <div className="flex flex-col">
-            <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('active_connections')}</h2>
-            <span style={{fontSize:11, color:'#8892a4'}}>
-              Últimos 5 minutos · atualizado a cada 30s
-            </span>
-          </div>
+           <div className="flex flex-col gap-1">
+             <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">{t('active_connections')}</h2>
+             <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+               <span style={{
+                 width: 8, height: 8,
+                 borderRadius: '50%',
+                 background: '#22c55e',
+                 display: 'inline-block',
+                 animation: 'pulse 2s infinite'
+               }} />
+               <span style={{ fontSize: 11, color: '#8892a4' }}>
+                 Ao vivo · últimos 2 minutos · atualizado a cada 30s
+               </span>
+             </div>
+           </div>
+           <span style={{fontSize:11, color:'#8892a4'}}>
+             Próxima atualização: {countdown}s
+           </span>
           <button className="text-text-secondary hover:text-text-primary transition-colors">
             <MoreVertical size={20} />
           </button>
