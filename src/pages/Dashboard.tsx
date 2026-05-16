@@ -1051,11 +1051,11 @@ export default function Dashboard() {
                 <th className="px-6 py-3 border-b border-border">Serviço</th>
                 <th className="px-6 py-3 border-b border-border">Empresa</th>
                 <th className="px-6 py-3 border-b border-border">{t('protocol')}</th>
-                <th className="px-6 py-3 border-b border-border text-right">VOLUME (2 min)</th>
+                <th className="px-6 py-3 border-b border-border text-right">VOLUME</th>
                 <th className="px-6 py-3 border-b border-border text-right">{t('pps')}</th>
               </tr>
             </thead>
-            <tbody className="text-sm divide-y divide-border/50">
+            <tbody className="text-sm divide-y divide-border/30">
               {((Array.isArray(connections) ? connections : (connections?.items || connections?.data || []))
                 ?.filter((item: any) => {
                   if (!serviceFilter) return true;
@@ -1081,10 +1081,10 @@ export default function Dashboard() {
                  const dstMitigation = bannedList.find((m: any) => m.ip === dst);
 
                 return (
-                  <tr key={i} className="hover:bg-accent/5 transition-colors group">
-                     <td className="px-6 py-4">
+                  <tr key={i} className="hover:bg-bg-primary/30 transition-colors group">
+                     <td className="px-6 py-3.5">
                       <div className="flex items-center gap-2">
-                        <Flag code={srcCountry} />
+                        <Flag code={srcCountry} size={14} />
                         {srcMitigation ? (
                           <MitigationTooltip data={{
                             ip: srcMitigation.ip,
@@ -1094,14 +1094,14 @@ export default function Dashboard() {
                             mbps: srcMitigation.mbps,
                             fonte: srcMitigation.source || 'Manual (admin)'
                           }}>
-                            <span className="font-bold text-danger cursor-help flex items-center gap-1">
+                            <span className="font-bold text-danger cursor-help flex items-center gap-1 text-xs">
                               🛡 {src}
                             </span>
                           </MitigationTooltip>
                         ) : (
-                          <span className="font-medium text-text-primary">{src}</span>
+                          <span className="font-semibold text-text-primary text-xs">{src}</span>
                         )}
-                        <span className="text-text-secondary text-xs">:{srcPort}</span>
+                        <span className="text-text-secondary text-[10px] opacity-60">:{srcPort}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4">
