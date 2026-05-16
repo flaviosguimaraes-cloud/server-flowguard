@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
 import { useTranslation } from '../hooks/useTranslation';
@@ -6,96 +6,86 @@ import { useTranslation } from '../hooks/useTranslation';
    LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
    BarChart, Bar, Cell, AreaChart, Area
  } from 'recharts';
-import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical } from 'lucide-react';
+import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon } from 'lucide-react';
 import { Skeleton } from '../components/Skeleton';
-
-const FlagEmoji = ({ code }: { code: string }) => {
-  const flags: Record<string, string> = {
-    BR:'🇧🇷', US:'🇺🇸', CN:'🇨🇳', RU:'🇷🇺', DE:'🇩🇪', FR:'🇫🇷',
-    GB:'🇬🇧', JP:'🇯🇵', KR:'🇰🇷', AR:'🇦🇷', CL:'🇨🇱', MX:'🇲🇽',
-    HK:'🇭🇰', SG:'🇸🇬', NL:'🇳🇱', CA:'🇨🇦', AU:'🇦🇺', IN:'🇮🇳',
-    UA:'🇺🇦', TR:'🇹🇷', ES:'🇪🇸', IT:'🇮🇹', PT:'🇵🇹', PL:'🇵🇱',
-    SE:'🇸🇪', NO:'🇳🇴', CH:'🇨🇭', ZA:'🇿🇦', AE:'🇦🇪', SA:'🇸🇦',
-    TH:'🇹🇭', VN:'🇻🇳', ID:'🇮🇩', MY:'🇲🇾', PH:'🇵🇭', TW:'🇹🇼',
-    CO:'🇨🇴', PE:'🇵🇪', IL:'🇮🇱', EG:'🇪🇬', NG:'🇳🇬', IE:'🇮🇪',
-  };
-  const emoji = flags[code];
-  if (emoji) return (
-    <span style={{ fontSize: 15, lineHeight: 1 }}>{emoji}</span>
-  );
-  return (
-    <img
-      src={`https://flagcdn.com/16x12/${code?.toLowerCase()}.png`}
-      alt={code || '?'}
-      style={{ width: 16, height: 12, borderRadius: 2, verticalAlign: 'middle' }}
-      onError={e => {
-        (e.currentTarget as HTMLImageElement).style.display = 'none';
-      }}
-    />
-  );
-};
+import Flag from '../components/Flag';
 
 import { clsx } from 'clsx';
 
 export default function Dashboard() {
   const { t } = useTranslation();
+
+  const [tick, setTick] = useState(0);
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setTick(t => t + 1);
+    }, 30000);
+    return () => clearInterval(timer);
+  }, []);
+
   const { data: detection, isLoading: statsLoading } = useQuery({
-     queryKey: ['detection-stats'],
+     queryKey: ['detection-stats', tick],
      queryFn: async () => {
        const r = await api.get('/api/detection/stats');
        return r.data;
      },
      refetchInterval: 30000,
+     staleTime: 0,
      retry: 1,
    });
  
    const { data: timeline } = useQuery({
-     queryKey: ['timeline'],
+     queryKey: ['timeline', tick],
      queryFn: async () => {
        const r = await api.get('/api/flows/timeline?minutes=30');
        return r.data;
      },
      refetchInterval: 30000,
+     staleTime: 0,
      retry: 1,
    });
  
    const { data: protocols } = useQuery({
-     queryKey: ['protocols'],
+     queryKey: ['protocols', tick],
      queryFn: async () => {
        const r = await api.get('/api/flows/protocols?minutes=30');
        console.log('protocols raw:', r.data);
        return r.data;
      },
      refetchInterval: 30000,
+     staleTime: 0,
    });
 
    const { data: countries } = useQuery({
-     queryKey: ['countries'],
+     queryKey: ['countries', tick],
      queryFn: async () => {
        const r = await api.get('/api/flows/countries?minutes=30');
        console.log('countries raw:', r.data);
        return r.data;
      },
      refetchInterval: 30000,
+     staleTime: 0,
    });
 
    const { data: ports } = useQuery({
-     queryKey: ['ports'],
+     queryKey: ['ports', tick],
      queryFn: async () => {
        const r = await api.get('/api/flows/ports?minutes=30');
        console.log('ports raw:', r.data);
        return r.data;
      },
      refetchInterval: 30000,
+     staleTime: 0,
    });
  
     const { data: interfaces } = useQuery({
-      queryKey: ['interfaces'],
+       queryKey: ['interfaces', tick],
       queryFn: async () => {
         const r = await api.get('/api/collectors/1/interfaces/summary');
         return r.data;
       },
       refetchInterval: 30000,
+       staleTime: 0,
     });
 
   const [trafficSource, setTrafficSource] = useState<'flow' | 'snmp'>(() =>
@@ -110,6 +100,7 @@ export default function Dashboard() {
       return [];
     }
   });
+  const [sumMode, setSumMode] = useState(false);
 
   useEffect(() => {
     localStorage.setItem('fg_traffic_source', trafficSource);
@@ -135,13 +126,14 @@ export default function Dashboard() {
   }, [interfaces, trafficSource, selectedIfaces.length]);
 
    const { data: connections } = useQuery({
-     queryKey: ['connections'],
+     queryKey: ['connections', tick],
      queryFn: async () => {
        const r = await api.get('/api/flows/connections?limit=10');
        console.log('connections raw:', r.data);
        return r.data;
      },
      refetchInterval: 30000,
+     staleTime: 0,
    });
 
    console.log('protocols:', protocols);
