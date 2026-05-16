@@ -1022,7 +1022,7 @@ export default function Dashboard() {
         </div>
 
         {/* Filtros rápidos */}
-        <div className="flex flex-wrap gap-2 px-6 py-3 border-b border-gray-100 dark:border-[#2a2d3e] bg-gray-50/30 dark:bg-bg-secondary/10">
+        <div className="flex flex-wrap gap-2 px-5 py-2.5 border-b border-border bg-bg-primary/10">
           {['Todos', 'HTTP', 'HTTPS', 'DNS', 'Steam', 'UDP', 'TCP'].map(label => {
             const value = label === 'Todos' ? null : label;
             const isActive = serviceFilter === value;
@@ -1031,10 +1031,10 @@ export default function Dashboard() {
                 key={label}
                 onClick={() => setServiceFilter(value)}
                 className={clsx(
-                  "px-3 py-1 rounded-md text-[11px] font-bold transition-all",
+                  "px-2.5 py-1 rounded-md text-[10px] font-bold transition-all uppercase tracking-wider",
                   isActive 
-                    ? "bg-accent/10 text-accent border border-accent/30 shadow-sm" 
-                    : "text-text-secondary hover:text-text-primary border border-transparent hover:bg-gray-100 dark:hover:bg-[#2a2d3e]"
+                    ? "bg-primary text-white shadow-sm" 
+                    : "text-text-secondary hover:text-text-primary hover:bg-bg-primary"
                 )}
               >
                 {label}
