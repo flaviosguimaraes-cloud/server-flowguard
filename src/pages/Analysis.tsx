@@ -2,35 +2,14 @@ import { useState, useMemo, useCallback } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
  import api from '../services/api';
  import { useTranslation } from '../hooks/useTranslation';
- import { 
-   Search, Filter, X, Shield, Globe, Users, 
-   ArrowRight, AlertCircle, Download, MoreHorizontal
- } from 'lucide-react';
+  import { 
+    Search, Filter, X, Shield, Globe, Users, 
+    ArrowRight, AlertCircle, Download, MoreHorizontal, Activity
+  } from 'lucide-react';
+  import Flag from '../components/Flag';
  import { Skeleton } from '../components/Skeleton';
  import { clsx } from 'clsx';
  import MitigationModal from '../components/MitigationModal';
- 
- const FlagEmoji = ({ code }: { code: string }) => {
-   const flags: Record<string, string> = {
-     BR:'🇧🇷', US:'🇺🇸', CN:'🇨🇳', RU:'🇷🇺', DE:'🇩🇪', FR:'🇫🇷',
-     GB:'🇬🇧', JP:'🇯🇵', KR:'🇰🇷', AR:'🇦🇷', CL:'🇨🇱', MX:'🇲🇽',
-     HK:'🇭🇰', SG:'🇸🇬', NL:'🇳🇱', CA:'🇨🇦', AU:'🇦🇺', IN:'🇮🇳',
-     UA:'🇺🇦', TR:'🇹🇷', ES:'🇪🇸', IT:'🇮🇹', PT:'🇵🇹', PL:'🇵🇱',
-     SE:'🇸🇪', NO:'🇳🇴', CH:'🇨🇭', ZA:'🇿🇦', AE:'🇦🇪', SA:'🇸🇦',
-     TH:'🇹🇭', VN:'🇻🇳', ID:'🇮🇩', MY:'🇲🇾', PH:'🇵🇭', TW:'🇹🇼',
-     CO:'🇨🇴', PE:'🇵🇪', IL:'🇮🇱', EG:'🇪🇬', NG:'🇳🇬', IE:'🇮🇪',
-   };
-   const emoji = flags[code];
-   if (emoji) return <span style={{ fontSize: 15, lineHeight: 1 }}>{emoji}</span>;
-   return (
-     <img
-       src={`https://flagcdn.com/16x12/${code?.toLowerCase()}.png`}
-       alt={code || '?'}
-       style={{ width: 16, height: 12, borderRadius: 2, verticalAlign: 'middle' }}
-       onError={e => { (e.currentTarget as HTMLImageElement).style.display = 'none'; }}
-     />
-   );
- };
  
  export default function Analysis() {
    const { t } = useTranslation();
@@ -239,22 +218,22 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
                    const dstCountry = flipped ? item.src_country : item.dst_country;
                    const dstOrg = flipped ? item.src_org : item.dst_org;
  
-                   return (
-                     <tr key={i} className="hover:bg-accent/5 transition-colors group">
-                       <td className="px-6 py-4">
-                         <div className="flex items-center gap-2">
-                           <FlagEmoji code={srcCountry} />
-                           <span className="font-medium text-gray-900 dark:text-gray-100">{src}</span>
-                           <span className="text-text-secondary text-xs">:{srcPort}</span>
-                         </div>
-                       </td>
-                       <td className="px-6 py-4">
-                         <div className="flex items-center gap-2">
-                           <FlagEmoji code={dstCountry} />
-                           <span className="text-gray-900 dark:text-gray-100">{dst}</span>
-                           <span className="text-text-secondary text-xs">:{dstPort}</span>
-                         </div>
-                       </td>
+                    return (
+                      <tr key={i} className="hover:bg-accent/5 transition-colors group">
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <Flag code={srcCountry} />
+                            <span className="font-medium text-gray-900 dark:text-gray-100">{src}</span>
+                            <span className="text-text-secondary text-xs">:{srcPort}</span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div className="flex items-center gap-2">
+                            <Flag code={dstCountry} />
+                            <span className="text-gray-900 dark:text-gray-100">{dst}</span>
+                            <span className="text-text-secondary text-xs">:{dstPort}</span>
+                          </div>
+                        </td>
                        <td className="px-6 py-4">
                          <span className="text-xs font-medium text-gray-700 dark:text-gray-300">{getService(dstPort)}</span>
                        </td>
