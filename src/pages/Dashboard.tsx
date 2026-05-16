@@ -231,16 +231,16 @@ export default function Dashboard() {
     }
   }, [interfaces]);
 
-  const { data: connections, dataUpdatedAt } = useQuery({
-    queryKey: ['connections'],
-    queryFn: () =>
-      api.get('/api/flows/connections?limit=10&minutes=5')
-        .then(r => r.data),
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnMount: true,
-    refetchOnWindowFocus: true,
-  });
+   const { data: connections, dataUpdatedAt } = useQuery({
+     queryKey: ['connections'],
+     queryFn: () =>
+       api.get('/api/flows/connections?limit=10&minutes=2')
+         .then(r => r.data),
+     staleTime: 0,
+     gcTime: 0,
+     refetchOnMount: true,
+     refetchOnWindowFocus: true,
+   });
 
 
     const flowData = useMemo(() => {
@@ -473,29 +473,47 @@ export default function Dashboard() {
               </select>
             </div>
 
-            <button 
-              onClick={() => {
-                queryClient.invalidateQueries();
-                setCountdown(30);
-              }}
-              className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-bg-secondary hover:bg-gray-100 dark:hover:bg-[#2a2d3e] text-text-secondary hover:text-text-primary rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider border border-gray-200 dark:border-[#2a2d3e]"
-            >
-              <svg 
-                xmlns="http://www.w3.org/2000/svg" 
-                width="14" height="14" 
-                viewBox="0 0 24 24" fill="none" 
-                stroke="currentColor" strokeWidth="2.5" 
-                strokeLinecap="round" strokeLinejoin="round"
-                className={clsx(countdown === 30 && "animate-spin")}
-                style={{ animationDuration: '1s' }}
-              >
-                <path d="M23 4v6h-6"/>
-                <path d="M1 20v-6h6"/>
-                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/>
-                <path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/>
-              </svg>
-              <span>{countdown}s</span>
-            </button>
+             {/* MELHORIA 2 — Seletor de período */}
+             <div className="flex bg-gray-50 dark:bg-bg-secondary p-1 rounded-lg border border-gray-200 dark:border-[#2a2d3e]">
+               {(['realtime', '5m', '15m'] as const).map((p) => (
+                 <button
+                   key={p}
+                   onClick={() => setPeriod(p)}
+                   className={clsx(
+                     "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all",
+                     period === p 
+                       ? "bg-white dark:bg-[#2a2d3e] text-accent shadow-sm" 
+                       : "text-text-secondary hover:text-text-primary"
+                   )}
+                 >
+                   {p === 'realtime' ? 'Tempo Real' : p === '5m' ? '5 min' : '15 min'}
+                 </button>
+               ))}
+             </div>
+ 
+             <button 
+               onClick={() => {
+                 queryClient.invalidateQueries();
+                 setCountdown(30);
+               }}
+               className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-bg-secondary hover:bg-gray-100 dark:hover:bg-[#2a2d3e] text-text-secondary hover:text-text-primary rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider border border-gray-200 dark:border-[#2a2d3e]"
+             >
+               <svg 
+                 xmlns="http://www.w3.org/2000/svg" 
+                 width="14" height="14" 
+                 viewBox="0 0 24 24" fill="none" 
+                 stroke="currentColor" strokeWidth="2.5" 
+                 strokeLinecap="round" strokeLinejoin="round"
+                 className={clsx(countdown === 30 && "animate-spin")}
+                 style={{ animationDuration: '1s' }}
+               >
+                 <path d="M23 4v6h-6"/>
+                 <path d="M1 20v-6h6"/>
+                 <path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/>
+                 <path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/>
+               </svg>
+               <span>{countdown}s</span>
+             </button>
           </div>
         </div>
 
