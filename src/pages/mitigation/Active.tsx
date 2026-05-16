@@ -176,85 +176,83 @@ function TabButton({ active, onClick, icon, label, count }: any) {
                    {isAdmin && <th className="px-6 py-4 border-b border-border text-center">Ações</th>}
                  </tr>
                </thead>
-               <tbody className="text-sm divide-y divide-border/50">
-                 {bhLoading ? (
-                   Array.from({ length: 3 }).map((_, i) => (
-                     <tr key={i}><td colSpan={5} className="px-6 py-4"><Skeleton count={1} className="h-8 w-full bg-gray-50 dark:bg-[#2a2d3e] rounded" /></td></tr>
-                   ))
-                 ) : (blackholes?.items || []).length === 0 ? (
-                   <tr><td colSpan={5} className="px-6 py-12 text-center text-text-secondary italic">Nenhum blackhole ativo no momento</td></tr>
-                 ) : (
-                   (blackholes.items || []).map((item: any, i: number) => (
-                     <tr key={i} className="hover:bg-danger/5 transition-colors group">
-                        <td className="px-6 py-4 font-mono font-bold text-text-primary relative">
-                          <div 
-                            onMouseEnter={() => setHoveredIP(item.ip)}
-                            onMouseLeave={() => setHoveredIP(null)}
-                            className="flex items-center gap-2 cursor-help"
-                          >
-                            <div className="w-2 h-2 rounded-full bg-danger animate-pulse" />
-                            {item.ip}
-                            
-                            {hoveredIP === item.ip && (
-                              <div className="absolute z-[100] bg-bg-secondary border border-danger/50 rounded-xl p-4 w-[240px] shadow-2xl shadow-black/50 top-full left-0 mt-2 backdrop-blur-md animate-in fade-in zoom-in duration-200">
-                                <div className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mb-2 opacity-70 border-b border-border pb-1">
-                                  Detalhes da Mitigação
-                                </div>
-                                <div className="text-sm font-black text-text-primary font-mono mb-2">
-                                  {item.ip}
-                                </div>
-                                <div className="space-y-1">
-                                  <div className="text-[11px] text-text-secondary flex justify-between">
-                                    <span>Tipo:</span>
-                                    <span className="text-text-primary font-bold">{item.type || 'Blackhole /32'}</span>
-                                  </div>
-                                  <div className="text-[11px] text-text-secondary flex justify-between">
-                                    <span>Community:</span>
-                                    <span className="text-text-primary font-bold">65000:666</span>
-                                  </div>
-                                  <div className="text-[11px] text-text-secondary flex justify-between">
-                                    <span>Início:</span>
-                                    <span className="text-text-primary font-bold">{item.since}</span>
-                                  </div>
-                                  <div className="text-[11px] text-text-secondary flex justify-between">
-                                    <span>Fonte:</span>
-                                    <span className="text-text-primary font-bold">
-                                      {item.source === 'automatic' ? 'Automático (detector)' : 'Manual (operador)'}
-                                    </span>
-                                  </div>
-                                  {item.pps > 0 && (
-                                    <div className="mt-3 p-2 bg-danger-bg border border-danger/20 rounded-lg text-[10px] text-danger font-bold flex justify-between">
-                                      <span>Pico:</span>
-                                      <span>{item.pps > 1000 ? (item.pps/1000).toFixed(1)+'k' : item.pps} pps · {item.mbps} Mbps</span>
-                                    </div>
-                                  )}
-                                </div>
-                              </div>
-                            )}
-                          </div>
-                        </td>
-                       <td className="px-6 py-4 text-text-secondary whitespace-nowrap"><Clock size={14} className="inline mr-1" /> {item.since || 'Recente'}</td>
-                       <td className="px-6 py-4">
-                         <p className="font-bold text-text-primary">{item.pps ? (item.pps / 1000).toFixed(1) + 'k' : '0'} PPS</p>
-                         <p className="text-[10px] text-text-secondary">{item.mbps || 0} Mbps</p>
-                       </td>
-                       <td className="px-6 py-4">
-                         <span className="px-2 py-0.5 bg-danger/10 text-danger text-[10px] font-bold rounded uppercase">Blackhole</span>
-                       </td>
-                       {isAdmin && (
-                         <td className="px-6 py-4 text-center">
-                           <button 
-                             onClick={() => handleRemove(item.ip)}
-                             className="p-1.5 text-text-secondary hover:text-danger hover:bg-danger/10 rounded-lg transition-all"
+                <tbody className="text-sm divide-y divide-border/40">
+                  {bhLoading ? (
+                    Array.from({ length: 3 }).map((_, i) => (
+                      <tr key={i}><td colSpan={5} className="px-6 py-4"><Skeleton count={1} className="h-8 w-full bg-bg-primary/50 rounded" /></td></tr>
+                    ))
+                  ) : (blackholes?.items || []).length === 0 ? (
+                    <tr><td colSpan={5} className="px-6 py-12 text-center text-text-secondary italic text-xs">Nenhum blackhole ativo no momento</td></tr>
+                  ) : (
+                    (blackholes.items || []).map((item: any, i: number) => (
+                      <tr key={i} className="hover:bg-danger/5 transition-colors group">
+                         <td className="px-6 py-3.5 font-mono font-bold text-text-primary text-xs relative">
+                           <div 
+                             onMouseEnter={() => setHoveredIP(item.ip)}
+                             onMouseLeave={() => setHoveredIP(null)}
+                             className="flex items-center gap-2 cursor-help"
                            >
-                             <Trash2 size={18} />
-                           </button>
+                             <div className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse" />
+                             {item.ip}
+                             
+                             {hoveredIP === item.ip && (
+                               <div className="absolute z-[100] bg-bg-secondary border border-border rounded-xl p-4 w-[240px] shadow-xl top-full left-0 mt-2 animate-in fade-in zoom-in duration-150">
+                                 <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 opacity-60 border-b border-border pb-1">
+                                   Detalhes da Mitigação
+                                 </div>
+                                 <div className="text-sm font-bold text-text-primary font-mono mb-2">
+                                   {item.ip}
+                                 </div>
+                                 <div className="space-y-1.5">
+                                   <div className="text-[11px] text-text-secondary flex justify-between">
+                                     <span>Tipo:</span>
+                                     <span className="text-text-primary font-bold">{item.type || 'Blackhole /32'}</span>
+                                   </div>
+                                   <div className="text-[11px] text-text-secondary flex justify-between">
+                                     <span>Início:</span>
+                                     <span className="text-text-primary font-bold">{item.since}</span>
+                                   </div>
+                                   <div className="text-[11px] text-text-secondary flex justify-between">
+                                     <span>Fonte:</span>
+                                     <span className="text-text-primary font-bold uppercase text-[9px]">
+                                       {item.source === 'automatic' ? 'Detector' : 'Operador'}
+                                     </span>
+                                   </div>
+                                   {item.pps > 0 && (
+                                     <div className="mt-2 p-2 bg-danger/5 border border-danger/10 rounded-lg text-[10px] text-danger font-bold flex justify-between">
+                                       <span>Pico:</span>
+                                       <span>{item.pps > 1000 ? (item.pps/1000).toFixed(1)+'k' : item.pps} pps</span>
+                                     </div>
+                                   )}
+                                 </div>
+                               </div>
+                             )}
+                           </div>
                          </td>
-                       )}
-                     </tr>
-                   ))
-                 )}
-               </tbody>
+                        <td className="px-6 py-3.5 text-text-secondary text-xs whitespace-nowrap flex items-center gap-1.5">
+                          <Clock size={13} opacity={0.5} /> {item.since || 'Recente'}
+                        </td>
+                        <td className="px-6 py-3.5">
+                          <p className="font-bold text-text-primary text-xs">{item.pps ? (item.pps / 1000).toFixed(1) + 'k' : '0'} PPS</p>
+                          <p className="text-[10px] text-text-secondary font-medium uppercase tracking-tighter">{item.mbps || 0} Mbps</p>
+                        </td>
+                        <td className="px-6 py-3.5">
+                          <span className="px-1.5 py-0.5 bg-danger/5 text-danger border border-danger/10 text-[10px] font-bold rounded uppercase tracking-wider">Blackhole</span>
+                        </td>
+                        {isAdmin && (
+                          <td className="px-6 py-3.5 text-center">
+                            <button 
+                              onClick={() => handleRemove(item.ip)}
+                              className="p-1.5 text-text-secondary hover:text-danger hover:bg-danger/10 rounded-lg transition-all"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    ))
+                  )}
+                </tbody>
              </table>
            </div>
          )}
