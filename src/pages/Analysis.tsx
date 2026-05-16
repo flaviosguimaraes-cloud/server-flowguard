@@ -342,7 +342,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
           
           <div className="flex flex-wrap items-center gap-4 border-t border-border pt-4">
             <div className="flex items-center gap-2 mr-auto">
-               <span className="text-[11px] font-bold text-text-secondary uppercase tracking-widest opacity-60">Período:</span>
+               <span className="text-[11px] font-bold text-text-secondary uppercase tracking-widest opacity-60">Período</span>
                <div className="flex gap-1.5 flex-wrap">
                   {periods.map(p => (
                     <button
@@ -379,7 +379,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                  onClick={() => { setSearch(''); setProto('Todos'); setCountry('Todos'); }}
                  className="text-[11px] font-bold text-text-secondary hover:text-primary flex items-center gap-1.5 transition-colors uppercase tracking-wider"
                >
-                 <X size={14} /> Limpar
+                 <X size={14} /> Limpar filtros
                </button>
             </div>
           </div>
