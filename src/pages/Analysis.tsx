@@ -17,6 +17,34 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
    const isAdmin = localStorage.getItem('role') === 'admin';
   const queryClient = useQueryClient();
    
+    const isLocalIP = (ip: string) => ip?.startsWith('45.175.50.');
+    const shouldFlip = (item: any) => !isLocalIP(item.src_addr) && isLocalIP(item.dst_addr);
+    const getService = (port: number) => {
+      const s: Record<number, string> = {
+        80:'HTTP', 443:'HTTPS', 53:'DNS', 22:'SSH', 25:'SMTP', 110:'POP3',
+        143:'IMAP', 3389:'RDP', 8080:'HTTP-Alt', 123:'NTP', 179:'BGP', 161:'SNMP',
+        3306:'MySQL', 5432:'PG', 27000:'Steam', 1194:'VPN', 500:'IPSec', 1723:'PPTP',
+        8443:'HTTPS-Alt', 465:'SMTP-SSL', 993:'IMAP-SSL', 995:'POP3-SSL',
+        21:'FTP', 23:'Telnet', 3478:'STUN', 5060:'SIP', 5061:'SIP-TLS',
+        19522:'UDP-Game', 25461:'Game'
+      };
+      return s[port] || String(port);
+    };
+    const fmtBytes = (b: number) => {
+      if (!b) return '—';
+      if (b > 1e12) return (b / 1e12).toFixed(1) + ' TB';
+      if (b > 1e9) return (b / 1e9).toFixed(1) + ' GB';
+      if (b > 1e6) return (b / 1e6).toFixed(0) + ' MB';
+      if (b > 1e3) return (b / 1e3).toFixed(0) + ' KB';
+      return b + ' B';
+    };
+    const calcPPS = (packets: number) => {
+      if (!packets) return '—';
+      const pps = Math.round(packets / 1800);
+      return pps > 1000 ? (pps / 1000).toFixed(1) + 'k' : String(pps);
+    };
+    const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
+
     const [search, setSearch] = useState('');
     const [proto, setProto] = useState('Todos');
     const [country, setCountry] = useState('Todos');
@@ -145,33 +173,6 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
      return { total: items.length, uniqueIPs, distinctCountries, suspicious };
    }, [connectionItems]);
  
-   const isLocalIP = (ip: string) => ip?.startsWith('45.175.50.');
-   const shouldFlip = (item: any) => !isLocalIP(item.src_addr) && isLocalIP(item.dst_addr);
-   const getService = (port: number) => {
-     const s: Record<number, string> = {
-       80:'HTTP', 443:'HTTPS', 53:'DNS', 22:'SSH', 25:'SMTP', 110:'POP3',
-       143:'IMAP', 3389:'RDP', 8080:'HTTP-Alt', 123:'NTP', 179:'BGP', 161:'SNMP',
-       3306:'MySQL', 5432:'PG', 27000:'Steam', 1194:'VPN', 500:'IPSec', 1723:'PPTP',
-       8443:'HTTPS-Alt', 465:'SMTP-SSL', 993:'IMAP-SSL', 995:'POP3-SSL',
-       21:'FTP', 23:'Telnet', 3478:'STUN', 5060:'SIP', 5061:'SIP-TLS',
-       19522:'UDP-Game', 25461:'Game'
-     };
-     return s[port] || String(port);
-   };
-   const fmtBytes = (b: number) => {
-     if (!b) return '—';
-     if (b > 1e12) return (b / 1e12).toFixed(1) + ' TB';
-     if (b > 1e9) return (b / 1e9).toFixed(1) + ' GB';
-     if (b > 1e6) return (b / 1e6).toFixed(0) + ' MB';
-     if (b > 1e3) return (b / 1e3).toFixed(0) + ' KB';
-     return b + ' B';
-   };
-   const calcPPS = (packets: number) => {
-     if (!packets) return '—';
-     const pps = Math.round(packets / 1800);
-     return pps > 1000 ? (pps / 1000).toFixed(1) + 'k' : String(pps);
-   };
-   const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
  
    const handleMitigate = (item: any) => {
      const flipped = shouldFlip(item);
