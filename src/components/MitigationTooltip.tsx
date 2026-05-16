@@ -12,8 +12,8 @@
    since?: string;
    fonte?: string;
    source?: string;
-   pps?: number;
-   mbps?: number;
+    pps?: number | string;
+    mbps?: number | string;
    direction?: 'incoming' | 'outgoing' | string;
    reason?: string;
  }
@@ -28,8 +28,8 @@
     ip: data.ip,
     type: data.type || data.tipo || 'blackhole',
     since: data.since || data.desde || '—',
-    pps: data.pps || 0,
-    mbps: data.mbps || 0,
+    pps: Number(data.pps || 0),
+    mbps: Number(data.mbps || 0),
     source: data.source || data.fonte || 'manual',
     reason: data.reason || '',
     direction: data.direction || 'incoming',
