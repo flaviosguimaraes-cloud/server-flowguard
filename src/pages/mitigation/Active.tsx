@@ -213,7 +213,7 @@ function TabButton({ active, onClick, icon, label, count }: any) {
                            ) : item.source === 'manual' ? (
                              <span className="px-1.5 py-0.5 bg-bg-primary text-text-secondary border border-border text-[10px] font-bold rounded uppercase">Manual</span>
                            ) : (
-                             <span className="text-text-secondary italic text-[10px]">Aguardando dados</span>
+                             <span className="px-1.5 py-0.5 bg-bg-primary text-text-secondary border border-border text-[10px] font-bold rounded uppercase">Ataque cessado</span>
                            )}
                          </td>
                         <td className="px-6 py-3.5">
