@@ -1,5 +1,5 @@
-import { useState, useMemo, useEffect, useCallback } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useState, useMemo, useEffect } from 'react';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { useTranslation } from '../hooks/useTranslation';
  import { 
@@ -12,81 +12,103 @@ import Flag from '../components/Flag';
 
 import { clsx } from 'clsx';
 
+const REFETCH_INTERVAL = 30000;
+
 export default function Dashboard() {
   const { t } = useTranslation();
+  const queryClient = useQueryClient();
+  const [countdown, setCountdown] = useState(30);
 
-  const [tick, setTick] = useState(0);
   useEffect(() => {
     const timer = setInterval(() => {
-      setTick(t => t + 1);
-    }, 30000);
+      setCountdown(c => (c <= 1 ? 30 : c - 1));
+    }, 1000);
     return () => clearInterval(timer);
   }, []);
 
+  useEffect(() => {
+    if (countdown === 30) {
+      queryClient.invalidateQueries();
+    }
+  }, [countdown, queryClient]);
+
   const { data: detection, isLoading: statsLoading } = useQuery({
-     queryKey: ['detection-stats', tick],
-     queryFn: async () => {
-       const r = await api.get('/api/detection/stats');
-       return r.data;
-     },
-     refetchInterval: 30000,
-     staleTime: 0,
-     retry: 1,
-   });
- 
-   const { data: timeline } = useQuery({
-     queryKey: ['timeline', tick],
-     queryFn: async () => {
-       const r = await api.get('/api/flows/timeline?minutes=30');
-       return r.data;
-     },
-     refetchInterval: 30000,
-     staleTime: 0,
-     retry: 1,
-   });
- 
-   const { data: protocols } = useQuery({
-     queryKey: ['protocols', tick],
-     queryFn: async () => {
-       const r = await api.get('/api/flows/protocols?minutes=30');
-       console.log('protocols raw:', r.data);
-       return r.data;
-     },
-     refetchInterval: 30000,
-     staleTime: 0,
-   });
+    queryKey: ['detection-stats'],
+    queryFn: async () => {
+      const r = await api.get('/api/detection/stats');
+      return r.data;
+    },
+    refetchInterval: REFETCH_INTERVAL,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+  });
 
-   const { data: countries } = useQuery({
-     queryKey: ['countries', tick],
-     queryFn: async () => {
-       const r = await api.get('/api/flows/countries?minutes=30');
-       console.log('countries raw:', r.data);
-       return r.data;
-     },
-     refetchInterval: 30000,
-     staleTime: 0,
-   });
+  const { data: timeline } = useQuery({
+    queryKey: ['timeline'],
+    queryFn: async () => {
+      const r = await api.get('/api/flows/timeline?minutes=30');
+      return r.data;
+    },
+    refetchInterval: REFETCH_INTERVAL,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+  });
 
-   const { data: ports } = useQuery({
-     queryKey: ['ports', tick],
-     queryFn: async () => {
-       const r = await api.get('/api/flows/ports?minutes=30');
-       console.log('ports raw:', r.data);
-       return r.data;
-     },
-     refetchInterval: 30000,
-     staleTime: 0,
-   });
- 
-    const { data: interfaces } = useQuery({
-       queryKey: ['interfaces', tick],
-      queryFn: async () => {
-        const r = await api.get('/api/collectors/1/interfaces/summary');
-        return r.data;
-      },
-      refetchInterval: 30000,
-       staleTime: 0,
-    });
+  const { data: protocols } = useQuery({
+    queryKey: ['protocols'],
+    queryFn: async () => {
+      const r = await api.get('/api/flows/protocols?minutes=30');
+      return r.data;
+    },
+    refetchInterval: REFETCH_INTERVAL,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+  });
+
+  const { data: countries } = useQuery({
+    queryKey: ['countries'],
+    queryFn: async () => {
+      const r = await api.get('/api/flows/countries?minutes=30');
+      return r.data;
+    },
+    refetchInterval: REFETCH_INTERVAL,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+  });
+
+  const { data: ports } = useQuery({
+    queryKey: ['ports'],
+    queryFn: async () => {
+      const r = await api.get('/api/flows/ports?minutes=30');
+      return r.data;
+    },
+    refetchInterval: REFETCH_INTERVAL,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+  });
+
+  const { data: interfaces } = useQuery({
+    queryKey: ['interfaces'],
+    queryFn: async () => {
+      const r = await api.get('/api/collectors/1/interfaces/summary');
+      return r.data;
+    },
+    refetchInterval: REFETCH_INTERVAL,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+  });
 
   const [trafficSource, setTrafficSource] = useState<'flow' | 'snmp'>(() =>
     localStorage.getItem('fg_traffic_source') as 'flow' | 'snmp' || 'snmp'
@@ -125,21 +147,19 @@ export default function Dashboard() {
     }
   }, [interfaces, trafficSource, selectedIfaces.length]);
 
-   const { data: connections } = useQuery({
-     queryKey: ['connections', tick],
-     queryFn: async () => {
-       const r = await api.get('/api/flows/connections?limit=10');
-       console.log('connections raw:', r.data);
-       return r.data;
-     },
-     refetchInterval: 30000,
-     staleTime: 0,
-   });
+  const { data: connections, dataUpdatedAt } = useQuery({
+    queryKey: ['connections'],
+    queryFn: async () => {
+      const r = await api.get('/api/flows/connections?limit=10');
+      return r.data;
+    },
+    refetchInterval: REFETCH_INTERVAL,
+    refetchIntervalInBackground: true,
+    staleTime: 0,
+    gcTime: 0,
+    refetchOnWindowFocus: true,
+  });
 
-   console.log('protocols:', protocols);
-   console.log('countries:', countries);
-   console.log('ports:', ports);
-   console.log('connections:', connections);
 
     const flowData = useMemo(() => {
       return (timeline || []).map((d: any) => ({
@@ -255,12 +275,16 @@ export default function Dashboard() {
      .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
      .slice(0, 6);
 
-    const fmtBps = (bps: number) => {
-      if (!bps) return '0 bps';
-      if (bps > 1e9) return (bps / 1e9).toFixed(1) + ' Gbps';
-      if (bps > 1e6) return (bps / 1e6).toFixed(0) + ' Mbps';
-      return (bps / 1e3).toFixed(0) + ' Kbps';
-    };
+  const fmtBps = (bps: number) => {
+    if (!bps || bps === 0) return '0 bps';
+    if (bps >= 1e9)
+      return (bps/1e9).toFixed(1)+' Gbps';
+    if (bps >= 1e6)
+      return (bps/1e6).toFixed(0)+' Mbps';
+    if (bps >= 1e3)
+      return (bps/1e3).toFixed(0)+' Kbps';
+    return bps+' bps';
+  };
 
   if (statsLoading) {
     return (
@@ -309,6 +333,30 @@ export default function Dashboard() {
           <h2 className="text-lg font-bold text-gray-900 dark:text-gray-100">Network Traffic</h2>
           
           <div className="flex flex-wrap items-center gap-3">
+            <button 
+              onClick={() => {
+                queryClient.invalidateQueries();
+                setCountdown(30);
+              }}
+              className="flex items-center gap-2 px-3 py-1.5 bg-gray-50 dark:bg-bg-secondary hover:bg-gray-100 dark:hover:bg-[#2a2d3e] text-text-secondary hover:text-text-primary rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider border border-gray-200 dark:border-[#2a2d3e]"
+            >
+              <svg 
+                xmlns="http://www.w3.org/2000/svg" 
+                width="14" height="14" 
+                viewBox="0 0 24 24" fill="none" 
+                stroke="currentColor" strokeWidth="2.5" 
+                strokeLinecap="round" strokeLinejoin="round"
+                className={clsx(countdown === 30 && "animate-spin")}
+                style={{ animationDuration: '1s' }}
+              >
+                <path d="M23 4v6h-6"/>
+                <path d="M1 20v-6h6"/>
+                <path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/>
+                <path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/>
+              </svg>
+              <span>{countdown}s</span>
+            </button>
+
             <div className="flex bg-gray-100 dark:bg-bg-secondary p-1 rounded-lg">
               <button
                 onClick={() => setTrafficSource('snmp')}
@@ -375,75 +423,106 @@ export default function Dashboard() {
                 {sumMode ? '✓ Somando selecionadas' : 'Somar selecionadas'}
               </button>
             </div>
-            <div className="lg:col-span-3 space-y-6 pt-2">
+            <div className="lg:col-span-3 space-y-4 pt-2">
+              <div style={{ display: 'flex', gap: 16, marginBottom: 12, fontSize: 12 }}>
+                <span style={{ color: '#8892a4' }}>↓ Entrada (RX)</span>
+                <span style={{ color: '#8892a4', opacity: 0.6 }}>↑ Saída (TX)</span>
+                <span style={{ marginLeft: 'auto', color: '#8892a4', fontSize: 11 }}>
+                  {selectedIfaces.length} interface(s) selecionada(s)
+                  {sumMode ? ' — Somadas' : ''}
+                </span>
+              </div>
+
               {!sumMode ? (
                 selectedIfaceData.map((iface: any, idx: number) => {
-                  const inPct = iface.if_speed > 0 ? Math.min((iface.in_bps / iface.if_speed) * 100, 100) : 0;
-                  const outPct = iface.if_speed > 0 ? Math.min((iface.out_bps / iface.if_speed) * 100, 100) : 0;
+                  const maxVal = Math.max(...selectedIfaceData.map((i: any) => i.if_speed || 0), ...selectedIfaceData.map((i: any) => Math.max(i.in_bps, i.out_bps)));
+                  const speed = iface.if_speed || maxVal || 1e9;
+                  const inPct = Math.min((iface.in_bps / speed) * 100, 100);
+                  const outPct = Math.min((iface.out_bps / speed) * 100, 100);
+                  const color = ifaceColors[idx % ifaceColors.length];
+                  
                   return (
-                    <div key={iface.display_name} className="space-y-1.5">
-                      <div className="flex justify-between items-center text-[11px]">
-                        <span className="font-bold flex items-center gap-2" style={{ color: ifaceColors[idx % ifaceColors.length] }}>
-                          <div className="w-1.5 h-1.5 rounded-full" style={{ backgroundColor: ifaceColors[idx % ifaceColors.length] }} />
-                          {iface.display_name}
-                        </span>
-                        <span className="text-text-secondary font-medium">
-                          {fmtBps(iface.in_bps)} <ArrowDown size={10} className="inline" /> / {fmtBps(iface.out_bps)} <ArrowUp size={10} className="inline" />
-                        </span>
-                      </div>
-                      <div className="space-y-1">
-                        <div className="h-2.5 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden shadow-inner border border-gray-200/50 dark:border-transparent">
-                          <div className="h-full transition-all duration-1000 rounded-full" style={{ width: inPct + '%', backgroundColor: ifaceColors[idx % ifaceColors.length] }} />
+                    <div key={iface.display_name} className="p-4 rounded-xl border border-gray-100 dark:border-[#2a2d3e] bg-gray-50/30 dark:bg-bg-secondary/20 space-y-3 transition-all">
+                      <p className="text-[11px] font-bold text-gray-900 dark:text-gray-100 truncate">
+                        {iface.display_name}
+                      </p>
+                      
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] text-[#8892a4] w-8">↓ RX</span>
+                          <div className="flex-1 h-3 bg-gray-100 dark:bg-[#2a2d3e] rounded-[4px] overflow-hidden">
+                            <div 
+                              className="h-full transition-all duration-500 rounded-[4px]"
+                              style={{ width: inPct + '%', backgroundColor: color }}
+                            />
+                          </div>
+                          <span className="text-[11px] font-bold text-gray-700 dark:text-[#e2e8f0] min-w-[70px] text-right">
+                            {fmtBps(iface.in_bps)}
+                          </span>
                         </div>
-                        <div className="h-2.5 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden shadow-inner border border-gray-200/50 dark:border-transparent">
-                          <div className="h-full transition-all duration-1000 rounded-full opacity-60" style={{ width: outPct + '%', backgroundColor: ifaceColors[idx % ifaceColors.length] }} />
+                        
+                        <div className="flex items-center gap-3">
+                          <span className="text-[10px] text-[#8892a4] w-8">↑ TX</span>
+                          <div className="flex-1 h-3 bg-gray-100 dark:bg-[#2a2d3e] rounded-[4px] overflow-hidden">
+                            <div 
+                              className="h-full transition-all duration-500 rounded-[4px] opacity-60"
+                              style={{ width: outPct + '%', backgroundColor: color }}
+                            />
+                          </div>
+                          <span className="text-[11px] font-bold text-gray-700 dark:text-[#e2e8f0] min-w-[70px] text-right">
+                            {fmtBps(iface.out_bps)}
+                          </span>
                         </div>
                       </div>
-                      <div className="flex justify-between text-[9px] text-text-secondary font-medium px-1">
-                        <span>Capacidade: {fmtBps(iface.if_speed)}</span>
-                        <span>Utilização: {inPct.toFixed(1)}% (RX) / {outPct.toFixed(1)}% (TX)</span>
+
+                      <div className="text-[10px] text-[#8892a4] font-medium border-t border-gray-100 dark:border-[#2a2d3e] pt-2">
+                        Capacidade: {fmtBps(iface.if_speed)} — Util: {((Math.max(iface.in_bps, iface.out_bps) / speed) * 100).toFixed(1)}%
                       </div>
                     </div>
                   );
                 })
               ) : (
-                <div className="h-full flex flex-col justify-center space-y-10 py-4">
+                <div className="p-6 rounded-xl border border-accent/20 bg-accent/5 space-y-6">
                   {(() => {
                     const totalRx = selectedIfaceData.reduce((a: number, b: any) => a + (b.in_bps || 0), 0);
                     const totalTx = selectedIfaceData.reduce((a: number, b: any) => a + (b.out_bps || 0), 0);
                     const totalSpeed = selectedIfaceData.reduce((a: number, b: any) => a + (b.if_speed || 0), 0);
-                    const totalInPct = totalSpeed > 0 ? Math.min((totalRx / totalSpeed) * 100, 100) : 0;
-                    const totalOutPct = totalSpeed > 0 ? Math.min((totalTx / totalSpeed) * 100, 100) : 0;
+                    const maxVal = totalSpeed || Math.max(totalRx, totalTx) || 1e9;
+                    
                     return (
-                      <>
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-end">
-                            <div>
-                              <p className="text-xs font-bold text-accent uppercase tracking-widest mb-1">Total Entrada (RX)</p>
-                              <h3 className="text-4xl font-black text-gray-900 dark:text-gray-100">{fmtBps(totalRx)}</h3>
+                      <div className="space-y-4">
+                        <p className="text-[12px] font-black text-accent uppercase tracking-widest">
+                          TOTAL ({selectedIfaceData.length} interfaces somadas)
+                        </p>
+                        
+                        <div className="space-y-3">
+                          <div className="flex items-center gap-4">
+                            <span className="text-[11px] font-bold text-[#8892a4] w-10">↓ RX</span>
+                            <div className="flex-1 h-4 bg-gray-100 dark:bg-[#2a2d3e] rounded-[4px] overflow-hidden">
+                              <div 
+                                className="h-full bg-accent transition-all duration-500 rounded-[4px]"
+                                style={{ width: Math.min((totalRx / maxVal) * 100, 100) + '%' }}
+                              />
                             </div>
-                            <span className="text-sm font-bold text-accent">{totalInPct.toFixed(1)}%</span>
+                            <span className="text-sm font-black text-gray-900 dark:text-gray-100 min-w-[90px] text-right">
+                              {fmtBps(totalRx)}
+                            </span>
                           </div>
-                          <div className="h-4 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden shadow-inner">
-                            <div className="h-full bg-accent transition-all duration-1000 shadow-lg shadow-accent/20" style={{ width: totalInPct + '%' }} />
-                          </div>
-                        </div>
-                        <div className="space-y-4">
-                          <div className="flex justify-between items-end">
-                            <div>
-                              <p className="text-xs font-bold text-success uppercase tracking-widest mb-1">Total Saída (TX)</p>
-                              <h3 className="text-4xl font-black text-gray-900 dark:text-gray-100">{fmtBps(totalTx)}</h3>
+                          
+                          <div className="flex items-center gap-4">
+                            <span className="text-[11px] font-bold text-[#8892a4] w-10">↑ TX</span>
+                            <div className="flex-1 h-4 bg-gray-100 dark:bg-[#2a2d3e] rounded-[4px] overflow-hidden">
+                              <div 
+                                className="h-full bg-accent transition-all duration-500 rounded-[4px] opacity-60"
+                                style={{ width: Math.min((totalTx / maxVal) * 100, 100) + '%' }}
+                              />
                             </div>
-                            <span className="text-sm font-bold text-success">{totalOutPct.toFixed(1)}%</span>
-                          </div>
-                          <div className="h-4 bg-gray-100 dark:bg-[#2a2d3e] rounded-full overflow-hidden shadow-inner">
-                            <div className="h-full bg-success transition-all duration-1000 shadow-lg shadow-success/20" style={{ width: totalOutPct + '%' }} />
+                            <span className="text-sm font-black text-gray-900 dark:text-gray-100 min-w-[90px] text-right">
+                              {fmtBps(totalTx)}
+                            </span>
                           </div>
                         </div>
-                        <div className="text-center text-[11px] text-text-secondary font-bold uppercase tracking-widest pt-4">
-                          Capacidade Combinada: {fmtBps(totalSpeed)}
-                        </div>
-                      </>
+                      </div>
                     );
                   })()}
                 </div>
@@ -682,8 +761,14 @@ export default function Dashboard() {
             </tbody>
           </table>
         </div>
-        <div className="p-3 border-t border-gray-100 dark:border-border text-[10px] text-text-secondary text-right font-bold uppercase tracking-widest bg-gray-50/30 dark:bg-bg-secondary/10">
-          Atualizado: {new Date().toLocaleTimeString('pt-BR')}
+        <div style={{
+          fontSize: 11,
+          color: '#8892a4',
+          textAlign: 'right',
+          marginTop: 6,
+          padding: '0 24px 16px'
+        }}>
+          Atualizado às {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR') : '—'}
         </div>
       </div>
     </div>
