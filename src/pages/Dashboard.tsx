@@ -1,7 +1,8 @@
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, Fragment } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { useTranslation } from '../hooks/useTranslation';
+import { useTheme } from '../contexts/ThemeContext';
 import { 
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
   BarChart, Bar, Cell, AreaChart, Area
@@ -58,6 +59,8 @@ function StatCard({ title, value, unit, icon, trend, tooltip, subtitle }: any) {
 
 export default function Dashboard() {
   const { t } = useTranslation();
+  const { theme } = useTheme();
+  const isDark = theme === 'dark';
   const queryClient = useQueryClient();
   const [countdown, setCountdown] = useState(30);
   const [hoveredIP, setHoveredIP] = useState<string | null>(null);
