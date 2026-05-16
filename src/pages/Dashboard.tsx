@@ -1096,8 +1096,8 @@ export default function Dashboard() {
                             ip: srcMitigation.ip,
                             tipo: 'Blackhole /32',
                             desde: srcMitigation.since,
-                            pps: srcMitigation.pps,
-                            mbps: srcMitigation.mbps,
+                             pps: Number(srcMitigation.pps || 0),
+                             mbps: Number(srcMitigation.mbps || 0),
                             fonte: srcMitigation.source || 'Manual (admin)'
                           }}>
                             <span className="font-bold text-danger cursor-help flex items-center gap-1 text-xs">
@@ -1118,8 +1118,8 @@ export default function Dashboard() {
                             ip: dstMitigation.ip,
                             tipo: 'Blackhole /32',
                             desde: dstMitigation.since,
-                            pps: dstMitigation.pps,
-                            mbps: dstMitigation.mbps,
+                             pps: Number(dstMitigation.pps || 0),
+                             mbps: Number(dstMitigation.mbps || 0),
                             fonte: dstMitigation.source || 'Manual (admin)'
                           }}>
                             <span className="font-bold text-danger cursor-help flex items-center gap-1 text-xs">
