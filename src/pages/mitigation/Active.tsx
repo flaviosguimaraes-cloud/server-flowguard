@@ -19,18 +19,19 @@ function TabButton({ active, onClick, icon, label, count }: any) {
     <button
       onClick={onClick}
       className={clsx(
-        "px-6 py-4 flex items-center gap-2 border-b-2 transition-all relative font-bold text-sm",
+        "px-8 py-5 flex items-center gap-3 border-b-2 transition-all duration-300 relative font-black text-sm uppercase tracking-widest overflow-hidden",
         active 
-          ? "border-primary text-primary bg-primary/5" 
+          ? "border-primary text-primary bg-primary/10" 
           : "border-transparent text-text-secondary hover:text-text-primary hover:bg-bg-primary"
       )}
     >
+      {active && <div className="absolute top-0 left-0 w-full h-1 bg-primary animate-in slide-in-from-left duration-500" />}
       {icon}
-      <span className="tracking-tight">{label}</span>
+      <span className="tracking-tighter">{label}</span>
       {count !== undefined && (
         <span className={clsx(
-          "px-2 py-0.5 rounded-full text-[10px] ml-1 font-black",
-          active ? "bg-primary text-white" : "bg-bg-primary text-text-secondary border border-border"
+          "px-2.5 py-1 rounded-lg text-[10px] ml-2 font-black border transition-all duration-300",
+          active ? "bg-primary text-white border-primary shadow-lg shadow-primary/30 scale-110" : "bg-bg-primary text-text-secondary border-border"
         )}>
           {count}
         </span>
