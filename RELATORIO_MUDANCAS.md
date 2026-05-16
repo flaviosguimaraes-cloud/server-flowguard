@@ -1,47 +1,59 @@
-# Relatório de Alterações - FlowGuard
+# Relatório de Atualização Visual - FlowGuard
 
-Este relatório descreve todas as correções e melhorias implementadas no sistema FlowGuard.
+Este relatório detalha as alterações visuais aplicadas ao sistema, focando em modernização, consistência e profissionalismo (NOC/SOC Style), sem alterar nenhuma lógica funcional ou regra de negócio.
 
-## 1. Correção de Rotas e Páginas
-Foram criadas todas as rotas faltantes para garantir que o menu lateral não exiba erros de "Not Found".
-- **Novas Rotas:** Análise, Eventos, Mitigação (Ativas, FlowSpec, BGP, Whitelist, Blacklist), CDNs, Operação (Coletores, Sessões BGP, Limiares), Sistema, Auditoria, Notificações e Configurações.
-- **Novas Páginas:** Placeholder para todas as rotas com visual padronizado e tradução automática.
+## 1. Cores e Temas
+- **Paleta de Cores Refinada:** Introdução de tons mais sóbrios baseados em Slate e Zinc.
+- **Dark Mode Premium:** Fundo agora usa um tom mais profundo (#0b0e14) com cards em (#12151c), reduzindo o cansaço visual.
+- **Contraste Aprimorado:** Melhor distinção entre o fundo da página, cards e textos secundários.
+- **Variáveis Semânticas:** Consolidação do uso de `--primary`, `--border`, `--bg-primary` em todo o projeto.
 
-## 2. Integração de Dados do Dashboard
-O dashboard agora busca dados reais da API utilizando `@tanstack/react-query`.
-- **Endpoints Integrados:** 
-  - `/api/detection/stats` (Métricas principais)
-  - `/api/flows/timeline` (Gráfico de tráfego)
-  - `/api/flows/protocols` (Top Protocolos)
-  - `/api/flows/countries` (Top Países)
-  - `/api/flows/ports` (Top Portas)
-  - `/api/collectors/1/interfaces/summary` (Interfaces SNMP)
-  - `/api/flows/summary` (Resumo geral)
-- **Atualização Automática:** Todos os dados são atualizados a cada 30 segundos.
+## 2. Tipografia e Espaçamento
+- **Hierarquia Visual:** Ajuste nos tamanhos de fonte (`text-3xl`, `font-black`) para destacar valores principais.
+- **Espaçamento Consistente:** Padronização de paddings (`p-6`) e gaps em grids (`gap-6`).
+- **Font-Smoothing:** Ativado antialiasing global para maior legibilidade.
 
-## 3. Redesign Completo (UI/UX)
-O sistema foi totalmente refatorado com um design profissional.
-- **Login:** Novo layout com card centralizado, logo FlowGuard e seletor de idioma.
-- **Sidebar:** Agora é colapsável, com grupos organizados ("Mitigação" e "Operação") e ícones modernos.
-- **Header:** Altura reduzida para 52px, botões de toggle, seletor de idioma e avatar de usuário.
-- **Dashboard:** Cards de métricas com tendências, gráficos de área polidos (Recharts) e tabelas com hover e destaque para linhas suspeitas.
+## 3. Componentes de UI (Design System)
+- **Cards:**
+  - Bordas arredondadas aumentadas para `rounded-2xl`.
+  - Adição de sombras suaves (`shadow-black/5`).
+  - Efeito hover sutil com alteração de borda e sombra.
+- **Tabelas:**
+  - Headers agora usam fundo suave (`bg-bg-primary/50`) e texto em uppercase com tracking largo.
+  - Rows com transição de cor suave no hover.
+  - Células com espaçamento aumentado para melhor leitura.
+- **Botões:**
+  - Novo estilo de botões com cantos mais arredondados (`rounded-xl`).
+  - Sombras coloridas (`shadow-primary/20`) para botões de ação principal.
+  - Feedback visual no clique (`active:scale-95`).
+- **Badges:**
+  - Estilo "Pill" (arredondado total).
+  - Cores mais suaves com bordas sutis.
 
-## 4. Gerenciamento de Temas (Dark/Light Mode)
-- Implementado `ThemeContext` para gerenciar a troca de tema globalmente.
-- Sincronização automática com `localStorage` e preferência do sistema.
-- Cores customizadas via Tailwind v4 garantindo visibilidade total em ambos os modos.
+## 4. Layout Estrutural
+- **Sidebar:**
+  - Design mais limpo com borda lateral fina.
+  - Itens de menu com estados ativo/hover mais elegantes.
+  - Grupo de submenus com identação visual clara.
+- **Header:**
+  - Altura aumentada para 64px para melhor respiro.
+  - Adição de efeito `backdrop-blur` (vidro fosco) na rolagem.
+  - Elementos de perfil (Avatar) e seletores refinados.
 
-## 5. Internacionalização (i18n)
-- Arquivo `translations.ts` atualizado com todas as novas chaves.
-- Suporte completo a Português, Inglês e Espanhol em todas as telas e menus.
+## 5. Elementos Específicos
+- **Dashboards:** StatCards redesenhados para exibir métricas de forma mais impactante.
+- **Análise:** Barras de intensidade de PPS com transições mais fluidas e cores dinâmicas via CSS variables.
+- **Tooltips:** Tooltips de mitigação customizados agora usam o mesmo estilo visual dos cards, com sombras profundas e tipografia mono para IPs.
 
-## 6. Correções Técnicas
-- Substituição de `window.location.href` por `navigate` do TanStack Router para navegação sem refresh.
-- Centralização do estado da Sidebar via `UIContext`.
- - Padronização dos componentes `Skeleton` para carregamento suave.
- 
- ## 7. Correção Crítica de Segurança e API
- - **Remoção de Token em Autenticação:** Corrigido o interceptor de requisições no arquivo `src/services/api.ts` para não enviar o cabeçalho `Authorization` durante o login e refresh de token, evitando erros de credenciais inválidas caso existisse um token expirado no cache.
- - **Tratamento de Erros de Login:** Implementada a limpeza de estados de erro ao digitar no formulário de login e tratamento refinado para respostas 401.
- - **Renovação de Token (Refresh Token):** Implementada lógica no interceptor da API para tentar renovar o token automaticamente antes de deslogar o usuário em caso de erro 401, evitando loops de redirecionamento.
- - **Persistência de Sessão Síncrona:** O estado de autenticação agora é lido do `localStorage` instantaneamente na inicialização, eliminando "flickers" e garantindo que rotas protegidas funcionem corretamente.
+## Checklist de Integridade
+1. [x] Nenhum texto foi alterado.
+2. [x] Nenhum texto novo foi criado.
+3. [x] Nenhum componente funcional novo foi adicionado.
+4. [x] Nenhuma chamada de API foi alterada.
+5. [x] Nenhuma rota foi alterada.
+6. [x] Nenhuma regra de negócio foi alterada.
+7. [x] Nenhuma informação nova foi exibida.
+8. [x] Apenas classes, estilos, cores, fontes, espaçamentos e aparência foram modificados.
+
+---
+*Atualização concluída em 16 de Maio de 2026.*
