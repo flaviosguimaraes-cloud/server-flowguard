@@ -1104,9 +1104,9 @@ export default function Dashboard() {
                         <span className="text-text-secondary text-[10px] opacity-60">:{srcPort}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-3.5">
                       <div className="flex items-center gap-2">
-                        <Flag code={dstCountry} />
+                        <Flag code={dstCountry} size={14} />
                         {dstMitigation ? (
                           <MitigationTooltip data={{
                             ip: dstMitigation.ip,
@@ -1116,44 +1116,44 @@ export default function Dashboard() {
                             mbps: dstMitigation.mbps,
                             fonte: dstMitigation.source || 'Manual (admin)'
                           }}>
-                            <span className="font-bold text-danger cursor-help flex items-center gap-1">
+                            <span className="font-bold text-danger cursor-help flex items-center gap-1 text-xs">
                               🛡 {dst}
                             </span>
                           </MitigationTooltip>
                         ) : (
-                          <span className="text-text-primary">{dst}</span>
+                          <span className="text-text-primary text-xs font-medium">{dst}</span>
                         )}
-                        <span className="text-text-secondary text-xs">:{dstPort}</span>
+                        <span className="text-text-secondary text-[10px] opacity-60">:{dstPort}</span>
                       </div>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="text-xs font-medium text-text-primary">{getService(dstPort)}</span>
+                    <td className="px-6 py-3.5">
+                      <span className="text-[11px] font-semibold text-text-primary">{getService(dstPort)}</span>
                     </td>
-                    <td className="px-6 py-4">
-                      <span className="text-[11px] text-text-secondary" title={dstOrg}>{getOrg(dstOrg)}</span>
+                    <td className="px-6 py-3.5">
+                      <span className="text-[10px] font-medium text-text-secondary" title={dstOrg}>{getOrg(dstOrg)}</span>
                     </td>
-                    <td className="px-6 py-4">
+                    <td className="px-6 py-3.5">
                       <span className={clsx(
-                        "px-2 py-0.5 rounded text-[10px] font-bold uppercase",
-                        item.proto === 6 ? "bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400" :
-                        item.proto === 17 ? "bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400" :
-                        item.proto === 1 ? "bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400" :
-                        "bg-gray-100 text-gray-700 dark:bg-bg-secondary dark:text-text-secondary"
+                        "px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider",
+                        item.proto === 6 ? "bg-primary/10 text-primary border border-primary/10" :
+                        item.proto === 17 ? "bg-purple-500/10 text-purple-500 border border-purple-500/10" :
+                        item.proto === 1 ? "bg-warning/10 text-warning border border-warning/10" :
+                        "bg-bg-primary text-text-secondary"
                       )}>
                         {protoName(item.proto)}
                       </span>
                     </td>
-                    <td className="px-6 py-4 text-right font-bold text-text-primary">
+                    <td className="px-6 py-3.5 text-right font-bold text-text-primary text-xs">
                       <Tooltip>
                         <TooltipTrigger asChild>
                           <span className="cursor-help">{fmtBytes(item.bytes)}</span>
                         </TooltipTrigger>
                         <TooltipContent>
-                          <p>Volume transferido nos últimos 2 minutos (estimado com sampling 1:1000)</p>
+                          <p>Volume transferido (2 min)</p>
                         </TooltipContent>
                       </Tooltip>
                     </td>
-                    <td className="px-6 py-4 text-right text-text-secondary">{calcPPS(item.packets)}</td>
+                    <td className="px-6 py-3.5 text-right text-text-secondary text-xs font-medium">{calcPPS(item.packets)}</td>
                   </tr>
                 );
               })}
