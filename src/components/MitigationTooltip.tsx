@@ -53,56 +53,57 @@
          className="p-0 border-none bg-transparent shadow-none"
          style={{ width: 240 }}
        >
-         <div 
-           className="bg-[#1e2130] rounded-lg overflow-hidden border"
-           style={{ 
-             borderColor: info.color,
-             boxShadow: '0 4px 20px rgba(0,0,0,0.5)'
-           }}
-         >
-           <div className="p-3 border-b border-white/5 bg-white/5">
-             <div className="flex justify-between items-center mb-1">
-               <span className="text-[10px] font-black uppercase tracking-widest text-white/50">Detalhes da Proteção</span>
-               <span className="text-sm">{info.icon}</span>
-             </div>
-             <h4 className="text-base font-bold text-white font-mono">{data.ip}</h4>
-           </div>
-           
-           <div className="p-3 space-y-2.5">
-             <div className="flex justify-between items-center">
-               <span className="text-[10px] text-white/40 font-bold uppercase">Tipo</span>
-               <span className="text-[11px] font-bold" style={{ color: info.color }}>{info.label}</span>
-             </div>
-             
-             {data.community && (
-               <div className="flex justify-between items-center">
-                 <span className="text-[10px] text-white/40 font-bold uppercase">Community</span>
-                 <span className="text-[11px] font-mono text-white/80">{data.community}</span>
-               </div>
-             )}
- 
-             <div className="flex justify-between items-center">
-               <span className="text-[10px] text-white/40 font-bold uppercase">Desde</span>
-               <span className="text-[11px] text-white/80">{data.desde || '—'}</span>
-             </div>
- 
-             <div className="flex justify-between items-center">
-               <span className="text-[10px] text-white/40 font-bold uppercase">Fonte</span>
-               <span className="text-[11px] font-bold text-accent">{data.fonte || 'Manual (admin)'}</span>
-             </div>
- 
-             <div className="pt-1 mt-1 border-t border-white/5 grid grid-cols-2 gap-2">
-               <div>
-                 <span className="text-[9px] text-white/40 font-bold uppercase block">PPS Atual</span>
-                 <span className="text-xs font-bold text-white">{fmtPPS(data.pps)}</span>
-               </div>
-               <div className="text-right">
-                 <span className="text-[9px] text-white/40 font-bold uppercase block">Tráfego</span>
-                 <span className="text-xs font-bold text-white">{fmtMBPS(data.mbps)}</span>
-               </div>
-             </div>
-           </div>
-         </div>
+          <div 
+            className="bg-bg-secondary rounded-2xl overflow-hidden border shadow-2xl shadow-black/50 backdrop-blur-md"
+            style={{ 
+              borderColor: `${info.color}40`,
+              boxShadow: `0 10px 40px -10px ${info.color}30`
+            }}
+          >
+            <div className="p-4 border-b border-border bg-white/5 relative overflow-hidden">
+              <div className="absolute top-0 right-0 w-16 h-16 rounded-full blur-2xl" style={{ backgroundColor: info.color, opacity: 0.1 }} />
+              <div className="flex justify-between items-center mb-1 relative z-10">
+                <span className="text-[10px] font-black uppercase tracking-[0.2em] text-text-secondary opacity-60">Proteção Ativa</span>
+                <span className="text-xl">{info.icon}</span>
+              </div>
+              <h4 className="text-lg font-black text-text-primary font-mono relative z-10 tracking-tight">{data.ip}</h4>
+            </div>
+            
+            <div className="p-4 space-y-3.5 relative z-10">
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] text-text-secondary font-black uppercase tracking-wider">Tipo</span>
+                <span className="px-2 py-0.5 rounded text-[11px] font-black uppercase tracking-tighter" style={{ backgroundColor: `${info.color}20`, color: info.color }}>{info.label}</span>
+              </div>
+              
+              {data.community && (
+                <div className="flex justify-between items-center">
+                  <span className="text-[10px] text-text-secondary font-black uppercase tracking-wider">Community</span>
+                  <span className="text-[11px] font-black font-mono text-text-primary">{data.community}</span>
+                </div>
+              )}
+  
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] text-text-secondary font-black uppercase tracking-wider">Desde</span>
+                <span className="text-[11px] font-bold text-text-primary opacity-80">{data.desde || '—'}</span>
+              </div>
+  
+              <div className="flex justify-between items-center">
+                <span className="text-[10px] text-text-secondary font-black uppercase tracking-wider">Fonte</span>
+                <span className="text-[11px] font-black text-primary uppercase tracking-tighter bg-primary/10 px-2 py-0.5 rounded">{data.fonte || 'Manual'}</span>
+              </div>
+  
+              <div className="pt-3 mt-1 border-t border-border grid grid-cols-2 gap-4">
+                <div className="bg-bg-primary/50 p-2 rounded-xl border border-border">
+                  <span className="text-[9px] text-text-secondary font-black uppercase tracking-widest block mb-1 opacity-60">PPS</span>
+                  <span className="text-sm font-black text-text-primary tracking-tighter">{fmtPPS(data.pps)}</span>
+                </div>
+                <div className="bg-bg-primary/50 p-2 rounded-xl border border-border">
+                  <span className="text-[9px] text-text-secondary font-black uppercase tracking-widest block mb-1 opacity-60">VOLUME</span>
+                  <span className="text-sm font-black text-text-primary tracking-tighter">{fmtMBPS(data.mbps)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
        </TooltipContent>
      </Tooltip>
    );
