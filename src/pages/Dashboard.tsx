@@ -19,8 +19,10 @@ import Flag from '../components/Flag';
 import { clsx } from 'clsx';
 
 const REFETCH_INTERVAL = 30000;
-const RX_COLORS = ['#3b82f6', '#1d4ed8', '#60a5fa', '#93c5fd', '#bfdbfe'];
-const TX_COLORS = ['#22c55e', '#16a34a', '#4ade80', '#86efac', '#bbf7d0'];
+const RX_TOTAL_COLOR = '#3b82f6';
+const RX_IFACE_COLORS = ['#93c5fd', '#60a5fa', '#bfdbfe', '#1d4ed8', '#dbeafe'];
+const TX_TOTAL_COLOR = '#22c55e';
+const TX_IFACE_COLORS = ['#86efac', '#4ade80', '#bbf7d0', '#15803d', '#dcfce7'];
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
 const MAX_POINTS = 300;
 
@@ -351,13 +353,19 @@ export default function Dashboard() {
           time: time,
           display_time: time.substring(11, 16)
         };
+        let totalRx = 0;
+        let totalTx = 0;
         metricsHistory.forEach(({ifName, data}) => {
           const found = data.find((p: any) => p.time_bucket === time);
-          if (found) {
-            point[`${ifName}_in`] = Math.round(found.in_bps / 1e6);
-            point[`${ifName}_out`] = Math.round(found.out_bps / 1e6);
-          }
+          const rxMbps = found ? Math.round(found.in_bps / 1e6) : 0;
+          const txMbps = found ? Math.round(found.out_bps / 1e6) : 0;
+          point[`${ifName}_rx`] = rxMbps;
+          point[`${ifName}_tx`] = txMbps;
+          totalRx += rxMbps;
+          totalTx += txMbps;
         });
+        point['__total_rx'] = totalRx;
+        point['__total_tx'] = totalTx;
         return point;
       });
 
