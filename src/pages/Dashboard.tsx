@@ -227,33 +227,6 @@ export default function Dashboard() {
     refetchInterval: 60000,
   });
  
-   // MELHORIA 1 — Gráfico de interface carrega imediatamente
-  useEffect(() => {
-    if (!interfaces?.interfaces?.length || timePeriod !== 'realtime') return;
-
-    setHistory(prev => {
-       const hasData = Object.values(prev).some(arr => arr.length > 0);
-       if (hasData) return prev;
- 
-       const now = new Date();
-       const next: typeof prev = {};
- 
-       interfaces.interfaces.forEach((iface: any) => {
-         const name = iface.display_name || iface.if_name;
-         if (!name) return;
- 
-         next[name] = Array.from({length: 10}, (_, i) => ({
-           time: new Date(now.getTime() - (9-i) * 30000).toLocaleTimeString('pt-BR', {
-             hour: '2-digit', minute: '2-digit', second: '2-digit'
-           }),
-           in_bps: iface.in_bps || 0,
-           out_bps: iface.out_bps || 0,
-         }));
-       });
-       return next;
-     });
-  }, [interfaces, timePeriod]);
-
   useEffect(() => {
     if (selectedCollector) {
       localStorage.setItem('fg_collector', String(selectedCollector));
@@ -269,33 +242,6 @@ export default function Dashboard() {
   }, [source]);
 
   useEffect(() => {
-    if (!interfaces?.interfaces || timePeriod !== 'realtime') return;
-
-    const now = new Date().toLocaleTimeString('pt-BR', {
-      hour: '2-digit', minute: '2-digit', second: '2-digit'
-    });
-
-    setHistory(prev => {
-      const next = { ...prev };
-      const ifaceList = Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [];
-      
-      ifaceList.forEach((iface: any) => {
-        const name = iface.display_name || iface.if_name;
-        if (!name) return;
-        
-        if (!next[name]) next[name] = [];
-        next[name] = [
-          ...next[name].slice(-19),
-          {
-            time: now,
-            in_bps: iface.in_bps || 0,
-            out_bps: iface.out_bps || 0,
-          }
-        ];
-      });
-      return next;
-    });
-
     // Default selection (top 8) if none selected
     if (selectedIfaces.length === 0 && interfaces?.interfaces) {
       const top8 = (Array.isArray(interfaces.interfaces) ? interfaces.interfaces : [])
@@ -309,7 +255,7 @@ export default function Dashboard() {
         .map((i: any) => i.display_name || i.if_name);
       setSelectedIfaces(top8);
     }
-  }, [interfaces]);
+  }, [interfaces, selectedIfaces.length]);
 
    const { data: activeMitigations } = useQuery({
      queryKey: ['mitigation-active-dashboard'],
@@ -616,7 +562,7 @@ export default function Dashboard() {
 
               {/* MELHORIA 4 — Seletor de período */}
                <div className="flex bg-bg-primary p-1 rounded-lg border border-border overflow-x-auto">
-                 {(['realtime', '1h', '6h', '24h', '48h'] as const).map((p) => (
+                 {(['30m', '1h', '6h', '24h', '48h'] as const).map((p) => (
                    <button
                      key={p}
                      onClick={() => setTimePeriod(p)}
@@ -627,7 +573,7 @@ export default function Dashboard() {
                          : "text-text-secondary hover:text-text-primary"
                      )}
                    >
-                     {p === 'realtime' ? 'Tempo Real' : p}
+                     {p === '30m' ? '30m' : p}
                    </button>
                  ))}
                </div>
