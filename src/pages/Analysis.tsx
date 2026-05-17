@@ -389,8 +389,8 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                 onChange={(e) => setFilters(prev => ({ ...prev, direction: e.target.value }))}
               >
                 <option value="">Todos</option>
-                <option value="outgoing">Saindo (outgoing)</option>
-                <option value="incoming">Entrando (incoming)</option>
+                <option value="outgoing">↑ Upload (saindo)</option>
+                <option value="incoming">↓ Download (entrando)</option>
               </select>
             </div>
             <div className="space-y-1">
@@ -477,7 +477,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                </button>
              </div>
              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
-               {metrics.total} conexões · {filters.direction === 'outgoing' ? 'Saindo' : filters.direction === 'incoming' ? 'Entrando' : 'Todas Direções'} · período: {filters.start ? 'Customizado' : parseInt(filters.minutes) < 60 ? `${filters.minutes} min` : `${parseInt(filters.minutes)/60}h`}
+               {metrics.total} conexões · {filters.direction === 'outgoing' ? '↑ Upload' : filters.direction === 'incoming' ? '↓ Download' : 'Todas Direções'} · período: {filters.start ? 'Customizado' : parseInt(filters.minutes) < 60 ? `${filters.minutes} min` : `${parseInt(filters.minutes)/60}h`}
              </p>
           </div>
        </div>
@@ -543,7 +543,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                                      ? "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800" 
                                      : "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800"
                                  )}>
-                                   {direction === 'outgoing' ? <><ArrowUp size={10} /> Saindo</> : <><ArrowDown size={10} /> Entrando</>}
+                                   {direction === 'outgoing' ? <><ArrowUp size={10} /> Upload</> : <><ArrowDown size={10} /> Download</>}
                                  </div>
                                </TooltipTrigger>
                                <TooltipContent className="max-w-[200px] text-[10px]">

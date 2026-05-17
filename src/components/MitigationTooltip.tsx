@@ -68,10 +68,13 @@
         </div>
         <div className="flex justify-between">
           <span className="text-text-secondary">Direção:</span>
-          <span>
-            {item.direction === 'incoming'
-              ? '↓ Entrada'
-              : '↑ Saída'}
+          <span className={clsx(
+            "font-bold",
+            (item.direction === 'incoming' || item.direction === 'inbound') ? "text-blue-500" : "text-green-500"
+          )}>
+            {(item.direction === 'incoming' || item.direction === 'inbound')
+              ? '↓ Download (entrando)'
+              : '↑ Upload (saindo)'}
           </span>
         </div>
 
