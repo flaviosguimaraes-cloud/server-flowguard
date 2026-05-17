@@ -211,9 +211,9 @@ export default function Dashboard() {
     enabled: !!selectedCollector,
   });
 
-    const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
-  const [serviceFilter, setServiceFilter] = useState<string | null>(null);
-  const [timePeriod, setTimePeriod] = useState<'realtime' | '1h' | '6h' | '24h'>('realtime');
+   const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
+   const [serviceFilter, setServiceFilter] = useState<string | null>(null);
+   const [timePeriod, setTimePeriod] = useState<'realtime' | '1h' | '6h' | '24h' | '48h'>('realtime');
    const [showIfaceSelector, setShowIfaceSelector] = useState(false);
 
   // 1. Forçar refetch quando timePeriod ou interfaces selecionadas mudam
@@ -231,7 +231,7 @@ export default function Dashboard() {
       if (timePeriod === 'realtime' || selectedIfaces.length === 0 || !selectedCollector)
         return null;
 
-      const minutes = timePeriod === '1h' ? 60 : timePeriod === '6h' ? 360 : 1440;
+       const minutes = timePeriod === '1h' ? 60 : timePeriod === '6h' ? 360 : timePeriod === '24h' ? 1440 : 2880;
 
       console.log('Buscando histórico:', selectedCollector, selectedIfaces, minutes);
 
@@ -522,17 +522,74 @@ export default function Dashboard() {
       }));
     };
 
-  const formatTime = (timeStr: string) => {
-    if (!timeStr || timeStr.length < 16) return timeStr;
-    if (timePeriod === '24h') {
-      const d = new Date(timeStr.replace(' ', 'T'));
-      if (isNaN(d.getTime())) return timeStr.substring(11, 16);
-      return d.toLocaleDateString('pt-BR', {
-        day: '2-digit', month: '2-digit'
-      }) + ' ' + timeStr.substring(11, 16);
-    }
-    return timeStr.substring(11, 16);
-  };
+   const formatTime = (timeStr: string) => {
+     if (!timeStr || timeStr.length < 16) return timeStr;
+     if (timePeriod === '24h' || timePeriod === '48h') {
+       const d = new Date(timeStr.replace(' ', 'T'));
+       if (isNaN(d.getTime())) return timeStr.substring(11, 16);
+       return d.toLocaleDateString('pt-BR', {
+         day: '2-digit', month: '2-digit'
+       }) + ' ' + timeStr.substring(11, 16);
+     }
+     return timeStr.substring(11, 16);
+   };
+   const formatBps = (mbps: number) => {
+     if (mbps >= 1000)
+       return (mbps / 1000).toFixed(1) + ' G';
+     return mbps.toFixed(0) + ' M';
+   };
+
+   const formatBpsRaw = (bps: number) => {
+     if (bps >= 1e9)
+       return (bps / 1e9).toFixed(1) + ' Gbps';
+     if (bps >= 1e6)
+       return (bps / 1e6).toFixed(0) + ' Mbps';
+     return (bps / 1e3).toFixed(0) + ' Kbps';
+   };
+
+   const periodStats = useMemo(() => {
+     if (timePeriod === 'realtime' || !metricsHistory?.length) {
+       // Usar snapshot atual
+       const total_rx = interfaces?.interfaces
+         ?.filter((i: any) => selectedIfaces.includes(i.display_name || i.if_name))
+         ?.reduce((s: number, i: any) => s + (i.in_bps || 0), 0) || 0;
+       const total_tx = interfaces?.interfaces
+         ?.filter((i: any) => selectedIfaces.includes(i.display_name || i.if_name))
+         ?.reduce((s: number, i: any) => s + (i.out_bps || 0), 0) || 0;
+       return {
+         rx: total_rx,
+         tx: total_tx,
+         label: 'Agora'
+       };
+     }
+
+     // Calcular média do histórico
+     let rx_sum = 0, tx_sum = 0, count = 0;
+     metricsHistory.forEach(({data}) => {
+       data.forEach((p: any) => {
+         rx_sum += p.in_bps || 0;
+         tx_sum += p.out_bps || 0;
+         count++;
+       });
+     });
+     
+     const avg_rx = count > 0 ? rx_sum / count : 0;
+     const avg_tx = count > 0 ? tx_sum / count : 0;
+
+     const labels: Record<string, string> = {
+       '1h': 'Média 1h',
+       '6h': 'Média 6h',
+       '24h': 'Média 24h',
+       '48h': 'Média 48h'
+     };
+
+     return {
+       rx: avg_rx,
+       tx: avg_tx,
+       label: labels[timePeriod] || timePeriod
+     };
+   }, [timePeriod, metricsHistory, interfaces, selectedIfaces]);
+
 
     const portDataDst = processPortData(portsDst);
     const portDataSrc = processPortData(portsSrc);
@@ -827,22 +884,22 @@ export default function Dashboard() {
             </div>
 
               {/* MELHORIA 4 — Seletor de período */}
-              <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
-                {(['realtime', '1h', '6h', '24h'] as const).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setTimePeriod(p)}
-                    className={clsx(
-                      "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all",
-                      timePeriod === p 
-                        ? "bg-white dark:bg-[#2a2d3e] text-accent shadow-sm" 
-                        : "text-text-secondary hover:text-text-primary"
-                    )}
-                  >
-                    {p === 'realtime' ? 'Tempo Real' : p}
-                  </button>
-                ))}
-              </div>
+               <div className="flex bg-bg-primary p-1 rounded-lg border border-border overflow-x-auto">
+                 {(['realtime', '1h', '6h', '24h', '48h'] as const).map((p) => (
+                   <button
+                     key={p}
+                     onClick={() => setTimePeriod(p)}
+                     className={clsx(
+                       "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all whitespace-nowrap",
+                       timePeriod === p 
+                         ? "bg-white dark:bg-[#2a2d3e] text-accent shadow-sm" 
+                         : "text-text-secondary hover:text-text-primary"
+                     )}
+                   >
+                     {p === 'realtime' ? 'Tempo Real' : p}
+                   </button>
+                 ))}
+               </div>
  
              <button 
                onClick={() => {
@@ -883,15 +940,15 @@ export default function Dashboard() {
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col items-end px-3 py-1.5 bg-bg-primary/50 rounded-lg border border-border/30">
-              <span className="text-[9px] uppercase font-black text-text-secondary opacity-60 leading-none mb-1">Total RX</span>
-              <span className="text-xs font-black text-accent">{fmtBps(selectedIfaceData.reduce((a: number, b: any) => a + (b.in_bps || 0), 0))}</span>
-            </div>
-            <div className="flex flex-col items-end px-3 py-1.5 bg-bg-primary/50 rounded-lg border border-border/30">
-              <span className="text-[9px] uppercase font-black text-text-secondary opacity-60 leading-none mb-1">Total TX</span>
-              <span className="text-xs font-black text-success">{fmtBps(selectedIfaceData.reduce((a: number, b: any) => a + (b.out_bps || 0), 0))}</span>
-            </div>
+           <div className="flex items-center gap-4">
+             <div className="flex flex-col items-end px-3 py-1.5 bg-bg-primary/50 rounded-lg border border-border/30">
+               <span className="text-[9px] uppercase font-black text-text-secondary opacity-60 leading-none mb-1">Total RX ({periodStats.label})</span>
+               <span className="text-sm font-black text-accent">{formatBpsRaw(periodStats.rx)}</span>
+             </div>
+             <div className="flex flex-col items-end px-3 py-1.5 bg-bg-primary/50 rounded-lg border border-border/30">
+               <span className="text-[9px] uppercase font-black text-text-secondary opacity-60 leading-none mb-1">Total TX ({periodStats.label})</span>
+               <span className="text-sm font-black text-success">{formatBpsRaw(periodStats.tx)}</span>
+             </div>
             <div className="flex flex-col items-end px-3 py-1.5 bg-bg-primary/50 rounded-lg border border-border/30">
               <span className="text-[9px] uppercase font-black text-text-secondary opacity-60 leading-none mb-1">Interfaces</span>
               <span className="text-xs font-black text-text-primary">{selectedIfaces.length}<span className="text-[10px] opacity-40 mx-0.5">/</span>{(Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : []).length}</span>
@@ -912,62 +969,79 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="relative w-full h-[300px] mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#334155" : "#E2E8F0"} vertical={false} opacity={isDark ? 0.3 : 0.6} />
-                  <XAxis 
-                    dataKey="time" 
-                    tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
-                    tickLine={false} 
-                    axisLine={false}
-                    tickFormatter={formatTime}
-                    minTickGap={30}
-                  />
-                  <YAxis 
-                    tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
-                    tickLine={false} 
-                    axisLine={false} 
-                    tickFormatter={v => v + ' M'} 
-                  />
-                  <RechartsTooltip
-                    contentStyle={{ 
-                      background: isDark ? '#1E293B' : '#FFFFFF', 
-                      border: `1px solid ${isDark ? '#334155' : '#E2E8F0'}`, 
-                      borderRadius: '12px', 
-                      fontSize: '11px',
-                      boxShadow: isDark ? 'none' : '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                      padding: '8px 12px'
-                    }}
-                    formatter={(v: any, name: string) => [
-                      v + ' Mbps',
-                      name.replace('_in', ' ↓').replace('_out', ' ↑')
-                    ]}
-                  />
-                  {selectedIfaces.flatMap((name, idx) => [
-                    <Line 
-                      key={`${name}_in`}
-                      type="monotone"
-                      dataKey={`${name}_in`}
-                      stroke={COLORS[idx % COLORS.length]}
-                      dot={false} 
-                      strokeWidth={2} 
-                      isAnimationActive={false}
-                      name={`${name} ↓`}
-                    />,
-                    <Line 
-                      key={`${name}_out`}
-                      type="monotone"
-                      dataKey={`${name}_out`}
-                      stroke={COLORS[idx % COLORS.length] + '80'}
-                      dot={false} 
-                      strokeWidth={1.5}
-                      strokeDasharray="4 2"
-                      isAnimationActive={false}
-                      name={`${name} ↑`}
-                    />
-                  ])}
-                </LineChart>
-              </ResponsiveContainer>
+               <ResponsiveContainer width="100%" height="100%">
+                 <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                   <defs>
+                     {selectedIfaces.map((name, idx) => (
+                       <linearGradient
+                         key={name}
+                         id={`grad_${idx}`}
+                         x1="0" y1="0" x2="0" y2="1">
+                         <stop offset="5%"
+                           stopColor={COLORS[idx % COLORS.length]}
+                           stopOpacity={0.4}/>
+                         <stop offset="95%"
+                           stopColor={COLORS[idx % COLORS.length]}
+                           stopOpacity={0.05}/>
+                       </linearGradient>
+                     ))}
+                   </defs>
+                   <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#334155" : "#E2E8F0"} vertical={false} opacity={isDark ? 0.3 : 0.6} />
+                   <XAxis 
+                     dataKey="time" 
+                     tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
+                     tickLine={false} 
+                     axisLine={false}
+                     tickFormatter={formatTime}
+                     minTickGap={30}
+                   />
+                   <YAxis 
+                     tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
+                     tickLine={false} 
+                     axisLine={false} 
+                     tickFormatter={v => formatBps(v)} 
+                   />
+                   <RechartsTooltip
+                     contentStyle={{ 
+                       background: isDark ? '#1E293B' : '#FFFFFF', 
+                       border: `1px solid ${isDark ? '#334155' : '#E2E8F0'}`, 
+                       borderRadius: '12px', 
+                       fontSize: '11px',
+                       boxShadow: isDark ? 'none' : '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                       padding: '8px 12px'
+                     }}
+                     formatter={(v: number, name: string) => [
+                       formatBps(v) + 'bps',
+                       name.includes('_in') ? '↓ RX' : '↑ TX'
+                     ]}
+                   />
+                   {selectedIfaces.flatMap((name, idx) => [
+                     <Area 
+                       key={`${name}_in`}
+                       type="monotone"
+                       dataKey={`${name}_in`}
+                       stroke={COLORS[idx % COLORS.length]}
+                       strokeWidth={2} 
+                       fill={`url(#grad_${idx})`}
+                       dot={false} 
+                       isAnimationActive={false}
+                       name={`${name} ↓`}
+                     />,
+                     <Area 
+                       key={`${name}_out`}
+                       type="monotone"
+                       dataKey={`${name}_out`}
+                       stroke={COLORS[idx % COLORS.length]}
+                       strokeWidth={1.5}
+                       strokeDasharray="4 2"
+                       fill="none"
+                       dot={false} 
+                       isAnimationActive={false}
+                       name={`${name} ↑`}
+                     />
+                   ])}
+                 </AreaChart>
+               </ResponsiveContainer>
             </div>
           )}
         </div>
