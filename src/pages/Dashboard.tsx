@@ -415,16 +415,15 @@ export default function Dashboard() {
      const rxValues = sorted.map(t => timeMap[t].rx);
      const txValues = sorted.map(t => timeMap[t].tx);
 
-     const labels: Record<string, string> = {
-       '1h': '1 hora', '6h': '6 horas',
-       '24h': '24 horas', '48h': '48 horas'
-     };
-
-     return {
-       rx: getStats(rxValues),
-       tx: getStats(txValues),
-       label: labels[timePeriod] || timePeriod
-     };
+      return {
+        rx: getStats(rxValues),
+        tx: getStats(txValues),
+        label: timePeriod === '30M' ? '30 minutos' :
+               timePeriod === '1H' ? '1 hora' :
+               timePeriod === '6H' ? '6 horas' :
+               timePeriod === '24H' ? '24 horas' :
+               timePeriod === '48H' ? '48 horas' : timePeriod
+      };
    }, [timePeriod, metricsHistory, history, selectedIfaces]);
 
 
@@ -582,10 +581,10 @@ export default function Dashboard() {
 
               {/* MELHORIA 4 — Seletor de período */}
                <div className="flex bg-bg-primary p-1 rounded-lg border border-border overflow-x-auto">
-                 {(['30m', '1h', '6h', '24h', '48h'] as const).map((p) => (
+                 {(['30M', '1H', '6H', '24H', '48H'] as const).map((p) => (
                    <button
                      key={p}
-                     onClick={() => setTimePeriod(p)}
+                     onClick={() => setTimePeriod(p as any)}
                      className={clsx(
                        "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all whitespace-nowrap",
                        timePeriod === p 
@@ -593,7 +592,7 @@ export default function Dashboard() {
                          : "text-text-secondary hover:text-text-primary"
                      )}
                    >
-                     {p === '30m' ? '30m' : p}
+                     {p}
                    </button>
                  ))}
                </div>
@@ -732,9 +731,9 @@ export default function Dashboard() {
               <Activity size={10} />
               Estatísticas · {periodStats.label}
             </div>
-            <div className="space-y-1">
+            <div className="space-y-2">
               {(['rx', 'tx'] as const).map(dir => (
-                <div key={dir} className="flex items-center gap-3 text-[11px] font-medium leading-none py-0.5">
+                <div key={dir} className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-4 text-[11px] font-medium leading-none py-0.5">
                   <span className={clsx(
                     "font-black w-8",
                     dir === 'rx' ? "text-blue-500" : "text-green-500"
@@ -742,9 +741,9 @@ export default function Dashboard() {
                     {dir === 'rx' ? '↓ RX' : '↑ TX'}
                   </span>
                   
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
                     {(['last', 'min', 'avg', 'max'] as const).map(metric => (
-                      <div key={metric} className="flex items-center gap-1.5">
+                      <div key={metric} className="flex items-baseline gap-1">
                         <span className="uppercase text-[9px] font-bold text-text-secondary opacity-50">
                           {metric === 'last' ? 'Último' : metric === 'min' ? 'Mín' : metric === 'avg' ? 'Méd' : 'Máx'}:
                         </span>
@@ -752,7 +751,7 @@ export default function Dashboard() {
                           "font-bold",
                           metric === 'max' ? (dir === 'rx' ? "text-blue-500" : "text-green-500") : "text-text-primary"
                         )}>
-                          {formatBpsRaw(periodStats[dir][metric]).replace('bps', '')}
+                          {formatBpsRaw(periodStats[dir][metric])}
                         </span>
                       </div>
                     ))}
