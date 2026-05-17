@@ -507,6 +507,18 @@ export default function Dashboard() {
       }));
     };
 
+  const formatTime = (timeStr: string) => {
+    if (!timeStr || timeStr.length < 16) return timeStr;
+    if (timePeriod === '24h') {
+      const d = new Date(timeStr.replace(' ', 'T'));
+      if (isNaN(d.getTime())) return timeStr.substring(11, 16);
+      return d.toLocaleDateString('pt-BR', {
+        day: '2-digit', month: '2-digit'
+      }) + ' ' + timeStr.substring(11, 16);
+    }
+    return timeStr.substring(11, 16);
+  };
+
     const portDataDst = processPortData(portsDst);
     const portDataSrc = processPortData(portsSrc);
 
