@@ -67,15 +67,15 @@ function StatCard({ title, value, unit, icon, trend, tooltip, subtitle }: any) {
   );
 }
 
-const SERVICE_NAMES: Record<string, string> = {
-  flow_collector: "GoFlow2 (Coletor)",
-  detection_engine: "FastNetMon",
-  api: "FlowGuard API",
-  flow_database: "ClickHouse",
-  config_database: "PostgreSQL",
-  cache: "Redis",
-  bgp_engine: "ExaBGP (BGP)",
-  web: "Nginx"
+const serviceNames: Record<string, string> = {
+  flow_collector: 'GoFlow2',
+  detection_engine: 'FastNetMon',
+  api: 'API FlowGuard',
+  flow_database: 'ClickHouse',
+  config_database: 'PostgreSQL',
+  cache: 'Redis',
+  bgp_engine: 'ExaBGP',
+  web: 'Nginx',
 };
 
 export default function Dashboard() {
@@ -133,23 +133,32 @@ export default function Dashboard() {
     refetchOnWindowFocus: true,
   });
 
-  const { data: eventsHistory } = useQuery({
-    queryKey: ['events-history-compact'],
+  const { data: eventsHistory, isLoading: loadingEvents } = useQuery({
+    queryKey: ['events-history-dashboard'],
     queryFn: async () => {
       const r = await api.get('/api/events/history?limit=8');
-      console.log('events:', r.data);
+      console.log('events raw:', r.data);
       return r.data;
     },
-    refetchInterval: 30000,
+    refetchInterval: 10000,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: sysStatus } = useQuery({
     queryKey: ['system-status'],
-    queryFn: () => api.get('/api/system/status').then(r => {
-      console.log('system status:', r.data);
-      return r.data;
-    }).catch(() => null),
-    refetchInterval: 30000,
+    queryFn: async () => {
+      try {
+        const r = await api.get('/api/system/status');
+        console.log('system status:', r.data);
+        return r.data;
+      } catch (err) {
+        console.error('System status error:', err);
+        return null;
+      }
+    },
+    refetchInterval: 10000,
+    staleTime: 0,
   });
 
   const { data: timeline } = useQuery({
@@ -201,7 +210,7 @@ export default function Dashboard() {
 
    const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
    const [serviceFilter, setServiceFilter] = useState<string | null>(null);
-   const [timePeriod, setTimePeriod] = useState<'30m' | '1h' | '6h' | '24h' | '48h'>('30m');
+   const [timePeriod, setTimePeriod] = useState<'30M' | '1H' | '6H' | '24H' | '48H'>('30M');
    const [showIfaceSelector, setShowIfaceSelector] = useState(false);
 
   useEffect(() => {
@@ -216,7 +225,7 @@ export default function Dashboard() {
       if (selectedIfaces.length === 0 || !selectedCollector)
         return null;
 
-       const minutes = timePeriod === '30m' ? 30 : timePeriod === '1h' ? 60 : timePeriod === '6h' ? 360 : timePeriod === '24h' ? 1440 : 2880;
+       const minutes = timePeriod === '30M' ? 30 : timePeriod === '1H' ? 60 : timePeriod === '6H' ? 360 : timePeriod === '24H' ? 1440 : 2880;
 
       console.log('Buscando histórico:', selectedCollector, selectedIfaces, minutes);
 
@@ -350,7 +359,7 @@ export default function Dashboard() {
 
    const formatTime = (timeStr: string) => {
      if (!timeStr || timeStr.length < 16) return timeStr;
-     if (timePeriod === '24h' || timePeriod === '48h') {
+     if (timePeriod === '24H' || timePeriod === '48H') {
        const d = new Date(timeStr.replace(' ', 'T'));
        if (isNaN(d.getTime())) return timeStr.substring(11, 16);
        return d.toLocaleDateString('pt-BR', {
@@ -406,16 +415,15 @@ export default function Dashboard() {
      const rxValues = sorted.map(t => timeMap[t].rx);
      const txValues = sorted.map(t => timeMap[t].tx);
 
-     const labels: Record<string, string> = {
-       '1h': '1 hora', '6h': '6 horas',
-       '24h': '24 horas', '48h': '48 horas'
-     };
-
-     return {
-       rx: getStats(rxValues),
-       tx: getStats(txValues),
-       label: labels[timePeriod] || timePeriod
-     };
+      return {
+        rx: getStats(rxValues),
+        tx: getStats(txValues),
+        label: timePeriod === '30M' ? '30 minutos' :
+               timePeriod === '1H' ? '1 hora' :
+               timePeriod === '6H' ? '6 horas' :
+               timePeriod === '24H' ? '24 horas' :
+               timePeriod === '48H' ? '48 horas' : timePeriod
+      };
    }, [timePeriod, metricsHistory, history, selectedIfaces]);
 
 
@@ -573,10 +581,10 @@ export default function Dashboard() {
 
               {/* MELHORIA 4 — Seletor de período */}
                <div className="flex bg-bg-primary p-1 rounded-lg border border-border overflow-x-auto">
-                 {(['30m', '1h', '6h', '24h', '48h'] as const).map((p) => (
+                 {(['30M', '1H', '6H', '24H', '48H'] as const).map((p) => (
                    <button
                      key={p}
-                     onClick={() => setTimePeriod(p)}
+                     onClick={() => setTimePeriod(p as any)}
                      className={clsx(
                        "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all whitespace-nowrap",
                        timePeriod === p 
@@ -584,7 +592,7 @@ export default function Dashboard() {
                          : "text-text-secondary hover:text-text-primary"
                      )}
                    >
-                     {p === '30m' ? '30m' : p}
+                     {p}
                    </button>
                  ))}
                </div>
@@ -723,9 +731,9 @@ export default function Dashboard() {
               <Activity size={10} />
               Estatísticas · {periodStats.label}
             </div>
-            <div className="space-y-1">
+            <div className="space-y-2">
               {(['rx', 'tx'] as const).map(dir => (
-                <div key={dir} className="flex items-center gap-3 text-[11px] font-medium leading-none py-0.5">
+                <div key={dir} className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-4 text-[11px] font-medium leading-none py-0.5">
                   <span className={clsx(
                     "font-black w-8",
                     dir === 'rx' ? "text-blue-500" : "text-green-500"
@@ -733,9 +741,9 @@ export default function Dashboard() {
                     {dir === 'rx' ? '↓ RX' : '↑ TX'}
                   </span>
                   
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
                     {(['last', 'min', 'avg', 'max'] as const).map(metric => (
-                      <div key={metric} className="flex items-center gap-1.5">
+                      <div key={metric} className="flex items-baseline gap-1">
                         <span className="uppercase text-[9px] font-bold text-text-secondary opacity-50">
                           {metric === 'last' ? 'Último' : metric === 'min' ? 'Mín' : metric === 'avg' ? 'Méd' : 'Máx'}:
                         </span>
@@ -743,7 +751,7 @@ export default function Dashboard() {
                           "font-bold",
                           metric === 'max' ? (dir === 'rx' ? "text-blue-500" : "text-green-500") : "text-text-primary"
                         )}>
-                          {formatBpsRaw(periodStats[dir][metric]).replace('bps', '')}
+                          {formatBpsRaw(periodStats[dir][metric])}
                         </span>
                       </div>
                     ))}
@@ -818,9 +826,16 @@ export default function Dashboard() {
 
           {/* PAINEL DIREITO (40%) - Saúde do Servidor */}
           <div className="lg:col-span-4 bg-white dark:bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm">
-            <div className="flex items-center gap-2 mb-5 border-b border-border/50 pb-3">
-              <Activity className="text-success" size={18} />
-              <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Saúde do Servidor</h2>
+            <div className="flex flex-col gap-1 mb-5 border-b border-border/50 pb-3">
+              <div className="flex items-center gap-2">
+                <Activity className="text-success" size={18} />
+                <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Saúde do Sistema</h2>
+              </div>
+              {sysStatus?.uptime && (
+                <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest opacity-60">
+                  Uptime: {sysStatus.uptime}
+                </p>
+              )}
             </div>
 
             {!sysStatus ? (
@@ -832,28 +847,26 @@ export default function Dashboard() {
                   {[
                     { 
                       label: 'CPU', 
-                      value: sysStatus.cpu_percent || sysStatus.cpu_usage || 0, 
-                      color: (sysStatus.cpu_percent || sysStatus.cpu_usage) >= 90 ? 'bg-danger' : (sysStatus.cpu_percent || sysStatus.cpu_usage) >= 70 ? 'bg-warning' : 'bg-success',
-                      detail: `${(sysStatus.cpu_percent || sysStatus.cpu_usage || 0).toFixed(1)}%`
+                      value: sysStatus.cpu_percent || 0, 
+                      color: sysStatus.cpu_percent >= 90 ? 'bg-danger' : sysStatus.cpu_percent >= 70 ? 'bg-warning' : 'bg-success',
+                      detail: `${(sysStatus.cpu_percent || 0).toFixed(1)}%`
                     },
                     { 
                       label: 'RAM', 
-                      value: sysStatus.ram_percent || (sysStatus.ram_used_gb && sysStatus.ram_free_gb ? (sysStatus.ram_used_gb / (sysStatus.ram_used_gb + sysStatus.ram_free_gb) * 100) : sysStatus.ram_usage || 0), 
-                      color: (sysStatus.ram_percent || sysStatus.ram_usage) >= 90 ? 'bg-danger' : (sysStatus.ram_percent || sysStatus.ram_usage) >= 70 ? 'bg-warning' : 'bg-primary',
-                      detail: sysStatus.ram_used_gb 
-                        ? `${sysStatus.ram_used_gb.toFixed(2)} GB usado${(sysStatus.ram_used_gb && sysStatus.ram_free_gb) ? ` de ${(sysStatus.ram_used_gb + sysStatus.ram_free_gb).toFixed(0)} GB` : ''}`
-                        : `${(sysStatus.ram_usage || 0).toFixed(0)}%`
+                      value: sysStatus.ram_percent || 0, 
+                      color: sysStatus.ram_percent >= 85 ? 'bg-danger' : sysStatus.ram_percent >= 70 ? 'bg-warning' : 'bg-primary',
+                      detail: `${(sysStatus.ram_used_gb || 0).toFixed(1)}GB / ${(sysStatus.ram_total_gb || 0).toFixed(1)}GB`
                     },
                     { 
                       label: 'Disco', 
-                      value: sysStatus.disk_percent || sysStatus.disk_usage || 0, 
-                      color: 'bg-accent',
-                      detail: sysStatus.disk_used_gb ? `${sysStatus.disk_used_gb.toFixed(0)} GB / ${(sysStatus.disk_used_gb + (sysStatus.disk_free_gb || 0)).toFixed(0)} GB` : `${(sysStatus.disk_usage || 0).toFixed(0)}%`
+                      value: sysStatus.disk_percent || 0, 
+                      color: sysStatus.disk_percent >= 85 ? 'bg-danger' : sysStatus.disk_percent >= 70 ? 'bg-warning' : 'bg-accent',
+                      detail: `${(sysStatus.disk_used_gb || 0).toFixed(0)}GB / ${(sysStatus.disk_used_gb + (sysStatus.disk_free_gb || 0)).toFixed(0)}GB`
                     }
                   ].map(m => (
                     <div key={m.label} className="space-y-1.5">
                       <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
-                        <span className="text-text-secondary">{m.label}</span>
+                        <span className="text-text-secondary">{m.label} {m.value.toFixed(1)}%</span>
                         <span className="text-text-primary">{m.detail}</span>
                       </div>
                       <div className="h-1.5 bg-bg-primary rounded-full overflow-hidden border border-border/10">
@@ -867,22 +880,20 @@ export default function Dashboard() {
                 </div>
 
                 <div className="pt-4 border-t border-border/20">
-                  <div className="flex justify-between items-center mb-3">
-                    <span className="text-[10px] font-bold uppercase text-text-secondary tracking-widest">Uptime</span>
-                    <span className="text-xs font-black text-text-primary">{sysStatus.uptime || '—'}</span>
-                  </div>
-
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
                     {Object.entries(sysStatus.services || {}).map(([name, status]: [string, any]) => {
-                      const isActive = status === 'active' || status === true;
+                      const isActive = status === 'active';
                       return (
                         <div key={name} className="flex items-center gap-2">
                           <span className={clsx(
                             "w-1.5 h-1.5 rounded-full",
                             isActive ? "bg-success shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-danger shadow-[0_0_8px_rgba(239,68,68,0.4)]"
                           )} />
-                          <span className="text-[10px] font-bold text-text-secondary truncate" title={name}>
-                            {SERVICE_NAMES[name] || name}
+                          <span className={clsx(
+                            "text-[10px] font-bold truncate",
+                            isActive ? "text-text-secondary" : "text-danger"
+                          )} title={name}>
+                            {serviceNames[name] || name}
                           </span>
                         </div>
                       );
