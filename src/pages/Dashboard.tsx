@@ -983,53 +983,6 @@ export default function Dashboard() {
           </div>
       </div>
 
-       {/* Secondary Grids */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-         {/* Top Protocols */}
-         <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm">
-            <h2 className="text-base font-bold mb-5 text-text-primary">{t('protocols')}</h2>
-            <div className="space-y-1.5">
-              {protoData.map((p: any, i: number) => (
-                <div key={i} className={clsx(
-                  "flex items-center gap-3 py-1.5",
-                  i < protoData.length - 1 && "border-b border-border/40"
-                )}>
-                  <span className="min-w-[40px] text-xs font-semibold text-text-primary">{p.name}</span>
-                  <div className="flex-1 h-1.5 bg-bg-primary rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-primary rounded-full transition-all duration-700"
-                      style={{ width: p.pct + '%' }}
-                    />
-                  </div>
-                  <span className="text-[11px] text-text-secondary font-bold min-w-[35px] text-right">{p.pct}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
- 
-          {/* Top Countries */}
-         <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm">
-            <h2 className="text-base font-bold mb-5 text-text-primary">{t('countries')}</h2>
-            <div className="space-y-1">
-              {countryData.map((c: any, i: number) => (
-                <div key={i} className={clsx(
-                  "flex items-center gap-2 py-1.5",
-                   i < countryData.length - 1 && "border-b border-border/40"
-                 )}>
-                   <Flag code={c.code} size={16} />
-                   <span className="text-xs text-text-primary min-w-[28px] font-semibold ml-1">{c.code}</span>
-                  <div className="flex-1 h-1.5 bg-bg-primary rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-primary rounded-full transition-all duration-700"
-                      style={{ width: c.pct + '%' }}
-                    />
-                  </div>
-                  <span className="text-[11px] text-text-secondary font-bold min-w-[35px] text-right">{c.pct}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
-       </div>
 
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Port Panels */}
