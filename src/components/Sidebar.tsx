@@ -44,6 +44,7 @@ export const Sidebar = () => {
         { path: '/mitigation/bgp', label: t('bgp'), icon: Network },
         { path: '/mitigation/whitelist', label: t('whitelist'), icon: CheckCircle },
         { path: '/mitigation/blacklist', label: t('blacklist'), icon: XCircle },
+        { path: '/mitigation/policy', label: 'Política', icon: Sliders },
       ]
     },
     { path: '/cdns', label: t('cdns'), icon: Globe },
