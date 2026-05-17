@@ -49,15 +49,16 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
    });
  
   const [eventFilter, setEventFilter] = useState<'all' | 'active' | 'removed'>('all');
-  const [timeRange, setTimeRange] = useState<'all' | '1h' | '24h'>('all');
+  const [timeRange, setTimeRange] = useState<'all' | '1h' | '6h' | '24h'>('all');
 
     const { data: eventsHistory, isLoading: historyLoading, dataUpdatedAt: eventsUpdatedAt } = useQuery({
      queryKey: ['events-history-page', eventFilter, timeRange],
      queryFn: async () => {
        const params = new URLSearchParams({ limit: '100' });
        if (eventFilter && eventFilter !== 'all') params.append('status', eventFilter);
-       if (timeRange === '1h') params.append('minutes', '60');
-       if (timeRange === '24h') params.append('minutes', '1440');
+      if (timeRange === '1h') params.append('minutes', '60');
+      if (timeRange === '6h') params.append('minutes', '360');
+      if (timeRange === '24h') params.append('minutes', '1440');
        
         const r = await api.get(`/api/events/history?${params.toString()}`);
        return r.data;
@@ -103,10 +104,33 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
   const fmtPeak = (pps: number, mbps: number) => {
     if (!pps && !mbps) return '—';
     const ppsStr = pps > 1000 ? (pps / 1000).toFixed(1) + 'k' : pps;
-    const mbpsStr = mbps > 1000 ? (mbps / 1000).toFixed(2) + ' Gbps' : mbps + ' Mbps';
-    return `${ppsStr} pps · ${mbpsStr}`;
+    if (mbps > 0) {
+      const mbpsStr = mbps >= 1000 ? (mbps / 1000).toFixed(1) + ' Gbps' : mbps.toFixed(0) + ' Mbps';
+      return `${ppsStr} pps · ${mbpsStr}`;
+    }
+    return `${ppsStr} pps`;
   };
- 
+
+  const dirLabel = (dir: string) => {
+    if (dir === 'outgoing' || dir === 'outbound')
+      return {
+        label: '↑ Upload',
+        color: '#22c55e',
+        bg: '#0f2d1a'
+      };
+    if (dir === 'incoming' || dir === 'inbound')
+      return {
+        label: '↓ Download',
+        color: '#3b82f6',
+        bg: '#0f1f3a'
+      };
+    return {
+      label: '—',
+      color: '#8892a4',
+      bg: 'transparent'
+    };
+  };
+
   const handleMitigate = useCallback((ip: string) => {
     setTargetIP(ip);
     setIsMitigationOpen(true);
@@ -299,8 +323,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
               <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
                 {[
                   { label: 'Tudo', value: 'all' },
-                  { label: '1h', value: '1h' },
-                  { label: '24h', value: '24h' }
+                  { label: '1H', value: '1h' },
+                  { label: '6H', value: '6h' },
+                  { label: '24H', value: '24h' }
                 ].map((f) => (
                   <button
                     key={f.value}
@@ -351,24 +376,32 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
                       {fmtPeak(event.peak_pps, event.peak_mbps)}
                     </td>
                     <td className="px-6 py-3.5 text-center">
-                      <span className={clsx(
-                        "px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border",
-                        event.flow_direction === 'incoming' 
-                          ? "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800" 
-                          : "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
-                      )}>
-                        {event.flow_direction === 'incoming' ? '↓ Entrada' : '↑ Saída'}
-                      </span>
+                      {(() => {
+                        const dir = dirLabel(event.direction || event.flow_direction);
+                        return (
+                          <span style={{
+                            color: dir.color,
+                            background: dir.bg,
+                            padding: '2px 8px',
+                            borderRadius: 4,
+                            fontSize: 10,
+                            fontWeight: 500
+                          }}>
+                            {dir.label}
+                          </span>
+                        );
+                      })()}
                     </td>
                     <td className="px-6 py-3.5 text-center">
-                      <span className={clsx(
-                        "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter border",
-                        event.status === 'active' 
-                          ? "bg-danger/10 text-danger border-danger/20 animate-pulse" 
-                          : "bg-bg-primary text-text-secondary border-border"
-                      )}>
-                        {event.status === 'active' ? 'ATIVO' : 'RESOLVIDO'}
-                      </span>
+                      {event.status === 'active' ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-danger/10 text-danger text-[9px] font-black border border-danger/20 animate-pulse">
+                          ● ATIVO
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-bg-primary text-text-secondary text-[9px] font-bold border border-border">
+                          ✓ FINALIZADO
+                        </span>
+                      )}
                     </td>
                     <td className="px-6 py-3.5 text-text-secondary text-[11px] font-medium uppercase tracking-wider">
                       {event.type || 'Blackhole'}
