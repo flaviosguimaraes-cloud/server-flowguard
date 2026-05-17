@@ -211,9 +211,9 @@ export default function Dashboard() {
     enabled: !!selectedCollector,
   });
 
-    const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
-  const [serviceFilter, setServiceFilter] = useState<string | null>(null);
-  const [timePeriod, setTimePeriod] = useState<'realtime' | '1h' | '6h' | '24h'>('realtime');
+   const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
+   const [serviceFilter, setServiceFilter] = useState<string | null>(null);
+   const [timePeriod, setTimePeriod] = useState<'realtime' | '1h' | '6h' | '24h' | '48h'>('realtime');
    const [showIfaceSelector, setShowIfaceSelector] = useState(false);
 
   // 1. Forçar refetch quando timePeriod ou interfaces selecionadas mudam
@@ -231,7 +231,7 @@ export default function Dashboard() {
       if (timePeriod === 'realtime' || selectedIfaces.length === 0 || !selectedCollector)
         return null;
 
-      const minutes = timePeriod === '1h' ? 60 : timePeriod === '6h' ? 360 : 1440;
+       const minutes = timePeriod === '1h' ? 60 : timePeriod === '6h' ? 360 : timePeriod === '24h' ? 1440 : 2880;
 
       console.log('Buscando histórico:', selectedCollector, selectedIfaces, minutes);
 
@@ -522,17 +522,74 @@ export default function Dashboard() {
       }));
     };
 
-  const formatTime = (timeStr: string) => {
-    if (!timeStr || timeStr.length < 16) return timeStr;
-    if (timePeriod === '24h') {
-      const d = new Date(timeStr.replace(' ', 'T'));
-      if (isNaN(d.getTime())) return timeStr.substring(11, 16);
-      return d.toLocaleDateString('pt-BR', {
-        day: '2-digit', month: '2-digit'
-      }) + ' ' + timeStr.substring(11, 16);
-    }
-    return timeStr.substring(11, 16);
-  };
+   const formatTime = (timeStr: string) => {
+     if (!timeStr || timeStr.length < 16) return timeStr;
+     if (timePeriod === '24h' || timePeriod === '48h') {
+       const d = new Date(timeStr.replace(' ', 'T'));
+       if (isNaN(d.getTime())) return timeStr.substring(11, 16);
+       return d.toLocaleDateString('pt-BR', {
+         day: '2-digit', month: '2-digit'
+       }) + ' ' + timeStr.substring(11, 16);
+     }
+     return timeStr.substring(11, 16);
+   };
+   const formatBps = (mbps: number) => {
+     if (mbps >= 1000)
+       return (mbps / 1000).toFixed(1) + ' G';
+     return mbps.toFixed(0) + ' M';
+   };
+
+   const formatBpsRaw = (bps: number) => {
+     if (bps >= 1e9)
+       return (bps / 1e9).toFixed(1) + ' Gbps';
+     if (bps >= 1e6)
+       return (bps / 1e6).toFixed(0) + ' Mbps';
+     return (bps / 1e3).toFixed(0) + ' Kbps';
+   };
+
+   const periodStats = useMemo(() => {
+     if (timePeriod === 'realtime' || !metricsHistory?.length) {
+       // Usar snapshot atual
+       const total_rx = interfaces?.interfaces
+         ?.filter((i: any) => selectedIfaces.includes(i.display_name || i.if_name))
+         ?.reduce((s: number, i: any) => s + (i.in_bps || 0), 0) || 0;
+       const total_tx = interfaces?.interfaces
+         ?.filter((i: any) => selectedIfaces.includes(i.display_name || i.if_name))
+         ?.reduce((s: number, i: any) => s + (i.out_bps || 0), 0) || 0;
+       return {
+         rx: total_rx,
+         tx: total_tx,
+         label: 'Agora'
+       };
+     }
+
+     // Calcular média do histórico
+     let rx_sum = 0, tx_sum = 0, count = 0;
+     metricsHistory.forEach(({data}) => {
+       data.forEach((p: any) => {
+         rx_sum += p.in_bps || 0;
+         tx_sum += p.out_bps || 0;
+         count++;
+       });
+     });
+     
+     const avg_rx = count > 0 ? rx_sum / count : 0;
+     const avg_tx = count > 0 ? tx_sum / count : 0;
+
+     const labels: Record<string, string> = {
+       '1h': 'Média 1h',
+       '6h': 'Média 6h',
+       '24h': 'Média 24h',
+       '48h': 'Média 48h'
+     };
+
+     return {
+       rx: avg_rx,
+       tx: avg_tx,
+       label: labels[timePeriod] || timePeriod
+     };
+   }, [timePeriod, metricsHistory, interfaces, selectedIfaces]);
+
 
     const portDataDst = processPortData(portsDst);
     const portDataSrc = processPortData(portsSrc);
