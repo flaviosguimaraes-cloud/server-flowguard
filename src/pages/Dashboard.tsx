@@ -956,52 +956,16 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Collector Info & Metrics Summary */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
-          <div className="flex items-center gap-2 text-xs text-text-secondary opacity-80">
-            <Info size={14} />
-            <span className="font-medium">
-              {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).find((c: any) => c.id === selectedCollector)?.name || 'NE-20'} 
-              <span className="mx-2 opacity-30">|</span>
-              {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).find((c: any) => c.id === selectedCollector)?.host || '45.175.50.209'} 
-              <span className="mx-2 opacity-30">|</span>
-              v2c
-            </span>
-          </div>
-
-           <div className="flex flex-col gap-2 bg-bg-primary/30 p-4 rounded-xl border border-border/40">
-             <div className="text-[10px] text-text-secondary font-bold uppercase tracking-wider mb-1 opacity-60">
-               Estatísticas · {periodStats.label}
-             </div>
-             {(['rx', 'tx'] as const).map(dir => (
-               <div key={dir} className="flex items-center gap-4 py-1 border-t border-border/20 first:border-t-0">
-                 <span className={clsx(
-                   "text-xs font-black w-6 text-center",
-                   dir === 'rx' ? "text-accent" : "text-success"
-                 )}>
-                   {dir === 'rx' ? '↓' : '↑'}
-                 </span>
-
-                 {(['last', 'min', 'avg', 'max'] as const).map(metric => (
-                   <div key={metric} className="flex flex-col items-center min-w-[70px]">
-                     <span className="text-[9px] uppercase font-bold text-text-secondary opacity-50 mb-0.5">
-                       {metric === 'last' ? 'Último' : metric === 'min' ? 'Mínimo' : metric === 'avg' ? 'Média' : 'Máximo'}
-                     </span>
-                     <span className={clsx(
-                       "text-[13px] font-bold tracking-tight",
-                       metric === 'max' ? (dir === 'rx' ? "text-accent" : "text-success") : "text-text-primary"
-                     )}>
-                       {formatBpsRaw(periodStats[dir][metric])}
-                     </span>
-                   </div>
-                 ))}
-               </div>
-             ))}
-           </div>
-            <div className="flex flex-col items-end px-3 py-1.5 bg-bg-primary/50 rounded-lg border border-border/30">
-              <span className="text-[9px] uppercase font-black text-text-secondary opacity-60 leading-none mb-1">Interfaces</span>
-              <span className="text-xs font-black text-text-primary">{selectedIfaces.length}<span className="text-[10px] opacity-40 mx-0.5">/</span>{(Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : []).length}</span>
-         </div>
+        {/* Collector Info */}
+        <div className="flex items-center gap-2 text-xs text-text-secondary opacity-80 mb-5">
+          <Info size={14} />
+          <span className="font-medium">
+            {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).find((c: any) => c.id === selectedCollector)?.name || 'NE-20'} 
+            <span className="mx-2 opacity-30">|</span>
+            {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).find((c: any) => c.id === selectedCollector)?.host || '45.175.50.209'} 
+            <span className="mx-2 opacity-30">|</span>
+            v2c
+          </span>
         </div>
 
          <div className="space-y-2 bg-[#F8FAFC] dark:bg-[#0f172a]/40 p-4 rounded-xl border border-border/50 relative min-h-[350px] flex items-center justify-center">
