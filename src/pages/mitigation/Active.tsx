@@ -340,27 +340,18 @@ function TabButton({ active, onClick, icon, label, count }: any) {
                          </td>
                         <td className="px-6 py-4 text-text-secondary font-mono text-xs">{route.nexthop}</td>
                         <td className="px-6 py-4">
-                          <span style={{
-                            background: '#1e3a5f',
-                            color: '#3b82f6',
-                            padding: '2px 8px',
-                            borderRadius: 4,
-                            fontSize: 11,
-                            fontFamily: 'monospace'
-                          }}>
+                          <span className="bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20 px-2 py-1 rounded-md text-[11px] font-mono whitespace-nowrap">
                             {route.community}
                           </span>
                         </td>
                         <td className="px-6 py-4 text-text-secondary text-xs">{route.age}</td>
                         <td className="px-6 py-4">
-                          <span style={{
-                            background: route.type === 'blackhole' ? '#3b1212' : '#1e2130',
-                            color: route.type === 'blackhole' ? '#ef4444' : '#8892a4',
-                            padding: '2px 8px',
-                            borderRadius: 4,
-                            fontSize: 11,
-                            textTransform: 'uppercase'
-                          }}>
+                          <span className={clsx(
+                            "px-2 py-1 rounded-md text-[11px] font-semibold uppercase border whitespace-nowrap",
+                            route.type === 'blackhole' 
+                              ? "bg-red-50 text-red-700 border-red-200 dark:bg-red-500/10 dark:text-red-300 dark:border-red-500/20"
+                              : "bg-bg-primary text-text-secondary border-border"
+                          )}>
                             {route.type}
                           </span>
                         </td>
