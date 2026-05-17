@@ -1426,7 +1426,6 @@ export default function Dashboard() {
         </p>
        </div>
       </div>
-     </div>
 
       {showIfaceSelector && (
          <div style={{
