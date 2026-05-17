@@ -11,7 +11,7 @@ import {
    Tooltip, TooltipTrigger, TooltipContent, TooltipProvider 
  } from '../components/ui/tooltip';
  import { MitigationTooltip } from '../components/MitigationTooltip';
-import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon, Settings2, Info, ArrowRight } from 'lucide-react';
+import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon, Settings2, Info, ArrowRight, History, Zap, CheckCircle, Clock } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { Skeleton } from '../components/Skeleton';
 import Flag from '../components/Flag';
@@ -93,6 +93,14 @@ export default function Dashboard() {
     };
   }, [queryClient]);
 
+  const timeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `há ${mins}min`;
+    const hrs = Math.floor(mins / 60);
+    return `há ${hrs}h`;
+  };
+
   const { data: detection, isLoading: statsLoading } = useQuery({
     queryKey: ['detection-stats'],
     queryFn: async () => {
@@ -102,6 +110,12 @@ export default function Dashboard() {
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true,
+  });
+
+  const { data: eventsHistory } = useQuery({
+    queryKey: ['events-history-compact'],
+    queryFn: () => api.get('/api/events/history?limit=5').then(r => r.data),
+    refetchInterval: 30000,
   });
 
   const { data: timeline } = useQuery({
@@ -188,26 +202,31 @@ export default function Dashboard() {
   });
 
     const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
-    const [serviceFilter, setServiceFilter] = useState<string | null>(null);
-   const [period, setPeriod] = useState<'realtime' | '5m' | '15m'>('realtime');
- 
-   const { data: metricsHistory } = useQuery({
-     queryKey: ['iface-metrics', selectedCollector, period],
-     queryFn: async () => {
-       if (period === 'realtime') return null;
-       const mins = period === '5m' ? 5 : 15;
-       const r = await api.get(`/api/collectors/${selectedCollector}/metrics?minutes=${mins}`);
-       return r.data;
-     },
-     enabled: period !== 'realtime' && !!selectedCollector,
-     refetchInterval: 30000,
-   });
+  const [serviceFilter, setServiceFilter] = useState<string | null>(null);
+  const [timePeriod, setTimePeriod] = useState<'realtime' | '1h' | '6h' | '24h'>('realtime');
+
+  const { data: metricsHistory, isLoading: metricsHistoryLoading } = useQuery({
+    queryKey: ['iface-metrics-history', selectedCollector, timePeriod, selectedIfaces],
+    queryFn: async () => {
+      if (timePeriod === 'realtime' || !selectedIfaces.length) return null;
+      const mins = timePeriod === '1h' ? 60 : timePeriod === '6h' ? 360 : 1440;
+      
+      const promises = selectedIfaces.map(ifName => 
+        api.get(`/api/collectors/${selectedCollector}/metrics/history?minutes=${mins}&if_name=${ifName}`)
+          .then(r => ({ ifName, data: r.data }))
+      );
+      
+      return Promise.all(promises);
+    },
+    enabled: timePeriod !== 'realtime' && !!selectedCollector && selectedIfaces.length > 0,
+    refetchInterval: timePeriod === 'realtime' ? 30000 : 300000,
+  });
  
    // MELHORIA 1 — Gráfico de interface carrega imediatamente
-   useEffect(() => {
-     if (!interfaces?.interfaces?.length || period !== 'realtime') return;
- 
-     setHistory(prev => {
+  useEffect(() => {
+    if (!interfaces?.interfaces?.length || timePeriod !== 'realtime') return;
+
+    setHistory(prev => {
        const hasData = Object.values(prev).some(arr => arr.length > 0);
        if (hasData) return prev;
  
@@ -228,7 +247,7 @@ export default function Dashboard() {
        });
        return next;
      });
-   }, [interfaces, period]);
+  }, [interfaces, timePeriod]);
 
   useEffect(() => {
     if (selectedCollector) {
@@ -244,8 +263,8 @@ export default function Dashboard() {
     localStorage.setItem('fg_traffic_source', source);
   }, [source]);
 
-   useEffect(() => {
-     if (!interfaces?.interfaces || period !== 'realtime') return;
+  useEffect(() => {
+    if (!interfaces?.interfaces || timePeriod !== 'realtime') return;
 
     const now = new Date().toLocaleTimeString('pt-BR', {
       hour: '2-digit', minute: '2-digit', second: '2-digit'
@@ -333,42 +352,45 @@ export default function Dashboard() {
        return map;
      }, [interfaces]);
  
-     const chartData = useMemo(() => {
-       if (period === 'realtime') {
-         return timePoints.map((time, idx) => {
-           const point: Record<string, any> = { time };
-           selectedIfaces.forEach(name => {
-             const h = history[name];
-             if (h && h[idx]) {
-               point[`${name}_in`] = Math.round(h[idx].in_bps / 1e6);
-               point[`${name}_out`] = Math.round(h[idx].out_bps / 1e6);
-             }
-           });
-           return point;
-         });
-       } else {
-         if (!metricsHistory || !Array.isArray(metricsHistory)) return [];
-         
-         const timeMap: Record<string, any> = {};
-         metricsHistory.forEach((m: any) => {
-           const time = new Date(m.collected_at).toLocaleTimeString('pt-BR', {
-             hour: '2-digit', minute: '2-digit'
-           });
-           if (!timeMap[time]) timeMap[time] = { time };
-           
-           // The endpoint uses if_name, we might need to match with display_name
-           // but the user's selectedIfaces are based on display_name || if_name.
-           // Let's check both.
-          const displayName = ifaceMap[m.if_name] || m.if_name;
-          if (selectedIfaces.includes(displayName)) {
-            timeMap[time][`${displayName}_in`] = Math.round(m.in_bps / 1e6);
-            timeMap[time][`${displayName}_out`] = Math.round(m.out_bps / 1e6);
+  const chartData = useMemo(() => {
+    if (timePeriod === 'realtime') {
+      return timePoints.map((time, idx) => {
+        const point: Record<string, any> = { time };
+        selectedIfaces.forEach(name => {
+          const h = history[name];
+          if (h && h[idx]) {
+            point[`${name}_in`] = Math.round(h[idx].in_bps / 1e6);
+            point[`${name}_out`] = Math.round(h[idx].out_bps / 1e6);
           }
-         });
-         
-         return Object.values(timeMap).sort((a: any, b: any) => a.time.localeCompare(b.time));
-       }
-     }, [timePoints, selectedIfaces, history, period, metricsHistory]);
+        });
+        return point;
+      });
+    } else {
+      if (!metricsHistory || !Array.isArray(metricsHistory)) return [];
+      
+      const timeMap: Record<string, any> = {};
+      metricsHistory.forEach(({ ifName, data }) => {
+        const items = Array.isArray(data) ? data : (data?.items || []);
+        
+        // For 24h, take 1 every 5 points to not overload
+        const filteredItems = timePeriod === '24h' ? items.filter((_: any, i: number) => i % 5 === 0) : items;
+
+        filteredItems.forEach((m: any) => {
+          const date = new Date(m.time_bucket);
+          const time = timePeriod === '24h' 
+            ? date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+            : date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+          if (!timeMap[time]) timeMap[time] = { time, raw_time: date.getTime() };
+          
+          timeMap[time][`${ifName}_in`] = Math.round(m.in_bps / 1e6);
+          timeMap[time][`${ifName}_out`] = Math.round(m.out_bps / 1e6);
+        });
+      });
+      
+      return Object.values(timeMap).sort((a: any, b: any) => a.raw_time - b.raw_time);
+    }
+  }, [timePoints, selectedIfaces, history, timePeriod, metricsHistory]);
 
     const protoMap: Record<number, string> = {
      6: 'TCP', 17: 'UDP', 1: 'ICMP',
@@ -525,61 +547,107 @@ export default function Dashboard() {
            50% { opacity: 0.3; }
          }
        `}</style>
-      {/* Top Stats */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
-        <StatCard 
-          title="FLOW IPv4 ↓" 
-          value={(detection?.incoming_mbps / 1000).toFixed(1)} 
-          unit="Gbps" 
-          icon={<ArrowDown className="text-accent" size={20} />} 
-          subtitle="Estimado via Flow · sampling 1:1000"
-        />
-        <StatCard 
-          title="FLOW IPv4 ↑" 
-          value={(detection?.outgoing_mbps / 1000).toFixed(1)} 
-          unit="Gbps" 
-          icon={<ArrowUp className="text-success" size={20} />} 
-          subtitle="Estimado via Flow · sampling 1:1000"
-        />
-        <StatCard 
-          title="SNMP ↓ Total" 
-          value={snmpTotals.rx.toFixed(1)} 
-          unit="Gbps" 
-          icon={<ArrowDown className="text-blue-500" size={20} />} 
-          subtitle="Tráfego real · todas interfaces"
-        />
-        <StatCard 
-          title="SNMP ↑ Total" 
-          value={snmpTotals.tx.toFixed(1)} 
-          unit="Gbps" 
-          icon={<ArrowUp className="text-green-500" size={20} />} 
-          subtitle="Tráfego real · todas interfaces"
-        />
-        <StatCard 
-          title={t('active_flows')} 
-          value={detection?.incoming_pps > 1000 ? (detection.incoming_pps / 1000).toFixed(1) + 'k' : detection?.incoming_pps || '0'} 
-          icon={<Activity className="text-warning" size={20} />} 
-        />
-         <StatCard 
-           title={t('active_mitigations')} 
-           value={detection?.active_mitigations || '0'} 
-           icon={<Shield className="text-danger" size={20} />} 
-           subtitle={activeMitigations?.items?.length > 0 && (
-             <div className="flex flex-wrap gap-1 mt-1">
-               {activeMitigations.items.slice(0, 2).map((m: any) => (
-                  <div key={m.ip} className="relative">
-                    <MitigationTooltip data={m}>
-                      <span className="text-[9px] font-mono font-bold text-danger border border-danger/20 px-1 rounded bg-danger/5 cursor-help hover:bg-danger/10 transition-colors">
-                        {m.ip}
-                      </span>
-                    </MitigationTooltip>
+        {/* Top Stats */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+          <StatCard 
+            title="FLOW IPv4 ↓" 
+            value={(detection?.incoming_mbps / 1000).toFixed(1)} 
+            unit="Gbps" 
+            icon={<ArrowDown className="text-accent" size={20} />} 
+            subtitle="Estimado via Flow · sampling 1:1000"
+          />
+          <StatCard 
+            title="FLOW IPv4 ↑" 
+            value={(detection?.outgoing_mbps / 1000).toFixed(1)} 
+            unit="Gbps" 
+            icon={<ArrowUp className="text-success" size={20} />} 
+            subtitle="Estimado via Flow · sampling 1:1000"
+          />
+          <StatCard 
+            title="SNMP ↓ Total" 
+            value={snmpTotals.rx.toFixed(1)} 
+            unit="Gbps" 
+            icon={<ArrowDown className="text-blue-500" size={20} />} 
+            subtitle="Tráfego real · todas interfaces"
+          />
+          <StatCard 
+            title="SNMP ↑ Total" 
+            value={snmpTotals.tx.toFixed(1)} 
+            unit="Gbps" 
+            icon={<ArrowUp className="text-green-500" size={20} />} 
+            subtitle="Tráfego real · todas interfaces"
+          />
+          <StatCard 
+            title={t('active_flows')} 
+            value={detection?.incoming_pps > 1000 ? (detection.incoming_pps / 1000).toFixed(1) + 'k' : detection?.incoming_pps || '0'} 
+            icon={<Activity className="text-warning" size={20} />} 
+          />
+           <StatCard 
+             title={t('active_mitigations')} 
+             value={detection?.active_mitigations || '0'} 
+             icon={<Shield className="text-danger" size={20} />} 
+             subtitle={activeMitigations?.items?.length > 0 && (
+               <div className="flex flex-wrap gap-1 mt-1">
+                 {activeMitigations.items.slice(0, 2).map((m: any) => (
+                    <div key={m.ip} className="relative">
+                      <MitigationTooltip data={m}>
+                        <span className="text-[9px] font-mono font-bold text-danger border border-danger/20 px-1 rounded bg-danger/5 cursor-help hover:bg-danger/10 transition-colors">
+                          {m.ip}
+                        </span>
+                      </MitigationTooltip>
+                    </div>
+                 ))}
+                 {activeMitigations.items.length > 2 && <span className="text-[9px] text-text-secondary">+{activeMitigations.items.length - 2}</span>}
+               </div>
+             )}
+           />
+        </div>
+
+        {/* MELHORIA 3 — Dashboard card de anomalias */}
+        <div className="bg-white dark:bg-bg-secondary p-5 rounded-xl border border-border shadow-sm">
+          <div className="flex items-center justify-between mb-4 border-b border-border/50 pb-3">
+            <div className="flex items-center gap-2">
+              <History className="text-warning" size={18} />
+              <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Últimos Eventos de Mitigação</h2>
+            </div>
+            <Link to="/events" className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1">
+              Ver histórico completo <ArrowRight size={12} />
+            </Link>
+          </div>
+          <div className="space-y-3">
+            {eventsHistory?.items?.map((event: any, i: number) => (
+              <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-bg-primary/50 border border-border/40 hover:border-primary/20 transition-all">
+                <div className="flex items-center gap-4">
+                  <div className="font-mono text-xs font-bold text-text-primary">{event.ip}</div>
+                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-bg-secondary border border-border text-[9px] font-bold uppercase tracking-wider">
+                    {event.flow_direction === 'incoming' ? (
+                      <><ArrowDown size={10} className="text-blue-500" /> Entrada</>
+                    ) : (
+                      <><ArrowUp size={10} className="text-green-500" /> Saída</>
+                    )}
                   </div>
-               ))}
-               {activeMitigations.items.length > 2 && <span className="text-[9px] text-text-secondary">+{activeMitigations.items.length - 2}</span>}
-             </div>
-           )}
-         />
-      </div>
+                  <div className="text-[10px] text-text-secondary">
+                    <span className="font-bold text-text-primary">{(event.peak_pps / 1000).toFixed(1)}k</span> pps
+                  </div>
+                  <div className="text-[10px] text-text-secondary opacity-60 flex items-center gap-1">
+                    <Clock size={10} /> {timeAgo(event.start_time)}
+                  </div>
+                </div>
+                <div className={clsx(
+                  "text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-tighter",
+                  event.status === 'active' 
+                    ? "bg-danger/10 text-danger animate-pulse" 
+                    : "bg-success/10 text-success"
+                )}>
+                  {event.status === 'active' ? 'ATIVO' : 'RESOLVIDO'}
+                </div>
+              </div>
+            ))}
+            {(!eventsHistory?.items || eventsHistory.items.length === 0) && (
+              <div className="text-center py-4 text-xs text-text-secondary italic">Nenhum evento recente</div>
+            )}
+          </div>
+        </div>
 
       {/* Main Chart: Tráfego da Interface - Refined Light Theme Visuals */}
       <div className="bg-white dark:bg-bg-secondary p-6 rounded-2xl border border-border shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none transition-all">
@@ -623,23 +691,23 @@ export default function Dashboard() {
               </select>
             </div>
 
-             {/* MELHORIA 2 — Seletor de período */}
-             <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
-               {(['realtime', '5m', '15m'] as const).map((p) => (
-                 <button
-                   key={p}
-                   onClick={() => setPeriod(p)}
-                   className={clsx(
-                     "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all",
-                     period === p 
-                       ? "bg-white dark:bg-[#2a2d3e] text-accent shadow-sm" 
-                       : "text-text-secondary hover:text-text-primary"
-                   )}
-                 >
-                   {p === 'realtime' ? 'Tempo Real' : p === '5m' ? '5 min' : '15 min'}
-                 </button>
-               ))}
-             </div>
+              {/* MELHORIA 4 — Seletor de período */}
+              <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
+                {(['realtime', '1h', '6h', '24h'] as const).map((p) => (
+                  <button
+                    key={p}
+                    onClick={() => setTimePeriod(p)}
+                    className={clsx(
+                      "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all",
+                      timePeriod === p 
+                        ? "bg-white dark:bg-[#2a2d3e] text-accent shadow-sm" 
+                        : "text-text-secondary hover:text-text-primary"
+                    )}
+                  >
+                    {p === 'realtime' ? 'Tempo Real' : p}
+                  </button>
+                ))}
+              </div>
  
              <button 
                onClick={() => {
@@ -696,7 +764,16 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="space-y-2 bg-[#F8FAFC] dark:bg-[#0f172a]/40 p-4 rounded-xl border border-border/50">
+        <div className="space-y-2 bg-[#F8FAFC] dark:bg-[#0f172a]/40 p-4 rounded-xl border border-border/50 relative min-h-[350px]">
+          {metricsHistoryLoading && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/50 dark:bg-black/20 rounded-xl backdrop-blur-[1px]">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-xs font-bold text-text-secondary uppercase tracking-widest animate-pulse">Carregando histórico...</span>
+              </div>
+            </div>
+          )}
+
           {/* RX Chart */}
           <div className="relative">
             <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 origin-left text-[9px] font-black text-text-secondary uppercase tracking-widest pointer-events-none opacity-40 ml-1">

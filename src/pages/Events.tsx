@@ -1,4 +1,4 @@
-import { useState, useCallback, useEffect } from 'react';
+import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
  import api from '../services/api';
  import { useTranslation } from '../hooks/useTranslation';
@@ -44,14 +44,42 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
      refetchInterval: 30000,
    });
  
-   const { data: auditLogs } = useQuery({
-     queryKey: ['audit-logs-mitigation'],
-     queryFn: async () => {
-       const r = await api.get('/api/audit/logs?action=mitigation_started');
-       return r.data;
-     },
-     refetchInterval: 30000,
-   });
+  const [eventFilter, setEventFilter] = useState<'all' | 'active' | 'removed'>('all');
+  const [timeRange, setTimeRange] = useState<'all' | '1h' | '24h'>('all');
+
+  const { data: eventsHistory, isLoading: historyLoading } = useQuery({
+    queryKey: ['events-history-full', eventFilter, timeRange],
+    queryFn: async () => {
+      const params = new URLSearchParams({ limit: '50' });
+      if (eventFilter !== 'all') params.append('status', eventFilter);
+      if (timeRange === '1h') params.append('minutes', '60');
+      if (timeRange === '24h') params.append('minutes', '1440');
+      
+      const r = await api.get(`/api/events/history?${params}`);
+      return r.data;
+    },
+    refetchInterval: 30000,
+  });
+
+  const fmtDuration = (seconds: number) => {
+    if (!seconds) return '—';
+    if (seconds < 60) return `${seconds}s`;
+    if (seconds < 3600) {
+      const mins = Math.floor(seconds / 60);
+      const secs = seconds % 60;
+      return `${mins}min ${secs}s`;
+    }
+    const hrs = Math.floor(seconds / 3600);
+    const mins = Math.floor((seconds % 3600) / 60);
+    return `${hrs}h ${mins}min`;
+  };
+
+  const fmtPeak = (pps: number, mbps: number) => {
+    if (!pps && !mbps) return '—';
+    const ppsStr = pps > 1000 ? (pps / 1000).toFixed(1) + 'k' : pps;
+    const mbpsStr = mbps > 1000 ? (mbps / 1000).toFixed(2) + ' Gbps' : mbps + ' Mbps';
+    return `${ppsStr} pps · ${mbpsStr}`;
+  };
  
   const handleMitigate = useCallback((ip: string) => {
     setTargetIP(ip);
@@ -198,47 +226,129 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
          </div>
        </div>
  
-        {/* Anomaly History Section */}
+        {/* MELHORIA 2 — Histórico de Anomalias em Eventos */}
         <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-border flex items-center gap-2 bg-bg-primary/30">
-            <History className="text-warning" size={18} />
-            <h2 className="text-base font-bold text-text-primary">Histórico de Anomalias</h2>
+          <div className="p-5 border-b border-border flex flex-col md:flex-row justify-between items-center gap-4 bg-bg-primary/30">
+            <div className="flex items-center gap-2">
+              <History className="text-warning" size={18} />
+              <h2 className="text-base font-bold text-text-primary">Histórico de Anomalias</h2>
+            </div>
+            
+            <div className="flex flex-wrap gap-2">
+              <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
+                {[
+                  { label: 'Todos', value: 'all' },
+                  { label: 'Ativos', value: 'active' },
+                  { label: 'Resolvidos', value: 'removed' }
+                ].map((f) => (
+                  <button
+                    key={f.value}
+                    onClick={() => setEventFilter(f.value as any)}
+                    className={clsx(
+                      "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all",
+                      eventFilter === f.value 
+                        ? "bg-white dark:bg-[#2a2d3e] text-primary shadow-sm" 
+                        : "text-text-secondary hover:text-text-primary"
+                    )}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+
+              <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
+                {[
+                  { label: 'Tudo', value: 'all' },
+                  { label: '1h', value: '1h' },
+                  { label: '24h', value: '24h' }
+                ].map((f) => (
+                  <button
+                    key={f.value}
+                    onClick={() => setTimeRange(f.value as any)}
+                    className={clsx(
+                      "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all",
+                      timeRange === f.value 
+                        ? "bg-white dark:bg-[#2a2d3e] text-primary shadow-sm" 
+                        : "text-text-secondary hover:text-text-primary"
+                    )}
+                  >
+                    {f.label}
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
+
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-                  <th className="px-6 py-3 border-b border-border">Data/Hora</th>
-                  <th className="px-6 py-3 border-b border-border">IP Mitigado</th>
-                  <th className="px-6 py-3 border-b border-border">Ação</th>
-                  <th className="px-6 py-3 border-b border-border">Operador</th>
+                  <th className="px-6 py-3 border-b border-border">IP</th>
+                  <th className="px-6 py-3 border-b border-border">Início</th>
+                  <th className="px-6 py-3 border-b border-border">Fim</th>
+                  <th className="px-6 py-3 border-b border-border text-center">Duração</th>
+                  <th className="px-6 py-3 border-b border-border">Pico (PPS/Mbps)</th>
+                  <th className="px-6 py-3 border-b border-border text-center">Direção</th>
                   <th className="px-6 py-3 border-b border-border text-center">Status</th>
+                  <th className="px-6 py-3 border-b border-border">Tipo</th>
+                  <th className="px-6 py-3 border-b border-border">Origem</th>
                 </tr>
               </thead>
               <tbody className="text-sm divide-y divide-border/50">
-                {(Array.isArray(auditLogs) ? auditLogs : (auditLogs?.items || [])).map((log: any, i: number) => (
+                {eventsHistory?.items?.map((event: any, i: number) => (
                   <tr key={i} className="hover:bg-bg-primary/50 transition-colors group">
-                    <td className="px-6 py-3.5 flex items-center gap-2 text-text-secondary whitespace-nowrap text-xs">
-                      <Clock size={13} opacity={0.5} /> {log.timestamp || log.created_at}
+                    <td className="px-6 py-3.5 font-mono font-bold text-text-primary text-xs">{event.ip}</td>
+                    <td className="px-6 py-3.5 text-text-secondary text-[11px] whitespace-nowrap">
+                      {new Date(event.start_time).toLocaleString('pt-BR')}
                     </td>
-                    <td className="px-6 py-3.5 font-mono font-bold text-text-primary text-xs">{log.target || log.ip || '—'}</td>
-                    <td className="px-6 py-3.5">
-                      <span className="flex items-center gap-1.5 text-primary font-semibold text-xs">
-                        <Zap size={13} /> {log.action_type || 'BGP Blackhole'}
-                      </span>
+                    <td className="px-6 py-3.5 text-text-secondary text-[11px] whitespace-nowrap">
+                      {event.end_time ? new Date(event.end_time).toLocaleString('pt-BR') : '—'}
                     </td>
-                    <td className="px-6 py-3.5 text-text-secondary text-xs">{log.username || 'System'}</td>
+                    <td className="px-6 py-3.5 text-center text-text-primary text-[11px] font-medium">
+                      {fmtDuration(event.duration_seconds)}
+                    </td>
+                    <td className="px-6 py-3.5 text-text-primary text-[11px] font-bold">
+                      {fmtPeak(event.peak_pps, event.peak_mbps)}
+                    </td>
                     <td className="px-6 py-3.5 text-center">
-                      <span className="px-2 py-0.5 bg-success/10 text-success text-[10px] font-bold rounded uppercase">
-                        Resolvido
+                      <span className={clsx(
+                        "px-2 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider border",
+                        event.flow_direction === 'incoming' 
+                          ? "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800" 
+                          : "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800"
+                      )}>
+                        {event.flow_direction === 'incoming' ? '↓ Entrada' : '↑ Saída'}
                       </span>
+                    </td>
+                    <td className="px-6 py-3.5 text-center">
+                      <span className={clsx(
+                        "px-2 py-0.5 rounded text-[9px] font-black uppercase tracking-tighter border",
+                        event.status === 'active' 
+                          ? "bg-danger/10 text-danger border-danger/20 animate-pulse" 
+                          : "bg-bg-primary text-text-secondary border-border"
+                      )}>
+                        {event.status === 'active' ? 'ATIVO' : 'RESOLVIDO'}
+                      </span>
+                    </td>
+                    <td className="px-6 py-3.5 text-text-secondary text-[11px] font-medium uppercase tracking-wider">
+                      {event.type || 'Blackhole'}
+                    </td>
+                    <td className="px-6 py-3.5 text-text-secondary text-[11px] font-bold uppercase tracking-wider">
+                      {event.triggered_by === 'detector' ? 'Automático' : 'Manual'}
                     </td>
                   </tr>
                 ))}
-                {(!auditLogs || (Array.isArray(auditLogs) && auditLogs.length === 0)) && (
+                {(!eventsHistory?.items || eventsHistory.items.length === 0) && !historyLoading && (
                   <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-text-secondary italic text-xs">
-                      Nenhum histórico de mitigação encontrado
+                    <td colSpan={9} className="px-6 py-12 text-center text-text-secondary italic text-xs">
+                      Nenhum histórico de anomalias encontrado
+                    </td>
+                  </tr>
+                )}
+                {historyLoading && (
+                  <tr>
+                    <td colSpan={9} className="px-6 py-12 text-center">
+                      <Skeleton count={5} />
                     </td>
                   </tr>
                 )}
