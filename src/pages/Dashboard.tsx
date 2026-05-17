@@ -1058,11 +1058,43 @@ export default function Dashboard() {
           )}
         </div>
 
-         <div className="mt-4 border-t border-border/40 pt-4">
-            <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest opacity-60">
-              Clique no botão "Interfaces" acima para selecionar as interfaces exibidas no gráfico.
-            </p>
-         </div>
+          {/* Zabbix style stats */}
+          <div className="mt-6 border-t border-border/40 pt-4 px-2">
+            <div className="text-[10px] text-text-secondary font-bold uppercase tracking-widest mb-3 opacity-60 flex items-center gap-2">
+              <Activity size={12} />
+              Estatísticas · {periodStats.label}
+            </div>
+            <div className="space-y-3">
+              {(['rx', 'tx'] as const).map(dir => (
+                <div key={dir} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-8">
+                  <div className="flex items-center gap-2 min-w-[60px]">
+                    <span className={clsx(
+                      "text-xs font-black",
+                      dir === 'rx' ? "text-blue-500" : "text-green-500"
+                    )}>
+                      {dir === 'rx' ? '↓ RX' : '↑ TX'}
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-4 gap-4 sm:gap-12 flex-1">
+                    {(['last', 'min', 'avg', 'max'] as const).map(metric => (
+                      <div key={metric} className="flex flex-col">
+                        <span className="text-[9px] uppercase font-bold text-text-secondary opacity-40 leading-none mb-1">
+                          {metric === 'last' ? 'Último' : metric === 'min' ? 'Mínimo' : metric === 'avg' ? 'Média' : 'Máximo'}
+                        </span>
+                        <span className={clsx(
+                          "text-[13px] font-bold tracking-tight leading-none",
+                          metric === 'max' ? (dir === 'rx' ? "text-blue-500" : "text-green-500") : "text-text-primary"
+                        )}>
+                          {formatBpsRaw(periodStats[dir][metric])}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
       </div>
 
        {/* Secondary Grids */}
