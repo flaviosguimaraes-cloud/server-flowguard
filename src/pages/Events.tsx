@@ -339,68 +339,142 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
  
         {/* MELHORIA 2 — Histórico de Anomalias em Eventos */}
         <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
-          <div className="p-5 border-b border-border flex flex-col md:flex-row justify-between items-center gap-4 bg-bg-primary/30">
-            <div className="flex flex-col gap-1">
-              <div className="flex items-center gap-2">
-                <History className="text-warning" size={18} />
-                <h2 className="text-base font-bold text-text-primary">Histórico de Anomalias</h2>
+          <div className="p-5 border-b border-border bg-bg-primary/30">
+            <div className="flex justify-between items-center mb-6">
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <History className="text-warning" size={18} />
+                  <h2 className="text-base font-bold text-text-primary">Histórico de Anomalias</h2>
+                </div>
+                {eventsUpdatedAt && (
+                  <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest opacity-60">
+                    Atualizado: {new Date(eventsUpdatedAt).toLocaleTimeString('pt-BR')}
+                  </p>
+                )}
               </div>
-              {eventsUpdatedAt && (
-                <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest opacity-60">
-                  Atualizado: {new Date(eventsUpdatedAt).toLocaleTimeString('pt-BR')}
-                </p>
-              )}
-            </div>
-            
-            <div className="flex flex-wrap gap-2">
               <button 
                 onClick={() => queryClient.invalidateQueries({ queryKey: ['events-history-page'] })}
-                className="px-3 py-1.5 text-[10px] font-bold uppercase rounded-lg bg-bg-primary text-text-secondary border border-border hover:text-primary transition-all"
+                className="px-3 py-1.5 text-[10px] font-bold uppercase rounded-lg bg-bg-primary text-text-secondary border border-border hover:text-primary transition-all flex items-center gap-1"
               >
-                ↻ Atualizar
+                ↻ Atualizar Dados
               </button>
+            </div>
 
-              <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
-                {[
-                  { label: 'Todos', value: 'all' },
-                  { label: 'Ativos', value: 'active' },
-                  { label: 'Resolvidos', value: 'removed' }
-                ].map((f) => (
-                  <button
-                    key={f.value}
-                    onClick={() => setEventFilter(f.value as any)}
-                    className={clsx(
-                      "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all",
-                      eventFilter === f.value 
-                        ? "bg-white dark:bg-[#2a2d3e] text-primary shadow-sm" 
-                        : "text-text-secondary hover:text-text-primary"
-                    )}
-                  >
-                    {f.label}
-                  </button>
-                ))}
+            {/* Filtros Avançados */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase text-text-secondary opacity-70">IP</label>
+                <input
+                  type="text"
+                  placeholder="Ex: 45.175.50 ou IP completo"
+                  value={filters.ip}
+                  onChange={e => setFilters(f => ({ ...f, ip: e.target.value }))}
+                  className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-primary outline-none transition-all"
+                />
+              </div>
+              
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase text-text-secondary opacity-70">Direção</label>
+                <select
+                  value={filters.direction}
+                  onChange={e => setFilters(f => ({ ...f, direction: e.target.value }))}
+                  className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-primary outline-none transition-all cursor-pointer"
+                >
+                  <option value="">Todas</option>
+                  <option value="incoming">↓ Download</option>
+                  <option value="outgoing">↑ Upload</option>
+                </select>
               </div>
 
-              <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
-                {[
-                  { label: 'Tudo', value: 'all' },
-                  { label: '1H', value: '1h' },
-                  { label: '6H', value: '6h' },
-                  { label: '24H', value: '24h' }
-                ].map((f) => (
-                  <button
-                    key={f.value}
-                    onClick={() => setTimeRange(f.value as any)}
-                    className={clsx(
-                      "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all",
-                      timeRange === f.value 
-                        ? "bg-white dark:bg-[#2a2d3e] text-primary shadow-sm" 
-                        : "text-text-secondary hover:text-text-primary"
-                    )}
-                  >
-                    {f.label}
-                  </button>
-                ))}
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase text-text-secondary opacity-70">Status</label>
+                <select
+                  value={filters.status}
+                  onChange={e => setFilters(f => ({ ...f, status: e.target.value }))}
+                  className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-primary outline-none transition-all cursor-pointer"
+                >
+                  <option value="">Todos</option>
+                  <option value="active">Ativo</option>
+                  <option value="removed">Finalizado</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase text-text-secondary opacity-70">Origem</label>
+                <select
+                  value={filters.origin}
+                  onChange={e => setFilters(f => ({ ...f, origin: e.target.value }))}
+                  className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-primary outline-none transition-all cursor-pointer"
+                >
+                  <option value="">Todas</option>
+                  <option value="auto">Automático</option>
+                  <option value="manual">Manual</option>
+                </select>
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase text-text-secondary opacity-70">Data Início</label>
+                <input
+                  type="datetime-local"
+                  value={filters.dateStart}
+                  onChange={e => setFilters(f => ({ ...f, dateStart: e.target.value }))}
+                  className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-primary outline-none transition-all"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase text-text-secondary opacity-70">Data Fim</label>
+                <input
+                  type="datetime-local"
+                  value={filters.dateEnd}
+                  onChange={e => setFilters(f => ({ ...f, dateEnd: e.target.value }))}
+                  className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-primary outline-none transition-all"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase text-text-secondary opacity-70">PPS Mínimo</label>
+                <input
+                  type="number"
+                  placeholder="Ex: 100000"
+                  value={filters.minPps}
+                  onChange={e => setFilters(f => ({ ...f, minPps: e.target.value }))}
+                  className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-primary outline-none transition-all"
+                />
+              </div>
+
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold uppercase text-text-secondary opacity-70">PPS Máximo</label>
+                <input
+                  type="number"
+                  placeholder="Ex: 500000"
+                  value={filters.maxPps}
+                  onChange={e => setFilters(f => ({ ...f, maxPps: e.target.value }))}
+                  className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-primary outline-none transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="mt-6 pt-4 border-t border-border/20 flex justify-between items-center">
+              <p className="text-[11px] font-bold text-text-secondary italic">
+                {Object.values(filters).some(v => v !== '') 
+                  ? `${filteredItems.length} eventos encontrados`
+                  : `Mostrando todos os ${eventsHistory?.total || eventsHistory?.items?.length || 0} eventos`
+                }
+              </p>
+              <div className="flex gap-2">
+                <button
+                  onClick={clearFilters}
+                  className="px-4 py-1.5 text-[10px] font-bold uppercase bg-bg-primary text-text-secondary border border-border rounded-lg hover:bg-bg-secondary transition-all"
+                >
+                  ✕ Limpar
+                </button>
+                <button
+                   onClick={() => queryClient.invalidateQueries({ queryKey: ['events-history-page'] })}
+                   className="px-4 py-1.5 text-[10px] font-bold uppercase bg-primary text-white rounded-lg hover:bg-primary/90 transition-all shadow-sm shadow-primary/10 flex items-center gap-1"
+                >
+                  🔍 Pesquisar
+                </button>
               </div>
             </div>
           </div>
