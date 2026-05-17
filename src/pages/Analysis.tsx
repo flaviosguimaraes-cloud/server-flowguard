@@ -75,11 +75,49 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       if (b > 1e3) return (b / 1e3).toFixed(0) + ' KB';
       return b + ' B';
     };
-    const calcPPS = (packets: number) => {
-      if (!packets) return '—';
-      const pps = Math.round(packets / 1800);
-      return pps > 1000 ? (pps / 1000).toFixed(1) + 'k' : String(pps);
-    };
+     const calcPPS = (packets: number, minutesStr: string = '30') => {
+       if (!packets) return 0;
+       const mins = parseInt(minutesStr) || 30;
+       return Math.round(packets / (mins * 60));
+     };
+
+     const flagColor = (flags: string) => {
+       if (!flags) return '#8892a4';
+       if (flags.includes('RST')) return '#ef4444';
+       if (flags === 'SYN') return '#f59e0b';
+       if (flags === 'NO-FLAGS') return '#f97316';
+       if (flags.includes('PSH')) return '#22c55e';
+       if (flags.includes('SYN')) return '#3b82f6';
+       return '#8892a4';
+     };
+
+     const bppLabel = (bpp: number) => {
+       if (!bpp) return null;
+       if (bpp > 1400) return {
+         label: `${bpp}B ⚠`,
+         color: '#ef4444',
+         hint: 'Possível amplificação'
+       };
+       if (bpp < 100) return {
+         label: `${bpp}B ⚠`,
+         color: '#f59e0b',
+         hint: 'Possível flood'
+       };
+       return {
+         label: `${bpp}B`,
+         color: '#8892a4',
+         hint: 'Normal'
+       };
+     };
+
+     const fmtDuration = (s: number) => {
+       if (!s) return '—';
+       if (s < 60) return `${s}s`;
+       if (s < 3600)
+         return `${Math.floor(s/60)}m ${s%60}s`;
+       return `${Math.floor(s/3600)}h `+
+         `${Math.floor((s%3600)/60)}m`;
+     };
     const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
 
     const formatDate = (dateStr: string) => {
