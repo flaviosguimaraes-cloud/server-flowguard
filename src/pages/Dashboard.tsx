@@ -206,6 +206,15 @@ export default function Dashboard() {
   const [timePeriod, setTimePeriod] = useState<'realtime' | '1h' | '6h' | '24h'>('realtime');
    const [showIfaceSelector, setShowIfaceSelector] = useState(false);
 
+  // 1. Forçar refetch quando timePeriod ou interfaces selecionadas mudam
+  useEffect(() => {
+    if (timePeriod !== 'realtime') {
+      queryClient.invalidateQueries({
+        queryKey: ['iface-history']
+      });
+    }
+  }, [timePeriod, selectedIfaces, queryClient]);
+
   const { data: metricsHistory, isLoading: metricsHistoryLoading } = useQuery({
     queryKey: ['iface-history', selectedCollector, timePeriod, selectedIfaces],
     queryFn: async () => {
@@ -224,7 +233,7 @@ export default function Dashboard() {
           console.log('Resultado:', ifName, r.data);
           return {
             ifName,
-            data: r.data?.history || r.data?.metrics || []
+            data: r.data?.history || []
           };
         })
       );
@@ -377,33 +386,33 @@ export default function Dashboard() {
         });
         return point;
       });
-    } else {
-      if (!metricsHistory || !Array.isArray(metricsHistory)) return [];
-      
-      const timeMap: Record<string, any> = {};
-      metricsHistory.forEach(({ ifName, data }) => {
-        const items = Array.isArray(data) ? data : (data?.items || []);
-        
-        // For 24h, take 1 every 5 points to not overload
-        const filteredItems = timePeriod === '24h' ? items.filter((_: any, i: number) => i % 5 === 0) : items;
-
-         filteredItems.forEach((m: any) => {
-           const date = new Date(String(m.time_bucket).replace(' ', 'T'));
-           if (isNaN(date.getTime())) return;
-           
-           const time = timePeriod === '24h' 
-            ? date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-            : date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
-          if (!timeMap[time]) timeMap[time] = { time, raw_time: date.getTime() };
-          
-          timeMap[time][`${ifName}_in`] = Math.round(m.in_bps / 1e6);
-          timeMap[time][`${ifName}_out`] = Math.round(m.out_bps / 1e6);
-        });
-      });
-      
-      return Object.values(timeMap).sort((a: any, b: any) => a.raw_time - b.raw_time);
     }
+
+    if (!metricsHistory?.length) return [];
+
+    // Coletar todos os timestamps únicos
+    const allTimes = new Set<string>();
+    metricsHistory.forEach(({data}) => {
+      data.forEach((p: any) => allTimes.add(p.time_bucket));
+    });
+
+    // Montar pontos do gráfico
+    return Array.from(allTimes)
+      .sort()
+      .map(time => {
+        const point: any = {
+          time: time, // Mantemos o time_bucket completo para o formatter
+          display_time: time.substring(11, 16)
+        };
+        metricsHistory.forEach(({ifName, data}) => {
+          const found = data.find((p: any) => p.time_bucket === time);
+          if (found) {
+            point[`${ifName}_in`] = Math.round(found.in_bps / 1e6);
+            point[`${ifName}_out`] = Math.round(found.out_bps / 1e6);
+          }
+        });
+        return point;
+      });
   }, [timePoints, selectedIfaces, history, timePeriod, metricsHistory]);
 
     const protoMap: Record<number, string> = {
@@ -497,6 +506,18 @@ export default function Dashboard() {
         pct: total > 0 ? ((p.bytes / total) * 100).toFixed(1) : "0"
       }));
     };
+
+  const formatTime = (timeStr: string) => {
+    if (!timeStr || timeStr.length < 16) return timeStr;
+    if (timePeriod === '24h') {
+      const d = new Date(timeStr.replace(' ', 'T'));
+      if (isNaN(d.getTime())) return timeStr.substring(11, 16);
+      return d.toLocaleDateString('pt-BR', {
+        day: '2-digit', month: '2-digit'
+      }) + ' ' + timeStr.substring(11, 16);
+    }
+    return timeStr.substring(11, 16);
+  };
 
     const portDataDst = processPortData(portsDst);
     const portDataSrc = processPortData(portsSrc);
@@ -873,97 +894,23 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* RX Chart */}
-          <div className="relative">
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 origin-left text-[9px] font-black text-text-secondary uppercase tracking-widest pointer-events-none opacity-40 ml-1">
-              RX (↓)
-            </div>
-            <ResponsiveContainer width="100%" height={150}>
-              <AreaChart data={chartData} margin={{top:10,right:10,left:35,bottom:0}}>
-                <defs>
-                  {selectedIfaces.map((name, idx) => {
-                    const color = RX_COLORS[idx % RX_COLORS.length];
-                    return (
-                      <linearGradient key={`rx_${name}`} id={`grad_rx_${idx}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={color} stopOpacity={isDark ? 0.5 : 0.3}/>
-                        <stop offset="95%" stopColor={color} stopOpacity={0}/>
-                      </linearGradient>
-                    );
-                  })}
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#334155" : "#E2E8F0"} vertical={false} opacity={isDark ? 0.3 : 0.6} />
-                <XAxis dataKey="time" hide />
-                <YAxis 
-                  tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
-                  tickLine={false} 
-                  axisLine={false} 
-                  tickFormatter={v => `${v}M`} 
-                />
-                <RechartsTooltip
-                  contentStyle={{ 
-                    background: isDark ? '#1E293B' : '#FFFFFF', 
-                    border: `1px solid ${isDark ? '#334155' : '#E2E8F0'}`, 
-                    borderRadius: '12px', 
-                    fontSize: '11px',
-                    boxShadow: isDark ? 'none' : '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                    padding: '8px 12px'
-                  }}
-                  itemStyle={{ fontWeight: 700 }}
-                  formatter={(v: number, name: string) => {
-                    const ifName = name.replace('_in', '').replace('_out', '');
-                    return [`${v} Mbps ↓ RX`, ifName];
-                  }}
-                />
-                {selectedIfaces.map((name, idx) => {
-                  const color = RX_COLORS[idx % RX_COLORS.length];
-                  return (
-                    <Area 
-                      key={`${name}_in`} 
-                      type="monotone" 
-                      dataKey={`${name}_in`} 
-                      stackId="rx" 
-                      stroke={color} 
-                      strokeWidth={2} 
-                      fill={`url(#grad_rx_${idx})`} 
-                      isAnimationActive={false}
-                    />
-                  );
-                })}
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* TX Chart */}
-          <div className="relative">
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 origin-left text-[9px] font-black text-text-secondary uppercase tracking-widest pointer-events-none opacity-40 ml-1">
-              TX (↑)
-            </div>
-            <ResponsiveContainer width="100%" height={150}>
-              <AreaChart data={chartData} margin={{top:0,right:10,left:35,bottom:10}}>
-                <defs>
-                  {selectedIfaces.map((name, idx) => {
-                    const color = TX_COLORS[idx % TX_COLORS.length];
-                    return (
-                      <linearGradient key={`tx_${name}`} id={`grad_tx_${idx}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={color} stopOpacity={isDark ? 0.5 : 0.3}/>
-                        <stop offset="95%" stopColor={color} stopOpacity={0}/>
-                      </linearGradient>
-                    );
-                  })}
-                </defs>
+          <div className="relative h-[300px] mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#334155" : "#E2E8F0"} vertical={false} opacity={isDark ? 0.3 : 0.6} />
                 <XAxis 
                   dataKey="time" 
                   tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
                   tickLine={false} 
-                  axisLine={false} 
-                  interval={4} 
+                  axisLine={false}
+                  tickFormatter={formatTime}
+                  minTickGap={30}
                 />
                 <YAxis 
                   tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
                   tickLine={false} 
                   axisLine={false} 
-                  tickFormatter={v => `${v}M`} 
+                  tickFormatter={v => v + ' M'} 
                 />
                 <RechartsTooltip
                   contentStyle={{ 
@@ -974,28 +921,35 @@ export default function Dashboard() {
                     boxShadow: isDark ? 'none' : '0 10px 15px -3px rgb(0 0 0 / 0.1)',
                     padding: '8px 12px'
                   }}
-                  itemStyle={{ fontWeight: 700 }}
-                  formatter={(v: number, name: string) => {
-                    const ifName = name.replace('_out', '');
-                    return [`${v} Mbps ↑ TX`, ifName];
-                  }}
+                  formatter={(v: any, name: string) => [
+                    v + ' Mbps',
+                    name.replace('_in', ' ↓').replace('_out', ' ↑')
+                  ]}
                 />
-                {selectedIfaces.map((name, idx) => {
-                  const color = TX_COLORS[idx % TX_COLORS.length];
-                  return (
-                    <Area 
-                      key={`${name}_out`} 
-                      type="monotone" 
-                      dataKey={`${name}_out`} 
-                      stackId="tx" 
-                      stroke={color} 
+                {selectedIfaces.map((name, idx) => (
+                  <Fragment key={name}>
+                    <Line 
+                      key={name+'_in'}
+                      type="monotone"
+                      dataKey={`${name}_in`}
+                      stroke={COLORS[idx % COLORS.length]}
+                      dot={false} 
                       strokeWidth={2} 
-                      fill={`url(#grad_tx_${idx})`} 
                       isAnimationActive={false}
                     />
-                  );
-                })}
-              </AreaChart>
+                    <Line 
+                      key={name+'_out'}
+                      type="monotone"
+                      dataKey={`${name}_out`}
+                      stroke={COLORS[idx % COLORS.length] + '80'}
+                      dot={false} 
+                      strokeWidth={1.5}
+                      strokeDasharray="4 2"
+                      isAnimationActive={false}
+                    />
+                  </Fragment>
+                ))}
+              </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
