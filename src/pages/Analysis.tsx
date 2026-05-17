@@ -571,31 +571,22 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                     const isSuspicious = item.bytes > 1e9;
   
                      return (
-                       <tr key={i} className="hover:bg-accent/5 transition-colors group">
-                          <td className="px-6 py-4 text-[10px] text-text-secondary font-mono whitespace-nowrap">
-                            {formatUTC(item.time_received)}
-                          </td>
-                         <td className="px-6 py-4 text-center">
-                           <TooltipProvider>
-                             <Tooltip>
-                               <TooltipTrigger asChild>
-                                 <div className={clsx(
-                                   "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border cursor-help",
-                                   direction === 'outgoing' 
-                                     ? "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800" 
-                                     : "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800"
-                                 )}>
-                                   {direction === 'outgoing' ? <><ArrowUp size={10} /> Upload</> : <><ArrowDown size={10} /> Download</>}
-                                 </div>
-                               </TooltipTrigger>
-                               <TooltipContent className="max-w-[200px] text-[10px]">
-                                 {direction === 'outgoing' 
-                                   ? "Saindo = upload / ataque gerado pelo seu cliente" 
-                                   : "Entrando = download / ataque recebido pelo seu cliente"}
-                               </TooltipContent>
-                             </Tooltip>
-                           </TooltipProvider>
-                         </td>
+                        <Tooltip key={i} delayDuration={300}>
+                          <TooltipTrigger asChild>
+                            <tr className="hover:bg-accent/5 transition-colors group cursor-default">
+                               <td className="px-6 py-4 text-[10px] text-text-secondary font-mono whitespace-nowrap">
+                                 {formatUTC(item.time_received)}
+                               </td>
+                              <td className="px-6 py-4 text-center">
+                                <div className={clsx(
+                                  "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border",
+                                  direction === 'outgoing' 
+                                    ? "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800" 
+                                    : "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800"
+                                )}>
+                                  {direction === 'outgoing' ? <><ArrowUp size={10} /> Upload</> : <><ArrowDown size={10} /> Download</>}
+                                </div>
+                              </td>
                          <td className="px-6 py-4">
                            <div className="flex items-center gap-2">
                              <span className={clsx("w-2 h-2 rounded-full", isSuspicious ? "bg-danger animate-pulse" : "bg-success")} />
