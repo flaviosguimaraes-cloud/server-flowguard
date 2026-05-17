@@ -530,12 +530,16 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                    <th className="px-6 py-4 border-b border-border text-center">Direção</th>
                    <th className="px-6 py-4 border-b border-border">IP Origem</th>
                    <th className="px-6 py-4 border-b border-border">IP Destino</th>
-                   <th className="px-6 py-4 border-b border-border">Serviço</th>
-                   <th className="px-6 py-4 border-b border-border">Empresa</th>
-                   <th className="px-6 py-4 border-b border-border">Proto</th>
-                   <SortHeader field="bytes" label="Bytes" align="right" />
-                   <SortHeader field="packets" label="PPS" align="right" />
-                   {isAdmin && <th className="px-6 py-4 border-b border-border text-center">Ação</th>}
+                    <th className="px-6 py-4 border-b border-border">Serviço</th>
+                    <th className="px-6 py-4 border-b border-border text-center">Protocolo</th>
+                    <th className="px-6 py-4 border-b border-border text-center">TCP Flags</th>
+                    <th className="px-6 py-4 border-b border-border">Interface ↓/↑</th>
+                    <th className="px-6 py-4 border-b border-border">Empresa</th>
+                    <SortHeader field="bytes" label="Bytes" align="right" />
+                    <SortHeader field="packets" label="PPS" align="right" />
+                    <th className="px-6 py-4 border-b border-border text-right">BPP</th>
+                    <th className="px-6 py-4 border-b border-border text-right">Duração</th>
+                    {isAdmin && <th className="px-6 py-4 border-b border-border text-center">Ação</th>}
                  </tr>
                </thead>
               <tbody className="text-sm divide-y divide-border/50">
