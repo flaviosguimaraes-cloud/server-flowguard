@@ -22,6 +22,16 @@ const REFETCH_INTERVAL = 30000;
 const RX_COLORS = ['#3b82f6', '#1d4ed8', '#60a5fa', '#93c5fd', '#bfdbfe'];
 const TX_COLORS = ['#22c55e', '#16a34a', '#4ade80', '#86efac', '#bbf7d0'];
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
+const MAX_POINTS = 200;
+
+const sampleData = (data: any[]) => {
+  if (data.length <= MAX_POINTS)
+    return data;
+  const step = Math.ceil(
+    data.length / MAX_POINTS);
+  return data.filter(
+    (_, i) => i % step === 0);
+};
 
 function StatCard({ title, value, unit, icon, trend, tooltip, subtitle }: any) {
   return (
@@ -373,22 +383,23 @@ export default function Dashboard() {
        return map;
      }, [interfaces]);
  
-  const chartData = useMemo(() => {
-    if (timePeriod === 'realtime') {
-      return timePoints.map((time, idx) => {
-        const point: Record<string, any> = { time };
-        selectedIfaces.forEach(name => {
-          const h = history[name];
-          if (h && h[idx]) {
-            point[`${name}_in`] = Math.round(h[idx].in_bps / 1e6);
-            point[`${name}_out`] = Math.round(h[idx].out_bps / 1e6);
-          }
-        });
-        return point;
+  const realtimeChartData = useMemo(() => {
+    if (timePeriod !== 'realtime') return [];
+    return timePoints.map((time, idx) => {
+      const point: Record<string, any> = { time };
+      selectedIfaces.forEach(name => {
+        const h = history[name];
+        if (h && h[idx]) {
+          point[`${name}_in`] = Math.round(h[idx].in_bps / 1e6);
+          point[`${name}_out`] = Math.round(h[idx].out_bps / 1e6);
+        }
       });
-    }
+      return point;
+    });
+  }, [timePoints, selectedIfaces, history, timePeriod]);
 
-    if (!metricsHistory?.length) return [];
+  const historicalChartData = useMemo(() => {
+    if (timePeriod === 'realtime' || !metricsHistory?.length) return [];
 
     // Coletar todos os timestamps únicos
     const allTimes = new Set<string>();
@@ -397,11 +408,11 @@ export default function Dashboard() {
     });
 
     // Montar pontos do gráfico
-    return Array.from(allTimes)
+    const fullData = Array.from(allTimes)
       .sort()
       .map(time => {
         const point: any = {
-          time: time, // Mantemos o time_bucket completo para o formatter
+          time: time,
           display_time: time.substring(11, 16)
         };
         metricsHistory.forEach(({ifName, data}) => {
@@ -413,7 +424,11 @@ export default function Dashboard() {
         });
         return point;
       });
-  }, [timePoints, selectedIfaces, history, timePeriod, metricsHistory]);
+
+    return sampleData(fullData);
+  }, [metricsHistory, timePeriod]);
+
+  const chartData = timePeriod === 'realtime' ? realtimeChartData : historicalChartData;
 
     const protoMap: Record<number, string> = {
      6: 'TCP', 17: 'UDP', 1: 'ICMP',
