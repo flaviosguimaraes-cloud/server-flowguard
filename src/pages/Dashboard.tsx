@@ -90,9 +90,6 @@ export default function Dashboard() {
       queryClient.invalidateQueries({ queryKey: ['connections'] });
       queryClient.invalidateQueries({ queryKey: ['detection-stats'] });
       queryClient.invalidateQueries({ queryKey: ['timeline'] });
-      queryClient.invalidateQueries({ queryKey: ['protocols'] });
-      queryClient.invalidateQueries({ queryKey: ['countries'] });
-      queryClient.invalidateQueries({ queryKey: ['ports'] });
       queryClient.invalidateQueries({ queryKey: ['interfaces'] });
     }, 30000);
 
@@ -127,7 +124,13 @@ export default function Dashboard() {
 
   const { data: eventsHistory } = useQuery({
     queryKey: ['events-history-compact'],
-    queryFn: () => api.get('/api/events/history?limit=5').then(r => r.data),
+    queryFn: () => api.get('/api/events/history?limit=8').then(r => r.data),
+    refetchInterval: 30000,
+  });
+
+  const { data: sysStatus } = useQuery({
+    queryKey: ['system-status'],
+    queryFn: () => api.get('/api/system/status').then(r => r.data).catch(() => null),
     refetchInterval: 30000,
   });
 
@@ -142,39 +145,6 @@ export default function Dashboard() {
     refetchOnWindowFocus: true,
   });
 
-  const { data: protocols } = useQuery({
-    queryKey: ['protocols'],
-    queryFn: async () => {
-      const r = await api.get('/api/flows/protocols?minutes=30');
-      return r.data;
-    },
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnWindowFocus: true,
-  });
-
-  const { data: countries } = useQuery({
-    queryKey: ['countries'],
-    queryFn: async () => {
-      const r = await api.get('/api/flows/countries?minutes=30');
-      return r.data;
-    },
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnWindowFocus: true,
-  });
-
-  const { data: portsDst } = useQuery({
-    queryKey: ['ports-consumed'],
-    queryFn: () => api.get('/api/flows/ports?minutes=30&direction=src').then(r => r.data),
-    refetchInterval: 30000,
-  });
-
-  const { data: portsSrc } = useQuery({
-    queryKey: ['ports-served'],
-    queryFn: () => api.get('/api/flows/ports?minutes=30&direction=dst').then(r => r.data),
-    refetchInterval: 30000,
-  });
 
   const [selectedCollector, setSelectedCollector] = useState<number>(() => {
     const saved = localStorage.getItem('fg_collector');
@@ -430,97 +400,7 @@ export default function Dashboard() {
 
   const chartData = timePeriod === 'realtime' ? realtimeChartData : historicalChartData;
 
-    const protoMap: Record<number, string> = {
-     6: 'TCP', 17: 'UDP', 1: 'ICMP',
-     47: 'GRE', 50: 'ESP', 89: 'OSPF'
-   };
 
-    const protoItems = protocols?.items || protocols?.data || (Array.isArray(protocols) ? protocols : []);
-    const totalBytes = protoItems.reduce((a: number, b: any) => a + b.bytes, 0);
-
-    const protoData = protoItems
-      .slice(0, 5)
-      .map((p: any) => ({
-        name: protoMap[p.proto] || 'Proto ' + p.proto,
-        bytes: p.bytes,
-        flows: p.flows,
-        pct: totalBytes > 0 ? ((p.bytes / totalBytes) * 100).toFixed(1) : 0
-      }));
-
-    const countryItems = countries?.items || countries?.data || (Array.isArray(countries) ? countries : []);
-    const totalCountryBytes = countryItems.reduce((a: number, b: any) => a + b.bytes, 0);
-
-    const countryData = countryItems
-      .slice(0, 8)
-      .map((c: any) => ({
-        code: c.country,
-        bytes: c.bytes,
-        pct: totalCountryBytes > 0 ? ((c.bytes / totalCountryBytes) * 100).toFixed(1) : 0
-      }));
-
-    const isLocalIP = (ip: string) => ip?.startsWith('45.175.50.');
-
-    const shouldFlip = (item: any) => !isLocalIP(item.src_addr) && isLocalIP(item.dst_addr);
-
-    const getService = (port: number) => {
-      const s: Record<number, string> = {
-        80: 'HTTP', 443: 'HTTPS', 53: 'DNS',
-        22: 'SSH', 25: 'SMTP', 110: 'POP3',
-        143: 'IMAP', 3389: 'RDP',
-        8080: 'HTTP-Alt', 123: 'NTP',
-        179: 'BGP', 161: 'SNMP',
-        3306: 'MySQL', 5432: 'PostgreSQL',
-        27000: 'Steam', 1194: 'VPN',
-        500: 'IPSec', 1723: 'PPTP',
-        8443: 'HTTPS-Alt', 465: 'SMTP-SSL',
-        993: 'IMAP-SSL', 995: 'POP3-SSL',
-        21: 'FTP', 23: 'Telnet',
-        3478: 'STUN', 5060: 'SIP',
-        19132: 'Minecraft', 25565: 'Minecraft',
-        6881: 'BitTorrent', 1935: 'RTMP',
-        554: 'RTSP', 8888: 'HTTP-Alt2',
-      };
-      return s[port]
-        ? `${s[port]} (${port})`
-        : String(port);
-    };
-
-    const getOrg = (org: string) => {
-      if (!org) return '—';
-      return org.length > 35 ? org.substring(0, 35) + '...' : org;
-    };
-
-    const calcPPS = (packets: number) => {
-      if (!packets || packets === 0) return '—';
-      const pps = Math.round(packets / 1800);
-      return pps > 1000 ? (pps / 1000).toFixed(1) + 'k' : String(pps);
-    };
-
-    const fmtBytes = (b: number) => {
-      if (!b) return '—';
-      if (b > 1e12) return (b / 1e12).toFixed(1) + ' TB';
-      if (b > 1e9) return (b / 1e9).toFixed(1) + ' GB';
-      if (b > 1e6) return (b / 1e6).toFixed(0) + ' MB';
-      if (b > 1e3) return (b / 1e3).toFixed(0) + ' KB';
-      return b + ' B';
-    };
-
-    const portMap: Record<number, string> = {
-     443: 'HTTPS', 80: 'HTTP', 53: 'DNS', 22: 'SSH', 25: 'SMTP', 110: 'POP3',
-     143: 'IMAP', 3389: 'RDP', 8080: 'HTTP-Alt', 123: 'NTP', 161: 'SNMP', 179: 'BGP',
-     1194: 'VPN', 3306: 'MySQL', 5432: 'PG'
-   };
-
-    const processPortData = (data: any) => {
-      const items = data?.items || data?.data || (Array.isArray(data) ? data : []);
-      const total = items.reduce((a: number, b: any) => a + (b.bytes || 0), 0);
-      return items.slice(0, 6).map((p: any) => ({
-        port: p.port,
-        name: getService(p.port),
-        bytes: p.bytes,
-        pct: total > 0 ? ((p.bytes / total) * 100).toFixed(1) : "0"
-      }));
-    };
 
    const formatTime = (timeStr: string) => {
      if (!timeStr || timeStr.length < 16) return timeStr;
@@ -609,37 +489,6 @@ export default function Dashboard() {
    }, [timePeriod, metricsHistory, history, selectedIfaces]);
 
 
-    const portDataDst = processPortData(portsDst);
-    const portDataSrc = processPortData(portsSrc);
-
-    const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
-
-    const ifaceColors = ['#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
-  const snmpTotals = useMemo(() => {
-    const list = Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [];
-    let rx = 0;
-    let tx = 0;
-    list.forEach((i: any) => {
-      const name = (i.display_name || i.if_name || '').toLowerCase();
-      if (!name || name.includes('null') || name.includes('loopback') || name.includes('virtual')) return;
-      rx += (i.in_bps || 0);
-      tx += (i.out_bps || 0);
-    });
-    return {
-      rx: rx / 1e9,
-      tx: tx / 1e9
-    };
-  }, [interfaces]);
-
-  const relevantInterfaces = (Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
-    .filter((i: any) => (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0)
-    .filter((i: any) => {
-      const name = (i.display_name || i.if_name || '').toLowerCase();
-      return !name.includes('null') && !name.includes('loopback') && !name.includes('virtual') &&
-        !name.includes('template') && !name.includes('inloop');
-    })
-    .sort((a: any, b: any) => ((b.in_bps || 0) + (b.out_bps || 0)) - ((a.in_bps || 0) + (a.out_bps || 0)))
-    .slice(0, 6);
 
    const formatDate = (dateStr: string) => {
      if (!dateStr) return '—';
@@ -689,176 +538,67 @@ export default function Dashboard() {
            50% { opacity: 0.3; }
          }
        `}</style>
-        {/* Top Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+        {/* Top Stats Redesign */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <StatCard 
-            title="FLOW IPv4 ↓" 
-            value={(detection?.incoming_mbps / 1000).toFixed(1)} 
-            unit="Gbps" 
-            icon={<ArrowDown className="text-accent" size={20} />} 
-            subtitle="Estimado via Flow · sampling 1:1000"
-          />
-          <StatCard 
-            title="FLOW IPv4 ↑" 
-            value={(detection?.outgoing_mbps / 1000).toFixed(1)} 
-            unit="Gbps" 
-            icon={<ArrowUp className="text-success" size={20} />} 
-            subtitle="Estimado via Flow · sampling 1:1000"
-          />
-          <StatCard 
-            title="SNMP ↓ Total" 
-            value={snmpTotals.rx.toFixed(1)} 
-            unit="Gbps" 
+            title="FLOW IPv4 ↓ DOWNLOAD" 
+            value={detection?.incoming_mbps >= 1000 ? (detection.incoming_mbps / 1000).toFixed(1) : (detection?.incoming_mbps || 0).toFixed(0)} 
+            unit={detection?.incoming_mbps >= 1000 ? "Gbps" : "Mbps"} 
             icon={<ArrowDown className="text-blue-500" size={20} />} 
-            subtitle="Tráfego real · todas interfaces"
           />
           <StatCard 
-            title="SNMP ↑ Total" 
-            value={snmpTotals.tx.toFixed(1)} 
-            unit="Gbps" 
+            title="FLOW IPv4 ↑ UPLOAD" 
+            value={detection?.outgoing_mbps >= 1000 ? (detection.outgoing_mbps / 1000).toFixed(1) : (detection?.outgoing_mbps || 0).toFixed(0)} 
+            unit={detection?.outgoing_mbps >= 1000 ? "Gbps" : "Mbps"} 
             icon={<ArrowUp className="text-green-500" size={20} />} 
-            subtitle="Tráfego real · todas interfaces"
           />
           <StatCard 
-            title={t('active_flows')} 
+            title="FLOWS ATIVOS" 
             value={detection?.incoming_pps > 1000 ? (detection.incoming_pps / 1000).toFixed(1) + 'k' : detection?.incoming_pps || '0'} 
             icon={<Activity className="text-warning" size={20} />} 
           />
-           <StatCard 
-             title={t('active_mitigations')} 
-             value={detection?.active_mitigations || '0'} 
-             icon={<Shield className="text-danger" size={20} />} 
-             subtitle={activeMitigations?.items?.length > 0 && (
-               <div className="flex flex-wrap gap-1 mt-1">
-                 {activeMitigations.items.slice(0, 2).map((m: any) => (
-                    <div key={m.ip} className="relative">
-                      <MitigationTooltip data={m}>
-                        <span className="text-[9px] font-mono font-bold text-danger border border-danger/20 px-1 rounded bg-danger/5 cursor-help hover:bg-danger/10 transition-colors">
-                          {m.ip}
-                        </span>
-                      </MitigationTooltip>
+          
+          {/* Coletores Card with Tooltip */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="cursor-help">
+                <StatCard 
+                  title="COLETORES" 
+                  value={(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || []))
+                    .filter((c: any) => c.status === 'active' || c.status === 'Ativo').length} 
+                  icon={<Zap className="text-primary" size={20} />} 
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="w-64 p-3">
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-text-secondary mb-2 border-b border-border/50 pb-1">Status dos Coletores</p>
+                {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).map((c: any) => (
+                  <div key={c.id} className="flex justify-between items-center text-[11px]">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-text-primary">{c.name}</span>
+                      <span className="text-[9px] text-text-secondary">{c.host} · {c.snmp_version || 'v2c'}</span>
                     </div>
-                 ))}
-                 {activeMitigations.items.length > 2 && <span className="text-[9px] text-text-secondary">+{activeMitigations.items.length - 2}</span>}
-               </div>
-             )}
-           />
-        </div>
-
-        {/* MELHORIA 3 — Dashboard card de anomalias */}
-        <div className="bg-white dark:bg-bg-secondary p-5 rounded-xl border border-border shadow-sm">
-          <div className="flex items-center justify-between mb-4 border-b border-border/50 pb-3">
-            <div className="flex items-center gap-2">
-              <History className="text-warning" size={18} />
-              <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Últimos Eventos de Mitigação</h2>
-            </div>
-            <Link to="/events" className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1">
-              Ver histórico completo <ArrowRight size={12} />
-            </Link>
-          </div>
-          <div className="space-y-0">
-            {eventsHistory?.items?.map((item: any, i: number) => (
-              <div key={i} style={{
-                padding: '10px 0',
-                borderBottom: '1px solid rgba(136, 146, 164, 0.1)'
-              }}>
-                <div style={{
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  marginBottom: 4
-                }}>
-                  <span style={{
-                    fontFamily: 'monospace',
-                    fontSize: 13,
-                    color: isDark ? '#e2e8f0' : '#1e293b',
-                    fontWeight: 700
-                  }}>
-                    {item.ip}
-                  </span>
-                  <div style={{display:'flex', gap:6}}>
-                    {/* Status */}
-                    <span style={{
-                      fontSize: 10,
-                      padding: '2px 6px',
-                      borderRadius: 4,
-                      background: item.status === 'active'
-                        ? (isDark ? '#3b1212' : '#fee2e2') : (isDark ? '#1a1a2e' : '#f1f5f9'),
-                      color: item.status === 'active'
-                        ? '#ef4444' : '#8892a4',
-                      fontWeight: 600
-                    }}>
-                      {item.status === 'active'
-                        ? '● ATIVO' : 'RESOLVIDO'}
-                    </span>
-                    {/* Origem */}
-                    <span style={{
-                      fontSize: 10,
-                      padding: '2px 6px',
-                      borderRadius: 4,
-                      background: isDark ? '#1e2130' : '#f8fafc',
-                      color: '#8892a4',
-                      border: isDark ? 'none' : '1px solid #e2e8f0'
-                    }}>
-                      {item.triggered_by === 'detector'
-                        ? 'AUTO' : 'MANUAL'}
+                    <span className={clsx(
+                      "px-1.5 py-0.5 rounded text-[9px] font-bold",
+                      (c.status === 'active' || c.status === 'Ativo') ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
+                    )}>
+                      {(c.status === 'active' || c.status === 'Ativo') ? 'Ativo' : 'Inativo'}
                     </span>
                   </div>
-                </div>
-
-                <div style={{
-                  fontSize: 11,
-                  color: '#8892a4',
-                  display: 'flex',
-                  gap: 12,
-                  flexWrap: 'wrap',
-                  fontWeight: 500
-                }}>
-                  {/* Direção */}
-                  {item.direction ? (
-                    <span style={{
-                      color: item.direction === 'outgoing'
-                        ? '#22c55e' : '#3b82f6'
-                    }}>
-                      {item.direction === 'outgoing'
-                        ? '↑ Saída' : '↓ Entrada'}
-                    </span>
-                  ) : (
-                    <span style={{ color: '#8892a4' }}>—</span>
-                  )}
-
-                  {/* Volume */}
-                  {item.peak_pps > 0 && (
-                    <span style={{color:'#f59e0b'}}>
-                      {item.peak_pps > 1000
-                        ? (item.peak_pps/1000).toFixed(1)
-                          + 'k pps'
-                        : item.peak_pps + ' pps'}
-                      {item.peak_mbps > 0
-                        ? ' · ' + item.peak_mbps + ' Mbps'
-                        : ''}
-                    </span>
-                  )}
-
-                  {/* Horário início */}
-                  <span>
-                    Início: {formatDate(item.started_at || item.start_time)}
-                  </span>
-
-                  {/* Horário fim se resolvido */}
-                  {(item.ended_at || item.end_time) && (
-                    <span>
-                      Fim: {formatDate(item.ended_at || item.end_time)}
-                    </span>
-                  )}
-                </div>
+                ))}
               </div>
-            ))}
-            {(!eventsHistory?.items || eventsHistory.items.length === 0) && (
-              <div className="text-center py-4 text-xs text-text-secondary italic">Nenhum evento recente</div>
-            )}
-          </div>
+            </TooltipContent>
+          </Tooltip>
+
+          <StatCard 
+            title="MITIGAÇÕES ATIVAS" 
+            value={detection?.active_mitigations || '0'} 
+            icon={<Shield className={clsx(Number(detection?.active_mitigations) > 0 ? "text-danger" : "text-text-secondary opacity-40")} size={20} />} 
+            trend={Number(detection?.active_mitigations) > 0 ? "ATIVO" : undefined}
+          />
         </div>
+
 
       {/* Main Chart: Tráfego da Interface - Refined Light Theme Visuals */}
       <div className="bg-white dark:bg-bg-secondary p-6 rounded-2xl border border-border shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none transition-all">
@@ -945,52 +685,16 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Collector Info & Metrics Summary */}
-        <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
-          <div className="flex items-center gap-2 text-xs text-text-secondary opacity-80">
-            <Info size={14} />
-            <span className="font-medium">
-              {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).find((c: any) => c.id === selectedCollector)?.name || 'NE-20'} 
-              <span className="mx-2 opacity-30">|</span>
-              {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).find((c: any) => c.id === selectedCollector)?.host || '45.175.50.209'} 
-              <span className="mx-2 opacity-30">|</span>
-              v2c
-            </span>
-          </div>
-
-           <div className="flex flex-col gap-2 bg-bg-primary/30 p-4 rounded-xl border border-border/40">
-             <div className="text-[10px] text-text-secondary font-bold uppercase tracking-wider mb-1 opacity-60">
-               Estatísticas · {periodStats.label}
-             </div>
-             {(['rx', 'tx'] as const).map(dir => (
-               <div key={dir} className="flex items-center gap-4 py-1 border-t border-border/20 first:border-t-0">
-                 <span className={clsx(
-                   "text-xs font-black w-6 text-center",
-                   dir === 'rx' ? "text-accent" : "text-success"
-                 )}>
-                   {dir === 'rx' ? '↓' : '↑'}
-                 </span>
-
-                 {(['last', 'min', 'avg', 'max'] as const).map(metric => (
-                   <div key={metric} className="flex flex-col items-center min-w-[70px]">
-                     <span className="text-[9px] uppercase font-bold text-text-secondary opacity-50 mb-0.5">
-                       {metric === 'last' ? 'Último' : metric === 'min' ? 'Mínimo' : metric === 'avg' ? 'Média' : 'Máximo'}
-                     </span>
-                     <span className={clsx(
-                       "text-[13px] font-bold tracking-tight",
-                       metric === 'max' ? (dir === 'rx' ? "text-accent" : "text-success") : "text-text-primary"
-                     )}>
-                       {formatBpsRaw(periodStats[dir][metric])}
-                     </span>
-                   </div>
-                 ))}
-               </div>
-             ))}
-           </div>
-            <div className="flex flex-col items-end px-3 py-1.5 bg-bg-primary/50 rounded-lg border border-border/30">
-              <span className="text-[9px] uppercase font-black text-text-secondary opacity-60 leading-none mb-1">Interfaces</span>
-              <span className="text-xs font-black text-text-primary">{selectedIfaces.length}<span className="text-[10px] opacity-40 mx-0.5">/</span>{(Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : []).length}</span>
-         </div>
+        {/* Collector Info */}
+        <div className="flex items-center gap-2 text-xs text-text-secondary opacity-80 mb-5">
+          <Info size={14} />
+          <span className="font-medium">
+            {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).find((c: any) => c.id === selectedCollector)?.name || 'NE-20'} 
+            <span className="mx-2 opacity-30">|</span>
+            {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).find((c: any) => c.id === selectedCollector)?.host || '45.175.50.209'} 
+            <span className="mx-2 opacity-30">|</span>
+            v2c
+          </span>
         </div>
 
          <div className="space-y-2 bg-[#F8FAFC] dark:bg-[#0f172a]/40 p-4 rounded-xl border border-border/50 relative min-h-[350px] flex items-center justify-center">
@@ -1083,349 +787,162 @@ export default function Dashboard() {
           )}
         </div>
 
-         <div className="mt-4 border-t border-border/40 pt-4">
-            <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest opacity-60">
-              Clique no botão "Interfaces" acima para selecionar as interfaces exibidas no gráfico.
-            </p>
-         </div>
+          {/* Zabbix style stats */}
+          <div className="mt-6 border-t border-border/40 pt-4 px-2">
+            <div className="text-[10px] text-text-secondary font-bold uppercase tracking-widest mb-3 opacity-60 flex items-center gap-2">
+              <Activity size={12} />
+              Estatísticas · {periodStats.label}
+            </div>
+            <div className="space-y-3">
+              {(['rx', 'tx'] as const).map(dir => (
+                <div key={dir} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-8">
+                  <div className="flex items-center gap-2 min-w-[60px]">
+                    <span className={clsx(
+                      "text-xs font-black",
+                      dir === 'rx' ? "text-blue-500" : "text-green-500"
+                    )}>
+                      {dir === 'rx' ? '↓ RX' : '↑ TX'}
+                    </span>
+                  </div>
+                  
+                  <div className="grid grid-cols-4 gap-4 sm:gap-12 flex-1">
+                    {(['last', 'min', 'avg', 'max'] as const).map(metric => (
+                      <div key={metric} className="flex flex-col">
+                        <span className="text-[9px] uppercase font-bold text-text-secondary opacity-40 leading-none mb-1">
+                          {metric === 'last' ? 'Último' : metric === 'min' ? 'Mínimo' : metric === 'avg' ? 'Média' : 'Máximo'}
+                        </span>
+                        <span className={clsx(
+                          "text-[13px] font-bold tracking-tight leading-none",
+                          metric === 'max' ? (dir === 'rx' ? "text-blue-500" : "text-green-500") : "text-text-primary"
+                        )}>
+                          {formatBpsRaw(periodStats[dir][metric])}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
       </div>
 
-       {/* Secondary Grids */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-         {/* Top Protocols */}
-         <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm">
-            <h2 className="text-base font-bold mb-5 text-text-primary">{t('protocols')}</h2>
-            <div className="space-y-1.5">
-              {protoData.map((p: any, i: number) => (
-                <div key={i} className={clsx(
-                  "flex items-center gap-3 py-1.5",
-                  i < protoData.length - 1 && "border-b border-border/40"
-                )}>
-                  <span className="min-w-[40px] text-xs font-semibold text-text-primary">{p.name}</span>
-                  <div className="flex-1 h-1.5 bg-bg-primary rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-primary rounded-full transition-all duration-700"
-                      style={{ width: p.pct + '%' }}
-                    />
-                  </div>
-                  <span className="text-[11px] text-text-secondary font-bold min-w-[35px] text-right">{p.pct}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
- 
-          {/* Top Countries */}
-         <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm">
-            <h2 className="text-base font-bold mb-5 text-text-primary">{t('countries')}</h2>
-            <div className="space-y-1">
-              {countryData.map((c: any, i: number) => (
-                <div key={i} className={clsx(
-                  "flex items-center gap-2 py-1.5",
-                   i < countryData.length - 1 && "border-b border-border/40"
-                 )}>
-                   <Flag code={c.code} size={16} />
-                   <span className="text-xs text-text-primary min-w-[28px] font-semibold ml-1">{c.code}</span>
-                  <div className="flex-1 h-1.5 bg-bg-primary rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-primary rounded-full transition-all duration-700"
-                      style={{ width: c.pct + '%' }}
-                    />
-                  </div>
-                  <span className="text-[11px] text-text-secondary font-bold min-w-[35px] text-right">{c.pct}%</span>
-                </div>
-              ))}
-            </div>
-          </div>
-       </div>
 
-       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          {/* Port Panels */}
-          <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm space-y-6">
-            {/* PAINEL 1 — Portas mais consumidas */}
-            <div className="space-y-3">
-              <div>
-                <h2 className="text-base font-bold text-text-primary">Portas mais consumidas</h2>
-                <p className="text-[10px] text-text-secondary font-medium uppercase tracking-wider opacity-60 mt-0.5">Destino Internet</p>
-              </div>
-              <div className="space-y-2.5">
-                {portDataDst.map((p: any, i: number) => (
-                  <div key={i} className="space-y-1">
-                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-tight">
-                      <span className="text-text-primary">{p.name}</span>
-                      <span className="text-text-secondary opacity-70">{fmtBytes(p.bytes)}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 h-1.5 bg-bg-primary rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-primary rounded-full transition-all duration-700"
-                          style={{ width: `${p.pct}%` }}
-                        />
-                      </div>
-                      <span className="text-[10px] font-bold text-text-primary min-w-[30px] text-right">{p.pct}%</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
- 
-            <div className="border-t border-border/40 pt-6" />
- 
-            {/* PAINEL 2 — Serviços mais servidos */}
-            <div className="space-y-3">
-              <div>
-                <h2 className="text-base font-bold text-text-primary">Serviços mais servidos</h2>
-                <p className="text-[10px] text-text-secondary font-medium uppercase tracking-wider opacity-60 mt-0.5">Origem Rede</p>
-              </div>
-              <div className="space-y-2.5">
-                {portDataSrc.map((p: any, i: number) => (
-                  <div key={i} className="space-y-1">
-                    <div className="flex justify-between text-[10px] font-bold uppercase tracking-tight">
-                      <span className="text-text-primary">{p.name}</span>
-                      <span className="text-text-secondary opacity-70">{fmtBytes(p.bytes)}</span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <div className="flex-1 h-1.5 bg-bg-primary rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-success rounded-full transition-all duration-700"
-                          style={{ width: `${p.pct}%` }}
-                        />
-                      </div>
-                      <span className="text-[10px] font-bold text-text-primary min-w-[30px] text-right">{p.pct}%</span>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
- 
-          {/* SNMP Interfaces */}
-         <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm">
-            <h2 className="text-base font-bold mb-5 text-text-primary">{t('top_interfaces')}</h2>
-            <div className="space-y-4">
-             {relevantInterfaces.map((i: any) => {
-               const utilPct = i.if_speed > 0
-                 ? Math.min((i.in_bps / i.if_speed) * 100, 100)
-                 : 0;
-               return (
-                 <div key={i.if_index || i.display_name} className="space-y-1.5">
-                   <div className="flex justify-between items-end">
-                     <div>
-                       <p className="text-[10px] font-bold text-primary uppercase tracking-wider">{i.display_name || i.if_name}</p>
-                       <p className="text-base font-bold text-text-primary leading-tight">{fmtBps(i.in_bps)}</p>
-                     </div>
-                      <div className="text-right">
-                        <p className="text-[9px] text-text-secondary font-bold uppercase tracking-widest opacity-60">Utilization</p>
-                        <p className="text-xs font-bold text-success">{utilPct.toFixed(1)}%</p>
-                      </div>
-                   </div>
-                   <div className="w-full bg-bg-primary rounded-full h-1.5 overflow-hidden flex border border-border/10">
-                     <div
-                       className="bg-primary h-full transition-all duration-1000"
-                       style={{ width: `${utilPct}%` }}
-                     />
-                   </div>
-                 </div>
-               );
-             })}
-            </div>
-          </div>
-        </div>
 
-          {/* Active Connections Table */}
-        <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-border flex flex-wrap justify-between items-center bg-bg-primary/30 gap-4">
-           <div className="flex flex-col gap-0.5">
-             <h2 className="text-base font-bold text-text-primary">Top Fluxos IPv4 (2 min)</h2>
-             <span className="text-[10px] text-text-secondary font-bold uppercase tracking-wider opacity-60">
-               {(() => {
-                 const list = (Array.isArray(connections) ? connections : (connections?.items || connections?.data || []))
-                   ?.filter((item: any) => {
-                     if (!serviceFilter) return true;
-                     const flipped = shouldFlip(item);
-                     const dstPort = flipped ? item.src_port : item.dst_port;
-                     const service = getService(dstPort).split(' ')[0];
-                     if (serviceFilter === 'UDP') return item.proto === 17;
-                     if (serviceFilter === 'TCP') return item.proto === 6;
-                     return service === serviceFilter;
-                   }) || [];
-                  return `${list.length} conexões · Top conexões por volume · últimos 2 min · atualizado a cada 30s`;
-               })()}
-             </span>
-           </div>
-            <div className="flex items-center gap-4">
-               <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest bg-bg-primary px-2 py-1 rounded border border-border">
-                 Próxima atualização: {countdown}s
-               </span>
-              <button className="text-text-secondary hover:text-text-primary transition-colors">
-                <MoreVertical size={18} />
-              </button>
-           </div>
-        </div>
+        {/* Seção 3 — Eventos + Saúde */}
+        <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
+          {/* PAINEL ESQUERDO (60%) - Últimos Eventos */}
+          <div className="lg:col-span-6 bg-white dark:bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm flex flex-col">
+            <div className="flex items-center justify-between mb-5 border-b border-border/50 pb-3">
+              <div className="flex items-center gap-2">
+                <History className="text-primary" size={18} />
+                <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Últimos Eventos de Mitigação</h2>
+              </div>
+              <Link to="/events" className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1">
+                Ver completo <ArrowRight size={12} />
+              </Link>
+            </div>
+            
+            <div className="space-y-1 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
+              {eventsHistory?.items?.map((item: any, i: number) => (
+                <div key={i} className="flex items-center justify-between py-2 border-b border-border/20 last:border-0 hover:bg-bg-primary/10 transition-colors px-2 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <span className={clsx(
+                      "flex-shrink-0 w-2 h-2 rounded-full",
+                      item.status === 'active' ? "bg-danger animate-pulse" : "bg-success"
+                    )} />
+                    
+                    <div className="flex items-center gap-2 min-w-[120px]">
+                      <span className="text-xs font-bold text-text-primary font-mono">{item.ip}</span>
+                    </div>
 
-        {/* Filtros rápidos */}
-        <div className="flex flex-wrap gap-2 px-5 py-2.5 border-b border-border bg-bg-primary/10">
-          {['Todos', 'HTTP', 'HTTPS', 'DNS', 'Steam', 'UDP', 'TCP'].map(label => {
-            const value = label === 'Todos' ? null : label;
-            const isActive = serviceFilter === value;
-            return (
-              <button
-                key={label}
-                onClick={() => setServiceFilter(value)}
-                className={clsx(
-                  "px-2.5 py-1 rounded-md text-[10px] font-bold transition-all uppercase tracking-wider",
-                  isActive 
-                    ? "bg-primary text-white shadow-sm" 
-                    : "text-text-secondary hover:text-text-primary hover:bg-bg-primary"
-                )}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[800px]">
-            <thead>
-              <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-                <th className="px-6 py-3 border-b border-border">{t('source_ip')}</th>
-                <th className="px-6 py-3 border-b border-border">{t('dest_ip')}</th>
-                <th className="px-6 py-3 border-b border-border">Serviço</th>
-                <th className="px-6 py-3 border-b border-border">Empresa</th>
-                <th className="px-6 py-3 border-b border-border">{t('protocol')}</th>
-                <th className="px-6 py-3 border-b border-border text-right">VOLUME (2 min)</th>
-                <th className="px-6 py-3 border-b border-border text-right">{t('pps')}</th>
-              </tr>
-            </thead>
-            <tbody className="text-sm divide-y divide-border/30">
-              {((Array.isArray(connections) ? connections : (connections?.items || connections?.data || []))
-                ?.filter((item: any) => {
-                  if (!serviceFilter) return true;
-                  const flipped = shouldFlip(item);
-                  const dstPort = flipped ? item.src_port : item.dst_port;
-                  const service = getService(dstPort).split(' ')[0];
-                  if (serviceFilter === 'UDP') return item.proto === 17;
-                  if (serviceFilter === 'TCP') return item.proto === 6;
-                  return service === serviceFilter;
-                }) || []).map((item: any, i: number) => {
-                const flipped = shouldFlip(item);
-                const src = flipped ? item.dst_addr : item.src_addr;
-                const srcPort = flipped ? item.dst_port : item.src_port;
-                const srcCountry = flipped ? item.dst_country : item.src_country;
-                
-                const dst = flipped ? item.src_addr : item.dst_addr;
-                 const dstPort = flipped ? item.src_port : item.dst_port;
-                 const dstCountry = flipped ? item.src_country : item.dst_country;
-                 const dstOrg = flipped ? item.src_org : item.dst_org;
- 
-                 const bannedList = activeMitigations?.items || [];
-                 const srcMitigation = bannedList.find((m: any) => m.ip === src);
-                 const dstMitigation = bannedList.find((m: any) => m.ip === dst);
-
-                return (
-                  <tr key={i} className="hover:bg-bg-primary/30 transition-colors group">
-                     <td className="px-6 py-3.5">
-                      <div className="flex items-center gap-2">
-                        <Flag code={srcCountry} size={14} />
-                        {srcMitigation ? (
-                          <MitigationTooltip data={{
-                            ip: srcMitigation.ip,
-                            tipo: 'Blackhole /32',
-                            desde: srcMitigation.since,
-                             pps: Number(srcMitigation.pps || 0),
-                             mbps: Number(srcMitigation.mbps || 0),
-                            fonte: srcMitigation.source || 'Manual (admin)'
-                          }}>
-                            <span className="font-bold text-danger cursor-help flex items-center gap-1 text-xs">
-                              🛡 {src}
-                            </span>
-                          </MitigationTooltip>
-                        ) : (
-                          <span className="font-semibold text-text-primary text-xs">{src}</span>
-                        )}
-                        <span className="text-text-secondary text-[10px] opacity-60">:{srcPort}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-3.5">
-                      <div className="flex items-center gap-2">
-                        <Flag code={dstCountry} size={14} />
-                        {dstMitigation ? (
-                          <MitigationTooltip data={{
-                            ip: dstMitigation.ip,
-                            tipo: 'Blackhole /32',
-                            desde: dstMitigation.since,
-                             pps: Number(dstMitigation.pps || 0),
-                             mbps: Number(dstMitigation.mbps || 0),
-                            fonte: dstMitigation.source || 'Manual (admin)'
-                          }}>
-                            <span className="font-bold text-danger cursor-help flex items-center gap-1 text-xs">
-                              🛡 {dst}
-                            </span>
-                          </MitigationTooltip>
-                        ) : (
-                          <span className="text-text-primary text-xs font-medium">{dst}</span>
-                        )}
-                        <span className="text-text-secondary text-[10px] opacity-60">:{dstPort}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-3.5">
-                      <span className="text-[11px] font-semibold text-text-primary">{getService(dstPort)}</span>
-                    </td>
-                    <td className="px-6 py-3.5">
-                      <span className="text-[10px] font-medium text-text-secondary" title={dstOrg}>{getOrg(dstOrg)}</span>
-                    </td>
-                    <td className="px-6 py-3.5">
+                    <div className="hidden sm:flex items-center gap-2 text-[10px] font-medium text-text-secondary">
                       <span className={clsx(
-                        "px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider",
-                        item.proto === 6 ? "bg-primary/10 text-primary border border-primary/10" :
-                        item.proto === 17 ? "bg-purple-500/10 text-purple-500 border border-purple-500/10" :
-                        item.proto === 1 ? "bg-warning/10 text-warning border border-warning/10" :
-                        "bg-bg-primary text-text-secondary"
+                        "px-1.5 py-0.5 rounded",
+                        item.direction === 'outgoing' ? "bg-success/10 text-success" : "bg-blue-500/10 text-blue-500"
                       )}>
-                        {protoName(item.proto)}
+                        {item.direction === 'outgoing' ? '↑ Saída' : '↓ Entrada'}
                       </span>
-                    </td>
-                    <td className="px-6 py-3.5 text-right font-bold text-text-primary text-xs">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="cursor-help">{fmtBytes(item.bytes)}</span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Volume transferido nos últimos 2 minutos (estimado com sampling 1:1000)</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </td>
-                    <td className="px-6 py-3.5 text-right text-text-secondary text-xs font-medium">{calcPPS(item.packets)}</td>
-                  </tr>
-                );
-              })}
-              {(!connections || connections.length === 0) && (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-text-secondary italic">
-                    No active connections found
-                  </td>
-                </tr>
+                      <span className="opacity-40">·</span>
+                      <span className="text-warning font-bold">
+                        {item.peak_pps > 1000 ? (item.peak_pps/1000).toFixed(1) + 'k' : item.peak_pps} pps
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="text-[10px] font-medium text-text-secondary flex items-center gap-2">
+                    <span>{formatDate(item.started_at || item.start_time).split(' ')[1].substring(0, 5)}</span>
+                    {item.ended_at || item.end_time ? (
+                      <>
+                        <ArrowRight size={10} className="opacity-30" />
+                        <span>{formatDate(item.ended_at || item.end_time).split(' ')[1].substring(0, 5)}</span>
+                      </>
+                    ) : (
+                      <span className="text-danger font-bold uppercase tracking-tighter">ATIVO</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {(!eventsHistory?.items || eventsHistory.items.length === 0) && (
+                <div className="text-center py-10 text-xs text-text-secondary italic opacity-50">Nenhum evento recente</div>
               )}
-            </tbody>
-          </table>
+            </div>
+          </div>
+
+          {/* PAINEL DIREITO (40%) - Saúde do Servidor */}
+          <div className="lg:col-span-4 bg-white dark:bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm">
+            <div className="flex items-center gap-2 mb-5 border-b border-border/50 pb-3">
+              <Activity className="text-success" size={18} />
+              <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Saúde do Servidor</h2>
+            </div>
+
+            {!sysStatus ? (
+              <div className="py-10 text-center text-xs text-text-secondary italic">Dados indisponíveis</div>
+            ) : (
+              <div className="space-y-5">
+                {/* Métricas Principais */}
+                <div className="space-y-4">
+                  {[
+                    { label: 'CPU', value: sysStatus.cpu_usage, color: sysStatus.cpu_usage >= 90 ? 'bg-danger' : sysStatus.cpu_usage >= 70 ? 'bg-warning' : 'bg-success' },
+                    { label: 'RAM', value: sysStatus.ram_usage, color: sysStatus.ram_usage >= 90 ? 'bg-danger' : sysStatus.ram_usage >= 70 ? 'bg-warning' : 'bg-primary' },
+                    { label: 'Disco', value: sysStatus.disk_usage, color: 'bg-accent' }
+                  ].map(m => (
+                    <div key={m.label} className="space-y-1.5">
+                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                        <span className="text-text-secondary">{m.label}</span>
+                        <span className="text-text-primary">{m.value}%</span>
+                      </div>
+                      <div className="h-1.5 bg-bg-primary rounded-full overflow-hidden border border-border/10">
+                        <div 
+                          className={clsx("h-full transition-all duration-1000", m.color)}
+                          style={{ width: `${m.value}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pt-4 border-t border-border/20">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-[10px] font-bold uppercase text-text-secondary tracking-widest">Uptime</span>
+                    <span className="text-xs font-black text-text-primary">{sysStatus.uptime || '—'}</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                    {Object.entries(sysStatus.services || {}).map(([name, status]: [string, any]) => (
+                      <div key={name} className="flex items-center gap-2">
+                        <span className={clsx(
+                          "w-1.5 h-1.5 rounded-full",
+                          status ? "bg-success shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-danger shadow-[0_0_8px_rgba(239,68,68,0.4)]"
+                        )} />
+                        <span className="text-[10px] font-bold text-text-secondary font-mono truncate">{name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-        <div className="px-6 py-4 bg-gray-50/30 dark:bg-bg-secondary/10 border-t border-gray-100 dark:border-[#2a2d3e] flex justify-between items-center">
-          <Link 
-            to="/analysis"
-            search={{ minutes: 5 }}
-            className="text-[11px] font-bold text-accent hover:text-accent/80 transition-colors flex items-center gap-1.5"
-          >
-            Ver análise em tempo real
-            <ArrowRight size={12} />
-          </Link>
-          <p style={{
-            fontSize: 11,
-            color: '#8892a4',
-            textAlign: 'right',
-          }}>
-            Última atualização: {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR') : '—'}
-        </p>
-       </div>
-      </div>
 
       {showIfaceSelector && (
          <div style={{
