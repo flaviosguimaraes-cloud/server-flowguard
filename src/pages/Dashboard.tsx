@@ -578,12 +578,7 @@ export default function Dashboard() {
       {/* Main Chart: Tráfego da Interface - Refined Light Theme Visuals */}
       <div className="bg-white dark:bg-bg-secondary p-6 rounded-2xl border border-border shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none transition-all">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 gap-4 border-b border-border/50 pb-5">
-          <div className="flex items-center gap-3">
-            <h2 className="text-lg font-bold text-text-primary">Tráfego do Coletor</h2>
-            <div className="px-2.5 py-1 rounded-full bg-accent/10 text-accent text-[9px] font-black uppercase tracking-wider">
-              SNMP Realtime
-            </div>
-          </div>
+          <h2 className="text-lg font-bold text-text-primary">Tráfego do Coletor</h2>
 
           <div className="flex flex-wrap items-center gap-3">
             <button
@@ -718,43 +713,56 @@ export default function Dashboard() {
                      tickFormatter={v => formatBps(v)} 
                    />
                   <RechartsTooltip
+                    cursor={{ stroke: isDark ? '#2a2d3e' : '#e2e8f0', strokeWidth: 1 }}
                     content={({ active, payload, label }) => {
                       if (!active || !payload?.length) return null;
+                      
+                      // Filtrar apenas o item mais próximo do cursor (maior valor no ponto)
+                      const topItem = payload.reduce(
+                        (best: any, curr: any) =>
+                          (curr.value || 0) > (best.value || 0) ? curr : best,
+                        payload[0]
+                      );
+
+                      if (!topItem) return null;
+
+                      const ifName = topItem.dataKey
+                        .replace(/_in$/, '')
+                        .replace(/_out$/, '');
+                      const isRx = topItem.dataKey.endsWith('_in');
+
                       return (
                         <div style={{
                           background: isDark ? '#1e2130' : '#ffffff',
-                          border: `1px solid ${isDark ? '#2a2d3e' : '#e2e8f0'}`,
-                          borderRadius: 8,
+                          border: `1px solid ${topItem.color}`,
+                          borderRadius: 6,
                           padding: '8px 12px',
                           fontSize: 12,
+                          minWidth: 160,
                           boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                         }}>
                           <div style={{
                             color: '#8892a4',
-                            marginBottom: 6,
-                            fontSize: 11,
-                            fontWeight: 600
+                            fontSize: 10,
+                            marginBottom: 4,
                           }}>
                             {label}
                           </div>
-                          {payload.map((entry: any) => {
-                            const ifName = entry.dataKey
-                              .replace('_in', '')
-                              .replace('_out', '');
-                            const dir = entry.dataKey.endsWith('_in') ? '↓ RX' : '↑ TX';
-                            return (
-                              <div key={entry.dataKey} style={{
-                                color: entry.color,
-                                marginBottom: 2,
-                                display: 'flex',
-                                gap: 8,
-                                justifyContent: 'space-between'
-                              }}>
-                                <span style={{ fontWeight: 600 }}>{ifName}</span>
-                                <span>{dir}: {formatBpsRaw((entry.value || 0) * 1e6)}</span>
-                              </div>
-                            );
-                          })}
+                          <div style={{
+                            color: topItem.color,
+                            fontWeight: 600,
+                            fontSize: 13,
+                            marginBottom: 2,
+                          }}>
+                            {ifName}
+                          </div>
+                          <div style={{
+                            color: isDark ? '#e2e8f0' : '#1e293b',
+                            fontSize: 12,
+                          }}>
+                            {isRx ? '↓ RX' : '↑ TX'}:{' '}
+                            {formatBpsRaw((topItem.value || 0) * 1e6)}
+                          </div>
                         </div>
                       );
                     }}
