@@ -700,13 +700,17 @@ export default function Dashboard() {
                   fontWeight: 500
                 }}>
                   {/* Direção */}
-                  <span style={{
-                    color: item.flow_direction === 'outgoing'
-                      ? '#22c55e' : '#3b82f6'
-                  }}>
-                    {item.flow_direction === 'outgoing'
-                      ? '↑ Saída' : '↓ Entrada'}
-                  </span>
+                  {item.direction ? (
+                    <span style={{
+                      color: item.direction === 'outgoing'
+                        ? '#22c55e' : '#3b82f6'
+                    }}>
+                      {item.direction === 'outgoing'
+                        ? '↑ Saída' : '↓ Entrada'}
+                    </span>
+                  ) : (
+                    <span style={{ color: '#8892a4' }}>—</span>
+                  )}
 
                   {/* Volume */}
                   {item.peak_pps > 0 && (
