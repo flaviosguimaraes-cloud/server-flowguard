@@ -133,7 +133,7 @@ export default function Dashboard() {
     refetchOnWindowFocus: true,
   });
 
-   const { data: eventsHistory, isLoading: loadingEvents, dataUpdatedAt: eventsUpdatedAt } = useQuery({
+  const { data: eventsHistory, isLoading: loadingEvents, dataUpdatedAt: eventsUpdatedAt } = useQuery({
     queryKey: ['events-history-dashboard'],
     queryFn: async () => {
       const r = await api.get('/api/events/history?limit=8');
@@ -145,6 +145,26 @@ export default function Dashboard() {
     refetchOnMount: 'always',
     refetchOnWindowFocus: true,
   });
+
+  const dirLabel = (dir: string) => {
+    if (dir === 'outgoing' || dir === 'outbound')
+      return {
+        label: '↑ Upload (saindo)',
+        color: '#22c55e',
+        bg: '#0f2d1a'
+      };
+    if (dir === 'incoming' || dir === 'inbound')
+      return {
+        label: '↓ Download (entrando)',
+        color: '#3b82f6',
+        bg: '#0f1f3a'
+      };
+    return {
+      label: '—',
+      color: '#8892a4',
+      bg: 'transparent'
+    };
+  };
 
   const { data: sysStatus } = useQuery({
     queryKey: ['system-status'],
@@ -838,22 +858,37 @@ export default function Dashboard() {
               {eventsHistory?.items?.map((item: any, i: number) => (
                 <div key={i} className="flex items-center justify-between py-2 border-b border-border/20 last:border-0 hover:bg-bg-primary/10 transition-colors px-2 rounded-lg">
                   <div className="flex items-center gap-3">
-                    <span className={clsx(
-                      "flex-shrink-0 w-2 h-2 rounded-full",
-                      item.status === 'active' ? "bg-danger animate-pulse" : "bg-success"
-                    )} />
-                    
+                    {item.status === 'active' ? (
+                      <span className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-danger/10 text-danger text-[9px] font-black border border-danger/20 animate-pulse">
+                        ● ATIVO
+                      </span>
+                    ) : (
+                      <span className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-bg-primary text-text-secondary text-[9px] font-bold border border-border">
+                        ✓ FINALIZADO
+                      </span>
+                    )}
+
                     <div className="flex items-center gap-2 min-w-[120px]">
                       <span className="text-xs font-bold text-text-primary font-mono">{item.ip}</span>
                     </div>
 
-                    <div className="hidden sm:flex items-center gap-2 text-[10px] font-medium text-text-secondary">
-                      <span className={clsx(
-                        "px-1.5 py-0.5 rounded",
-                        item.direction === 'outgoing' ? "bg-success/10 text-success" : "bg-blue-500/10 text-blue-500"
-                      )}>
-                        {item.direction === 'outgoing' ? '↑ Saída' : '↓ Entrada'}
-                      </span>
+                    <div className="hidden sm:flex items-center gap-2 text-[10px]">
+                      {(() => {
+                        const dir = dirLabel(item.direction || item.flow_direction);
+                        return (
+                          <span style={{
+                            color: dir.color,
+                            background: dir.bg,
+                            padding: '2px 8px',
+                            borderRadius: 4,
+                            fontSize: 10,
+                            fontWeight: 500,
+                            whiteSpace: 'nowrap'
+                          }}>
+                            {dir.label}
+                          </span>
+                        );
+                      })()}
                       <span className="opacity-40">·</span>
                       <span className="text-warning font-bold">
                         {item.peak_pps > 1000 ? (item.peak_pps/1000).toFixed(1) + 'k' : item.peak_pps} pps
