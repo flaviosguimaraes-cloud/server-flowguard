@@ -1137,7 +1137,6 @@ export default function Dashboard() {
             </div>
           </div>
        </div>
-      </div>
 
        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Port Panels */}
@@ -1231,7 +1230,7 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-       </div>
+       </TooltipProvider>
  
          {/* Active Connections Table */}
         <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
