@@ -695,60 +695,65 @@ export default function Dashboard() {
            50% { opacity: 0.3; }
          }
        `}</style>
-        {/* Top Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-6">
+        {/* Top Stats Redesign */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
           <StatCard 
-            title="FLOW IPv4 ↓" 
-            value={(detection?.incoming_mbps / 1000).toFixed(1)} 
-            unit="Gbps" 
-            icon={<ArrowDown className="text-accent" size={20} />} 
-            subtitle="Estimado via Flow · sampling 1:1000"
-          />
-          <StatCard 
-            title="FLOW IPv4 ↑" 
-            value={(detection?.outgoing_mbps / 1000).toFixed(1)} 
-            unit="Gbps" 
-            icon={<ArrowUp className="text-success" size={20} />} 
-            subtitle="Estimado via Flow · sampling 1:1000"
-          />
-          <StatCard 
-            title="SNMP ↓ Total" 
-            value={snmpTotals.rx.toFixed(1)} 
-            unit="Gbps" 
+            title="FLOW IPv4 ↓ DOWNLOAD" 
+            value={detection?.incoming_mbps >= 1000 ? (detection.incoming_mbps / 1000).toFixed(1) : (detection?.incoming_mbps || 0).toFixed(0)} 
+            unit={detection?.incoming_mbps >= 1000 ? "Gbps" : "Mbps"} 
             icon={<ArrowDown className="text-blue-500" size={20} />} 
-            subtitle="Tráfego real · todas interfaces"
           />
           <StatCard 
-            title="SNMP ↑ Total" 
-            value={snmpTotals.tx.toFixed(1)} 
-            unit="Gbps" 
+            title="FLOW IPv4 ↑ UPLOAD" 
+            value={detection?.outgoing_mbps >= 1000 ? (detection.outgoing_mbps / 1000).toFixed(1) : (detection?.outgoing_mbps || 0).toFixed(0)} 
+            unit={detection?.outgoing_mbps >= 1000 ? "Gbps" : "Mbps"} 
             icon={<ArrowUp className="text-green-500" size={20} />} 
-            subtitle="Tráfego real · todas interfaces"
           />
           <StatCard 
-            title={t('active_flows')} 
+            title="FLOWS ATIVOS" 
             value={detection?.incoming_pps > 1000 ? (detection.incoming_pps / 1000).toFixed(1) + 'k' : detection?.incoming_pps || '0'} 
             icon={<Activity className="text-warning" size={20} />} 
           />
-           <StatCard 
-             title={t('active_mitigations')} 
-             value={detection?.active_mitigations || '0'} 
-             icon={<Shield className="text-danger" size={20} />} 
-             subtitle={activeMitigations?.items?.length > 0 && (
-               <div className="flex flex-wrap gap-1 mt-1">
-                 {activeMitigations.items.slice(0, 2).map((m: any) => (
-                    <div key={m.ip} className="relative">
-                      <MitigationTooltip data={m}>
-                        <span className="text-[9px] font-mono font-bold text-danger border border-danger/20 px-1 rounded bg-danger/5 cursor-help hover:bg-danger/10 transition-colors">
-                          {m.ip}
-                        </span>
-                      </MitigationTooltip>
+          
+          {/* Coletores Card with Tooltip */}
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="cursor-help">
+                <StatCard 
+                  title="COLETORES" 
+                  value={(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || []))
+                    .filter((c: any) => c.status === 'active' || c.status === 'Ativo').length} 
+                  icon={<Zap className="text-primary" size={20} />} 
+                />
+              </div>
+            </TooltipTrigger>
+            <TooltipContent side="bottom" className="w-64 p-3">
+              <div className="space-y-2">
+                <p className="text-[10px] font-bold uppercase tracking-wider text-text-secondary mb-2 border-b border-border/50 pb-1">Status dos Coletores</p>
+                {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).map((c: any) => (
+                  <div key={c.id} className="flex justify-between items-center text-[11px]">
+                    <div className="flex flex-col">
+                      <span className="font-bold text-text-primary">{c.name}</span>
+                      <span className="text-[9px] text-text-secondary">{c.host} · {c.snmp_version || 'v2c'}</span>
                     </div>
-                 ))}
-                 {activeMitigations.items.length > 2 && <span className="text-[9px] text-text-secondary">+{activeMitigations.items.length - 2}</span>}
-               </div>
-             )}
-           />
+                    <span className={clsx(
+                      "px-1.5 py-0.5 rounded text-[9px] font-bold",
+                      (c.status === 'active' || c.status === 'Ativo') ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
+                    )}>
+                      {(c.status === 'active' || c.status === 'Ativo') ? 'Ativo' : 'Inativo'}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </TooltipContent>
+          </Tooltip>
+
+          <StatCard 
+            title="MITIGAÇÕES ATIVAS" 
+            value={detection?.active_mitigations || '0'} 
+            icon={<Shield className={clsx(Number(detection?.active_mitigations) > 0 ? "text-danger" : "text-text-secondary opacity-40")} size={20} />} 
+            trend={Number(detection?.active_mitigations) > 0 ? "ATIVO" : undefined}
+          />
         </div>
 
         {/* MELHORIA 3 — Dashboard card de anomalias */}
