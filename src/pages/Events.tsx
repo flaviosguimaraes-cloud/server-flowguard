@@ -1,4 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
+import { useTheme } from '../contexts/ThemeContext';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
  import api from '../services/api';
  import { useTranslation } from '../hooks/useTranslation';
@@ -12,8 +13,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
  import { TooltipProvider } from '../components/ui/tooltip';
  import { MitigationTooltip } from '../components/MitigationTooltip';
  
- export default function Events() {
-   const { t } = useTranslation();
+  export default function Events() {
+    const { t } = useTranslation();
+    const { theme } = useTheme();
+    const isDark = theme === 'dark';
    const isAdmin = localStorage.getItem('role') === 'admin';
   const queryClient = useQueryClient();
    const [isMitigationOpen, setIsMitigationOpen] = useState(false);
@@ -115,14 +118,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
     if (dir === 'outgoing' || dir === 'outbound')
       return {
         label: '↑ Upload',
-        color: '#22c55e',
-        bg: '#0f2d1a'
+        color: isDark ? '#22c55e' : '#15803d',
+        bg: isDark ? '#0f2d1a' : '#dcfce7'
       };
     if (dir === 'incoming' || dir === 'inbound')
       return {
         label: '↓ Download',
-        color: '#3b82f6',
-        bg: '#0f1f3a'
+        color: isDark ? '#3b82f6' : '#1d4ed8',
+        bg: isDark ? '#0f1f3a' : '#dbeafe'
       };
     return {
       label: '—',
@@ -372,8 +375,41 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
                     <td className="px-6 py-3.5 text-center text-text-primary text-[11px] font-medium">
                       {fmtDuration(event.duration_seconds)}
                     </td>
-                    <td className="px-6 py-3.5 text-text-primary text-[11px] font-bold">
-                      {fmtPeak(event.peak_pps, event.peak_mbps)}
+                    <td className="px-6 py-3.5">
+                      <div style={{ display: 'flex', gap: 6 }}>
+                        {(() => {
+                          const byPps = event.peak_pps >= 100000;
+                          return (
+                            <span style={{
+                              fontWeight: byPps ? 700 : 400,
+                              color: byPps ? '#ef4444' : (isDark ? '#94a3b8' : '#6b7280'),
+                              background: byPps ? (isDark ? '#3b1212' : '#fee2e2') : 'transparent',
+                              padding: byPps ? '1px 6px' : '0',
+                              borderRadius: 3,
+                              fontSize: 12,
+                            }}>
+                              {(event.peak_pps / 1000).toFixed(1)}k pps
+                              {byPps ? ' ⚡' : ''}
+                            </span>
+                          );
+                        })()}
+                        {event.peak_mbps > 0 && (() => {
+                          const byMbps = event.peak_mbps >= 1000;
+                          return (
+                            <span style={{
+                              fontWeight: byMbps ? 700 : 400,
+                              color: byMbps ? '#f59e0b' : (isDark ? '#94a3b8' : '#6b7280'),
+                              background: byMbps ? (isDark ? '#2d1f0a' : '#fef3c7') : 'transparent',
+                              padding: byMbps ? '1px 6px' : '0',
+                              borderRadius: 3,
+                              fontSize: 12,
+                            }}>
+                              {event.peak_mbps} Mbps
+                              {byMbps ? ' ⚡' : ''}
+                            </span>
+                          );
+                        })()}
+                      </div>
                     </td>
                     <td className="px-6 py-3.5 text-center">
                       {(() => {
