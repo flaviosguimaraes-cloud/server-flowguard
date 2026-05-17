@@ -1230,7 +1230,6 @@ export default function Dashboard() {
             </div>
           </div>
         </div>
-       </div>
 
           {/* Active Connections Table */}
         <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
@@ -1427,7 +1426,6 @@ export default function Dashboard() {
         </p>
        </div>
       </div>
-     </div>
 
       {showIfaceSelector && (
          <div style={{
@@ -1549,9 +1547,6 @@ export default function Dashboard() {
          </div>
         )}
 
-        </div>
-        </div>
-        </div>
         </div>
         </TooltipProvider>
      );
