@@ -489,6 +489,7 @@ export default function Dashboard() {
      return `${hrs}h ${mins}min`;
    };
 
+
    const fmtPeak = (pps: number, mbps: number) => {
      if (!pps && !mbps) return '—';
      const ppsStr = pps > 1000 ? (pps / 1000).toFixed(1) + 'k' : pps;
@@ -497,6 +498,17 @@ export default function Dashboard() {
        return `${ppsStr} pps · ${mbpsStr}`;
      }
      return `${ppsStr} pps`;
+   };
+
+   const fmtBps = (bps: number) => {
+     if (!bps || bps === 0) return '0 bps';
+     if (bps >= 1e9)
+       return (bps/1e9).toFixed(1)+' Gbps';
+     if (bps >= 1e6)
+       return (bps/1e6).toFixed(0)+' Mbps';
+     if (bps >= 1e3)
+       return (bps/1e3).toFixed(0)+' Kbps';
+     return bps+' bps';
    };
 
   if (statsLoading) {
