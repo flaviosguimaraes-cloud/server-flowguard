@@ -214,15 +214,19 @@ export default function Dashboard() {
 
       const minutes = timePeriod === '1h' ? 60 : timePeriod === '6h' ? 360 : 1440;
 
+      console.log('Buscando histórico:', selectedCollector, selectedIfaces, minutes);
+
       const results = await Promise.all(
-        selectedIfaces.map(ifName =>
-          api.get(
-            `/api/collectors/${selectedCollector}/metrics/history?minutes=${minutes}&if_name=${encodeURIComponent(ifName)}`
-          ).then(r => ({
+        selectedIfaces.map(async ifName => {
+          const url = `/api/collectors/${selectedCollector}/metrics/history?minutes=${minutes}&if_name=${encodeURIComponent(ifName)}`;
+          console.log('URL:', url);
+          const r = await api.get(url);
+          console.log('Resultado:', ifName, r.data);
+          return {
             ifName,
-            data: r.data.history || []
-          }))
-        )
+            data: r.data?.history || r.data?.metrics || []
+          };
+        })
       );
       return results;
     },
@@ -700,13 +704,17 @@ export default function Dashboard() {
                   fontWeight: 500
                 }}>
                   {/* Direção */}
-                  <span style={{
-                    color: item.flow_direction === 'outgoing'
-                      ? '#22c55e' : '#3b82f6'
-                  }}>
-                    {item.flow_direction === 'outgoing'
-                      ? '↑ Saída' : '↓ Entrada'}
-                  </span>
+                  {item.direction ? (
+                    <span style={{
+                      color: item.direction === 'outgoing'
+                        ? '#22c55e' : '#3b82f6'
+                    }}>
+                      {item.direction === 'outgoing'
+                        ? '↑ Saída' : '↓ Entrada'}
+                    </span>
+                  ) : (
+                    <span style={{ color: '#8892a4' }}>—</span>
+                  )}
 
                   {/* Volume */}
                   {item.peak_pps > 0 && (

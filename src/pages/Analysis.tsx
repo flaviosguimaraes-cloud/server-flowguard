@@ -85,7 +85,6 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     const formatDate = (dateStr: string) => {
       if (!dateStr) return '—';
       try {
-        // Substituir espaço por T para compatibilidade com Safari/iOS
         const d = new Date(dateStr.replace(' ', 'T'));
         if (isNaN(d.getTime())) return '—';
         return d.toLocaleString('pt-BR', {
@@ -95,9 +94,25 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
           minute: '2-digit',
           second: '2-digit'
         });
-      } catch {
-        return '—';
-      }
+      } catch { return '—'; }
+    };
+
+    const formatUTC = (dateStr: string) => {
+      if (!dateStr) return '—';
+      try {
+        // ClickHouse retorna sem timezone, assumir UTC e converter para local
+        const d = new Date(dateStr.replace(' ', 'T') + 'Z');
+        if (isNaN(d.getTime())) return '—';
+        return d.toLocaleString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+          timeZone: 'America/Sao_Paulo'
+        });
+      } catch { return '—'; }
     };
 
     const [filters, setFilters] = useState({
@@ -254,7 +269,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       protoName(i.proto),
       i.bytes,
       Math.round((i.packets || 0) / 1800),
-      i.time_received || ''
+      formatUTC(i.time_received)
     ]);
     
     const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
@@ -516,7 +531,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                      return (
                        <tr key={i} className="hover:bg-accent/5 transition-colors group">
                           <td className="px-6 py-4 text-[10px] text-text-secondary font-mono whitespace-nowrap">
-                            {formatDate(item.time_received)}
+                            {formatUTC(item.time_received)}
                           </td>
                          <td className="px-6 py-4 text-center">
                            <TooltipProvider>
