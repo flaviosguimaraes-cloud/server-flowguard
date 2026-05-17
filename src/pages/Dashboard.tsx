@@ -548,47 +548,65 @@ export default function Dashboard() {
    };
 
    const periodStats = useMemo(() => {
-     if (timePeriod === 'realtime' || !metricsHistory?.length) {
-       // Usar snapshot atual
-       const total_rx = interfaces?.interfaces
-         ?.filter((i: any) => selectedIfaces.includes(i.display_name || i.if_name))
-         ?.reduce((s: number, i: any) => s + (i.in_bps || 0), 0) || 0;
-       const total_tx = interfaces?.interfaces
-         ?.filter((i: any) => selectedIfaces.includes(i.display_name || i.if_name))
-         ?.reduce((s: number, i: any) => s + (i.out_bps || 0), 0) || 0;
+     const getStats = (values: number[]) => {
+       if (!values.length) return { last: 0, min: 0, avg: 0, max: 0 };
        return {
-         rx: total_rx,
-         tx: total_tx,
-         label: 'Agora'
+         last: values[values.length - 1],
+         min: Math.min(...values),
+         avg: values.reduce((a, b) => a + b, 0) / values.length,
+         max: Math.max(...values),
+       };
+     };
+
+     if (timePeriod === 'realtime') {
+       const firstIface = selectedIfaces[0];
+       const rxValues = firstIface && history[firstIface] ? history[firstIface].map((_, idx) =>
+         selectedIfaces.reduce((s, name) => s + (history[name]?.[idx]?.in_bps || 0), 0)
+       ) : [];
+       const txValues = firstIface && history[firstIface] ? history[firstIface].map((_, idx) =>
+         selectedIfaces.reduce((s, name) => s + (history[name]?.[idx]?.out_bps || 0), 0)
+       ) : [];
+
+       return {
+         rx: getStats(rxValues),
+         tx: getStats(txValues),
+         label: 'Tempo Real'
        };
      }
 
-     // Calcular média do histórico
-     let rx_sum = 0, tx_sum = 0, count = 0;
-     metricsHistory.forEach(({data}) => {
+     if (!metricsHistory?.length) {
+       return {
+         rx: getStats([]),
+         tx: getStats([]),
+         label: timePeriod
+       };
+     }
+
+     const timeMap: Record<string, { rx: number, tx: number }> = {};
+     metricsHistory.forEach(({ data }) => {
        data.forEach((p: any) => {
-         rx_sum += p.in_bps || 0;
-         tx_sum += p.out_bps || 0;
-         count++;
+         const t = p.time_bucket;
+         if (!timeMap[t]) timeMap[t] = { rx: 0, tx: 0 };
+         timeMap[t].rx += p.in_bps || 0;
+         timeMap[t].tx += p.out_bps || 0;
        });
      });
-     
-     const avg_rx = count > 0 ? rx_sum / count : 0;
-     const avg_tx = count > 0 ? tx_sum / count : 0;
+
+     const sorted = Object.keys(timeMap).sort();
+     const rxValues = sorted.map(t => timeMap[t].rx);
+     const txValues = sorted.map(t => timeMap[t].tx);
 
      const labels: Record<string, string> = {
-       '1h': 'Média 1h',
-       '6h': 'Média 6h',
-       '24h': 'Média 24h',
-       '48h': 'Média 48h'
+       '1h': '1 hora', '6h': '6 horas',
+       '24h': '24 horas', '48h': '48 horas'
      };
 
      return {
-       rx: avg_rx,
-       tx: avg_tx,
+       rx: getStats(rxValues),
+       tx: getStats(txValues),
        label: labels[timePeriod] || timePeriod
      };
-   }, [timePeriod, metricsHistory, interfaces, selectedIfaces]);
+   }, [timePeriod, metricsHistory, history, selectedIfaces]);
 
 
     const portDataDst = processPortData(portsDst);
