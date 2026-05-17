@@ -1064,10 +1064,9 @@ export default function Dashboard() {
                 </div>
               </div>
             )}
-          </div>
         </div>
 
-      {showIfaceSelector && (
+        {showIfaceSelector && (
          <div style={{
            position: 'fixed',
            top: 0, left: 0,
