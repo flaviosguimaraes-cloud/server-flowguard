@@ -764,7 +764,16 @@ export default function Dashboard() {
           </div>
         </div>
 
-        <div className="space-y-2 bg-[#F8FAFC] dark:bg-[#0f172a]/40 p-4 rounded-xl border border-border/50">
+        <div className="space-y-2 bg-[#F8FAFC] dark:bg-[#0f172a]/40 p-4 rounded-xl border border-border/50 relative min-h-[350px]">
+          {metricsHistoryLoading && (
+            <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/50 dark:bg-black/20 rounded-xl backdrop-blur-[1px]">
+              <div className="flex flex-col items-center gap-3">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-xs font-bold text-text-secondary uppercase tracking-widest animate-pulse">Carregando histórico...</span>
+              </div>
+            </div>
+          )}
+
           {/* RX Chart */}
           <div className="relative">
             <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 origin-left text-[9px] font-black text-text-secondary uppercase tracking-widest pointer-events-none opacity-40 ml-1">
