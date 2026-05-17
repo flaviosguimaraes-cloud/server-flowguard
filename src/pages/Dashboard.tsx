@@ -985,201 +985,121 @@ export default function Dashboard() {
 
 
 
-          {/* Active Connections Table */}
-        <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
-        <div className="p-5 border-b border-border flex flex-wrap justify-between items-center bg-bg-primary/30 gap-4">
-           <div className="flex flex-col gap-0.5">
-             <h2 className="text-base font-bold text-text-primary">Top Fluxos IPv4 (2 min)</h2>
-             <span className="text-[10px] text-text-secondary font-bold uppercase tracking-wider opacity-60">
-               {(() => {
-                 const list = (Array.isArray(connections) ? connections : (connections?.items || connections?.data || []))
-                   ?.filter((item: any) => {
-                     if (!serviceFilter) return true;
-                     const flipped = shouldFlip(item);
-                     const dstPort = flipped ? item.src_port : item.dst_port;
-                     const service = getService(dstPort).split(' ')[0];
-                     if (serviceFilter === 'UDP') return item.proto === 17;
-                     if (serviceFilter === 'TCP') return item.proto === 6;
-                     return service === serviceFilter;
-                   }) || [];
-                  return `${list.length} conexões · Top conexões por volume · últimos 2 min · atualizado a cada 30s`;
-               })()}
-             </span>
-           </div>
-            <div className="flex items-center gap-4">
-               <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest bg-bg-primary px-2 py-1 rounded border border-border">
-                 Próxima atualização: {countdown}s
-               </span>
-              <button className="text-text-secondary hover:text-text-primary transition-colors">
-                <MoreVertical size={18} />
-              </button>
-           </div>
-        </div>
+        {/* Seção 3 — Eventos + Saúde */}
+        <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
+          {/* PAINEL ESQUERDO (60%) - Últimos Eventos */}
+          <div className="lg:col-span-6 bg-white dark:bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm flex flex-col">
+            <div className="flex items-center justify-between mb-5 border-b border-border/50 pb-3">
+              <div className="flex items-center gap-2">
+                <History className="text-primary" size={18} />
+                <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Últimos Eventos de Mitigação</h2>
+              </div>
+              <Link to="/events" className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1">
+                Ver completo <ArrowRight size={12} />
+              </Link>
+            </div>
+            
+            <div className="space-y-1 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
+              {eventsHistory?.items?.map((item: any, i: number) => (
+                <div key={i} className="flex items-center justify-between py-2 border-b border-border/20 last:border-0 hover:bg-bg-primary/10 transition-colors px-2 rounded-lg">
+                  <div className="flex items-center gap-3">
+                    <span className={clsx(
+                      "flex-shrink-0 w-2 h-2 rounded-full",
+                      item.status === 'active' ? "bg-danger animate-pulse" : "bg-success"
+                    )} />
+                    
+                    <div className="flex items-center gap-2 min-w-[120px]">
+                      <span className="text-xs font-bold text-text-primary font-mono">{item.ip}</span>
+                    </div>
 
-        {/* Filtros rápidos */}
-        <div className="flex flex-wrap gap-2 px-5 py-2.5 border-b border-border bg-bg-primary/10">
-          {['Todos', 'HTTP', 'HTTPS', 'DNS', 'Steam', 'UDP', 'TCP'].map(label => {
-            const value = label === 'Todos' ? null : label;
-            const isActive = serviceFilter === value;
-            return (
-              <button
-                key={label}
-                onClick={() => setServiceFilter(value)}
-                className={clsx(
-                  "px-2.5 py-1 rounded-md text-[10px] font-bold transition-all uppercase tracking-wider",
-                  isActive 
-                    ? "bg-primary text-white shadow-sm" 
-                    : "text-text-secondary hover:text-text-primary hover:bg-bg-primary"
-                )}
-              >
-                {label}
-              </button>
-            );
-          })}
-        </div>
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse min-w-[800px]">
-            <thead>
-              <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-                <th className="px-6 py-3 border-b border-border">{t('source_ip')}</th>
-                <th className="px-6 py-3 border-b border-border">{t('dest_ip')}</th>
-                <th className="px-6 py-3 border-b border-border">Serviço</th>
-                <th className="px-6 py-3 border-b border-border">Empresa</th>
-                <th className="px-6 py-3 border-b border-border">{t('protocol')}</th>
-                <th className="px-6 py-3 border-b border-border text-right">VOLUME (2 min)</th>
-                <th className="px-6 py-3 border-b border-border text-right">{t('pps')}</th>
-              </tr>
-            </thead>
-            <tbody className="text-sm divide-y divide-border/30">
-              {((Array.isArray(connections) ? connections : (connections?.items || connections?.data || []))
-                ?.filter((item: any) => {
-                  if (!serviceFilter) return true;
-                  const flipped = shouldFlip(item);
-                  const dstPort = flipped ? item.src_port : item.dst_port;
-                  const service = getService(dstPort).split(' ')[0];
-                  if (serviceFilter === 'UDP') return item.proto === 17;
-                  if (serviceFilter === 'TCP') return item.proto === 6;
-                  return service === serviceFilter;
-                }) || []).map((item: any, i: number) => {
-                const flipped = shouldFlip(item);
-                const src = flipped ? item.dst_addr : item.src_addr;
-                const srcPort = flipped ? item.dst_port : item.src_port;
-                const srcCountry = flipped ? item.dst_country : item.src_country;
-                
-                const dst = flipped ? item.src_addr : item.dst_addr;
-                 const dstPort = flipped ? item.src_port : item.dst_port;
-                 const dstCountry = flipped ? item.src_country : item.dst_country;
-                 const dstOrg = flipped ? item.src_org : item.dst_org;
- 
-                 const bannedList = activeMitigations?.items || [];
-                 const srcMitigation = bannedList.find((m: any) => m.ip === src);
-                 const dstMitigation = bannedList.find((m: any) => m.ip === dst);
-
-                return (
-                  <tr key={i} className="hover:bg-bg-primary/30 transition-colors group">
-                     <td className="px-6 py-3.5">
-                      <div className="flex items-center gap-2">
-                        <Flag code={srcCountry} size={14} />
-                        {srcMitigation ? (
-                          <MitigationTooltip data={{
-                            ip: srcMitigation.ip,
-                            tipo: 'Blackhole /32',
-                            desde: srcMitigation.since,
-                             pps: Number(srcMitigation.pps || 0),
-                             mbps: Number(srcMitigation.mbps || 0),
-                            fonte: srcMitigation.source || 'Manual (admin)'
-                          }}>
-                            <span className="font-bold text-danger cursor-help flex items-center gap-1 text-xs">
-                              🛡 {src}
-                            </span>
-                          </MitigationTooltip>
-                        ) : (
-                          <span className="font-semibold text-text-primary text-xs">{src}</span>
-                        )}
-                        <span className="text-text-secondary text-[10px] opacity-60">:{srcPort}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-3.5">
-                      <div className="flex items-center gap-2">
-                        <Flag code={dstCountry} size={14} />
-                        {dstMitigation ? (
-                          <MitigationTooltip data={{
-                            ip: dstMitigation.ip,
-                            tipo: 'Blackhole /32',
-                            desde: dstMitigation.since,
-                             pps: Number(dstMitigation.pps || 0),
-                             mbps: Number(dstMitigation.mbps || 0),
-                            fonte: dstMitigation.source || 'Manual (admin)'
-                          }}>
-                            <span className="font-bold text-danger cursor-help flex items-center gap-1 text-xs">
-                              🛡 {dst}
-                            </span>
-                          </MitigationTooltip>
-                        ) : (
-                          <span className="text-text-primary text-xs font-medium">{dst}</span>
-                        )}
-                        <span className="text-text-secondary text-[10px] opacity-60">:{dstPort}</span>
-                      </div>
-                    </td>
-                    <td className="px-6 py-3.5">
-                      <span className="text-[11px] font-semibold text-text-primary">{getService(dstPort)}</span>
-                    </td>
-                    <td className="px-6 py-3.5">
-                      <span className="text-[10px] font-medium text-text-secondary" title={dstOrg}>{getOrg(dstOrg)}</span>
-                    </td>
-                    <td className="px-6 py-3.5">
+                    <div className="hidden sm:flex items-center gap-2 text-[10px] font-medium text-text-secondary">
                       <span className={clsx(
-                        "px-1.5 py-0.5 rounded text-[9px] font-bold uppercase tracking-wider",
-                        item.proto === 6 ? "bg-primary/10 text-primary border border-primary/10" :
-                        item.proto === 17 ? "bg-purple-500/10 text-purple-500 border border-purple-500/10" :
-                        item.proto === 1 ? "bg-warning/10 text-warning border border-warning/10" :
-                        "bg-bg-primary text-text-secondary"
+                        "px-1.5 py-0.5 rounded",
+                        item.direction === 'outgoing' ? "bg-success/10 text-success" : "bg-blue-500/10 text-blue-500"
                       )}>
-                        {protoName(item.proto)}
+                        {item.direction === 'outgoing' ? '↑ Saída' : '↓ Entrada'}
                       </span>
-                    </td>
-                    <td className="px-6 py-3.5 text-right font-bold text-text-primary text-xs">
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <span className="cursor-help">{fmtBytes(item.bytes)}</span>
-                        </TooltipTrigger>
-                        <TooltipContent>
-                          <p>Volume transferido nos últimos 2 minutos (estimado com sampling 1:1000)</p>
-                        </TooltipContent>
-                      </Tooltip>
-                    </td>
-                    <td className="px-6 py-3.5 text-right text-text-secondary text-xs font-medium">{calcPPS(item.packets)}</td>
-                  </tr>
-                );
-              })}
-              {(!connections || connections.length === 0) && (
-                <tr>
-                  <td colSpan={6} className="px-6 py-8 text-center text-text-secondary italic">
-                    No active connections found
-                  </td>
-                </tr>
+                      <span className="opacity-40">·</span>
+                      <span className="text-warning font-bold">
+                        {item.peak_pps > 1000 ? (item.peak_pps/1000).toFixed(1) + 'k' : item.peak_pps} pps
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="text-[10px] font-medium text-text-secondary flex items-center gap-2">
+                    <span>{formatDate(item.started_at || item.start_time).split(' ')[1].substring(0, 5)}</span>
+                    {item.ended_at || item.end_time ? (
+                      <>
+                        <ArrowRight size={10} className="opacity-30" />
+                        <span>{formatDate(item.ended_at || item.end_time).split(' ')[1].substring(0, 5)}</span>
+                      </>
+                    ) : (
+                      <span className="text-danger font-bold uppercase tracking-tighter">ATIVO</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+              {(!eventsHistory?.items || eventsHistory.items.length === 0) && (
+                <div className="text-center py-10 text-xs text-text-secondary italic opacity-50">Nenhum evento recente</div>
               )}
-            </tbody>
-          </table>
+            </div>
+          </div>
+
+          {/* PAINEL DIREITO (40%) - Saúde do Servidor */}
+          <div className="lg:col-span-4 bg-white dark:bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm">
+            <div className="flex items-center gap-2 mb-5 border-b border-border/50 pb-3">
+              <Activity className="text-success" size={18} />
+              <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Saúde do Servidor</h2>
+            </div>
+
+            {!sysStatus ? (
+              <div className="py-10 text-center text-xs text-text-secondary italic">Dados indisponíveis</div>
+            ) : (
+              <div className="space-y-5">
+                {/* Métricas Principais */}
+                <div className="space-y-4">
+                  {[
+                    { label: 'CPU', value: sysStatus.cpu_usage, color: sysStatus.cpu_usage >= 90 ? 'bg-danger' : sysStatus.cpu_usage >= 70 ? 'bg-warning' : 'bg-success' },
+                    { label: 'RAM', value: sysStatus.ram_usage, color: sysStatus.ram_usage >= 90 ? 'bg-danger' : sysStatus.ram_usage >= 70 ? 'bg-warning' : 'bg-primary' },
+                    { label: 'Disco', value: sysStatus.disk_usage, color: 'bg-accent' }
+                  ].map(m => (
+                    <div key={m.label} className="space-y-1.5">
+                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                        <span className="text-text-secondary">{m.label}</span>
+                        <span className="text-text-primary">{m.value}%</span>
+                      </div>
+                      <div className="h-1.5 bg-bg-primary rounded-full overflow-hidden border border-border/10">
+                        <div 
+                          className={clsx("h-full transition-all duration-1000", m.color)}
+                          style={{ width: `${m.value}%` }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
+                <div className="pt-4 border-t border-border/20">
+                  <div className="flex justify-between items-center mb-3">
+                    <span className="text-[10px] font-bold uppercase text-text-secondary tracking-widest">Uptime</span>
+                    <span className="text-xs font-black text-text-primary">{sysStatus.uptime || '—'}</span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
+                    {Object.entries(sysStatus.services || {}).map(([name, status]: [string, any]) => (
+                      <div key={name} className="flex items-center gap-2">
+                        <span className={clsx(
+                          "w-1.5 h-1.5 rounded-full",
+                          status ? "bg-success shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-danger shadow-[0_0_8px_rgba(239,68,68,0.4)]"
+                        )} />
+                        <span className="text-[10px] font-bold text-text-secondary font-mono truncate">{name}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
         </div>
-        <div className="px-6 py-4 bg-gray-50/30 dark:bg-bg-secondary/10 border-t border-gray-100 dark:border-[#2a2d3e] flex justify-between items-center">
-          <Link 
-            to="/analysis"
-            search={{ minutes: 5 }}
-            className="text-[11px] font-bold text-accent hover:text-accent/80 transition-colors flex items-center gap-1.5"
-          >
-            Ver análise em tempo real
-            <ArrowRight size={12} />
-          </Link>
-          <p style={{
-            fontSize: 11,
-            color: '#8892a4',
-            textAlign: 'right',
-          }}>
-            Última atualização: {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR') : '—'}
-        </p>
-       </div>
-      </div>
 
       {showIfaceSelector && (
          <div style={{
