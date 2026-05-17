@@ -133,12 +133,12 @@ export default function Dashboard() {
     refetchOnWindowFocus: true,
   });
 
-  const { data: eventsHistory, isLoading: loadingEvents, dataUpdatedAt: eventsUpdatedAt } = useQuery({
-    queryKey: ['events-history-dashboard'],
-    queryFn: async () => {
-      const r = await api.get('/api/events/history?limit=8');
-      return r.data;
-    },
+   const { data: eventsHistory, isLoading: loadingEvents, dataUpdatedAt: eventsUpdatedAt } = useQuery({
+     queryKey: ['events-history-dashboard'],
+     queryFn: async () => {
+       const r = await api.get('/api/events/history?limit=5');
+       return r.data;
+     },
     staleTime: 0,
     gcTime: 0,
     refetchInterval: 10000,
@@ -475,16 +475,29 @@ export default function Dashboard() {
      }
    };
 
-   const fmtBps = (bps: number) => {
-    if (!bps || bps === 0) return '0 bps';
-    if (bps >= 1e9)
-      return (bps/1e9).toFixed(1)+' Gbps';
-    if (bps >= 1e6)
-      return (bps/1e6).toFixed(0)+' Mbps';
-    if (bps >= 1e3)
-      return (bps/1e3).toFixed(0)+' Kbps';
-    return bps+' bps';
-  };
+
+   const fmtDuration = (seconds: number) => {
+     if (!seconds) return '—';
+     if (seconds < 60) return `${seconds}s`;
+     if (seconds < 3600) {
+       const mins = Math.floor(seconds / 60);
+       const secs = seconds % 60;
+       return `${mins}min ${secs}s`;
+     }
+     const hrs = Math.floor(seconds / 3600);
+     const mins = Math.floor((seconds % 3600) / 60);
+     return `${hrs}h ${mins}min`;
+   };
+
+   const fmtPeak = (pps: number, mbps: number) => {
+     if (!pps && !mbps) return '—';
+     const ppsStr = pps > 1000 ? (pps / 1000).toFixed(1) + 'k' : pps;
+     if (mbps > 0) {
+       const mbpsStr = mbps >= 1000 ? (mbps / 1000).toFixed(1) + ' Gbps' : mbps.toFixed(0) + ' Mbps';
+       return `${ppsStr} pps · ${mbpsStr}`;
+     }
+     return `${ppsStr} pps`;
+   };
 
   if (statsLoading) {
     return (
