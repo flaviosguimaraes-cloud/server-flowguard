@@ -894,97 +894,23 @@ export default function Dashboard() {
             </div>
           )}
 
-          {/* RX Chart */}
-          <div className="relative">
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 origin-left text-[9px] font-black text-text-secondary uppercase tracking-widest pointer-events-none opacity-40 ml-1">
-              RX (↓)
-            </div>
-            <ResponsiveContainer width="100%" height={150}>
-              <AreaChart data={chartData} margin={{top:10,right:10,left:35,bottom:0}}>
-                <defs>
-                  {selectedIfaces.map((name, idx) => {
-                    const color = RX_COLORS[idx % RX_COLORS.length];
-                    return (
-                      <linearGradient key={`rx_${name}`} id={`grad_rx_${idx}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={color} stopOpacity={isDark ? 0.5 : 0.3}/>
-                        <stop offset="95%" stopColor={color} stopOpacity={0}/>
-                      </linearGradient>
-                    );
-                  })}
-                </defs>
-                <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#334155" : "#E2E8F0"} vertical={false} opacity={isDark ? 0.3 : 0.6} />
-                <XAxis dataKey="time" hide />
-                <YAxis 
-                  tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
-                  tickLine={false} 
-                  axisLine={false} 
-                  tickFormatter={v => `${v}M`} 
-                />
-                <RechartsTooltip
-                  contentStyle={{ 
-                    background: isDark ? '#1E293B' : '#FFFFFF', 
-                    border: `1px solid ${isDark ? '#334155' : '#E2E8F0'}`, 
-                    borderRadius: '12px', 
-                    fontSize: '11px',
-                    boxShadow: isDark ? 'none' : '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                    padding: '8px 12px'
-                  }}
-                  itemStyle={{ fontWeight: 700 }}
-                  formatter={(v: number, name: string) => {
-                    const ifName = name.replace('_in', '').replace('_out', '');
-                    return [`${v} Mbps ↓ RX`, ifName];
-                  }}
-                />
-                {selectedIfaces.map((name, idx) => {
-                  const color = RX_COLORS[idx % RX_COLORS.length];
-                  return (
-                    <Area 
-                      key={`${name}_in`} 
-                      type="monotone" 
-                      dataKey={`${name}_in`} 
-                      stackId="rx" 
-                      stroke={color} 
-                      strokeWidth={2} 
-                      fill={`url(#grad_rx_${idx})`} 
-                      isAnimationActive={false}
-                    />
-                  );
-                })}
-              </AreaChart>
-            </ResponsiveContainer>
-          </div>
-
-          {/* TX Chart */}
-          <div className="relative">
-            <div className="absolute left-0 top-1/2 -translate-y-1/2 -rotate-90 origin-left text-[9px] font-black text-text-secondary uppercase tracking-widest pointer-events-none opacity-40 ml-1">
-              TX (↑)
-            </div>
-            <ResponsiveContainer width="100%" height={150}>
-              <AreaChart data={chartData} margin={{top:0,right:10,left:35,bottom:10}}>
-                <defs>
-                  {selectedIfaces.map((name, idx) => {
-                    const color = TX_COLORS[idx % TX_COLORS.length];
-                    return (
-                      <linearGradient key={`tx_${name}`} id={`grad_tx_${idx}`} x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={color} stopOpacity={isDark ? 0.5 : 0.3}/>
-                        <stop offset="95%" stopColor={color} stopOpacity={0}/>
-                      </linearGradient>
-                    );
-                  })}
-                </defs>
+          <div className="relative h-[300px] mt-4">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#334155" : "#E2E8F0"} vertical={false} opacity={isDark ? 0.3 : 0.6} />
                 <XAxis 
                   dataKey="time" 
                   tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
                   tickLine={false} 
-                  axisLine={false} 
-                  interval={4} 
+                  axisLine={false}
+                  tickFormatter={formatTime}
+                  minTickGap={30}
                 />
                 <YAxis 
                   tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
                   tickLine={false} 
                   axisLine={false} 
-                  tickFormatter={v => `${v}M`} 
+                  tickFormatter={v => v + ' M'} 
                 />
                 <RechartsTooltip
                   contentStyle={{ 
@@ -995,28 +921,35 @@ export default function Dashboard() {
                     boxShadow: isDark ? 'none' : '0 10px 15px -3px rgb(0 0 0 / 0.1)',
                     padding: '8px 12px'
                   }}
-                  itemStyle={{ fontWeight: 700 }}
-                  formatter={(v: number, name: string) => {
-                    const ifName = name.replace('_out', '');
-                    return [`${v} Mbps ↑ TX`, ifName];
-                  }}
+                  formatter={(v: any, name: string) => [
+                    v + ' Mbps',
+                    name.replace('_in', ' ↓').replace('_out', ' ↑')
+                  ]}
                 />
-                {selectedIfaces.map((name, idx) => {
-                  const color = TX_COLORS[idx % TX_COLORS.length];
-                  return (
-                    <Area 
-                      key={`${name}_out`} 
-                      type="monotone" 
-                      dataKey={`${name}_out`} 
-                      stackId="tx" 
-                      stroke={color} 
+                {selectedIfaces.map((name, idx) => (
+                  <Fragment key={name}>
+                    <Line 
+                      key={name+'_in'}
+                      type="monotone"
+                      dataKey={`${name}_in`}
+                      stroke={COLORS[idx % COLORS.length]}
+                      dot={false} 
                       strokeWidth={2} 
-                      fill={`url(#grad_tx_${idx})`} 
                       isAnimationActive={false}
                     />
-                  );
-                })}
-              </AreaChart>
+                    <Line 
+                      key={name+'_out'}
+                      type="monotone"
+                      dataKey={`${name}_out`}
+                      stroke={COLORS[idx % COLORS.length] + '80'}
+                      dot={false} 
+                      strokeWidth={1.5}
+                      strokeDasharray="4 2"
+                      isAnimationActive={false}
+                    />
+                  </Fragment>
+                ))}
+              </LineChart>
             </ResponsiveContainer>
           </div>
         </div>
