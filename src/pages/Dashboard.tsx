@@ -899,61 +899,63 @@ export default function Dashboard() {
        </div>
       </div>
 
-        <div className="space-y-2 bg-[#F8FAFC] dark:bg-[#0f172a]/40 p-4 rounded-xl border border-border/50 relative min-h-[350px]">
-          {metricsHistoryLoading && (
-            <div className="absolute inset-0 z-50 flex items-center justify-center bg-white/50 dark:bg-black/20 rounded-xl backdrop-blur-[1px]">
-              <div className="flex flex-col items-center gap-3">
-                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-                <span className="text-xs font-bold text-text-secondary uppercase tracking-widest animate-pulse">Carregando histórico...</span>
-              </div>
+        <div className="space-y-2 bg-[#F8FAFC] dark:bg-[#0f172a]/40 p-4 rounded-xl border border-border/50 relative min-h-[350px] flex items-center justify-center">
+          {metricsHistoryLoading ? (
+            <div className="flex flex-col items-center gap-3">
+              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+              <span className="text-xs font-bold text-text-secondary uppercase tracking-widest animate-pulse">Carregando histórico...</span>
             </div>
-          )}
-
-          <div className="relative h-[300px] mt-4">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#334155" : "#E2E8F0"} vertical={false} opacity={isDark ? 0.3 : 0.6} />
-                <XAxis 
-                  dataKey="time" 
-                  tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
-                  tickLine={false} 
-                  axisLine={false}
-                  tickFormatter={formatTime}
-                  minTickGap={30}
-                />
-                <YAxis 
-                  tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
-                  tickLine={false} 
-                  axisLine={false} 
-                  tickFormatter={v => v + ' M'} 
-                />
-                <RechartsTooltip
-                  contentStyle={{ 
-                    background: isDark ? '#1E293B' : '#FFFFFF', 
-                    border: `1px solid ${isDark ? '#334155' : '#E2E8F0'}`, 
-                    borderRadius: '12px', 
-                    fontSize: '11px',
-                    boxShadow: isDark ? 'none' : '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                    padding: '8px 12px'
-                  }}
-                  formatter={(v: any, name: string) => [
-                    v + ' Mbps',
-                    name.replace('_in', ' ↓').replace('_out', ' ↑')
-                  ]}
-                />
-                {selectedIfaces.map((name, idx) => (
-                  <Fragment key={name}>
+          ) : chartData.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 text-text-secondary opacity-60">
+              <History size={32} strokeWidth={1.5} />
+              <span className="text-xs font-bold uppercase tracking-wider">Sem dados para o período selecionado</span>
+            </div>
+          ) : (
+            <div className="relative w-full h-[300px] mt-4">
+              <ResponsiveContainer width="100%" height="100%">
+                <LineChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#334155" : "#E2E8F0"} vertical={false} opacity={isDark ? 0.3 : 0.6} />
+                  <XAxis 
+                    dataKey="time" 
+                    tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
+                    tickLine={false} 
+                    axisLine={false}
+                    tickFormatter={formatTime}
+                    minTickGap={30}
+                  />
+                  <YAxis 
+                    tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
+                    tickLine={false} 
+                    axisLine={false} 
+                    tickFormatter={v => v + ' M'} 
+                  />
+                  <RechartsTooltip
+                    contentStyle={{ 
+                      background: isDark ? '#1E293B' : '#FFFFFF', 
+                      border: `1px solid ${isDark ? '#334155' : '#E2E8F0'}`, 
+                      borderRadius: '12px', 
+                      fontSize: '11px',
+                      boxShadow: isDark ? 'none' : '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                      padding: '8px 12px'
+                    }}
+                    formatter={(v: any, name: string) => [
+                      v + ' Mbps',
+                      name.replace('_in', ' ↓').replace('_out', ' ↑')
+                    ]}
+                  />
+                  {selectedIfaces.flatMap((name, idx) => [
                     <Line 
-                      key={name+'_in'}
+                      key={`${name}_in`}
                       type="monotone"
                       dataKey={`${name}_in`}
                       stroke={COLORS[idx % COLORS.length]}
                       dot={false} 
                       strokeWidth={2} 
                       isAnimationActive={false}
-                    />
+                      name={`${name} ↓`}
+                    />,
                     <Line 
-                      key={name+'_out'}
+                      key={`${name}_out`}
                       type="monotone"
                       dataKey={`${name}_out`}
                       stroke={COLORS[idx % COLORS.length] + '80'}
@@ -961,12 +963,13 @@ export default function Dashboard() {
                       strokeWidth={1.5}
                       strokeDasharray="4 2"
                       isAnimationActive={false}
+                      name={`${name} ↑`}
                     />
-                  </Fragment>
-                ))}
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+                  ])}
+                </LineChart>
+              </ResponsiveContainer>
+            </div>
+          )}
         </div>
 
          <div className="mt-4 border-t border-border/40 pt-4">
