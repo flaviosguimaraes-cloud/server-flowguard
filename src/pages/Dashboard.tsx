@@ -181,10 +181,7 @@ export default function Dashboard() {
     }
   });
 
-  const [source, setSource] = useState<'snmp' | 'flow'>(() => {
-    const saved = localStorage.getItem('fg_traffic_source');
-    return (saved === 'snmp' || saved === 'flow') ? saved : 'snmp';
-  });
+   const [source] = useState<'snmp'>('snmp');
 
   const { data: collectors } = useQuery({
     queryKey: ['collectors'],
@@ -207,22 +204,30 @@ export default function Dashboard() {
     const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
   const [serviceFilter, setServiceFilter] = useState<string | null>(null);
   const [timePeriod, setTimePeriod] = useState<'realtime' | '1h' | '6h' | '24h'>('realtime');
+   const [showIfaceSelector, setShowIfaceSelector] = useState(false);
 
   const { data: metricsHistory, isLoading: metricsHistoryLoading } = useQuery({
-    queryKey: ['iface-metrics-history', selectedCollector, timePeriod, selectedIfaces],
+    queryKey: ['iface-history', selectedCollector, timePeriod, selectedIfaces],
     queryFn: async () => {
-      if (timePeriod === 'realtime' || !selectedIfaces.length) return null;
-      const mins = timePeriod === '1h' ? 60 : timePeriod === '6h' ? 360 : 1440;
-      
-      const promises = selectedIfaces.map(ifName => 
-        api.get(`/api/collectors/${selectedCollector}/metrics/history?minutes=${mins}&if_name=${ifName}`)
-          .then(r => ({ ifName, data: r.data }))
+      if (timePeriod === 'realtime' || selectedIfaces.length === 0 || !selectedCollector)
+        return null;
+
+      const minutes = timePeriod === '1h' ? 60 : timePeriod === '6h' ? 360 : 1440;
+
+      const results = await Promise.all(
+        selectedIfaces.map(ifName =>
+          api.get(
+            `/api/collectors/${selectedCollector}/metrics/history?minutes=${minutes}&if_name=${encodeURIComponent(ifName)}`
+          ).then(r => ({
+            ifName,
+            data: r.data.history || []
+          }))
+        )
       );
-      
-      return Promise.all(promises);
+      return results;
     },
-    enabled: timePeriod !== 'realtime' && !!selectedCollector && selectedIfaces.length > 0,
-    refetchInterval: timePeriod === 'realtime' ? 30000 : 300000,
+    enabled: timePeriod !== 'realtime' && selectedIfaces.length > 0 && !!selectedCollector,
+    refetchInterval: 60000,
   });
  
    // MELHORIA 1 — Gráfico de interface carrega imediatamente
