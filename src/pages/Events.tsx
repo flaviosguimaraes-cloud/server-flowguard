@@ -61,6 +61,24 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
     refetchInterval: 30000,
   });
 
+   const formatDate = (dateStr: string) => {
+     if (!dateStr) return '—';
+     try {
+       // Substituir espaço por T para compatibilidade com Safari/iOS
+       const d = new Date(dateStr.replace(' ', 'T'));
+       if (isNaN(d.getTime())) return '—';
+       return d.toLocaleString('pt-BR', {
+         day: '2-digit',
+         month: '2-digit',
+         hour: '2-digit',
+         minute: '2-digit',
+         second: '2-digit'
+       });
+     } catch {
+       return '—';
+     }
+   };
+
   const fmtDuration = (seconds: number) => {
     if (!seconds) return '—';
     if (seconds < 60) return `${seconds}s`;
@@ -298,12 +316,12 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
                 {eventsHistory?.items?.map((event: any, i: number) => (
                   <tr key={i} className="hover:bg-bg-primary/50 transition-colors group">
                     <td className="px-6 py-3.5 font-mono font-bold text-text-primary text-xs">{event.ip}</td>
-                    <td className="px-6 py-3.5 text-text-secondary text-[11px] whitespace-nowrap">
-                      {new Date(event.start_time).toLocaleString('pt-BR')}
-                    </td>
-                    <td className="px-6 py-3.5 text-text-secondary text-[11px] whitespace-nowrap">
-                      {event.end_time ? new Date(event.end_time).toLocaleString('pt-BR') : '—'}
-                    </td>
+                     <td className="px-6 py-3.5 text-text-secondary text-[11px] whitespace-nowrap">
+                       {formatDate(event.start_time)}
+                     </td>
+                     <td className="px-6 py-3.5 text-text-secondary text-[11px] whitespace-nowrap">
+                       {formatDate(event.end_time)}
+                     </td>
                     <td className="px-6 py-3.5 text-center text-text-primary text-[11px] font-medium">
                       {fmtDuration(event.duration_seconds)}
                     </td>
