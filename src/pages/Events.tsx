@@ -263,15 +263,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
               )}
             </div>
             
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap gap-2">
               <button 
                 onClick={() => queryClient.invalidateQueries({ queryKey: ['events-history-page'] })}
                 className="px-3 py-1.5 text-[10px] font-bold uppercase rounded-lg bg-bg-primary text-text-secondary border border-border hover:text-primary transition-all"
               >
                 ↻ Atualizar
               </button>
-            
-            <div className="flex flex-wrap gap-2">
+
               <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
                 {[
                   { label: 'Todos', value: 'all' },
