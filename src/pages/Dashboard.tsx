@@ -1109,12 +1109,15 @@ export default function Dashboard() {
                >
                  Selecionar todas
                </button>
-               <button 
-                 onClick={() => setSelectedIfaces([])}
-                 className="text-[10px] font-bold uppercase px-3 py-1.5 bg-bg-primary border border-border rounded hover:bg-bg-secondary"
-               >
-                 Limpar
-               </button>
+                <button 
+                  onClick={() => {
+                    setSelectedIfaces([]);
+                    localStorage.setItem('fg_ifaces', JSON.stringify([]));
+                  }}
+                  className="text-[10px] font-bold uppercase px-3 py-1.5 bg-bg-primary border border-border rounded hover:bg-bg-secondary"
+                >
+                  Limpar
+                </button>
              </div>
              
              <div style={{ overflowY: 'auto', flex: 1 }} className="pr-2 custom-scrollbar">
