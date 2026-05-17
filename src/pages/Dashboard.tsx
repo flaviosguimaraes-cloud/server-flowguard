@@ -90,9 +90,6 @@ export default function Dashboard() {
       queryClient.invalidateQueries({ queryKey: ['connections'] });
       queryClient.invalidateQueries({ queryKey: ['detection-stats'] });
       queryClient.invalidateQueries({ queryKey: ['timeline'] });
-      queryClient.invalidateQueries({ queryKey: ['protocols'] });
-      queryClient.invalidateQueries({ queryKey: ['countries'] });
-      queryClient.invalidateQueries({ queryKey: ['ports'] });
       queryClient.invalidateQueries({ queryKey: ['interfaces'] });
     }, 30000);
 
@@ -148,39 +145,6 @@ export default function Dashboard() {
     refetchOnWindowFocus: true,
   });
 
-  const { data: protocols } = useQuery({
-    queryKey: ['protocols'],
-    queryFn: async () => {
-      const r = await api.get('/api/flows/protocols?minutes=30');
-      return r.data;
-    },
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnWindowFocus: true,
-  });
-
-  const { data: countries } = useQuery({
-    queryKey: ['countries'],
-    queryFn: async () => {
-      const r = await api.get('/api/flows/countries?minutes=30');
-      return r.data;
-    },
-    staleTime: 0,
-    gcTime: 0,
-    refetchOnWindowFocus: true,
-  });
-
-  const { data: portsDst } = useQuery({
-    queryKey: ['ports-consumed'],
-    queryFn: () => api.get('/api/flows/ports?minutes=30&direction=src').then(r => r.data),
-    refetchInterval: 30000,
-  });
-
-  const { data: portsSrc } = useQuery({
-    queryKey: ['ports-served'],
-    queryFn: () => api.get('/api/flows/ports?minutes=30&direction=dst').then(r => r.data),
-    refetchInterval: 30000,
-  });
 
   const [selectedCollector, setSelectedCollector] = useState<number>(() => {
     const saved = localStorage.getItem('fg_collector');
@@ -436,13 +400,6 @@ export default function Dashboard() {
 
   const chartData = timePeriod === 'realtime' ? realtimeChartData : historicalChartData;
 
-    const protoMap: Record<number, string> = {
-     6: 'TCP', 17: 'UDP', 1: 'ICMP',
-     47: 'GRE', 50: 'ESP', 89: 'OSPF'
-   };
-
-    const protoItems = protocols?.items || protocols?.data || (Array.isArray(protocols) ? protocols : []);
-    const totalBytes = protoItems.reduce((a: number, b: any) => a + b.bytes, 0);
 
 
    const formatTime = (timeStr: string) => {
