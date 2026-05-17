@@ -357,23 +357,8 @@ export default function Dashboard() {
        return map;
      }, [interfaces]);
  
-  const realtimeChartData = useMemo(() => {
-    if (timePeriod !== 'realtime') return [];
-    return timePoints.map((time, idx) => {
-      const point: Record<string, any> = { time };
-      selectedIfaces.forEach(name => {
-        const h = history[name];
-        if (h && h[idx]) {
-          point[`${name}_in`] = Math.round(h[idx].in_bps / 1e6);
-          point[`${name}_out`] = Math.round(h[idx].out_bps / 1e6);
-        }
-      });
-      return point;
-    });
-  }, [timePoints, selectedIfaces, history, timePeriod]);
-
   const historicalChartData = useMemo(() => {
-    if (timePeriod === 'realtime' || !metricsHistory?.length) return [];
+    if (!metricsHistory?.length) return [];
 
     // Coletar todos os timestamps únicos
     const allTimes = new Set<string>();
@@ -399,10 +384,10 @@ export default function Dashboard() {
         return point;
       });
 
-    return sampleData(fullData);
-  }, [metricsHistory, timePeriod]);
+    return fullData;
+  }, [metricsHistory]);
 
-  const chartData = timePeriod === 'realtime' ? realtimeChartData : historicalChartData;
+  const chartData = useMemo(() => sampleData(historicalChartData), [historicalChartData]);
 
 
 
@@ -441,22 +426,6 @@ export default function Dashboard() {
          max: Math.max(...values),
        };
      };
-
-     if (timePeriod === 'realtime') {
-       const firstIface = selectedIfaces[0];
-       const rxValues = firstIface && history[firstIface] ? history[firstIface].map((_, idx) =>
-         selectedIfaces.reduce((s, name) => s + (history[name]?.[idx]?.in_bps || 0), 0)
-       ) : [];
-       const txValues = firstIface && history[firstIface] ? history[firstIface].map((_, idx) =>
-         selectedIfaces.reduce((s, name) => s + (history[name]?.[idx]?.out_bps || 0), 0)
-       ) : [];
-
-       return {
-         rx: getStats(rxValues),
-         tx: getStats(txValues),
-         label: 'Tempo Real'
-       };
-     }
 
      if (!metricsHistory?.length) {
        return {
