@@ -884,22 +884,22 @@ export default function Dashboard() {
             </div>
 
               {/* MELHORIA 4 — Seletor de período */}
-              <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
-                {(['realtime', '1h', '6h', '24h'] as const).map((p) => (
-                  <button
-                    key={p}
-                    onClick={() => setTimePeriod(p)}
-                    className={clsx(
-                      "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all",
-                      timePeriod === p 
-                        ? "bg-white dark:bg-[#2a2d3e] text-accent shadow-sm" 
-                        : "text-text-secondary hover:text-text-primary"
-                    )}
-                  >
-                    {p === 'realtime' ? 'Tempo Real' : p}
-                  </button>
-                ))}
-              </div>
+               <div className="flex bg-bg-primary p-1 rounded-lg border border-border overflow-x-auto">
+                 {(['realtime', '1h', '6h', '24h', '48h'] as const).map((p) => (
+                   <button
+                     key={p}
+                     onClick={() => setTimePeriod(p)}
+                     className={clsx(
+                       "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all whitespace-nowrap",
+                       timePeriod === p 
+                         ? "bg-white dark:bg-[#2a2d3e] text-accent shadow-sm" 
+                         : "text-text-secondary hover:text-text-primary"
+                     )}
+                   >
+                     {p === 'realtime' ? 'Tempo Real' : p}
+                   </button>
+                 ))}
+               </div>
  
              <button 
                onClick={() => {
@@ -940,15 +940,15 @@ export default function Dashboard() {
             </span>
           </div>
 
-          <div className="flex items-center gap-4">
-            <div className="flex flex-col items-end px-3 py-1.5 bg-bg-primary/50 rounded-lg border border-border/30">
-              <span className="text-[9px] uppercase font-black text-text-secondary opacity-60 leading-none mb-1">Total RX</span>
-              <span className="text-xs font-black text-accent">{fmtBps(selectedIfaceData.reduce((a: number, b: any) => a + (b.in_bps || 0), 0))}</span>
-            </div>
-            <div className="flex flex-col items-end px-3 py-1.5 bg-bg-primary/50 rounded-lg border border-border/30">
-              <span className="text-[9px] uppercase font-black text-text-secondary opacity-60 leading-none mb-1">Total TX</span>
-              <span className="text-xs font-black text-success">{fmtBps(selectedIfaceData.reduce((a: number, b: any) => a + (b.out_bps || 0), 0))}</span>
-            </div>
+           <div className="flex items-center gap-4">
+             <div className="flex flex-col items-end px-3 py-1.5 bg-bg-primary/50 rounded-lg border border-border/30">
+               <span className="text-[9px] uppercase font-black text-text-secondary opacity-60 leading-none mb-1">Total RX ({periodStats.label})</span>
+               <span className="text-sm font-black text-accent">{formatBpsRaw(periodStats.rx)}</span>
+             </div>
+             <div className="flex flex-col items-end px-3 py-1.5 bg-bg-primary/50 rounded-lg border border-border/30">
+               <span className="text-[9px] uppercase font-black text-text-secondary opacity-60 leading-none mb-1">Total TX ({periodStats.label})</span>
+               <span className="text-sm font-black text-success">{formatBpsRaw(periodStats.tx)}</span>
+             </div>
             <div className="flex flex-col items-end px-3 py-1.5 bg-bg-primary/50 rounded-lg border border-border/30">
               <span className="text-[9px] uppercase font-black text-text-secondary opacity-60 leading-none mb-1">Interfaces</span>
               <span className="text-xs font-black text-text-primary">{selectedIfaces.length}<span className="text-[10px] opacity-40 mx-0.5">/</span>{(Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : []).length}</span>
