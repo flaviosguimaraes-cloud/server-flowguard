@@ -621,21 +621,6 @@ export default function Dashboard() {
     const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
 
     const ifaceColors = ['#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
-  const snmpTotals = useMemo(() => {
-    const list = Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [];
-    let rx = 0;
-    let tx = 0;
-    list.forEach((i: any) => {
-      const name = (i.display_name || i.if_name || '').toLowerCase();
-      if (!name || name.includes('null') || name.includes('loopback') || name.includes('virtual')) return;
-      rx += (i.in_bps || 0);
-      tx += (i.out_bps || 0);
-    });
-    return {
-      rx: rx / 1e9,
-      tx: tx / 1e9
-    };
-  }, [interfaces]);
 
   const relevantInterfaces = (Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
     .filter((i: any) => (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0)
