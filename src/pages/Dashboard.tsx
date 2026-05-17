@@ -969,62 +969,79 @@ export default function Dashboard() {
             </div>
           ) : (
             <div className="relative w-full h-[300px] mt-4">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#334155" : "#E2E8F0"} vertical={false} opacity={isDark ? 0.3 : 0.6} />
-                  <XAxis 
-                    dataKey="time" 
-                    tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
-                    tickLine={false} 
-                    axisLine={false}
-                    tickFormatter={formatTime}
-                    minTickGap={30}
-                  />
-                  <YAxis 
-                    tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
-                    tickLine={false} 
-                    axisLine={false} 
-                    tickFormatter={v => v + ' M'} 
-                  />
-                  <RechartsTooltip
-                    contentStyle={{ 
-                      background: isDark ? '#1E293B' : '#FFFFFF', 
-                      border: `1px solid ${isDark ? '#334155' : '#E2E8F0'}`, 
-                      borderRadius: '12px', 
-                      fontSize: '11px',
-                      boxShadow: isDark ? 'none' : '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                      padding: '8px 12px'
-                    }}
-                    formatter={(v: any, name: string) => [
-                      v + ' Mbps',
-                      name.replace('_in', ' ↓').replace('_out', ' ↑')
-                    ]}
-                  />
-                  {selectedIfaces.flatMap((name, idx) => [
-                    <Line 
-                      key={`${name}_in`}
-                      type="monotone"
-                      dataKey={`${name}_in`}
-                      stroke={COLORS[idx % COLORS.length]}
-                      dot={false} 
-                      strokeWidth={2} 
-                      isAnimationActive={false}
-                      name={`${name} ↓`}
-                    />,
-                    <Line 
-                      key={`${name}_out`}
-                      type="monotone"
-                      dataKey={`${name}_out`}
-                      stroke={COLORS[idx % COLORS.length] + '80'}
-                      dot={false} 
-                      strokeWidth={1.5}
-                      strokeDasharray="4 2"
-                      isAnimationActive={false}
-                      name={`${name} ↑`}
-                    />
-                  ])}
-                </LineChart>
-              </ResponsiveContainer>
+               <ResponsiveContainer width="100%" height="100%">
+                 <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                   <defs>
+                     {selectedIfaces.map((name, idx) => (
+                       <linearGradient
+                         key={name}
+                         id={`grad_${idx}`}
+                         x1="0" y1="0" x2="0" y2="1">
+                         <stop offset="5%"
+                           stopColor={COLORS[idx % COLORS.length]}
+                           stopOpacity={0.4}/>
+                         <stop offset="95%"
+                           stopColor={COLORS[idx % COLORS.length]}
+                           stopOpacity={0.05}/>
+                       </linearGradient>
+                     ))}
+                   </defs>
+                   <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#334155" : "#E2E8F0"} vertical={false} opacity={isDark ? 0.3 : 0.6} />
+                   <XAxis 
+                     dataKey="time" 
+                     tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
+                     tickLine={false} 
+                     axisLine={false}
+                     tickFormatter={formatTime}
+                     minTickGap={30}
+                   />
+                   <YAxis 
+                     tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
+                     tickLine={false} 
+                     axisLine={false} 
+                     tickFormatter={v => formatBps(v)} 
+                   />
+                   <RechartsTooltip
+                     contentStyle={{ 
+                       background: isDark ? '#1E293B' : '#FFFFFF', 
+                       border: `1px solid ${isDark ? '#334155' : '#E2E8F0'}`, 
+                       borderRadius: '12px', 
+                       fontSize: '11px',
+                       boxShadow: isDark ? 'none' : '0 10px 15px -3px rgb(0 0 0 / 0.1)',
+                       padding: '8px 12px'
+                     }}
+                     formatter={(v: number, name: string) => [
+                       formatBps(v) + 'bps',
+                       name.includes('_in') ? '↓ RX' : '↑ TX'
+                     ]}
+                   />
+                   {selectedIfaces.flatMap((name, idx) => [
+                     <Area 
+                       key={`${name}_in`}
+                       type="monotone"
+                       dataKey={`${name}_in`}
+                       stroke={COLORS[idx % COLORS.length]}
+                       strokeWidth={2} 
+                       fill={`url(#grad_${idx})`}
+                       dot={false} 
+                       isAnimationActive={false}
+                       name={`${name} ↓`}
+                     />,
+                     <Area 
+                       key={`${name}_out`}
+                       type="monotone"
+                       dataKey={`${name}_out`}
+                       stroke={COLORS[idx % COLORS.length]}
+                       strokeWidth={1.5}
+                       strokeDasharray="4 2"
+                       fill="none"
+                       dot={false} 
+                       isAnimationActive={false}
+                       name={`${name} ↑`}
+                     />
+                   ])}
+                 </AreaChart>
+               </ResponsiveContainer>
             </div>
           )}
         </div>
