@@ -22,7 +22,7 @@ const REFETCH_INTERVAL = 30000;
 const RX_COLORS = ['#3b82f6', '#1d4ed8', '#60a5fa', '#93c5fd', '#bfdbfe'];
 const TX_COLORS = ['#22c55e', '#16a34a', '#4ade80', '#86efac', '#bbf7d0'];
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
-const MAX_POINTS = 200;
+const MAX_POINTS = 300;
 
 const sampleData = (data: any[]) => {
   if (data.length <= MAX_POINTS)
@@ -66,6 +66,17 @@ function StatCard({ title, value, unit, icon, trend, tooltip, subtitle }: any) {
     </div>
   );
 }
+
+const SERVICE_NAMES: Record<string, string> = {
+  flow_collector: "GoFlow2 (Coletor)",
+  detection_engine: "FastNetMon",
+  api: "FlowGuard API",
+  flow_database: "ClickHouse",
+  config_database: "PostgreSQL",
+  cache: "Redis",
+  bgp_engine: "ExaBGP (BGP)",
+  web: "Nginx"
+};
 
 export default function Dashboard() {
   const { t } = useTranslation();
@@ -124,13 +135,20 @@ export default function Dashboard() {
 
   const { data: eventsHistory } = useQuery({
     queryKey: ['events-history-compact'],
-    queryFn: () => api.get('/api/events/history?limit=8').then(r => r.data),
+    queryFn: async () => {
+      const r = await api.get('/api/events/history?limit=8');
+      console.log('events:', r.data);
+      return r.data;
+    },
     refetchInterval: 30000,
   });
 
   const { data: sysStatus } = useQuery({
     queryKey: ['system-status'],
-    queryFn: () => api.get('/api/system/status').then(r => r.data).catch(() => null),
+    queryFn: () => api.get('/api/system/status').then(r => {
+      console.log('system status:', r.data);
+      return r.data;
+    }).catch(() => null),
     refetchInterval: 30000,
   });
 
@@ -183,25 +201,22 @@ export default function Dashboard() {
 
    const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
    const [serviceFilter, setServiceFilter] = useState<string | null>(null);
-   const [timePeriod, setTimePeriod] = useState<'realtime' | '1h' | '6h' | '24h' | '48h'>('realtime');
+   const [timePeriod, setTimePeriod] = useState<'30m' | '1h' | '6h' | '24h' | '48h'>('30m');
    const [showIfaceSelector, setShowIfaceSelector] = useState(false);
 
-  // 1. Forçar refetch quando timePeriod ou interfaces selecionadas mudam
   useEffect(() => {
-    if (timePeriod !== 'realtime') {
-      queryClient.invalidateQueries({
-        queryKey: ['iface-history']
-      });
-    }
+    queryClient.invalidateQueries({
+      queryKey: ['iface-history']
+    });
   }, [timePeriod, selectedIfaces, queryClient]);
 
   const { data: metricsHistory, isLoading: metricsHistoryLoading } = useQuery({
     queryKey: ['iface-history', selectedCollector, timePeriod, selectedIfaces],
     queryFn: async () => {
-      if (timePeriod === 'realtime' || selectedIfaces.length === 0 || !selectedCollector)
+      if (selectedIfaces.length === 0 || !selectedCollector)
         return null;
 
-       const minutes = timePeriod === '1h' ? 60 : timePeriod === '6h' ? 360 : timePeriod === '24h' ? 1440 : 2880;
+       const minutes = timePeriod === '30m' ? 30 : timePeriod === '1h' ? 60 : timePeriod === '6h' ? 360 : timePeriod === '24h' ? 1440 : 2880;
 
       console.log('Buscando histórico:', selectedCollector, selectedIfaces, minutes);
 
@@ -219,37 +234,10 @@ export default function Dashboard() {
       );
       return results;
     },
-    enabled: timePeriod !== 'realtime' && selectedIfaces.length > 0 && !!selectedCollector,
+    enabled: selectedIfaces.length > 0 && !!selectedCollector,
     refetchInterval: 60000,
   });
  
-   // MELHORIA 1 — Gráfico de interface carrega imediatamente
-  useEffect(() => {
-    if (!interfaces?.interfaces?.length || timePeriod !== 'realtime') return;
-
-    setHistory(prev => {
-       const hasData = Object.values(prev).some(arr => arr.length > 0);
-       if (hasData) return prev;
- 
-       const now = new Date();
-       const next: typeof prev = {};
- 
-       interfaces.interfaces.forEach((iface: any) => {
-         const name = iface.display_name || iface.if_name;
-         if (!name) return;
- 
-         next[name] = Array.from({length: 10}, (_, i) => ({
-           time: new Date(now.getTime() - (9-i) * 30000).toLocaleTimeString('pt-BR', {
-             hour: '2-digit', minute: '2-digit', second: '2-digit'
-           }),
-           in_bps: iface.in_bps || 0,
-           out_bps: iface.out_bps || 0,
-         }));
-       });
-       return next;
-     });
-  }, [interfaces, timePeriod]);
-
   useEffect(() => {
     if (selectedCollector) {
       localStorage.setItem('fg_collector', String(selectedCollector));
@@ -265,33 +253,6 @@ export default function Dashboard() {
   }, [source]);
 
   useEffect(() => {
-    if (!interfaces?.interfaces || timePeriod !== 'realtime') return;
-
-    const now = new Date().toLocaleTimeString('pt-BR', {
-      hour: '2-digit', minute: '2-digit', second: '2-digit'
-    });
-
-    setHistory(prev => {
-      const next = { ...prev };
-      const ifaceList = Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [];
-      
-      ifaceList.forEach((iface: any) => {
-        const name = iface.display_name || iface.if_name;
-        if (!name) return;
-        
-        if (!next[name]) next[name] = [];
-        next[name] = [
-          ...next[name].slice(-19),
-          {
-            time: now,
-            in_bps: iface.in_bps || 0,
-            out_bps: iface.out_bps || 0,
-          }
-        ];
-      });
-      return next;
-    });
-
     // Default selection (top 8) if none selected
     if (selectedIfaces.length === 0 && interfaces?.interfaces) {
       const top8 = (Array.isArray(interfaces.interfaces) ? interfaces.interfaces : [])
@@ -305,7 +266,7 @@ export default function Dashboard() {
         .map((i: any) => i.display_name || i.if_name);
       setSelectedIfaces(top8);
     }
-  }, [interfaces]);
+  }, [interfaces, selectedIfaces.length]);
 
    const { data: activeMitigations } = useQuery({
      queryKey: ['mitigation-active-dashboard'],
@@ -353,23 +314,8 @@ export default function Dashboard() {
        return map;
      }, [interfaces]);
  
-  const realtimeChartData = useMemo(() => {
-    if (timePeriod !== 'realtime') return [];
-    return timePoints.map((time, idx) => {
-      const point: Record<string, any> = { time };
-      selectedIfaces.forEach(name => {
-        const h = history[name];
-        if (h && h[idx]) {
-          point[`${name}_in`] = Math.round(h[idx].in_bps / 1e6);
-          point[`${name}_out`] = Math.round(h[idx].out_bps / 1e6);
-        }
-      });
-      return point;
-    });
-  }, [timePoints, selectedIfaces, history, timePeriod]);
-
   const historicalChartData = useMemo(() => {
-    if (timePeriod === 'realtime' || !metricsHistory?.length) return [];
+    if (!metricsHistory?.length) return [];
 
     // Coletar todos os timestamps únicos
     const allTimes = new Set<string>();
@@ -395,10 +341,10 @@ export default function Dashboard() {
         return point;
       });
 
-    return sampleData(fullData);
-  }, [metricsHistory, timePeriod]);
+    return fullData;
+  }, [metricsHistory]);
 
-  const chartData = timePeriod === 'realtime' ? realtimeChartData : historicalChartData;
+  const chartData = useMemo(() => sampleData(historicalChartData), [historicalChartData]);
 
 
 
@@ -437,22 +383,6 @@ export default function Dashboard() {
          max: Math.max(...values),
        };
      };
-
-     if (timePeriod === 'realtime') {
-       const firstIface = selectedIfaces[0];
-       const rxValues = firstIface && history[firstIface] ? history[firstIface].map((_, idx) =>
-         selectedIfaces.reduce((s, name) => s + (history[name]?.[idx]?.in_bps || 0), 0)
-       ) : [];
-       const txValues = firstIface && history[firstIface] ? history[firstIface].map((_, idx) =>
-         selectedIfaces.reduce((s, name) => s + (history[name]?.[idx]?.out_bps || 0), 0)
-       ) : [];
-
-       return {
-         rx: getStats(rxValues),
-         tx: getStats(txValues),
-         label: 'Tempo Real'
-       };
-     }
 
      if (!metricsHistory?.length) {
        return {
@@ -643,7 +573,7 @@ export default function Dashboard() {
 
               {/* MELHORIA 4 — Seletor de período */}
                <div className="flex bg-bg-primary p-1 rounded-lg border border-border overflow-x-auto">
-                 {(['realtime', '1h', '6h', '24h', '48h'] as const).map((p) => (
+                 {(['30m', '1h', '6h', '24h', '48h'] as const).map((p) => (
                    <button
                      key={p}
                      onClick={() => setTimePeriod(p)}
@@ -654,7 +584,7 @@ export default function Dashboard() {
                          : "text-text-secondary hover:text-text-primary"
                      )}
                    >
-                     {p === 'realtime' ? 'Tempo Real' : p}
+                     {p === '30m' ? '30m' : p}
                    </button>
                  ))}
                </div>
@@ -787,35 +717,33 @@ export default function Dashboard() {
           )}
         </div>
 
-          {/* Zabbix style stats */}
-          <div className="mt-6 border-t border-border/40 pt-4 px-2">
-            <div className="text-[10px] text-text-secondary font-bold uppercase tracking-widest mb-3 opacity-60 flex items-center gap-2">
-              <Activity size={12} />
+          {/* Compact Zabbix style stats below chart */}
+          <div className="mt-4 border-t border-border/40 pt-3 px-2">
+            <div className="flex items-center gap-4 text-[10px] text-text-secondary font-bold uppercase tracking-widest mb-2 opacity-60">
+              <Activity size={10} />
               Estatísticas · {periodStats.label}
             </div>
-            <div className="space-y-3">
+            <div className="space-y-1">
               {(['rx', 'tx'] as const).map(dir => (
-                <div key={dir} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-8">
-                  <div className="flex items-center gap-2 min-w-[60px]">
-                    <span className={clsx(
-                      "text-xs font-black",
-                      dir === 'rx' ? "text-blue-500" : "text-green-500"
-                    )}>
-                      {dir === 'rx' ? '↓ RX' : '↑ TX'}
-                    </span>
-                  </div>
+                <div key={dir} className="flex items-center gap-3 text-[11px] font-medium leading-none py-0.5">
+                  <span className={clsx(
+                    "font-black w-8",
+                    dir === 'rx' ? "text-blue-500" : "text-green-500"
+                  )}>
+                    {dir === 'rx' ? '↓ RX' : '↑ TX'}
+                  </span>
                   
-                  <div className="grid grid-cols-4 gap-4 sm:gap-12 flex-1">
+                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1">
                     {(['last', 'min', 'avg', 'max'] as const).map(metric => (
-                      <div key={metric} className="flex flex-col">
-                        <span className="text-[9px] uppercase font-bold text-text-secondary opacity-40 leading-none mb-1">
-                          {metric === 'last' ? 'Último' : metric === 'min' ? 'Mínimo' : metric === 'avg' ? 'Média' : 'Máximo'}
+                      <div key={metric} className="flex items-center gap-1.5">
+                        <span className="uppercase text-[9px] font-bold text-text-secondary opacity-50">
+                          {metric === 'last' ? 'Último' : metric === 'min' ? 'Mín' : metric === 'avg' ? 'Méd' : 'Máx'}:
                         </span>
                         <span className={clsx(
-                          "text-[13px] font-bold tracking-tight leading-none",
+                          "font-bold",
                           metric === 'max' ? (dir === 'rx' ? "text-blue-500" : "text-green-500") : "text-text-primary"
                         )}>
-                          {formatBpsRaw(periodStats[dir][metric])}
+                          {formatBpsRaw(periodStats[dir][metric]).replace('bps', '')}
                         </span>
                       </div>
                     ))}
@@ -902,14 +830,31 @@ export default function Dashboard() {
                 {/* Métricas Principais */}
                 <div className="space-y-4">
                   {[
-                    { label: 'CPU', value: sysStatus.cpu_usage, color: sysStatus.cpu_usage >= 90 ? 'bg-danger' : sysStatus.cpu_usage >= 70 ? 'bg-warning' : 'bg-success' },
-                    { label: 'RAM', value: sysStatus.ram_usage, color: sysStatus.ram_usage >= 90 ? 'bg-danger' : sysStatus.ram_usage >= 70 ? 'bg-warning' : 'bg-primary' },
-                    { label: 'Disco', value: sysStatus.disk_usage, color: 'bg-accent' }
+                    { 
+                      label: 'CPU', 
+                      value: sysStatus.cpu_percent || sysStatus.cpu_usage || 0, 
+                      color: (sysStatus.cpu_percent || sysStatus.cpu_usage) >= 90 ? 'bg-danger' : (sysStatus.cpu_percent || sysStatus.cpu_usage) >= 70 ? 'bg-warning' : 'bg-success',
+                      detail: `${(sysStatus.cpu_percent || sysStatus.cpu_usage || 0).toFixed(1)}%`
+                    },
+                    { 
+                      label: 'RAM', 
+                      value: sysStatus.ram_percent || (sysStatus.ram_used_gb && sysStatus.ram_free_gb ? (sysStatus.ram_used_gb / (sysStatus.ram_used_gb + sysStatus.ram_free_gb) * 100) : sysStatus.ram_usage || 0), 
+                      color: (sysStatus.ram_percent || sysStatus.ram_usage) >= 90 ? 'bg-danger' : (sysStatus.ram_percent || sysStatus.ram_usage) >= 70 ? 'bg-warning' : 'bg-primary',
+                      detail: sysStatus.ram_used_gb 
+                        ? `${sysStatus.ram_used_gb.toFixed(2)} GB usado${(sysStatus.ram_used_gb && sysStatus.ram_free_gb) ? ` de ${(sysStatus.ram_used_gb + sysStatus.ram_free_gb).toFixed(0)} GB` : ''}`
+                        : `${(sysStatus.ram_usage || 0).toFixed(0)}%`
+                    },
+                    { 
+                      label: 'Disco', 
+                      value: sysStatus.disk_percent || sysStatus.disk_usage || 0, 
+                      color: 'bg-accent',
+                      detail: sysStatus.disk_used_gb ? `${sysStatus.disk_used_gb.toFixed(0)} GB / ${(sysStatus.disk_used_gb + (sysStatus.disk_free_gb || 0)).toFixed(0)} GB` : `${(sysStatus.disk_usage || 0).toFixed(0)}%`
+                    }
                   ].map(m => (
                     <div key={m.label} className="space-y-1.5">
                       <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
                         <span className="text-text-secondary">{m.label}</span>
-                        <span className="text-text-primary">{m.value}%</span>
+                        <span className="text-text-primary">{m.detail}</span>
                       </div>
                       <div className="h-1.5 bg-bg-primary rounded-full overflow-hidden border border-border/10">
                         <div 
@@ -927,16 +872,21 @@ export default function Dashboard() {
                     <span className="text-xs font-black text-text-primary">{sysStatus.uptime || '—'}</span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                    {Object.entries(sysStatus.services || {}).map(([name, status]: [string, any]) => (
-                      <div key={name} className="flex items-center gap-2">
-                        <span className={clsx(
-                          "w-1.5 h-1.5 rounded-full",
-                          status ? "bg-success shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-danger shadow-[0_0_8px_rgba(239,68,68,0.4)]"
-                        )} />
-                        <span className="text-[10px] font-bold text-text-secondary font-mono truncate">{name}</span>
-                      </div>
-                    ))}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                    {Object.entries(sysStatus.services || {}).map(([name, status]: [string, any]) => {
+                      const isActive = status === 'active' || status === true;
+                      return (
+                        <div key={name} className="flex items-center gap-2">
+                          <span className={clsx(
+                            "w-1.5 h-1.5 rounded-full",
+                            isActive ? "bg-success shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-danger shadow-[0_0_8px_rgba(239,68,68,0.4)]"
+                          )} />
+                          <span className="text-[10px] font-bold text-text-secondary truncate" title={name}>
+                            {SERVICE_NAMES[name] || name}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
