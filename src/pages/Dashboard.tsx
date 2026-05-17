@@ -202,11 +202,9 @@ export default function Dashboard() {
   const [selectedIfaces, setSelectedIfaces] = useState<string[]>(() => {
     try {
       const saved = localStorage.getItem('fg_ifaces');
-      const parsed = saved ? JSON.parse(saved) : [];
+      const parsed = saved ? JSON.parse(saved) : null;
       return Array.isArray(parsed) ? parsed : [];
-    } catch {
-      return [];
-    }
+    } catch { return []; }
   });
 
    const [source] = useState<'snmp'>('snmp');
@@ -285,22 +283,6 @@ export default function Dashboard() {
   useEffect(() => {
     localStorage.setItem('fg_traffic_source', source);
   }, [source]);
-
-  useEffect(() => {
-    // Default selection (top 8) if none selected
-    if (selectedIfaces.length === 0 && interfaces?.interfaces) {
-      const top8 = (Array.isArray(interfaces.interfaces) ? interfaces.interfaces : [])
-        .filter((i: any) => (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0)
-        .filter((i: any) => {
-          const n = (i.display_name || i.if_name || '').toLowerCase();
-          return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
-        })
-        .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
-        .slice(0, 8)
-        .map((i: any) => i.display_name || i.if_name);
-      setSelectedIfaces(top8);
-    }
-  }, [interfaces, selectedIfaces.length]);
 
     const { data: activeMitigations, dataUpdatedAt: mitigationsUpdatedAt } = useQuery({
      queryKey: ['mitigation-active-dashboard'],
