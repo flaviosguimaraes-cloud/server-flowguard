@@ -133,23 +133,32 @@ export default function Dashboard() {
     refetchOnWindowFocus: true,
   });
 
-  const { data: eventsHistory } = useQuery({
-    queryKey: ['events-history-compact'],
+  const { data: eventsHistory, isLoading: loadingEvents } = useQuery({
+    queryKey: ['events-history-dashboard'],
     queryFn: async () => {
       const r = await api.get('/api/events/history?limit=8');
-      console.log('events:', r.data);
+      console.log('events raw:', r.data);
       return r.data;
     },
-    refetchInterval: 30000,
+    refetchInterval: 10000,
+    staleTime: 0,
+    gcTime: 0,
   });
 
   const { data: sysStatus } = useQuery({
     queryKey: ['system-status'],
-    queryFn: () => api.get('/api/system/status').then(r => {
-      console.log('system status:', r.data);
-      return r.data;
-    }).catch(() => null),
-    refetchInterval: 30000,
+    queryFn: async () => {
+      try {
+        const r = await api.get('/api/system/status');
+        console.log('system status:', r.data);
+        return r.data;
+      } catch (err) {
+        console.error('System status error:', err);
+        return null;
+      }
+    },
+    refetchInterval: 10000,
+    staleTime: 0,
   });
 
   const { data: timeline } = useQuery({
@@ -201,7 +210,7 @@ export default function Dashboard() {
 
    const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
    const [serviceFilter, setServiceFilter] = useState<string | null>(null);
-   const [timePeriod, setTimePeriod] = useState<'30m' | '1h' | '6h' | '24h' | '48h'>('30m');
+   const [timePeriod, setTimePeriod] = useState<'30M' | '1H' | '6H' | '24H' | '48H'>('30M');
    const [showIfaceSelector, setShowIfaceSelector] = useState(false);
 
   useEffect(() => {
@@ -216,7 +225,7 @@ export default function Dashboard() {
       if (selectedIfaces.length === 0 || !selectedCollector)
         return null;
 
-       const minutes = timePeriod === '30m' ? 30 : timePeriod === '1h' ? 60 : timePeriod === '6h' ? 360 : timePeriod === '24h' ? 1440 : 2880;
+       const minutes = timePeriod === '30M' ? 30 : timePeriod === '1H' ? 60 : timePeriod === '6H' ? 360 : timePeriod === '24H' ? 1440 : 2880;
 
       console.log('Buscando histórico:', selectedCollector, selectedIfaces, minutes);
 
