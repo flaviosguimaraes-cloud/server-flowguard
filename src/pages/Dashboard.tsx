@@ -127,7 +127,13 @@ export default function Dashboard() {
 
   const { data: eventsHistory } = useQuery({
     queryKey: ['events-history-compact'],
-    queryFn: () => api.get('/api/events/history?limit=5').then(r => r.data),
+    queryFn: () => api.get('/api/events/history?limit=8').then(r => r.data),
+    refetchInterval: 30000,
+  });
+
+  const { data: sysStatus } = useQuery({
+    queryKey: ['system-status'],
+    queryFn: () => api.get('/api/system/status').then(r => r.data).catch(() => null),
     refetchInterval: 30000,
   });
 
