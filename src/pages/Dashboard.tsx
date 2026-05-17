@@ -181,10 +181,7 @@ export default function Dashboard() {
     }
   });
 
-  const [source, setSource] = useState<'snmp' | 'flow'>(() => {
-    const saved = localStorage.getItem('fg_traffic_source');
-    return (saved === 'snmp' || saved === 'flow') ? saved : 'snmp';
-  });
+   const [source] = useState<'snmp'>('snmp');
 
   const { data: collectors } = useQuery({
     queryKey: ['collectors'],
@@ -207,22 +204,30 @@ export default function Dashboard() {
     const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
   const [serviceFilter, setServiceFilter] = useState<string | null>(null);
   const [timePeriod, setTimePeriod] = useState<'realtime' | '1h' | '6h' | '24h'>('realtime');
+   const [showIfaceSelector, setShowIfaceSelector] = useState(false);
 
   const { data: metricsHistory, isLoading: metricsHistoryLoading } = useQuery({
-    queryKey: ['iface-metrics-history', selectedCollector, timePeriod, selectedIfaces],
+    queryKey: ['iface-history', selectedCollector, timePeriod, selectedIfaces],
     queryFn: async () => {
-      if (timePeriod === 'realtime' || !selectedIfaces.length) return null;
-      const mins = timePeriod === '1h' ? 60 : timePeriod === '6h' ? 360 : 1440;
-      
-      const promises = selectedIfaces.map(ifName => 
-        api.get(`/api/collectors/${selectedCollector}/metrics/history?minutes=${mins}&if_name=${ifName}`)
-          .then(r => ({ ifName, data: r.data }))
+      if (timePeriod === 'realtime' || selectedIfaces.length === 0 || !selectedCollector)
+        return null;
+
+      const minutes = timePeriod === '1h' ? 60 : timePeriod === '6h' ? 360 : 1440;
+
+      const results = await Promise.all(
+        selectedIfaces.map(ifName =>
+          api.get(
+            `/api/collectors/${selectedCollector}/metrics/history?minutes=${minutes}&if_name=${encodeURIComponent(ifName)}`
+          ).then(r => ({
+            ifName,
+            data: r.data.history || []
+          }))
+        )
       );
-      
-      return Promise.all(promises);
+      return results;
     },
-    enabled: timePeriod !== 'realtime' && !!selectedCollector && selectedIfaces.length > 0,
-    refetchInterval: timePeriod === 'realtime' ? 30000 : 300000,
+    enabled: timePeriod !== 'realtime' && selectedIfaces.length > 0 && !!selectedCollector,
+    refetchInterval: 60000,
   });
  
    // MELHORIA 1 — Gráfico de interface carrega imediatamente
@@ -521,7 +526,24 @@ export default function Dashboard() {
     .sort((a: any, b: any) => ((b.in_bps || 0) + (b.out_bps || 0)) - ((a.in_bps || 0) + (a.out_bps || 0)))
     .slice(0, 6);
 
-  const fmtBps = (bps: number) => {
+   const formatDate = (dateStr: string) => {
+     if (!dateStr) return '—';
+     try {
+       const d = new Date(dateStr.replace(' ', 'T'));
+       if (isNaN(d.getTime())) return '—';
+       return d.toLocaleString('pt-BR', {
+         day: '2-digit',
+         month: '2-digit',
+         hour: '2-digit',
+         minute: '2-digit',
+         second: '2-digit'
+       });
+     } catch {
+       return '—';
+     }
+   };
+
+   const fmtBps = (bps: number) => {
     if (!bps || bps === 0) return '0 bps';
     if (bps >= 1e9)
       return (bps/1e9).toFixed(1)+' Gbps';
@@ -619,32 +641,97 @@ export default function Dashboard() {
               Ver histórico completo <ArrowRight size={12} />
             </Link>
           </div>
-          <div className="space-y-3">
-            {eventsHistory?.items?.map((event: any, i: number) => (
-              <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-bg-primary/50 border border-border/40 hover:border-primary/20 transition-all">
-                <div className="flex items-center gap-4">
-                  <div className="font-mono text-xs font-bold text-text-primary">{event.ip}</div>
-                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-bg-secondary border border-border text-[9px] font-bold uppercase tracking-wider">
-                    {event.flow_direction === 'incoming' ? (
-                      <><ArrowDown size={10} className="text-blue-500" /> Entrada</>
-                    ) : (
-                      <><ArrowUp size={10} className="text-green-500" /> Saída</>
-                    )}
-                  </div>
-                  <div className="text-[10px] text-text-secondary">
-                    <span className="font-bold text-text-primary">{(event.peak_pps / 1000).toFixed(1)}k</span> pps
-                  </div>
-                  <div className="text-[10px] text-text-secondary opacity-60 flex items-center gap-1">
-                     <Clock size={10} /> {timeAgo(event.started_at || event.start_time)}
+          <div className="space-y-0">
+            {eventsHistory?.items?.map((item: any, i: number) => (
+              <div key={i} style={{
+                padding: '10px 0',
+                borderBottom: '1px solid rgba(136, 146, 164, 0.1)'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 4
+                }}>
+                  <span style={{
+                    fontFamily: 'monospace',
+                    fontSize: 13,
+                    color: isDark ? '#e2e8f0' : '#1e293b',
+                    fontWeight: 700
+                  }}>
+                    {item.ip}
+                  </span>
+                  <div style={{display:'flex', gap:6}}>
+                    {/* Status */}
+                    <span style={{
+                      fontSize: 10,
+                      padding: '2px 6px',
+                      borderRadius: 4,
+                      background: item.status === 'active'
+                        ? (isDark ? '#3b1212' : '#fee2e2') : (isDark ? '#1a1a2e' : '#f1f5f9'),
+                      color: item.status === 'active'
+                        ? '#ef4444' : '#8892a4',
+                      fontWeight: 600
+                    }}>
+                      {item.status === 'active'
+                        ? '● ATIVO' : 'RESOLVIDO'}
+                    </span>
+                    {/* Origem */}
+                    <span style={{
+                      fontSize: 10,
+                      padding: '2px 6px',
+                      borderRadius: 4,
+                      background: isDark ? '#1e2130' : '#f8fafc',
+                      color: '#8892a4',
+                      border: isDark ? 'none' : '1px solid #e2e8f0'
+                    }}>
+                      {item.triggered_by === 'detector'
+                        ? 'AUTO' : 'MANUAL'}
+                    </span>
                   </div>
                 </div>
-                <div className={clsx(
-                  "text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-tighter",
-                  event.status === 'active' 
-                    ? "bg-danger/10 text-danger animate-pulse" 
-                    : "bg-success/10 text-success"
-                )}>
-                  {event.status === 'active' ? 'ATIVO' : 'RESOLVIDO'}
+
+                <div style={{
+                  fontSize: 11,
+                  color: '#8892a4',
+                  display: 'flex',
+                  gap: 12,
+                  flexWrap: 'wrap',
+                  fontWeight: 500
+                }}>
+                  {/* Direção */}
+                  <span style={{
+                    color: item.flow_direction === 'outgoing'
+                      ? '#22c55e' : '#3b82f6'
+                  }}>
+                    {item.flow_direction === 'outgoing'
+                      ? '↑ Saída' : '↓ Entrada'}
+                  </span>
+
+                  {/* Volume */}
+                  {item.peak_pps > 0 && (
+                    <span style={{color:'#f59e0b'}}>
+                      {item.peak_pps > 1000
+                        ? (item.peak_pps/1000).toFixed(1)
+                          + 'k pps'
+                        : item.peak_pps + ' pps'}
+                      {item.peak_mbps > 0
+                        ? ' · ' + item.peak_mbps + ' Mbps'
+                        : ''}
+                    </span>
+                  )}
+
+                  {/* Horário início */}
+                  <span>
+                    Início: {formatDate(item.started_at || item.start_time)}
+                  </span>
+
+                  {/* Horário fim se resolvido */}
+                  {(item.ended_at || item.end_time) && (
+                    <span>
+                      Fim: {formatDate(item.ended_at || item.end_time)}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
@@ -658,30 +745,29 @@ export default function Dashboard() {
       <div className="bg-white dark:bg-bg-secondary p-6 rounded-2xl border border-border shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none transition-all">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 gap-4 border-b border-border/50 pb-5">
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-bold text-text-primary">Tráfego da Interface</h2>
+            <h2 className="text-lg font-bold text-text-primary">Tráfego do Coletor</h2>
             <div className="px-2.5 py-1 rounded-full bg-accent/10 text-accent text-[9px] font-black uppercase tracking-wider">
-              {source === 'snmp' ? 'SNMP Realtime' : 'FLOW IPv4'}
+              SNMP Realtime
             </div>
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-3">
-            {/* Seletor de Fonte */}
-            <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
-              {(['snmp', 'flow'] as const).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setSource(s)}
-                  className={clsx(
-                    "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all",
-                    source === s 
-                      ? "bg-white dark:bg-[#2a2d3e] text-accent shadow-sm" 
-                      : "text-text-secondary hover:text-text-primary"
-                  )}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+            <button
+              onClick={() => setShowIfaceSelector(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 12px',
+                borderRadius: 6,
+                border: '1px solid #2a2d3e',
+                background: 'transparent',
+                color: '#8892a4',
+                cursor: 'pointer',
+                fontSize: 12,
+              }}>
+              ⚙ Interfaces ({selectedIfaces.length} selecionadas)
+            </button>
 
             <div className="flex items-center gap-2 px-3 py-1.5 bg-bg-primary rounded-lg border border-border">
               <Settings2 size={14} className="text-text-secondary" />
@@ -765,9 +851,9 @@ export default function Dashboard() {
             <div className="flex flex-col items-end px-3 py-1.5 bg-bg-primary/50 rounded-lg border border-border/30">
               <span className="text-[9px] uppercase font-black text-text-secondary opacity-60 leading-none mb-1">Interfaces</span>
               <span className="text-xs font-black text-text-primary">{selectedIfaces.length}<span className="text-[10px] opacity-40 mx-0.5">/</span>{(Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : []).length}</span>
-            </div>
-          </div>
         </div>
+       </div>
+      </div>
 
         <div className="space-y-2 bg-[#F8FAFC] dark:bg-[#0f172a]/40 p-4 rounded-xl border border-border/50 relative min-h-[350px]">
           {metricsHistoryLoading && (
@@ -906,55 +992,11 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Interface Legend / Selector */}
-        <div className="mt-6 flex flex-wrap gap-2 max-h-[200px] overflow-y-auto custom-scrollbar pt-4 border-t border-border/40">
-          {(Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
-            .filter((i: any) => (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0)
-            .filter((i: any) => {
-              const n = (i.display_name || i.if_name || '').toLowerCase();
-              return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
-            })
-            .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
-            .map((iface: any) => {
-              const name = iface.display_name || iface.if_name;
-              const isActive = selectedIfaces.includes(name);
-              const color = COLORS[selectedIfaces.indexOf(name) % 8] || '#8892a4';
-
-              return (
-                <button
-                  key={name}
-                  onClick={() => {
-                    setSelectedIfaces(prev =>
-                      prev.includes(name)
-                        ? prev.filter(n => n !== name)
-                        : [...prev, name]
-                    );
-                  }}
-                  className={clsx(
-                    "inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border transition-all text-[10px] font-black uppercase tracking-tight",
-                    isActive 
-                      ? "shadow-sm" 
-                      : "border-border/60 bg-bg-primary/30 text-text-secondary hover:border-border hover:bg-bg-primary/50"
-                  )}
-                  style={{
-                    borderColor: isActive ? color + '50' : undefined,
-                    backgroundColor: isActive ? color + '15' : undefined,
-                    color: isActive ? color : undefined,
-                  }}
-                >
-                  <span 
-                    className="w-2 h-2 rounded-full" 
-                    style={{ background: isActive ? color : '#8892a4' }} 
-                  />
-                  {name}
-                  <span className="text-[9px] opacity-70">
-                    {fmtBps(iface.in_bps)} ↓
-                  </span>
-                </button>
-              );
-            })
-          }
-        </div>
+         <div className="mt-4 border-t border-border/40 pt-4">
+            <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest opacity-60">
+              Clique no botão "Interfaces" acima para selecionar as interfaces exibidas no gráfico.
+            </p>
+         </div>
       </div>
 
        {/* Secondary Grids */}
@@ -1290,10 +1332,130 @@ export default function Dashboard() {
             textAlign: 'right',
           }}>
             Última atualização: {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR') : '—'}
-          </p>
-        </div>
-        </div>
+        </p>
        </div>
+      </div>
+
+      {showIfaceSelector && (
+         <div style={{
+           position: 'fixed',
+           top: 0, left: 0,
+           width: '100%', height: '100%',
+           background: 'rgba(0,0,0,0.5)',
+           zIndex: 1000,
+           display: 'flex',
+           alignItems: 'center',
+           justifyContent: 'center',
+           backdropFilter: 'blur(4px)',
+         }}>
+           <div style={{
+             background: isDark ? '#1e2130' : '#ffffff',
+             border: `1px solid ${isDark ? '#2a2d3e' : '#e2e8f0'}`,
+             borderRadius: 12,
+             padding: 24,
+             width: 450,
+             maxHeight: '85vh',
+             display: 'flex',
+             flexDirection: 'column',
+             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+           }}>
+             <div style={{
+               display: 'flex',
+               justifyContent: 'space-between',
+               alignItems: 'center',
+               marginBottom: 20
+             }}>
+               <h3 className="text-lg font-bold text-text-primary">Selecionar Interfaces</h3>
+               <button 
+                 onClick={() => setShowIfaceSelector(false)}
+                 className="p-2 hover:bg-bg-primary rounded-full transition-colors"
+               >
+                 ✕
+               </button>
+             </div>
+
+             <div className="flex gap-2 mb-4">
+               <button 
+                 onClick={() => {
+                   const all = (Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
+                    .filter((i: any) => {
+                      const n = (i.display_name || i.if_name || '').toLowerCase();
+                      return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
+                    })
+                    .map((i: any) => i.display_name || i.if_name);
+                   setSelectedIfaces(all);
+                 }}
+                 className="text-[10px] font-bold uppercase px-3 py-1.5 bg-bg-primary border border-border rounded hover:bg-bg-secondary"
+               >
+                 Selecionar todas
+               </button>
+               <button 
+                 onClick={() => setSelectedIfaces([])}
+                 className="text-[10px] font-bold uppercase px-3 py-1.5 bg-bg-primary border border-border rounded hover:bg-bg-secondary"
+               >
+                 Limpar
+               </button>
+             </div>
+             
+             <div style={{ overflowY: 'auto', flex: 1 }} className="pr-2 custom-scrollbar">
+               {(Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
+                 .filter((i: any) => {
+                   const n = (i.display_name || i.if_name || '').toLowerCase();
+                   return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
+                 })
+                 .sort((a: any, b: any) => ((b.in_bps || 0) + (b.out_bps || 0)) - ((a.in_bps || 0) + (a.out_bps || 0)))
+                 .map((iface: any) => {
+                   const name = iface.display_name || iface.if_name;
+                   const isSelected = selectedIfaces.includes(name);
+                   return (
+                     <label 
+                       key={name}
+                       style={{
+                         display: 'flex',
+                         alignItems: 'center',
+                         padding: '10px 12px',
+                         borderRadius: 8,
+                         cursor: 'pointer',
+                         marginBottom: 4,
+                         background: isSelected ? (isDark ? 'rgba(59, 130, 246, 0.1)' : '#eff6ff') : 'transparent',
+                         border: `1px solid ${isSelected ? (isDark ? 'rgba(59, 130, 246, 0.2)' : '#bfdbfe') : 'transparent'}`
+                       }}
+                       className="hover:bg-bg-primary/50 transition-all"
+                     >
+                       <input 
+                         type="checkbox"
+                         checked={isSelected}
+                         onChange={() => {
+                           setSelectedIfaces(prev =>
+                             prev.includes(name)
+                               ? prev.filter(n => n !== name)
+                               : [...prev, name]
+                           );
+                         }}
+                         className="mr-3 w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                       />
+                       <div style={{ flex: 1 }}>
+                         <div className="text-sm font-bold text-text-primary">{name}</div>
+                         <div className="text-[10px] text-text-secondary flex gap-3 mt-0.5">
+                           <span>RX: <span className="text-accent font-bold">{fmtBps(iface.in_bps)}</span></span>
+                           <span>TX: <span className="text-success font-bold">{fmtBps(iface.out_bps)}</span></span>
+                         </div>
+                       </div>
+                     </label>
+                   );
+                 })}
+             </div>
+
+             <button 
+               onClick={() => setShowIfaceSelector(false)}
+               className="mt-6 w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+             >
+               Aplicar Seleção
+             </button>
+           </div>
+         </div>
+       )}
+
        </TooltipProvider>
      );
    }
