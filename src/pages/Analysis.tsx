@@ -79,14 +79,51 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     };
     const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
 
-    const [search, setSearch] = useState('');
-    const [proto, setProto] = useState('Todos');
-    const [country, setCountry] = useState('Todos');
-    const [minutes, setMinutes] = useState(5);
-    const [sortField, setSortField] = useState('bytes');
-    const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc');
+    const [filters, setFilters] = useState({
+      src_ip: '',
+      dst_ip: '',
+      src_port: '',
+      dst_port: '',
+      proto: '',
+      country: '',
+      direction: '',
+      start: '',
+      end: '',
+      order: 'bytes',
+      minutes: '30',
+    });
+
     const [groupByIP, setGroupByIP] = useState(false);
     const [hoveredMitIP, setHoveredMitIP] = useState<string | null>(null);
+
+    const buildQuery = () => {
+      const params = new URLSearchParams({
+        limit: '200',
+      });
+      if (filters.minutes && !filters.start)
+        params.append('minutes', filters.minutes);
+      if (filters.src_ip)
+        params.append('src_ip', filters.src_ip);
+      if (filters.dst_ip)
+        params.append('dst_ip', filters.dst_ip);
+      if (filters.src_port)
+        params.append('src_port', filters.src_port);
+      if (filters.dst_port)
+        params.append('dst_port', filters.dst_port);
+      if (filters.proto)
+        params.append('proto', filters.proto);
+      if (filters.country)
+        params.append('country', filters.country);
+      if (filters.direction)
+        params.append('direction', filters.direction);
+      if (filters.start)
+        params.append('start', filters.start);
+      if (filters.end)
+        params.append('end', filters.end);
+      if (filters.order)
+        params.append('order', filters.order);
+      return params.toString();
+    };
 
     const SortHeader = ({ field, label, align = 'left' }: { field: string, label: string, align?: 'left' | 'right' | 'center' }) => (
       <th 
@@ -133,18 +170,11 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
      return items.map((c: any) => c.country).sort();
    }, [countriesData]);
  
-    const { data: connections, isLoading } = useQuery({
-      queryKey: ['connections-analysis', search, proto, country, minutes],
+    const { data: connections, isLoading, refetch } = useQuery({
+      queryKey: ['connections-analysis', filters],
       queryFn: async () => {
-        const params = new URLSearchParams({
-          limit: '100',
-          minutes: String(minutes),
-        });
-        if (proto !== 'Todos') params.append('proto', proto);
-        if (search) params.append('search', search);
-        if (country !== 'Todos') params.append('country', country);
-        
-        const r = await api.get(`/api/flows/connections?${params}`);
+        const q = buildQuery();
+        const r = await api.get(`/api/flows/connections?${q}`);
         return r.data;
       },
       staleTime: 0,
@@ -154,28 +184,6 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     const connectionItems = useMemo(() => {
       let items = Array.isArray(connections) ? [...connections] : [...(connections?.items || connections?.data || [])];
       
-      // Advanced Search (Frontend Filtering)
-      if (search) {
-        const s = search.toLowerCase();
-        items = items.filter((i: any) => {
-          const srcPortStr = String(i.src_port);
-          const dstPortStr = String(i.dst_port);
-          const service = getService(i.dst_port).toLowerCase();
-          return (
-            i.src_addr?.toLowerCase().includes(s) ||
-            i.dst_addr?.toLowerCase().includes(s) ||
-            i.src_org?.toLowerCase().includes(s) ||
-            i.dst_org?.toLowerCase().includes(s) ||
-            i.src_country?.toLowerCase() === s ||
-            i.dst_country?.toLowerCase() === s ||
-            srcPortStr === s ||
-            dstPortStr === s ||
-            service.includes(s) ||
-            (s.startsWith('as') && (i.src_org?.toLowerCase().includes(s) || i.dst_org?.toLowerCase().includes(s)))
-          );
-        });
-      }
-
       // Group by IP
       if (groupByIP) {
         const groups: Record<string, any> = {};
@@ -199,27 +207,8 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
         items = Object.values(groups);
       }
 
-      // Sort
-      items.sort((a: any, b: any) => {
-        let valA = a[sortField];
-        let valB = b[sortField];
-        
-        if (sortField === 'pps') {
-          valA = a.packets || 0;
-          valB = b.packets || 0;
-        }
-
-        if (typeof valA === 'string') {
-          return sortOrder === 'asc' 
-            ? valA.localeCompare(valB)
-            : valB.localeCompare(valA);
-        }
-        
-        return sortOrder === 'asc' ? valA - valB : valB - valA;
-      });
-
       return items;
-    }, [connections, search, groupByIP, sortField, sortOrder]);
+    }, [connections, groupByIP]);
  
    const metrics = useMemo(() => {
      const items = connectionItems;
