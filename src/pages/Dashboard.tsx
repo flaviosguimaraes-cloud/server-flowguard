@@ -425,8 +425,9 @@ export default function Dashboard() {
         tx: getStats(txValues),
         label: timePeriod === '30M' ? '30 minutos' :
                timePeriod === '1H' ? '1 hora' :
-               timePeriod === '6H' ? '6 horas' :
-               timePeriod === '24H' ? '24 horas' :
+               timePeriod === '6H' ? '6 horas' : 
+               timePeriod === '12H' ? '12 horas' :
+               timePeriod === '24H' ? '24 horas' : 
                timePeriod === '48H' ? '48 horas' : timePeriod
       };
    }, [timePeriod, metricsHistory, history, selectedIfaces]);
@@ -586,7 +587,7 @@ export default function Dashboard() {
 
               {/* MELHORIA 4 — Seletor de período */}
                <div className="flex bg-bg-primary p-1 rounded-lg border border-border overflow-x-auto">
-                 {(['30M', '1H', '6H', '24H', '48H'] as const).map((p) => (
+               {(['30M', '1H', '6H', '12H', '24H', '48H'] as const).map((p) => (
                    <button
                      key={p}
                      onClick={() => setTimePeriod(p as any)}
@@ -802,9 +803,27 @@ export default function Dashboard() {
           {/* PAINEL ESQUERDO (60%) - Últimos Eventos */}
           <div className="lg:col-span-6 bg-white dark:bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm flex flex-col">
             <div className="flex items-center justify-between mb-5 border-b border-border/50 pb-3">
-              <div className="flex items-center gap-2">
-                <History className="text-primary" size={18} />
-                <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Últimos Eventos de Mitigação</h2>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <History className="text-primary" size={18} />
+                  <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Últimos Eventos de Mitigação</h2>
+                </div>
+                {eventsUpdatedAt && (
+                  <span className="text-[10px] text-text-secondary opacity-60 font-medium">
+                    Atualizado: {new Date(eventsUpdatedAt).toLocaleTimeString('pt-BR')}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => queryClient.invalidateQueries({ queryKey: ['events-history-dashboard'] })}
+                  className="text-[10px] font-bold text-text-secondary hover:text-primary transition-colors flex items-center gap-1 bg-bg-primary px-2 py-1 rounded border border-border"
+                >
+                  ↻ Atualizar
+                </button>
+                <Link to="/events" className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1">
+                  Ver completo <ArrowRight size={12} />
+                </Link>
               </div>
               <Link to="/events" className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1">
                 Ver completo <ArrowRight size={12} />
