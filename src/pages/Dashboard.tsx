@@ -11,7 +11,7 @@ import {
    Tooltip, TooltipTrigger, TooltipContent, TooltipProvider 
  } from '../components/ui/tooltip';
  import { MitigationTooltip } from '../components/MitigationTooltip';
-import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon, Settings2, Info, ArrowRight } from 'lucide-react';
+import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon, Settings2, Info, ArrowRight, History, Zap, CheckCircle, Clock } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { Skeleton } from '../components/Skeleton';
 import Flag from '../components/Flag';
@@ -93,6 +93,14 @@ export default function Dashboard() {
     };
   }, [queryClient]);
 
+  const timeAgo = (dateStr: string) => {
+    const diff = Date.now() - new Date(dateStr).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `há ${mins}min`;
+    const hrs = Math.floor(mins / 60);
+    return `há ${hrs}h`;
+  };
+
   const { data: detection, isLoading: statsLoading } = useQuery({
     queryKey: ['detection-stats'],
     queryFn: async () => {
@@ -102,6 +110,12 @@ export default function Dashboard() {
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true,
+  });
+
+  const { data: eventsHistory } = useQuery({
+    queryKey: ['events-history-compact'],
+    queryFn: () => api.get('/api/events/history?limit=5').then(r => r.data),
+    refetchInterval: 30000,
   });
 
   const { data: timeline } = useQuery({
@@ -188,20 +202,25 @@ export default function Dashboard() {
   });
 
     const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
-    const [serviceFilter, setServiceFilter] = useState<string | null>(null);
-   const [period, setPeriod] = useState<'realtime' | '5m' | '15m'>('realtime');
- 
-   const { data: metricsHistory } = useQuery({
-     queryKey: ['iface-metrics', selectedCollector, period],
-     queryFn: async () => {
-       if (period === 'realtime') return null;
-       const mins = period === '5m' ? 5 : 15;
-       const r = await api.get(`/api/collectors/${selectedCollector}/metrics?minutes=${mins}`);
-       return r.data;
-     },
-     enabled: period !== 'realtime' && !!selectedCollector,
-     refetchInterval: 30000,
-   });
+  const [serviceFilter, setServiceFilter] = useState<string | null>(null);
+  const [timePeriod, setTimePeriod] = useState<'realtime' | '1h' | '6h' | '24h'>('realtime');
+
+  const { data: metricsHistory, isLoading: metricsHistoryLoading } = useQuery({
+    queryKey: ['iface-metrics-history', selectedCollector, timePeriod, selectedIfaces],
+    queryFn: async () => {
+      if (timePeriod === 'realtime' || !selectedIfaces.length) return null;
+      const mins = timePeriod === '1h' ? 60 : timePeriod === '6h' ? 360 : 1440;
+      
+      const promises = selectedIfaces.map(ifName => 
+        api.get(`/api/collectors/${selectedCollector}/metrics/history?minutes=${mins}&if_name=${ifName}`)
+          .then(r => ({ ifName, data: r.data }))
+      );
+      
+      return Promise.all(promises);
+    },
+    enabled: timePeriod !== 'realtime' && !!selectedCollector && selectedIfaces.length > 0,
+    refetchInterval: timePeriod === 'realtime' ? 30000 : 300000,
+  });
  
    // MELHORIA 1 — Gráfico de interface carrega imediatamente
    useEffect(() => {
@@ -333,42 +352,45 @@ export default function Dashboard() {
        return map;
      }, [interfaces]);
  
-     const chartData = useMemo(() => {
-       if (period === 'realtime') {
-         return timePoints.map((time, idx) => {
-           const point: Record<string, any> = { time };
-           selectedIfaces.forEach(name => {
-             const h = history[name];
-             if (h && h[idx]) {
-               point[`${name}_in`] = Math.round(h[idx].in_bps / 1e6);
-               point[`${name}_out`] = Math.round(h[idx].out_bps / 1e6);
-             }
-           });
-           return point;
-         });
-       } else {
-         if (!metricsHistory || !Array.isArray(metricsHistory)) return [];
-         
-         const timeMap: Record<string, any> = {};
-         metricsHistory.forEach((m: any) => {
-           const time = new Date(m.collected_at).toLocaleTimeString('pt-BR', {
-             hour: '2-digit', minute: '2-digit'
-           });
-           if (!timeMap[time]) timeMap[time] = { time };
-           
-           // The endpoint uses if_name, we might need to match with display_name
-           // but the user's selectedIfaces are based on display_name || if_name.
-           // Let's check both.
-          const displayName = ifaceMap[m.if_name] || m.if_name;
-          if (selectedIfaces.includes(displayName)) {
-            timeMap[time][`${displayName}_in`] = Math.round(m.in_bps / 1e6);
-            timeMap[time][`${displayName}_out`] = Math.round(m.out_bps / 1e6);
+  const chartData = useMemo(() => {
+    if (timePeriod === 'realtime') {
+      return timePoints.map((time, idx) => {
+        const point: Record<string, any> = { time };
+        selectedIfaces.forEach(name => {
+          const h = history[name];
+          if (h && h[idx]) {
+            point[`${name}_in`] = Math.round(h[idx].in_bps / 1e6);
+            point[`${name}_out`] = Math.round(h[idx].out_bps / 1e6);
           }
-         });
-         
-         return Object.values(timeMap).sort((a: any, b: any) => a.time.localeCompare(b.time));
-       }
-     }, [timePoints, selectedIfaces, history, period, metricsHistory]);
+        });
+        return point;
+      });
+    } else {
+      if (!metricsHistory || !Array.isArray(metricsHistory)) return [];
+      
+      const timeMap: Record<string, any> = {};
+      metricsHistory.forEach(({ ifName, data }) => {
+        const items = Array.isArray(data) ? data : (data?.items || []);
+        
+        // For 24h, take 1 every 5 points to not overload
+        const filteredItems = timePeriod === '24h' ? items.filter((_: any, i: number) => i % 5 === 0) : items;
+
+        filteredItems.forEach((m: any) => {
+          const date = new Date(m.time_bucket);
+          const time = timePeriod === '24h' 
+            ? date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
+            : date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
+          if (!timeMap[time]) timeMap[time] = { time, raw_time: date.getTime() };
+          
+          timeMap[time][`${ifName}_in`] = Math.round(m.in_bps / 1e6);
+          timeMap[time][`${ifName}_out`] = Math.round(m.out_bps / 1e6);
+        });
+      });
+      
+      return Object.values(timeMap).sort((a: any, b: any) => a.raw_time - b.raw_time);
+    }
+  }, [timePoints, selectedIfaces, history, timePeriod, metricsHistory]);
 
     const protoMap: Record<number, string> = {
      6: 'TCP', 17: 'UDP', 1: 'ICMP',
