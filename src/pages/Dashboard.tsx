@@ -1332,13 +1332,11 @@ export default function Dashboard() {
             textAlign: 'right',
           }}>
             Última atualização: {dataUpdatedAt ? new Date(dataUpdatedAt).toLocaleTimeString('pt-BR') : '—'}
-          </p>
-        </div>
-        </div>
-        </div>
+        </p>
        </div>
+      </div>
 
-       {showIfaceSelector && (
+      {showIfaceSelector && (
          <div style={{
            position: 'fixed',
            top: 0, left: 0,
