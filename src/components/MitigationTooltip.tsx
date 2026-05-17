@@ -73,8 +73,8 @@
             (item.direction === 'incoming' || item.direction === 'inbound') ? "text-blue-500" : "text-green-500"
           )}>
             {(item.direction === 'incoming' || item.direction === 'inbound')
-              ? '↓ Download (entrando)'
-              : '↑ Upload (saindo)'}
+              ? '↓ Download'
+              : '↑ Upload'}
           </span>
         </div>
 
