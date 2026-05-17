@@ -494,9 +494,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
                   <th className="px-6 py-3 border-b border-border">Origem</th>
                 </tr>
               </thead>
-              <tbody className="text-sm divide-y divide-border/50">
-                {eventsHistory?.items?.map((event: any, i: number) => (
-                  <tr key={i} className="hover:bg-bg-primary/50 transition-colors group">
+               <tbody className="text-sm divide-y divide-border/50">
+                 {filteredItems.map((event: any, i: number) => (
+                   <tr key={i} className="hover:bg-bg-primary/50 transition-colors group">
                     <td className="px-6 py-3.5 font-mono font-bold text-text-primary text-xs">{event.ip}</td>
                      <td className="px-6 py-3.5 text-text-secondary text-[11px] whitespace-nowrap">
                        {formatDate(event.started_at || event.start_time)}
