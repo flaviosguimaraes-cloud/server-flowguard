@@ -317,10 +317,10 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
                   <tr key={i} className="hover:bg-bg-primary/50 transition-colors group">
                     <td className="px-6 py-3.5 font-mono font-bold text-text-primary text-xs">{event.ip}</td>
                      <td className="px-6 py-3.5 text-text-secondary text-[11px] whitespace-nowrap">
-                       {formatDate(event.start_time)}
+                       {formatDate(event.started_at || event.start_time)}
                      </td>
                      <td className="px-6 py-3.5 text-text-secondary text-[11px] whitespace-nowrap">
-                       {formatDate(event.end_time)}
+                       {formatDate(event.ended_at || event.end_time)}
                      </td>
                     <td className="px-6 py-3.5 text-center text-text-primary text-[11px] font-medium">
                       {fmtDuration(event.duration_seconds)}
