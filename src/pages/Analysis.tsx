@@ -82,6 +82,24 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     };
     const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
 
+    const formatDate = (dateStr: string) => {
+      if (!dateStr) return '—';
+      try {
+        // Substituir espaço por T para compatibilidade com Safari/iOS
+        const d = new Date(dateStr.replace(' ', 'T'));
+        if (isNaN(d.getTime())) return '—';
+        return d.toLocaleString('pt-BR', {
+          day: '2-digit',
+          month: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit'
+        });
+      } catch {
+        return '—';
+      }
+    };
+
     const [filters, setFilters] = useState({
       src_ip: '',
       dst_ip: '',
@@ -497,9 +515,9 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
   
                      return (
                        <tr key={i} className="hover:bg-accent/5 transition-colors group">
-                         <td className="px-6 py-4 text-[10px] text-text-secondary font-mono whitespace-nowrap">
-                           {item.time_received ? new Date(item.time_received).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—'}
-                         </td>
+                          <td className="px-6 py-4 text-[10px] text-text-secondary font-mono whitespace-nowrap">
+                            {formatDate(item.time_received)}
+                          </td>
                          <td className="px-6 py-4 text-center">
                            <TooltipProvider>
                              <Tooltip>
