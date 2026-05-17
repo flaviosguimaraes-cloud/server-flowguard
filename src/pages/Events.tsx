@@ -51,21 +51,24 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
       refetchOnWindowFocus: true,
    });
  
-  const [eventFilter, setEventFilter] = useState<'all' | 'active' | 'removed'>('all');
-  const [timeRange, setTimeRange] = useState<'all' | '1h' | '6h' | '24h'>('all');
+    const [filters, setFilters] = useState({
+      ip: '',
+      direction: '',
+      status: '',
+      type: '',
+      origin: '',
+      dateStart: '',
+      dateEnd: '',
+      minPps: '',
+      maxPps: '',
+    });
 
     const { data: eventsHistory, isLoading: historyLoading, dataUpdatedAt: eventsUpdatedAt } = useQuery({
-     queryKey: ['events-history-page', eventFilter, timeRange],
-     queryFn: async () => {
-       const params = new URLSearchParams({ limit: '100' });
-       if (eventFilter && eventFilter !== 'all') params.append('status', eventFilter);
-      if (timeRange === '1h') params.append('minutes', '60');
-      if (timeRange === '6h') params.append('minutes', '360');
-      if (timeRange === '24h') params.append('minutes', '1440');
-       
-        const r = await api.get(`/api/events/history?${params.toString()}`);
-       return r.data;
-     },
+      queryKey: ['events-history-page'],
+      queryFn: async () => {
+        const r = await api.get('/api/events/history?limit=500');
+        return r.data;
+      },
      staleTime: 0,
       gcTime: 0,
       refetchInterval: 10000,
@@ -139,11 +142,66 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
     setIsMitigationOpen(true);
   }, []);
 
-  const handleMitigationSuccess = useCallback(() => {
-    queryClient.invalidateQueries({ queryKey: ['detection-stats-events'] });
-    queryClient.invalidateQueries({ queryKey: ['mitigation-active-events'] });
-    queryClient.invalidateQueries({ queryKey: ['audit-logs-mitigation'] });
-  }, [queryClient]);
+   const applyFilters = (items: any[]) => {
+     if (!items) return [];
+     return items.filter(item => {
+       // IP
+       if (filters.ip && !item.ip?.includes(filters.ip)) return false;
+
+       // Direção
+       if (filters.direction && item.direction !== filters.direction) return false;
+
+       // Status
+       if (filters.status === 'active' && item.status !== 'active') return false;
+       if (filters.status === 'removed' && item.status !== 'removed') return false;
+
+       // Origem
+       if (filters.origin === 'auto' && item.triggered_by !== 'detector') return false;
+       if (filters.origin === 'manual' && item.triggered_by === 'detector') return false;
+
+       // Data início
+       if (filters.dateStart) {
+         const d = new Date((item.started_at || item.start_time).replace(' ', 'T'));
+         if (d < new Date(filters.dateStart)) return false;
+       }
+
+       // Data fim
+       if (filters.dateEnd) {
+         const d = new Date((item.started_at || item.start_time).replace(' ', 'T'));
+         if (d > new Date(filters.dateEnd)) return false;
+       }
+
+       // PPS mínimo
+       if (filters.minPps && item.peak_pps < Number(filters.minPps)) return false;
+
+       // PPS máximo
+       if (filters.maxPps && item.peak_pps > Number(filters.maxPps)) return false;
+
+       return true;
+     });
+   };
+
+   const filteredItems = useMemo(() => applyFilters(eventsHistory?.items || []), [eventsHistory, filters]);
+
+   const clearFilters = () => {
+     setFilters({
+       ip: '',
+       direction: '',
+       status: '',
+       type: '',
+       origin: '',
+       dateStart: '',
+       dateEnd: '',
+       minPps: '',
+       maxPps: '',
+     });
+   };
+
+   const handleMitigationSuccess = useCallback(() => {
+     queryClient.invalidateQueries({ queryKey: ['detection-stats-events'] });
+     queryClient.invalidateQueries({ queryKey: ['mitigation-active-events'] });
+     queryClient.invalidateQueries({ queryKey: ['audit-logs-mitigation'] });
+   }, [queryClient]);
  
     if (statsLoading) {
       return (
