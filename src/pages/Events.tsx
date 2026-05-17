@@ -35,19 +35,23 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
       staleTime: 0,
    });
  
-   const { data: activeMitigations } = useQuery({
+    const { data: activeMitigations, dataUpdatedAt: activeMitigationsUpdatedAt } = useQuery({
      queryKey: ['mitigation-active-events'],
      queryFn: async () => {
        const r = await api.get('/api/mitigation/active');
        return r.data;
      },
-     refetchInterval: 30000,
+      staleTime: 0,
+      gcTime: 0,
+      refetchInterval: 10000,
+      refetchOnMount: 'always',
+      refetchOnWindowFocus: true,
    });
  
   const [eventFilter, setEventFilter] = useState<'all' | 'active' | 'removed'>('all');
   const [timeRange, setTimeRange] = useState<'all' | '1h' | '24h'>('all');
 
-   const { data: eventsHistory, isLoading: historyLoading } = useQuery({
+    const { data: eventsHistory, isLoading: historyLoading, dataUpdatedAt: eventsUpdatedAt } = useQuery({
      queryKey: ['events-history-page', eventFilter, timeRange],
      queryFn: async () => {
        const params = new URLSearchParams({ limit: '100' });
@@ -55,12 +59,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
        if (timeRange === '1h') params.append('minutes', '60');
        if (timeRange === '24h') params.append('minutes', '1440');
        
-       const r = await api.get(`/api/events/history?${params}`);
-       console.log('events full raw:', r.data);
+        const r = await api.get(`/api/events/history?${params.toString()}`);
        return r.data;
      },
-     refetchInterval: 10000,
      staleTime: 0,
+      gcTime: 0,
+      refetchInterval: 10000,
+      refetchOnMount: 'always',
+      refetchOnWindowFocus: true,
    });
 
    const formatDate = (dateStr: string) => {
@@ -249,12 +255,26 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
         {/* MELHORIA 2 — Histórico de Anomalias em Eventos */}
         <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
           <div className="p-5 border-b border-border flex flex-col md:flex-row justify-between items-center gap-4 bg-bg-primary/30">
-            <div className="flex items-center gap-2">
-              <History className="text-warning" size={18} />
-              <h2 className="text-base font-bold text-text-primary">Histórico de Anomalias</h2>
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <History className="text-warning" size={18} />
+                <h2 className="text-base font-bold text-text-primary">Histórico de Anomalias</h2>
+              </div>
+              {eventsUpdatedAt && (
+                <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest opacity-60">
+                  Atualizado: {new Date(eventsUpdatedAt).toLocaleTimeString('pt-BR')}
+                </p>
+              )}
             </div>
             
             <div className="flex flex-wrap gap-2">
+              <button 
+                onClick={() => queryClient.invalidateQueries({ queryKey: ['events-history-page'] })}
+                className="px-3 py-1.5 text-[10px] font-bold uppercase rounded-lg bg-bg-primary text-text-secondary border border-border hover:text-primary transition-all"
+              >
+                ↻ Atualizar
+              </button>
+
               <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
                 {[
                   { label: 'Todos', value: 'all' },

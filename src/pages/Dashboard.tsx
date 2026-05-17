@@ -133,16 +133,17 @@ export default function Dashboard() {
     refetchOnWindowFocus: true,
   });
 
-  const { data: eventsHistory, isLoading: loadingEvents } = useQuery({
+   const { data: eventsHistory, isLoading: loadingEvents, dataUpdatedAt: eventsUpdatedAt } = useQuery({
     queryKey: ['events-history-dashboard'],
     queryFn: async () => {
       const r = await api.get('/api/events/history?limit=8');
-      console.log('events raw:', r.data);
       return r.data;
     },
-    refetchInterval: 10000,
     staleTime: 0,
     gcTime: 0,
+    refetchInterval: 10000,
+    refetchOnMount: 'always',
+    refetchOnWindowFocus: true,
   });
 
   const { data: sysStatus } = useQuery({
@@ -210,7 +211,7 @@ export default function Dashboard() {
 
    const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
    const [serviceFilter, setServiceFilter] = useState<string | null>(null);
-   const [timePeriod, setTimePeriod] = useState<'30M' | '1H' | '6H' | '24H' | '48H'>('30M');
+   const [timePeriod, setTimePeriod] = useState<'30M' | '1H' | '6H' | '12H' | '24H' | '48H'>('30M');
    const [showIfaceSelector, setShowIfaceSelector] = useState(false);
 
   useEffect(() => {
@@ -225,7 +226,11 @@ export default function Dashboard() {
       if (selectedIfaces.length === 0 || !selectedCollector)
         return null;
 
-       const minutes = timePeriod === '30M' ? 30 : timePeriod === '1H' ? 60 : timePeriod === '6H' ? 360 : timePeriod === '24H' ? 1440 : 2880;
+       const minutes = timePeriod === '30M' ? 30 : 
+                       timePeriod === '1H' ? 60 : 
+                       timePeriod === '6H' ? 360 : 
+                       timePeriod === '12H' ? 720 : 
+                       timePeriod === '24H' ? 1440 : 2880;
 
       console.log('Buscando histórico:', selectedCollector, selectedIfaces, minutes);
 
@@ -277,10 +282,14 @@ export default function Dashboard() {
     }
   }, [interfaces, selectedIfaces.length]);
 
-   const { data: activeMitigations } = useQuery({
+    const { data: activeMitigations, dataUpdatedAt: mitigationsUpdatedAt } = useQuery({
      queryKey: ['mitigation-active-dashboard'],
      queryFn: () => api.get('/api/mitigation/active').then(r => r.data),
-     refetchInterval: 30000,
+      staleTime: 0,
+      gcTime: 0,
+      refetchInterval: 10000,
+      refetchOnMount: 'always',
+      refetchOnWindowFocus: true,
    });
  
    const { data: connections, dataUpdatedAt } = useQuery({
@@ -420,8 +429,9 @@ export default function Dashboard() {
         tx: getStats(txValues),
         label: timePeriod === '30M' ? '30 minutos' :
                timePeriod === '1H' ? '1 hora' :
-               timePeriod === '6H' ? '6 horas' :
-               timePeriod === '24H' ? '24 horas' :
+               timePeriod === '6H' ? '6 horas' : 
+               timePeriod === '12H' ? '12 horas' :
+               timePeriod === '24H' ? '24 horas' : 
                timePeriod === '48H' ? '48 horas' : timePeriod
       };
    }, [timePeriod, metricsHistory, history, selectedIfaces]);
@@ -581,7 +591,7 @@ export default function Dashboard() {
 
               {/* MELHORIA 4 — Seletor de período */}
                <div className="flex bg-bg-primary p-1 rounded-lg border border-border overflow-x-auto">
-                 {(['30M', '1H', '6H', '24H', '48H'] as const).map((p) => (
+               {(['30M', '1H', '6H', '12H', '24H', '48H'] as const).map((p) => (
                    <button
                      key={p}
                      onClick={() => setTimePeriod(p as any)}
@@ -680,20 +690,48 @@ export default function Dashboard() {
                      axisLine={false} 
                      tickFormatter={v => formatBps(v)} 
                    />
-                   <RechartsTooltip
-                     contentStyle={{ 
-                       background: isDark ? '#1E293B' : '#FFFFFF', 
-                       border: `1px solid ${isDark ? '#334155' : '#E2E8F0'}`, 
-                       borderRadius: '12px', 
-                       fontSize: '11px',
-                       boxShadow: isDark ? 'none' : '0 10px 15px -3px rgb(0 0 0 / 0.1)',
-                       padding: '8px 12px'
-                     }}
-                     formatter={(v: number, name: string) => [
-                       formatBps(v) + 'bps',
-                       name.includes('_in') ? '↓ RX' : '↑ TX'
-                     ]}
-                   />
+                  <RechartsTooltip
+                    content={({ active, payload, label }) => {
+                      if (!active || !payload?.length) return null;
+                      return (
+                        <div style={{
+                          background: isDark ? '#1e2130' : '#ffffff',
+                          border: `1px solid ${isDark ? '#2a2d3e' : '#e2e8f0'}`,
+                          borderRadius: 8,
+                          padding: '8px 12px',
+                          fontSize: 12,
+                          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                        }}>
+                          <div style={{
+                            color: '#8892a4',
+                            marginBottom: 6,
+                            fontSize: 11,
+                            fontWeight: 600
+                          }}>
+                            {label}
+                          </div>
+                          {payload.map((entry: any) => {
+                            const ifName = entry.dataKey
+                              .replace('_in', '')
+                              .replace('_out', '');
+                            const dir = entry.dataKey.endsWith('_in') ? '↓ RX' : '↑ TX';
+                            return (
+                              <div key={entry.dataKey} style={{
+                                color: entry.color,
+                                marginBottom: 2,
+                                display: 'flex',
+                                gap: 8,
+                                justifyContent: 'space-between'
+                              }}>
+                                <span style={{ fontWeight: 600 }}>{ifName}</span>
+                                <span>{dir}: {formatBpsRaw((entry.value || 0) * 1e6)}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      );
+                    }}
+                  />
                    {selectedIfaces.flatMap((name, idx) => [
                      <Area 
                        key={`${name}_in`}
@@ -769,9 +807,27 @@ export default function Dashboard() {
           {/* PAINEL ESQUERDO (60%) - Últimos Eventos */}
           <div className="lg:col-span-6 bg-white dark:bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm flex flex-col">
             <div className="flex items-center justify-between mb-5 border-b border-border/50 pb-3">
-              <div className="flex items-center gap-2">
-                <History className="text-primary" size={18} />
-                <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Últimos Eventos de Mitigação</h2>
+              <div className="flex flex-col gap-1">
+                <div className="flex items-center gap-2">
+                  <History className="text-primary" size={18} />
+                  <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Últimos Eventos de Mitigação</h2>
+                </div>
+                {eventsUpdatedAt && (
+                  <span className="text-[10px] text-text-secondary opacity-60 font-medium">
+                    Atualizado: {new Date(eventsUpdatedAt).toLocaleTimeString('pt-BR')}
+                  </span>
+                )}
+              </div>
+              <div className="flex items-center gap-3">
+                <button 
+                  onClick={() => queryClient.invalidateQueries({ queryKey: ['events-history-dashboard'] })}
+                  className="text-[10px] font-bold text-text-secondary hover:text-primary transition-colors flex items-center gap-1 bg-bg-primary px-2 py-1 rounded border border-border"
+                >
+                  ↻ Atualizar
+                </button>
+                <Link to="/events" className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1">
+                  Ver completo <ArrowRight size={12} />
+                </Link>
               </div>
               <Link to="/events" className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1">
                 Ver completo <ArrowRight size={12} />
