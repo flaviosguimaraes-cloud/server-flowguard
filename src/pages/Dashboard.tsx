@@ -282,10 +282,14 @@ export default function Dashboard() {
     }
   }, [interfaces, selectedIfaces.length]);
 
-   const { data: activeMitigations } = useQuery({
+    const { data: activeMitigations, dataUpdatedAt: mitigationsUpdatedAt } = useQuery({
      queryKey: ['mitigation-active-dashboard'],
      queryFn: () => api.get('/api/mitigation/active').then(r => r.data),
-     refetchInterval: 30000,
+      staleTime: 0,
+      gcTime: 0,
+      refetchInterval: 10000,
+      refetchOnMount: 'always',
+      refetchOnWindowFocus: true,
    });
  
    const { data: connections, dataUpdatedAt } = useQuery({

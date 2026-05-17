@@ -35,13 +35,17 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
       staleTime: 0,
    });
  
-   const { data: activeMitigations } = useQuery({
+    const { data: activeMitigations, dataUpdatedAt: activeMitigationsUpdatedAt } = useQuery({
      queryKey: ['mitigation-active-events'],
      queryFn: async () => {
        const r = await api.get('/api/mitigation/active');
        return r.data;
      },
-     refetchInterval: 30000,
+      staleTime: 0,
+      gcTime: 0,
+      refetchInterval: 10000,
+      refetchOnMount: 'always',
+      refetchOnWindowFocus: true,
    });
  
   const [eventFilter, setEventFilter] = useState<'all' | 'active' | 'removed'>('all');
