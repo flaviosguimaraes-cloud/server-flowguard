@@ -444,7 +444,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                </button>
              </div>
              <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
-               {metrics.total} conexões · {filters.direction === 'outgoing' ? 'Saindo' : filters.direction === 'incoming' ? 'Entrando' : 'Todas Direções'} · período: {filters.start ? 'Customizado' : filters.minutes < 60 ? `${filters.minutes} min` : `${parseInt(filters.minutes)/60}h`}
+               {metrics.total} conexões · {filters.direction === 'outgoing' ? 'Saindo' : filters.direction === 'incoming' ? 'Entrando' : 'Todas Direções'} · período: {filters.start ? 'Customizado' : parseInt(filters.minutes) < 60 ? `${filters.minutes} min` : `${parseInt(filters.minutes)/60}h`}
              </p>
           </div>
        </div>
