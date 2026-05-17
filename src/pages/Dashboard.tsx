@@ -855,7 +855,7 @@ export default function Dashboard() {
                       label: 'RAM', 
                       value: sysStatus.ram_percent || 0, 
                       color: sysStatus.ram_percent >= 85 ? 'bg-danger' : sysStatus.ram_percent >= 70 ? 'bg-warning' : 'bg-primary',
-                      detail: `${(sysStatus.ram_used_gb || 0).toFixed(1)}GB / ${(sysStatus.ram_total_gb || 0).toFixed(0)}GB`
+                      detail: `${(sysStatus.ram_used_gb || 0).toFixed(1)}GB / ${(sysStatus.ram_total_gb || 0).toFixed(1)}GB`
                     },
                     { 
                       label: 'Disco', 
