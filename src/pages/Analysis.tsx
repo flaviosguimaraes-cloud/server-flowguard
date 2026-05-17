@@ -75,11 +75,49 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       if (b > 1e3) return (b / 1e3).toFixed(0) + ' KB';
       return b + ' B';
     };
-    const calcPPS = (packets: number) => {
-      if (!packets) return '—';
-      const pps = Math.round(packets / 1800);
-      return pps > 1000 ? (pps / 1000).toFixed(1) + 'k' : String(pps);
-    };
+     const calcPPS = (packets: number, minutesStr: string = '30') => {
+       if (!packets) return 0;
+       const mins = parseInt(minutesStr) || 30;
+       return Math.round(packets / (mins * 60));
+     };
+
+     const flagColor = (flags: string) => {
+       if (!flags) return '#8892a4';
+       if (flags.includes('RST')) return '#ef4444';
+       if (flags === 'SYN') return '#f59e0b';
+       if (flags === 'NO-FLAGS') return '#f97316';
+       if (flags.includes('PSH')) return '#22c55e';
+       if (flags.includes('SYN')) return '#3b82f6';
+       return '#8892a4';
+     };
+
+     const bppLabel = (bpp: number) => {
+       if (!bpp) return null;
+       if (bpp > 1400) return {
+         label: `${bpp}B ⚠`,
+         color: '#ef4444',
+         hint: 'Possível amplificação'
+       };
+       if (bpp < 100) return {
+         label: `${bpp}B ⚠`,
+         color: '#f59e0b',
+         hint: 'Possível flood'
+       };
+       return {
+         label: `${bpp}B`,
+         color: '#8892a4',
+         hint: 'Normal'
+       };
+     };
+
+     const fmtDuration = (s: number) => {
+       if (!s) return '—';
+       if (s < 60) return `${s}s`;
+       if (s < 3600)
+         return `${Math.floor(s/60)}m ${s%60}s`;
+       return `${Math.floor(s/3600)}h `+
+         `${Math.floor((s%3600)/60)}m`;
+     };
     const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
 
     const formatDate = (dateStr: string) => {
@@ -492,22 +530,26 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                    <th className="px-6 py-4 border-b border-border text-center">Direção</th>
                    <th className="px-6 py-4 border-b border-border">IP Origem</th>
                    <th className="px-6 py-4 border-b border-border">IP Destino</th>
-                   <th className="px-6 py-4 border-b border-border">Serviço</th>
-                   <th className="px-6 py-4 border-b border-border">Empresa</th>
-                   <th className="px-6 py-4 border-b border-border">Proto</th>
-                   <SortHeader field="bytes" label="Bytes" align="right" />
-                   <SortHeader field="packets" label="PPS" align="right" />
-                   {isAdmin && <th className="px-6 py-4 border-b border-border text-center">Ação</th>}
+                    <th className="px-6 py-4 border-b border-border">Serviço</th>
+                    <th className="px-6 py-4 border-b border-border text-center">Protocolo</th>
+                    <th className="px-6 py-4 border-b border-border text-center">TCP Flags</th>
+                    <th className="px-6 py-4 border-b border-border">Interface ↓/↑</th>
+                    <th className="px-6 py-4 border-b border-border">Empresa</th>
+                    <SortHeader field="bytes" label="Bytes" align="right" />
+                    <SortHeader field="packets" label="PPS" align="right" />
+                    <th className="px-6 py-4 border-b border-border text-right">BPP</th>
+                    <th className="px-6 py-4 border-b border-border text-right">Duração</th>
+                    {isAdmin && <th className="px-6 py-4 border-b border-border text-center">Ação</th>}
                  </tr>
                </thead>
               <tbody className="text-sm divide-y divide-border/50">
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i}><td colSpan={10} className="px-6 py-4"><div className="w-full h-8 bg-bg-primary rounded animate-pulse" /></td></tr>
+                     <tr key={i}><td colSpan={14} className="px-6 py-4"><div className="w-full h-8 bg-bg-primary rounded animate-pulse" /></td></tr>
                   ))
                 ) : connectionItems.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="px-6 py-12 text-center text-text-secondary italic">
+                     <td colSpan={14} className="px-6 py-12 text-center text-text-secondary italic">
                       Nenhuma conexão encontrada com os filtros atuais
                     </td>
                   </tr>
@@ -529,31 +571,22 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                     const isSuspicious = item.bytes > 1e9;
   
                      return (
-                       <tr key={i} className="hover:bg-accent/5 transition-colors group">
-                          <td className="px-6 py-4 text-[10px] text-text-secondary font-mono whitespace-nowrap">
-                            {formatUTC(item.time_received)}
-                          </td>
-                         <td className="px-6 py-4 text-center">
-                           <TooltipProvider>
-                             <Tooltip>
-                               <TooltipTrigger asChild>
-                                 <div className={clsx(
-                                   "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border cursor-help",
-                                   direction === 'outgoing' 
-                                     ? "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800" 
-                                     : "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800"
-                                 )}>
-                                   {direction === 'outgoing' ? <><ArrowUp size={10} /> Upload</> : <><ArrowDown size={10} /> Download</>}
-                                 </div>
-                               </TooltipTrigger>
-                               <TooltipContent className="max-w-[200px] text-[10px]">
-                                 {direction === 'outgoing' 
-                                   ? "Saindo = upload / ataque gerado pelo seu cliente" 
-                                   : "Entrando = download / ataque recebido pelo seu cliente"}
-                               </TooltipContent>
-                             </Tooltip>
-                           </TooltipProvider>
-                         </td>
+                        <Tooltip key={i} delayDuration={300}>
+                          <TooltipTrigger asChild>
+                            <tr className="hover:bg-accent/5 transition-colors group cursor-default">
+                               <td className="px-6 py-4 text-[10px] text-text-secondary font-mono whitespace-nowrap">
+                                 {formatUTC(item.time_received)}
+                               </td>
+                              <td className="px-6 py-4 text-center">
+                                <div className={clsx(
+                                  "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border",
+                                  direction === 'outgoing' 
+                                    ? "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800" 
+                                    : "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800"
+                                )}>
+                                  {direction === 'outgoing' ? <><ArrowUp size={10} /> Upload</> : <><ArrowDown size={10} /> Download</>}
+                                </div>
+                              </td>
                          <td className="px-6 py-4">
                            <div className="flex items-center gap-2">
                              <span className={clsx("w-2 h-2 rounded-full", isSuspicious ? "bg-danger animate-pulse" : "bg-success")} />
@@ -572,12 +605,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                         <td className="px-6 py-4">
                           <span className="text-[11px] font-bold text-text-primary">{getService(dstPort)}</span>
                         </td>
-                        <td className="px-6 py-4">
-                          <span className="text-[11px] text-text-secondary font-medium truncate max-w-[150px] inline-block" title={dstOrg}>
-                            {dstOrg || '—'}
-                          </span>
-                        </td>
-                        <td className="px-6 py-4">
+                        <td className="px-6 py-4 text-center">
                           <span className={clsx(
                             "px-2 py-0.5 rounded text-[9px] font-black uppercase border",
                             item.proto === 6 ? "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400" :
@@ -588,14 +616,69 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                             {protoName(item.proto)}
                           </span>
                         </td>
-                          <td className="px-6 py-4 text-right font-bold text-text-primary text-xs">{fmtBytes(item.bytes)}</td>
-                          <td className="px-6 py-4 text-right text-text-secondary">
-                            <PPSIntensity pps={Math.round((item.packets || 0) / (parseInt(filters.minutes) * 60))} />
-                          </td>
+                        <td className="px-6 py-4 text-center">
+                          <span style={{
+                            fontSize: 10,
+                            padding: '2px 6px',
+                            borderRadius: 3,
+                            fontFamily: 'monospace',
+                            fontWeight: 600,
+                            background: flagColor(item.tcp_flags) + '20',
+                            color: flagColor(item.tcp_flags),
+                            border: `1px solid ${flagColor(item.tcp_flags)}40`
+                          }}>
+                            {item.tcp_flags || '—'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <div style={{fontSize:11}}>
+                            <span style={{color:'#3b82f6'}}>
+                              ↓ {item.in_iface || '—'}
+                            </span>
+                            <span style={{
+                              color:'#8892a4', margin:'0 4px'
+                            }}>
+                              /
+                            </span>
+                            <span style={{color:'#22c55e'}}>
+                              ↑ {item.out_iface || '—'}
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-[11px] text-text-secondary font-medium truncate max-w-[120px] inline-block" title={dstOrg}>
+                            {dstOrg || '—'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4 text-right font-bold text-text-primary text-xs">{fmtBytes(item.bytes)}</td>
+                        <td className="px-6 py-4 text-right text-text-secondary">
+                          <PPSIntensity pps={calcPPS(item.packets, filters.minutes)} />
+                        </td>
+                        <td className="px-6 py-4 text-right">
+                          {(() => {
+                            const bpp = bppLabel(item.bpp);
+                            if (!bpp) return <span className="text-text-secondary">—</span>;
+                            return (
+                              <span 
+                                className="font-bold text-xs" 
+                                style={{ color: bpp.color }}
+                                title={bpp.hint}
+                              >
+                                {bpp.label}
+                              </span>
+                            );
+                          })()}
+                        </td>
+                        <td className="px-6 py-4 text-right text-[11px] font-mono text-text-secondary whitespace-nowrap">
+                          {fmtDuration(item.duration)}
+                        </td>
                         {isAdmin && (
                           <td className="px-6 py-4 text-center">
                             <button 
-                              onClick={() => handleMitigate(item)}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                handleMitigate(item);
+                              }}
                               className="p-1.5 text-danger hover:bg-danger/10 rounded-lg transition-all"
                               title="Mitigar"
                             >
@@ -604,6 +687,56 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                           </td>
                         )}
                       </tr>
+                    </TooltipTrigger>
+                    <TooltipContent className="p-4 w-80 bg-bg-secondary border-border shadow-xl">
+                      <div className="space-y-3">
+                        <div className="flex justify-between items-center border-b border-border pb-2">
+                          <span className="text-[10px] font-bold uppercase text-text-secondary">Detalhes do Fluxo</span>
+                          <span className="text-[10px] font-mono text-text-secondary">{formatUTC(item.time_received)}</span>
+                        </div>
+                        
+                        <div className="grid grid-cols-2 gap-4">
+                          <div className="space-y-1">
+                            <p className="text-[9px] font-bold text-text-secondary uppercase">Rede Origem</p>
+                            <p className="text-xs font-mono text-text-primary">{item.src_net || '—'}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-[9px] font-bold text-text-secondary uppercase">Rede Destino</p>
+                            <p className="text-xs font-mono text-text-primary">{item.dst_net || '—'}</p>
+                          </div>
+                        </div>
+
+                        <div className="space-y-1 pt-1 border-t border-border/50">
+                          <p className="text-[9px] font-bold text-text-secondary uppercase">Next Hop</p>
+                          <p className="text-xs font-mono text-text-primary">{item.next_hop || '—'}</p>
+                        </div>
+
+                        <div className="grid grid-cols-2 gap-4 pt-1 border-t border-border/50">
+                          <div className="space-y-1">
+                            <p className="text-[9px] font-bold text-text-secondary uppercase">Duração</p>
+                            <p className="text-xs text-text-primary">{fmtDuration(item.duration)}</p>
+                          </div>
+                          <div className="space-y-1">
+                            <p className="text-[9px] font-bold text-text-secondary uppercase">BPP</p>
+                            <div className="flex items-center gap-1">
+                              <p className="text-xs text-text-primary">{item.bpp} Bytes</p>
+                              {item.bpp > 0 && (
+                                <span className="text-[9px] px-1 rounded bg-bg-primary border border-border" style={{ color: bppLabel(item.bpp)?.color }}>
+                                  {bppLabel(item.bpp)?.hint}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+
+                        <div className="pt-2 flex flex-col gap-1">
+                          <div className="text-[10px] color-[#8892a4] font-mono bg-bg-primary/50 p-1.5 rounded border border-border/30">
+                            {item.src_net} → {item.dst_net}
+                          </div>
+                        </div>
+                      </div>
+                    </TooltipContent>
+                  </Tooltip>
                     );
                   })
                 )}
