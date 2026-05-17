@@ -128,35 +128,22 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       return params.toString();
     };
 
-    const SortHeader = ({ field, label, align = 'left' }: { field: string, label: string, align?: 'left' | 'right' | 'center' }) => (
-      <th 
-        className={clsx("px-6 py-4 border-b border-border cursor-pointer hover:bg-bg-secondary transition-colors", align === 'right' && 'text-right', align === 'center' && 'text-center')}
-        onClick={() => {
-          if (sortField === field) {
-            setSortOrder(sortOrder === 'desc' ? 'asc' : 'desc');
-          } else {
-            setSortField(field);
-            setSortOrder('desc');
-          }
-        }}
-      >
-        <div className={clsx("flex items-center gap-1", align === 'right' && 'justify-end')}>
-          {label}
-          {sortField === field && (
-            sortOrder === 'desc' ? <ArrowDown size={12} /> : <ArrowUp size={12} />
-          )}
-        </div>
-      </th>
-    );
-
-    const periods = [
-      { label: '5 min', value: 5 },
-      { label: '15 min', value: 15 },
-      { label: '30 min', value: 30 },
-      { label: '1 hora', value: 60 },
-      { label: '6 horas', value: 360 },
-      { label: '24 horas', value: 1440 },
-    ];
+    const SortHeader = ({ field, label, align = 'left' }: { field: string, label: string, align?: 'left' | 'right' | 'center' }) => {
+      const isSelected = filters.order === field;
+      return (
+        <th 
+          className={clsx("px-6 py-4 border-b border-border cursor-pointer hover:bg-bg-secondary transition-colors", align === 'right' && 'text-right', align === 'center' && 'text-center')}
+          onClick={() => {
+            setFilters(prev => ({ ...prev, order: field }));
+          }}
+        >
+          <div className={clsx("flex items-center gap-1", align === 'right' && 'justify-end')}>
+            {label}
+            {isSelected && <ArrowDown size={12} />}
+          </div>
+        </th>
+      );
+    };
    const [isMitigationOpen, setIsMitigationOpen] = useState(false);
    const [mitigationData, setMitigationData] = useState({ ip: '', proto: '', port: 0 });
  
