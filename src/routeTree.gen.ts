@@ -26,6 +26,7 @@ import { Route as OperationThresholdsRouteImport } from './routes/operation/thre
 import { Route as OperationCollectorsRouteImport } from './routes/operation/collectors'
 import { Route as OperationBgpSessionsRouteImport } from './routes/operation/bgp-sessions'
 import { Route as MitigationWhitelistRouteImport } from './routes/mitigation/whitelist'
+import { Route as MitigationPolicyRouteImport } from './routes/mitigation/policy'
 import { Route as MitigationFlowspecRouteImport } from './routes/mitigation/flowspec'
 import { Route as MitigationBlacklistRouteImport } from './routes/mitigation/blacklist'
 import { Route as MitigationBgpRouteImport } from './routes/mitigation/bgp'
@@ -116,6 +117,11 @@ const MitigationWhitelistRoute = MitigationWhitelistRouteImport.update({
   path: '/mitigation/whitelist',
   getParentRoute: () => rootRouteImport,
 } as any)
+const MitigationPolicyRoute = MitigationPolicyRouteImport.update({
+  id: '/mitigation/policy',
+  path: '/mitigation/policy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const MitigationFlowspecRoute = MitigationFlowspecRouteImport.update({
   id: '/mitigation/flowspec',
   path: '/mitigation/flowspec',
@@ -153,6 +159,7 @@ export interface FileRoutesByFullPath {
   '/mitigation/bgp': typeof MitigationBgpRoute
   '/mitigation/blacklist': typeof MitigationBlacklistRoute
   '/mitigation/flowspec': typeof MitigationFlowspecRoute
+  '/mitigation/policy': typeof MitigationPolicyRoute
   '/mitigation/whitelist': typeof MitigationWhitelistRoute
   '/operation/bgp-sessions': typeof OperationBgpSessionsRoute
   '/operation/collectors': typeof OperationCollectorsRoute
@@ -176,6 +183,7 @@ export interface FileRoutesByTo {
   '/mitigation/bgp': typeof MitigationBgpRoute
   '/mitigation/blacklist': typeof MitigationBlacklistRoute
   '/mitigation/flowspec': typeof MitigationFlowspecRoute
+  '/mitigation/policy': typeof MitigationPolicyRoute
   '/mitigation/whitelist': typeof MitigationWhitelistRoute
   '/operation/bgp-sessions': typeof OperationBgpSessionsRoute
   '/operation/collectors': typeof OperationCollectorsRoute
@@ -200,6 +208,7 @@ export interface FileRoutesById {
   '/mitigation/bgp': typeof MitigationBgpRoute
   '/mitigation/blacklist': typeof MitigationBlacklistRoute
   '/mitigation/flowspec': typeof MitigationFlowspecRoute
+  '/mitigation/policy': typeof MitigationPolicyRoute
   '/mitigation/whitelist': typeof MitigationWhitelistRoute
   '/operation/bgp-sessions': typeof OperationBgpSessionsRoute
   '/operation/collectors': typeof OperationCollectorsRoute
@@ -225,6 +234,7 @@ export interface FileRouteTypes {
     | '/mitigation/bgp'
     | '/mitigation/blacklist'
     | '/mitigation/flowspec'
+    | '/mitigation/policy'
     | '/mitigation/whitelist'
     | '/operation/bgp-sessions'
     | '/operation/collectors'
@@ -248,6 +258,7 @@ export interface FileRouteTypes {
     | '/mitigation/bgp'
     | '/mitigation/blacklist'
     | '/mitigation/flowspec'
+    | '/mitigation/policy'
     | '/mitigation/whitelist'
     | '/operation/bgp-sessions'
     | '/operation/collectors'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/mitigation/bgp'
     | '/mitigation/blacklist'
     | '/mitigation/flowspec'
+    | '/mitigation/policy'
     | '/mitigation/whitelist'
     | '/operation/bgp-sessions'
     | '/operation/collectors'
@@ -295,6 +307,7 @@ export interface RootRouteChildren {
   MitigationBgpRoute: typeof MitigationBgpRoute
   MitigationBlacklistRoute: typeof MitigationBlacklistRoute
   MitigationFlowspecRoute: typeof MitigationFlowspecRoute
+  MitigationPolicyRoute: typeof MitigationPolicyRoute
   MitigationWhitelistRoute: typeof MitigationWhitelistRoute
   OperationBgpSessionsRoute: typeof OperationBgpSessionsRoute
   OperationCollectorsRoute: typeof OperationCollectorsRoute
@@ -424,6 +437,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MitigationWhitelistRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/mitigation/policy': {
+      id: '/mitigation/policy'
+      path: '/mitigation/policy'
+      fullPath: '/mitigation/policy'
+      preLoaderRoute: typeof MitigationPolicyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/mitigation/flowspec': {
       id: '/mitigation/flowspec'
       path: '/mitigation/flowspec'
@@ -471,6 +491,7 @@ const rootRouteChildren: RootRouteChildren = {
   MitigationBgpRoute: MitigationBgpRoute,
   MitigationBlacklistRoute: MitigationBlacklistRoute,
   MitigationFlowspecRoute: MitigationFlowspecRoute,
+  MitigationPolicyRoute: MitigationPolicyRoute,
   MitigationWhitelistRoute: MitigationWhitelistRoute,
   OperationBgpSessionsRoute: OperationBgpSessionsRoute,
   OperationCollectorsRoute: OperationCollectorsRoute,
