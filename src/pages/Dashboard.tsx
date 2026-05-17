@@ -93,8 +93,11 @@ export default function Dashboard() {
     };
   }, [queryClient]);
 
-  const timeAgo = (dateStr: string) => {
-    const diff = Date.now() - new Date(dateStr).getTime();
+   const timeAgo = (dateStr: string) => {
+     if (!dateStr) return '—';
+     const d = new Date(dateStr.replace(' ', 'T'));
+     if (isNaN(d.getTime())) return '—';
+     const diff = Date.now() - d.getTime();
     const mins = Math.floor(diff / 60000);
     if (mins < 60) return `há ${mins}min`;
     const hrs = Math.floor(mins / 60);
@@ -375,9 +378,11 @@ export default function Dashboard() {
         // For 24h, take 1 every 5 points to not overload
         const filteredItems = timePeriod === '24h' ? items.filter((_: any, i: number) => i % 5 === 0) : items;
 
-        filteredItems.forEach((m: any) => {
-          const date = new Date(m.time_bucket);
-          const time = timePeriod === '24h' 
+         filteredItems.forEach((m: any) => {
+           const date = new Date(String(m.time_bucket).replace(' ', 'T'));
+           if (isNaN(date.getTime())) return;
+           
+           const time = timePeriod === '24h' 
             ? date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
             : date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
@@ -630,7 +635,7 @@ export default function Dashboard() {
                     <span className="font-bold text-text-primary">{(event.peak_pps / 1000).toFixed(1)}k</span> pps
                   </div>
                   <div className="text-[10px] text-text-secondary opacity-60 flex items-center gap-1">
-                    <Clock size={10} /> {timeAgo(event.start_time)}
+                     <Clock size={10} /> {timeAgo(event.started_at || event.start_time)}
                   </div>
                 </div>
                 <div className={clsx(
