@@ -149,15 +149,15 @@ export default function Dashboard() {
   const dirLabel = (dir: string) => {
     if (dir === 'outgoing' || dir === 'outbound')
       return {
-        label: '↑ Upload (saindo)',
-        color: '#22c55e',
-        bg: '#0f2d1a'
+        label: '↑ Upload',
+        color: isDark ? '#22c55e' : '#15803d',
+        bg: isDark ? '#0f2d1a' : '#dcfce7'
       };
     if (dir === 'incoming' || dir === 'inbound')
       return {
-        label: '↓ Download (entrando)',
-        color: '#3b82f6',
-        bg: '#0f1f3a'
+        label: '↓ Download',
+        color: isDark ? '#3b82f6' : '#1d4ed8',
+        bg: isDark ? '#0f1f3a' : '#dbeafe'
       };
     return {
       label: '—',
@@ -849,9 +849,6 @@ export default function Dashboard() {
                   Ver completo <ArrowRight size={12} />
                 </Link>
               </div>
-              <Link to="/events" className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1">
-                Ver completo <ArrowRight size={12} />
-              </Link>
             </div>
             
             <div className="space-y-1 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
@@ -872,27 +869,60 @@ export default function Dashboard() {
                       <span className="text-xs font-bold text-text-primary font-mono">{item.ip}</span>
                     </div>
 
-                    <div className="hidden sm:flex items-center gap-2 text-[10px]">
-                      {(() => {
-                        const dir = dirLabel(item.direction || item.flow_direction);
-                        return (
-                          <span style={{
-                            color: dir.color,
-                            background: dir.bg,
-                            padding: '2px 8px',
-                            borderRadius: 4,
-                            fontSize: 10,
-                            fontWeight: 500,
-                            whiteSpace: 'nowrap'
-                          }}>
-                            {dir.label}
-                          </span>
-                        );
-                      })()}
-                      <span className="opacity-40">·</span>
-                      <span className="text-warning font-bold">
-                        {item.peak_pps > 1000 ? (item.peak_pps/1000).toFixed(1) + 'k' : item.peak_pps} pps
-                      </span>
+                    <div className="hidden sm:flex flex-col gap-0.5">
+                      <div className="flex items-center gap-2 text-[10px]">
+                        {(() => {
+                          const dir = dirLabel(item.direction || item.flow_direction);
+                          return (
+                            <span style={{
+                              color: dir.color,
+                              background: dir.bg,
+                              padding: '1px 6px',
+                              borderRadius: 4,
+                              fontSize: 9,
+                              fontWeight: 700,
+                              whiteSpace: 'nowrap'
+                            }}>
+                              {dir.label}
+                            </span>
+                          );
+                        })()}
+                      </div>
+
+                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 2 }}>
+                        {item.peak_pps > 0 && (() => {
+                          const byPps = item.peak_pps >= 100000;
+                          return (
+                            <span style={{
+                              fontSize: 11,
+                              fontWeight: byPps ? 700 : 400,
+                              color: byPps ? '#ef4444' : '#8892a4',
+                              background: byPps ? (isDark ? '#3b1212' : '#fee2e2') : 'transparent',
+                              padding: byPps ? '1px 5px' : '0',
+                              borderRadius: 3,
+                            }}>
+                              {(item.peak_pps / 1000).toFixed(1)}k pps
+                              {byPps ? ' ⚡' : ''}
+                            </span>
+                          );
+                        })()}
+                        {item.peak_mbps > 0 && (() => {
+                          const byMbps = item.peak_mbps >= 1000;
+                          return (
+                            <span style={{
+                              fontSize: 11,
+                              fontWeight: byMbps ? 700 : 400,
+                              color: byMbps ? '#f59e0b' : '#8892a4',
+                              background: byMbps ? (isDark ? '#2d1f0a' : '#fef3c7') : 'transparent',
+                              padding: byMbps ? '1px 5px' : '0',
+                              borderRadius: 3,
+                            }}>
+                              {item.peak_mbps} Mbps
+                              {byMbps ? ' ⚡' : ''}
+                            </span>
+                          );
+                        })()}
+                      </div>
                     </div>
                   </div>
 
