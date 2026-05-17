@@ -22,7 +22,7 @@ const REFETCH_INTERVAL = 30000;
 const RX_COLORS = ['#3b82f6', '#1d4ed8', '#60a5fa', '#93c5fd', '#bfdbfe'];
 const TX_COLORS = ['#22c55e', '#16a34a', '#4ade80', '#86efac', '#bbf7d0'];
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
-const MAX_POINTS = 200;
+const MAX_POINTS = 300;
 
 const sampleData = (data: any[]) => {
   if (data.length <= MAX_POINTS)
@@ -124,13 +124,20 @@ export default function Dashboard() {
 
   const { data: eventsHistory } = useQuery({
     queryKey: ['events-history-compact'],
-    queryFn: () => api.get('/api/events/history?limit=8').then(r => r.data),
+    queryFn: async () => {
+      const r = await api.get('/api/events/history?limit=8');
+      console.log('events:', r.data);
+      return r.data;
+    },
     refetchInterval: 30000,
   });
 
   const { data: sysStatus } = useQuery({
     queryKey: ['system-status'],
-    queryFn: () => api.get('/api/system/status').then(r => r.data).catch(() => null),
+    queryFn: () => api.get('/api/system/status').then(r => {
+      console.log('system status:', r.data);
+      return r.data;
+    }).catch(() => null),
     refetchInterval: 30000,
   });
 
