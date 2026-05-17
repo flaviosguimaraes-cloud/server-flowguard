@@ -635,7 +635,7 @@ export default function Dashboard() {
                     <span className="font-bold text-text-primary">{(event.peak_pps / 1000).toFixed(1)}k</span> pps
                   </div>
                   <div className="text-[10px] text-text-secondary opacity-60 flex items-center gap-1">
-                    <Clock size={10} /> {timeAgo(event.start_time)}
+                     <Clock size={10} /> {timeAgo(event.started_at || event.start_time)}
                   </div>
                 </div>
                 <div className={clsx(
