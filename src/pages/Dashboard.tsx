@@ -958,15 +958,35 @@ export default function Dashboard() {
             </span>
           </div>
 
-           <div className="flex items-center gap-4">
-             <div className="flex flex-col items-end px-3 py-1.5 bg-bg-primary/50 rounded-lg border border-border/30">
-               <span className="text-[9px] uppercase font-black text-text-secondary opacity-60 leading-none mb-1">Total RX ({periodStats.label})</span>
-               <span className="text-sm font-black text-accent">{formatBpsRaw(periodStats.rx)}</span>
+           <div className="flex flex-col gap-2 bg-bg-primary/30 p-4 rounded-xl border border-border/40">
+             <div className="text-[10px] text-text-secondary font-bold uppercase tracking-wider mb-1 opacity-60">
+               Estatísticas · {periodStats.label}
              </div>
-             <div className="flex flex-col items-end px-3 py-1.5 bg-bg-primary/50 rounded-lg border border-border/30">
-               <span className="text-[9px] uppercase font-black text-text-secondary opacity-60 leading-none mb-1">Total TX ({periodStats.label})</span>
-               <span className="text-sm font-black text-success">{formatBpsRaw(periodStats.tx)}</span>
-             </div>
+             {(['rx', 'tx'] as const).map(dir => (
+               <div key={dir} className="flex items-center gap-4 py-1 border-t border-border/20 first:border-t-0">
+                 <span className={clsx(
+                   "text-xs font-black w-6 text-center",
+                   dir === 'rx' ? "text-accent" : "text-success"
+                 )}>
+                   {dir === 'rx' ? '↓' : '↑'}
+                 </span>
+
+                 {(['last', 'min', 'avg', 'max'] as const).map(metric => (
+                   <div key={metric} className="flex flex-col items-center min-w-[70px]">
+                     <span className="text-[9px] uppercase font-bold text-text-secondary opacity-50 mb-0.5">
+                       {metric === 'last' ? 'Último' : metric === 'min' ? 'Mínimo' : metric === 'avg' ? 'Média' : 'Máximo'}
+                     </span>
+                     <span className={clsx(
+                       "text-[13px] font-bold tracking-tight",
+                       metric === 'max' ? (dir === 'rx' ? "text-accent" : "text-success") : "text-text-primary"
+                     )}>
+                       {formatBpsRaw(periodStats[dir][metric])}
+                     </span>
+                   </div>
+                 ))}
+               </div>
+             ))}
+           </div>
             <div className="flex flex-col items-end px-3 py-1.5 bg-bg-primary/50 rounded-lg border border-border/30">
               <span className="text-[9px] uppercase font-black text-text-secondary opacity-60 leading-none mb-1">Interfaces</span>
               <span className="text-xs font-black text-text-primary">{selectedIfaces.length}<span className="text-[10px] opacity-40 mx-0.5">/</span>{(Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : []).length}</span>
