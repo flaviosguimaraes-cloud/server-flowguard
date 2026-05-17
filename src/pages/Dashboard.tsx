@@ -206,6 +206,15 @@ export default function Dashboard() {
   const [timePeriod, setTimePeriod] = useState<'realtime' | '1h' | '6h' | '24h'>('realtime');
    const [showIfaceSelector, setShowIfaceSelector] = useState(false);
 
+  // 1. Forçar refetch quando timePeriod ou interfaces selecionadas mudam
+  useEffect(() => {
+    if (timePeriod !== 'realtime') {
+      queryClient.invalidateQueries({
+        queryKey: ['iface-history']
+      });
+    }
+  }, [timePeriod, selectedIfaces, queryClient]);
+
   const { data: metricsHistory, isLoading: metricsHistoryLoading } = useQuery({
     queryKey: ['iface-history', selectedCollector, timePeriod, selectedIfaces],
     queryFn: async () => {
@@ -224,7 +233,7 @@ export default function Dashboard() {
           console.log('Resultado:', ifName, r.data);
           return {
             ifName,
-            data: r.data?.history || r.data?.metrics || []
+            data: r.data?.history || []
           };
         })
       );
