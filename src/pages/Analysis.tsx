@@ -545,11 +545,11 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
               <tbody className="text-sm divide-y divide-border/50">
                 {isLoading ? (
                   Array.from({ length: 5 }).map((_, i) => (
-                    <tr key={i}><td colSpan={10} className="px-6 py-4"><div className="w-full h-8 bg-bg-primary rounded animate-pulse" /></td></tr>
+                     <tr key={i}><td colSpan={14} className="px-6 py-4"><div className="w-full h-8 bg-bg-primary rounded animate-pulse" /></td></tr>
                   ))
                 ) : connectionItems.length === 0 ? (
                   <tr>
-                    <td colSpan={10} className="px-6 py-12 text-center text-text-secondary italic">
+                     <td colSpan={14} className="px-6 py-12 text-center text-text-secondary italic">
                       Nenhuma conexão encontrada com os filtros atuais
                     </td>
                   </tr>
