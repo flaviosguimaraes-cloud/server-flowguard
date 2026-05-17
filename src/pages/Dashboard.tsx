@@ -214,15 +214,19 @@ export default function Dashboard() {
 
       const minutes = timePeriod === '1h' ? 60 : timePeriod === '6h' ? 360 : 1440;
 
+      console.log('Buscando histórico:', selectedCollector, selectedIfaces, minutes);
+
       const results = await Promise.all(
-        selectedIfaces.map(ifName =>
-          api.get(
-            `/api/collectors/${selectedCollector}/metrics/history?minutes=${minutes}&if_name=${encodeURIComponent(ifName)}`
-          ).then(r => ({
+        selectedIfaces.map(async ifName => {
+          const url = `/api/collectors/${selectedCollector}/metrics/history?minutes=${minutes}&if_name=${encodeURIComponent(ifName)}`;
+          console.log('URL:', url);
+          const r = await api.get(url);
+          console.log('Resultado:', ifName, r.data);
+          return {
             ifName,
-            data: r.data.history || []
-          }))
-        )
+            data: r.data?.history || r.data?.metrics || []
+          };
+        })
       );
       return results;
     },
