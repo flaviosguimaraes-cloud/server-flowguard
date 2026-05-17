@@ -389,8 +389,8 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                 onChange={(e) => setFilters(prev => ({ ...prev, direction: e.target.value }))}
               >
                 <option value="">Todos</option>
-                <option value="outgoing">↑ Upload (saindo)</option>
-                <option value="incoming">↓ Download (entrando)</option>
+                <option value="outgoing">↑ Upload</option>
+                <option value="incoming">↓ Download</option>
               </select>
             </div>
             <div className="space-y-1">
