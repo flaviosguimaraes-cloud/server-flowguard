@@ -67,6 +67,17 @@ function StatCard({ title, value, unit, icon, trend, tooltip, subtitle }: any) {
   );
 }
 
+const SERVICE_NAMES: Record<string, string> = {
+  flow_collector: "GoFlow2 (Coletor)",
+  detection_engine: "FastNetMon",
+  api: "FlowGuard API",
+  flow_database: "ClickHouse",
+  config_database: "PostgreSQL",
+  cache: "Redis",
+  bgp_engine: "ExaBGP (BGP)",
+  web: "Nginx"
+};
+
 export default function Dashboard() {
   const { t } = useTranslation();
   const { theme } = useTheme();
@@ -821,14 +832,31 @@ export default function Dashboard() {
                 {/* Métricas Principais */}
                 <div className="space-y-4">
                   {[
-                    { label: 'CPU', value: sysStatus.cpu_usage, color: sysStatus.cpu_usage >= 90 ? 'bg-danger' : sysStatus.cpu_usage >= 70 ? 'bg-warning' : 'bg-success' },
-                    { label: 'RAM', value: sysStatus.ram_usage, color: sysStatus.ram_usage >= 90 ? 'bg-danger' : sysStatus.ram_usage >= 70 ? 'bg-warning' : 'bg-primary' },
-                    { label: 'Disco', value: sysStatus.disk_usage, color: 'bg-accent' }
+                    { 
+                      label: 'CPU', 
+                      value: sysStatus.cpu_percent || sysStatus.cpu_usage || 0, 
+                      color: (sysStatus.cpu_percent || sysStatus.cpu_usage) >= 90 ? 'bg-danger' : (sysStatus.cpu_percent || sysStatus.cpu_usage) >= 70 ? 'bg-warning' : 'bg-success',
+                      detail: `${(sysStatus.cpu_percent || sysStatus.cpu_usage || 0).toFixed(1)}%`
+                    },
+                    { 
+                      label: 'RAM', 
+                      value: sysStatus.ram_percent || (sysStatus.ram_used_gb && sysStatus.ram_free_gb ? (sysStatus.ram_used_gb / (sysStatus.ram_used_gb + sysStatus.ram_free_gb) * 100) : sysStatus.ram_usage || 0), 
+                      color: (sysStatus.ram_percent || sysStatus.ram_usage) >= 90 ? 'bg-danger' : (sysStatus.ram_percent || sysStatus.ram_usage) >= 70 ? 'bg-warning' : 'bg-primary',
+                      detail: sysStatus.ram_used_gb 
+                        ? `${sysStatus.ram_used_gb.toFixed(2)} GB usado${(sysStatus.ram_used_gb && sysStatus.ram_free_gb) ? ` de ${(sysStatus.ram_used_gb + sysStatus.ram_free_gb).toFixed(0)} GB` : ''}`
+                        : `${(sysStatus.ram_usage || 0).toFixed(0)}%`
+                    },
+                    { 
+                      label: 'Disco', 
+                      value: sysStatus.disk_percent || sysStatus.disk_usage || 0, 
+                      color: 'bg-accent',
+                      detail: sysStatus.disk_used_gb ? `${sysStatus.disk_used_gb.toFixed(0)} GB / ${(sysStatus.disk_used_gb + (sysStatus.disk_free_gb || 0)).toFixed(0)} GB` : `${(sysStatus.disk_usage || 0).toFixed(0)}%`
+                    }
                   ].map(m => (
                     <div key={m.label} className="space-y-1.5">
                       <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
                         <span className="text-text-secondary">{m.label}</span>
-                        <span className="text-text-primary">{m.value}%</span>
+                        <span className="text-text-primary">{m.detail}</span>
                       </div>
                       <div className="h-1.5 bg-bg-primary rounded-full overflow-hidden border border-border/10">
                         <div 
@@ -846,16 +874,21 @@ export default function Dashboard() {
                     <span className="text-xs font-black text-text-primary">{sysStatus.uptime || '—'}</span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-x-4 gap-y-2">
-                    {Object.entries(sysStatus.services || {}).map(([name, status]: [string, any]) => (
-                      <div key={name} className="flex items-center gap-2">
-                        <span className={clsx(
-                          "w-1.5 h-1.5 rounded-full",
-                          status ? "bg-success shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-danger shadow-[0_0_8px_rgba(239,68,68,0.4)]"
-                        )} />
-                        <span className="text-[10px] font-bold text-text-secondary font-mono truncate">{name}</span>
-                      </div>
-                    ))}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
+                    {Object.entries(sysStatus.services || {}).map(([name, status]: [string, any]) => {
+                      const isActive = status === 'active' || status === true;
+                      return (
+                        <div key={name} className="flex items-center gap-2">
+                          <span className={clsx(
+                            "w-1.5 h-1.5 rounded-full",
+                            isActive ? "bg-success shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-danger shadow-[0_0_8px_rgba(239,68,68,0.4)]"
+                          )} />
+                          <span className="text-[10px] font-bold text-text-secondary truncate" title={name}>
+                            {SERVICE_NAMES[name] || name}
+                          </span>
+                        </div>
+                      );
+                    })}
                   </div>
                 </div>
               </div>
