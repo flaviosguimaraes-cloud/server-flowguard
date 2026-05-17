@@ -847,131 +847,147 @@ export default function Dashboard() {
 
 
 
-        {/* Seção 3 — Eventos + Saúde */}
-        <div className="grid grid-cols-1 lg:grid-cols-10 gap-6">
-          {/* PAINEL ESQUERDO (60%) - Últimos Eventos */}
-          <div className="lg:col-span-6 bg-white dark:bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm flex flex-col">
-            <div className="flex items-center justify-between mb-5 border-b border-border/50 pb-3">
-              <div className="flex flex-col gap-1">
-                <div className="flex items-center gap-2">
-                  <History className="text-primary" size={18} />
-                  <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Últimos Eventos de Mitigação</h2>
-                </div>
-                {eventsUpdatedAt && (
-                  <span className="text-[10px] text-text-secondary opacity-60 font-medium">
-                    Atualizado: {new Date(eventsUpdatedAt).toLocaleTimeString('pt-BR')}
-                  </span>
-                )}
+        {/* Seção 3 — Eventos (Largura Total) */}
+        <div className="bg-white dark:bg-bg-secondary rounded-2xl border border-border shadow-sm flex flex-col overflow-hidden">
+          <div className="p-5 flex items-center justify-between border-b border-border/50 bg-bg-primary/30">
+            <div className="flex flex-col gap-1">
+              <div className="flex items-center gap-2">
+                <History className="text-primary" size={18} />
+                <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Últimos Eventos de Mitigação</h2>
               </div>
-              <div className="flex items-center gap-3">
-                <button 
-                  onClick={() => queryClient.invalidateQueries({ queryKey: ['events-history-dashboard'] })}
-                  className="text-[10px] font-bold text-text-secondary hover:text-primary transition-colors flex items-center gap-1 bg-bg-primary px-2 py-1 rounded border border-border"
-                >
-                  ↻ Atualizar
-                </button>
-                <Link to="/events" className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1">
-                  Ver completo <ArrowRight size={12} />
-                </Link>
-              </div>
+              {eventsUpdatedAt && (
+                <span className="text-[10px] text-text-secondary opacity-60 font-medium">
+                  Atualizado: {new Date(eventsUpdatedAt).toLocaleTimeString('pt-BR')}
+                </span>
+              )}
             </div>
-            
-            <div className="space-y-1 overflow-y-auto max-h-[400px] pr-2 custom-scrollbar">
-              {eventsHistory?.items?.map((item: any, i: number) => (
-                <div key={i} className="flex items-center justify-between py-2 border-b border-border/20 last:border-0 hover:bg-bg-primary/10 transition-colors px-2 rounded-lg">
-                  <div className="flex items-center gap-3">
-                    {item.status === 'active' ? (
-                      <span className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-danger/10 text-danger text-[9px] font-black border border-danger/20 animate-pulse">
-                        ● ATIVO
-                      </span>
-                    ) : (
-                      <span className="flex items-center gap-1.5 px-2 py-0.5 rounded bg-bg-primary text-text-secondary text-[9px] font-bold border border-border">
-                        ✓ FINALIZADO
-                      </span>
-                    )}
-
-                    <div className="flex items-center gap-2 min-w-[120px]">
-                      <span className="text-xs font-bold text-text-primary font-mono">{item.ip}</span>
-                    </div>
-
-                    <div className="hidden sm:flex flex-col gap-0.5">
-                      <div className="flex items-center gap-2 text-[10px]">
+            <div className="flex items-center gap-3">
+              <button 
+                onClick={() => queryClient.invalidateQueries({ queryKey: ['events-history-dashboard'] })}
+                className="text-[10px] font-bold text-text-secondary hover:text-primary transition-colors flex items-center gap-1 bg-bg-primary px-2 py-1 rounded border border-border"
+              >
+                ↻ Atualizar
+              </button>
+              <Link to="/events" className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1">
+                Ver completo <ArrowRight size={12} />
+              </Link>
+            </div>
+          </div>
+          
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+                  <th className="px-6 py-3 border-b border-border">IP</th>
+                  <th className="px-6 py-3 border-b border-border">Início</th>
+                  <th className="px-6 py-3 border-b border-border">Fim</th>
+                  <th className="px-6 py-3 border-b border-border text-center">Duração</th>
+                  <th className="px-6 py-3 border-b border-border">Pico (PPS/MBPS)</th>
+                  <th className="px-6 py-3 border-b border-border text-center">Direção</th>
+                  <th className="px-6 py-3 border-b border-border text-center">Status</th>
+                  <th className="px-6 py-3 border-b border-border">Tipo</th>
+                  <th className="px-6 py-3 border-b border-border">Origem</th>
+                </tr>
+              </thead>
+              <tbody className="text-sm divide-y divide-border/50">
+                {eventsHistory?.items?.slice(0, 5).map((event: any, i: number) => (
+                  <tr key={i} className="hover:bg-bg-primary/50 transition-colors group">
+                    <td className="px-6 py-3.5 font-mono font-bold text-text-primary text-xs">{event.ip}</td>
+                    <td className="px-6 py-3.5 text-text-secondary text-[11px] whitespace-nowrap">
+                      {formatDate(event.started_at || event.start_time)}
+                    </td>
+                    <td className="px-6 py-3.5 text-text-secondary text-[11px] whitespace-nowrap">
+                      {formatDate(event.ended_at || event.end_time)}
+                    </td>
+                    <td className="px-6 py-3.5 text-center text-text-primary text-[11px] font-medium">
+                      {fmtDuration(event.duration_seconds)}
+                    </td>
+                    <td className="px-6 py-3.5">
+                      <div style={{ display: 'flex', gap: 6 }}>
                         {(() => {
-                          const dir = dirLabel(item.direction || item.flow_direction);
+                          const byPps = event.peak_pps >= 100000;
                           return (
                             <span style={{
-                              color: dir.color,
-                              background: dir.bg,
-                              padding: '1px 6px',
-                              borderRadius: 4,
-                              fontSize: 9,
-                              fontWeight: 700,
-                              whiteSpace: 'nowrap'
-                            }}>
-                              {dir.label}
-                            </span>
-                          );
-                        })()}
-                      </div>
-
-                      <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginTop: 2 }}>
-                        {item.peak_pps > 0 && (() => {
-                          const byPps = item.peak_pps >= 100000;
-                          return (
-                            <span style={{
-                              fontSize: 11,
                               fontWeight: byPps ? 700 : 400,
-                              color: byPps ? '#ef4444' : '#8892a4',
+                              color: byPps ? '#ef4444' : (isDark ? '#94a3b8' : '#6b7280'),
                               background: byPps ? (isDark ? '#3b1212' : '#fee2e2') : 'transparent',
-                              padding: byPps ? '1px 5px' : '0',
+                              padding: byPps ? '1px 6px' : '0',
                               borderRadius: 3,
+                              fontSize: 12,
                             }}>
-                              {(item.peak_pps / 1000).toFixed(1)}k pps
+                              {(event.peak_pps / 1000).toFixed(1)}k pps
                               {byPps ? ' ⚡' : ''}
                             </span>
                           );
                         })()}
-                        {item.peak_mbps > 0 && (() => {
-                          const byMbps = item.peak_mbps >= 1000;
+                        {event.peak_mbps > 0 && (() => {
+                          const byMbps = event.peak_mbps >= 1000;
                           return (
                             <span style={{
-                              fontSize: 11,
                               fontWeight: byMbps ? 700 : 400,
-                              color: byMbps ? '#f59e0b' : '#8892a4',
+                              color: byMbps ? '#f59e0b' : (isDark ? '#94a3b8' : '#6b7280'),
                               background: byMbps ? (isDark ? '#2d1f0a' : '#fef3c7') : 'transparent',
-                              padding: byMbps ? '1px 5px' : '0',
+                              padding: byMbps ? '1px 6px' : '0',
                               borderRadius: 3,
+                              fontSize: 12,
                             }}>
-                              {item.peak_mbps} Mbps
+                              {event.peak_mbps} Mbps
                               {byMbps ? ' ⚡' : ''}
                             </span>
                           );
                         })()}
                       </div>
-                    </div>
-                  </div>
-
-                  <div className="text-[10px] font-medium text-text-secondary flex items-center gap-2">
-                    <span>{formatDate(item.started_at || item.start_time).split(' ')[1].substring(0, 5)}</span>
-                    {item.ended_at || item.end_time ? (
-                      <>
-                        <ArrowRight size={10} className="opacity-30" />
-                        <span>{formatDate(item.ended_at || item.end_time).split(' ')[1].substring(0, 5)}</span>
-                      </>
-                    ) : (
-                      <span className="text-danger font-bold uppercase tracking-tighter">ATIVO</span>
-                    )}
-                  </div>
-                </div>
-              ))}
-              {(!eventsHistory?.items || eventsHistory.items.length === 0) && (
-                <div className="text-center py-10 text-xs text-text-secondary italic opacity-50">Nenhum evento recente</div>
-              )}
-            </div>
+                    </td>
+                    <td className="px-6 py-3.5 text-center">
+                      {(() => {
+                        const dir = dirLabel(event.direction || event.flow_direction);
+                        return (
+                          <span style={{
+                            color: dir.color,
+                            background: dir.bg,
+                            padding: '2px 8px',
+                            borderRadius: 4,
+                            fontSize: 10,
+                            fontWeight: 500
+                          }}>
+                            {dir.label}
+                          </span>
+                        );
+                      })()}
+                    </td>
+                    <td className="px-6 py-3.5 text-center">
+                      {event.status === 'active' ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-danger/10 text-danger text-[9px] font-black border border-danger/20 animate-pulse">
+                          ● ATIVO
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-bg-primary text-text-secondary text-[9px] font-bold border border-border">
+                          ✓ FINALIZADO
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-3.5 text-text-secondary text-[11px] font-medium uppercase tracking-wider">
+                      {event.type || 'Blackhole'}
+                    </td>
+                    <td className="px-6 py-3.5 text-text-secondary text-[11px] font-bold uppercase tracking-wider">
+                      {event.triggered_by === 'detector' ? 'Automático' : 'Manual'}
+                    </td>
+                  </tr>
+                ))}
+                {(!eventsHistory?.items || eventsHistory.items.length === 0) && (
+                  <tr>
+                    <td colSpan={9} className="px-6 py-12 text-center text-text-secondary italic text-xs">
+                      Nenhum histórico de anomalias encontrado
+                    </td>
+                  </tr>
+                )}
+              </tbody>
+            </table>
           </div>
+        </div>
 
-          {/* PAINEL DIREITO (40%) - Saúde do Servidor */}
-          <div className="lg:col-span-4 bg-white dark:bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm">
+        {/* Seção 4 — Saúde do Servidor (Largura Total) */}
+        <div className="bg-white dark:bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm">
             <div className="flex flex-col gap-1 mb-5 border-b border-border/50 pb-3">
               <div className="flex items-center gap-2">
                 <Activity className="text-success" size={18} />
