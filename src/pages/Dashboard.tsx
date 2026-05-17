@@ -720,8 +720,8 @@ export default function Dashboard() {
                         const ifName = isTotal ? `Total (${selectedIfaces.length} interfaces)` : top.name;
                         const rxKey = isTotal ? '__total_rx' : `${top.name}_rx`;
                         const txKey = isTotal ? '__total_tx' : `${top.name}_tx`;
-                        const rxPoint = payload.find(p => p.dataKey === rxKey);
-                        const txPoint = payload.find(p => p.dataKey === txKey) || { value: chartData.find(d => d.time === top.payload.time)?.[`${top.name}_tx`] };
+                        const rxPoint = payload.find(p => p.dataKey === rxKey) as any;
+                        const txPoint = (payload.find(p => p.dataKey === txKey) || { value: chartData.find(d => d.time === (top.payload as any).time)?.[`${top.name}_tx`] }) as any;
 
                         return (
                           <div style={{
@@ -735,14 +735,14 @@ export default function Dashboard() {
                           }}>
                             <div style={{ color: '#8892a4', fontSize: 10, marginBottom: 6 }}>{label}</div>
                             <div style={{ color: top.color, fontWeight: 700, marginBottom: 4 }}>{ifName}</div>
-                            {!isTotal && rxPoint && (
-                              <div style={{color:'#93c5fd'}}>↓ RX: {formatBpsRaw((rxPoint.value||0) * 1e6)}</div>
+                            {!isTotal && rxPoint && rxPoint.value !== undefined && (
+                              <div style={{color:'#93c5fd'}}>↓ RX: {formatBpsRaw((Number(rxPoint.value)||0) * 1e6)}</div>
                             )}
                             {!isTotal && txPoint && txPoint.value !== undefined && (
-                              <div style={{color:'#86efac'}}>↑ TX: {formatBpsRaw((txPoint.value||0) * 1e6)}</div>
+                              <div style={{color:'#86efac'}}>↑ TX: {formatBpsRaw((Number(txPoint.value)||0) * 1e6)}</div>
                             )}
-                            {isTotal && (
-                              <div style={{color: isDark ? '#e2e8f0' : '#1e293b'}}>↓ RX: {formatBpsRaw((top.value||0) * 1e6)}</div>
+                            {isTotal && top.value !== undefined && (
+                              <div style={{color: isDark ? '#e2e8f0' : '#1e293b'}}>↓ RX: {formatBpsRaw((Number(top.value)||0) * 1e6)}</div>
                             )}
                           </div>
                         );
@@ -809,8 +809,8 @@ export default function Dashboard() {
                         const ifName = isTotal ? `Total (${selectedIfaces.length} interfaces)` : top.name;
                         const rxKey = isTotal ? '__total_rx' : `${top.name}_rx`;
                         const txKey = isTotal ? '__total_tx' : `${top.name}_tx`;
-                        const txPoint = payload.find(p => p.dataKey === txKey);
-                        const rxPoint = payload.find(p => p.dataKey === rxKey) || { value: chartData.find(d => d.time === top.payload.time)?.[`${top.name}_rx`] };
+                        const txPoint = payload.find(p => p.dataKey === txKey) as any;
+                        const rxPoint = (payload.find(p => p.dataKey === rxKey) || { value: chartData.find(d => d.time === (top.payload as any).time)?.[`${top.name}_rx`] }) as any;
 
                         return (
                           <div style={{
@@ -825,13 +825,13 @@ export default function Dashboard() {
                             <div style={{ color: '#8892a4', fontSize: 10, marginBottom: 6 }}>{label}</div>
                             <div style={{ color: top.color, fontWeight: 700, marginBottom: 4 }}>{ifName}</div>
                             {!isTotal && rxPoint && rxPoint.value !== undefined && (
-                              <div style={{color:'#93c5fd'}}>↓ RX: {formatBpsRaw((rxPoint.value||0) * 1e6)}</div>
+                              <div style={{color:'#93c5fd'}}>↓ RX: {formatBpsRaw((Number(rxPoint.value)||0) * 1e6)}</div>
                             )}
-                            {!isTotal && txPoint && (
-                              <div style={{color:'#86efac'}}>↑ TX: {formatBpsRaw((txPoint.value||0) * 1e6)}</div>
+                            {!isTotal && txPoint && txPoint.value !== undefined && (
+                              <div style={{color:'#86efac'}}>↑ TX: {formatBpsRaw((Number(txPoint.value)||0) * 1e6)}</div>
                             )}
-                            {isTotal && (
-                              <div style={{color: isDark ? '#e2e8f0' : '#1e293b'}}>↑ TX: {formatBpsRaw((top.value||0) * 1e6)}</div>
+                            {isTotal && top.value !== undefined && (
+                              <div style={{color: isDark ? '#e2e8f0' : '#1e293b'}}>↑ TX: {formatBpsRaw((Number(top.value)||0) * 1e6)}</div>
                             )}
                           </div>
                         );
