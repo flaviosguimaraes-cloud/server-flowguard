@@ -1136,9 +1136,10 @@ export default function Dashboard() {
               ))}
             </div>
           </div>
+       </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Port Panels */}
           <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm space-y-6">
             {/* PAINEL 1 — Portas mais consumidas */}
