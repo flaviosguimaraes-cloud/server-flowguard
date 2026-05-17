@@ -526,7 +526,24 @@ export default function Dashboard() {
     .sort((a: any, b: any) => ((b.in_bps || 0) + (b.out_bps || 0)) - ((a.in_bps || 0) + (a.out_bps || 0)))
     .slice(0, 6);
 
-  const fmtBps = (bps: number) => {
+   const formatDate = (dateStr: string) => {
+     if (!dateStr) return '—';
+     try {
+       const d = new Date(dateStr.replace(' ', 'T'));
+       if (isNaN(d.getTime())) return '—';
+       return d.toLocaleString('pt-BR', {
+         day: '2-digit',
+         month: '2-digit',
+         hour: '2-digit',
+         minute: '2-digit',
+         second: '2-digit'
+       });
+     } catch {
+       return '—';
+     }
+   };
+
+   const fmtBps = (bps: number) => {
     if (!bps || bps === 0) return '0 bps';
     if (bps >= 1e9)
       return (bps/1e9).toFixed(1)+' Gbps';
@@ -975,55 +992,11 @@ export default function Dashboard() {
           </div>
         </div>
 
-        {/* Interface Legend / Selector */}
-        <div className="mt-6 flex flex-wrap gap-2 max-h-[200px] overflow-y-auto custom-scrollbar pt-4 border-t border-border/40">
-          {(Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
-            .filter((i: any) => (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0)
-            .filter((i: any) => {
-              const n = (i.display_name || i.if_name || '').toLowerCase();
-              return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
-            })
-            .sort((a: any, b: any) => (b.in_bps + b.out_bps) - (a.in_bps + a.out_bps))
-            .map((iface: any) => {
-              const name = iface.display_name || iface.if_name;
-              const isActive = selectedIfaces.includes(name);
-              const color = COLORS[selectedIfaces.indexOf(name) % 8] || '#8892a4';
-
-              return (
-                <button
-                  key={name}
-                  onClick={() => {
-                    setSelectedIfaces(prev =>
-                      prev.includes(name)
-                        ? prev.filter(n => n !== name)
-                        : [...prev, name]
-                    );
-                  }}
-                  className={clsx(
-                    "inline-flex items-center gap-2.5 px-3.5 py-1.5 rounded-full border transition-all text-[10px] font-black uppercase tracking-tight",
-                    isActive 
-                      ? "shadow-sm" 
-                      : "border-border/60 bg-bg-primary/30 text-text-secondary hover:border-border hover:bg-bg-primary/50"
-                  )}
-                  style={{
-                    borderColor: isActive ? color + '50' : undefined,
-                    backgroundColor: isActive ? color + '15' : undefined,
-                    color: isActive ? color : undefined,
-                  }}
-                >
-                  <span 
-                    className="w-2 h-2 rounded-full" 
-                    style={{ background: isActive ? color : '#8892a4' }} 
-                  />
-                  {name}
-                  <span className="text-[9px] opacity-70">
-                    {fmtBps(iface.in_bps)} ↓
-                  </span>
-                </button>
-              );
-            })
-          }
-        </div>
+         <div className="mt-4 border-t border-border/40 pt-4">
+            <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest opacity-60">
+              Clique no botão "Interfaces" acima para selecionar as interfaces exibidas no gráfico.
+            </p>
+         </div>
       </div>
 
        {/* Secondary Grids */}
@@ -1362,7 +1335,129 @@ export default function Dashboard() {
           </p>
         </div>
         </div>
+        </div>
        </div>
+
+       {showIfaceSelector && (
+         <div style={{
+           position: 'fixed',
+           top: 0, left: 0,
+           width: '100%', height: '100%',
+           background: 'rgba(0,0,0,0.5)',
+           zIndex: 1000,
+           display: 'flex',
+           alignItems: 'center',
+           justifyContent: 'center',
+           backdropFilter: 'blur(4px)',
+         }}>
+           <div style={{
+             background: isDark ? '#1e2130' : '#ffffff',
+             border: `1px solid ${isDark ? '#2a2d3e' : '#e2e8f0'}`,
+             borderRadius: 12,
+             padding: 24,
+             width: 450,
+             maxHeight: '85vh',
+             display: 'flex',
+             flexDirection: 'column',
+             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+           }}>
+             <div style={{
+               display: 'flex',
+               justifyContent: 'space-between',
+               alignItems: 'center',
+               marginBottom: 20
+             }}>
+               <h3 className="text-lg font-bold text-text-primary">Selecionar Interfaces</h3>
+               <button 
+                 onClick={() => setShowIfaceSelector(false)}
+                 className="p-2 hover:bg-bg-primary rounded-full transition-colors"
+               >
+                 ✕
+               </button>
+             </div>
+
+             <div className="flex gap-2 mb-4">
+               <button 
+                 onClick={() => {
+                   const all = (Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
+                    .filter((i: any) => {
+                      const n = (i.display_name || i.if_name || '').toLowerCase();
+                      return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
+                    })
+                    .map((i: any) => i.display_name || i.if_name);
+                   setSelectedIfaces(all);
+                 }}
+                 className="text-[10px] font-bold uppercase px-3 py-1.5 bg-bg-primary border border-border rounded hover:bg-bg-secondary"
+               >
+                 Selecionar todas
+               </button>
+               <button 
+                 onClick={() => setSelectedIfaces([])}
+                 className="text-[10px] font-bold uppercase px-3 py-1.5 bg-bg-primary border border-border rounded hover:bg-bg-secondary"
+               >
+                 Limpar
+               </button>
+             </div>
+             
+             <div style={{ overflowY: 'auto', flex: 1 }} className="pr-2 custom-scrollbar">
+               {(Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
+                 .filter((i: any) => {
+                   const n = (i.display_name || i.if_name || '').toLowerCase();
+                   return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
+                 })
+                 .sort((a: any, b: any) => ((b.in_bps || 0) + (b.out_bps || 0)) - ((a.in_bps || 0) + (a.out_bps || 0)))
+                 .map((iface: any) => {
+                   const name = iface.display_name || iface.if_name;
+                   const isSelected = selectedIfaces.includes(name);
+                   return (
+                     <label 
+                       key={name}
+                       style={{
+                         display: 'flex',
+                         alignItems: 'center',
+                         padding: '10px 12px',
+                         borderRadius: 8,
+                         cursor: 'pointer',
+                         marginBottom: 4,
+                         background: isSelected ? (isDark ? 'rgba(59, 130, 246, 0.1)' : '#eff6ff') : 'transparent',
+                         border: `1px solid ${isSelected ? (isDark ? 'rgba(59, 130, 246, 0.2)' : '#bfdbfe') : 'transparent'}`
+                       }}
+                       className="hover:bg-bg-primary/50 transition-all"
+                     >
+                       <input 
+                         type="checkbox"
+                         checked={isSelected}
+                         onChange={() => {
+                           setSelectedIfaces(prev =>
+                             prev.includes(name)
+                               ? prev.filter(n => n !== name)
+                               : [...prev, name]
+                           );
+                         }}
+                         className="mr-3 w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                       />
+                       <div style={{ flex: 1 }}>
+                         <div className="text-sm font-bold text-text-primary">{name}</div>
+                         <div className="text-[10px] text-text-secondary flex gap-3 mt-0.5">
+                           <span>RX: <span className="text-accent font-bold">{fmtBps(iface.in_bps)}</span></span>
+                           <span>TX: <span className="text-success font-bold">{fmtBps(iface.out_bps)}</span></span>
+                         </div>
+                       </div>
+                     </label>
+                   );
+                 })}
+             </div>
+
+             <button 
+               onClick={() => setShowIfaceSelector(false)}
+               className="mt-6 w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
+             >
+               Aplicar Seleção
+             </button>
+           </div>
+         </div>
+       )}
+
        </TooltipProvider>
      );
    }
