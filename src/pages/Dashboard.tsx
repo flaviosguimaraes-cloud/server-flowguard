@@ -67,15 +67,15 @@ function StatCard({ title, value, unit, icon, trend, tooltip, subtitle }: any) {
   );
 }
 
-const SERVICE_NAMES: Record<string, string> = {
-  flow_collector: "GoFlow2 (Coletor)",
-  detection_engine: "FastNetMon",
-  api: "FlowGuard API",
-  flow_database: "ClickHouse",
-  config_database: "PostgreSQL",
-  cache: "Redis",
-  bgp_engine: "ExaBGP (BGP)",
-  web: "Nginx"
+const serviceNames: Record<string, string> = {
+  flow_collector: 'GoFlow2',
+  detection_engine: 'FastNetMon',
+  api: 'API FlowGuard',
+  flow_database: 'ClickHouse',
+  config_database: 'PostgreSQL',
+  cache: 'Redis',
+  bgp_engine: 'ExaBGP',
+  web: 'Nginx',
 };
 
 export default function Dashboard() {
@@ -359,7 +359,7 @@ export default function Dashboard() {
 
    const formatTime = (timeStr: string) => {
      if (!timeStr || timeStr.length < 16) return timeStr;
-     if (timePeriod === '24h' || timePeriod === '48h') {
+     if (timePeriod === '24H' || timePeriod === '48H') {
        const d = new Date(timeStr.replace(' ', 'T'));
        if (isNaN(d.getTime())) return timeStr.substring(11, 16);
        return d.toLocaleDateString('pt-BR', {
