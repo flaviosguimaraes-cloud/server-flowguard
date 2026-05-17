@@ -386,33 +386,33 @@ export default function Dashboard() {
         });
         return point;
       });
-    } else {
-      if (!metricsHistory || !Array.isArray(metricsHistory)) return [];
-      
-      const timeMap: Record<string, any> = {};
-      metricsHistory.forEach(({ ifName, data }) => {
-        const items = Array.isArray(data) ? data : (data?.items || []);
-        
-        // For 24h, take 1 every 5 points to not overload
-        const filteredItems = timePeriod === '24h' ? items.filter((_: any, i: number) => i % 5 === 0) : items;
-
-         filteredItems.forEach((m: any) => {
-           const date = new Date(String(m.time_bucket).replace(' ', 'T'));
-           if (isNaN(date.getTime())) return;
-           
-           const time = timePeriod === '24h' 
-            ? date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' }) + ' ' + date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })
-            : date.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-
-          if (!timeMap[time]) timeMap[time] = { time, raw_time: date.getTime() };
-          
-          timeMap[time][`${ifName}_in`] = Math.round(m.in_bps / 1e6);
-          timeMap[time][`${ifName}_out`] = Math.round(m.out_bps / 1e6);
-        });
-      });
-      
-      return Object.values(timeMap).sort((a: any, b: any) => a.raw_time - b.raw_time);
     }
+
+    if (!metricsHistory?.length) return [];
+
+    // Coletar todos os timestamps únicos
+    const allTimes = new Set<string>();
+    metricsHistory.forEach(({data}) => {
+      data.forEach((p: any) => allTimes.add(p.time_bucket));
+    });
+
+    // Montar pontos do gráfico
+    return Array.from(allTimes)
+      .sort()
+      .map(time => {
+        const point: any = {
+          time: time, // Mantemos o time_bucket completo para o formatter
+          display_time: time.substring(11, 16)
+        };
+        metricsHistory.forEach(({ifName, data}) => {
+          const found = data.find((p: any) => p.time_bucket === time);
+          if (found) {
+            point[`${ifName}_in`] = Math.round(found.in_bps / 1e6);
+            point[`${ifName}_out`] = Math.round(found.out_bps / 1e6);
+          }
+        });
+        return point;
+      });
   }, [timePoints, selectedIfaces, history, timePeriod, metricsHistory]);
 
     const protoMap: Record<number, string> = {
