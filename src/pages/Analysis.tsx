@@ -252,3 +252,342 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
   };
 
 
+   return (
+    <TooltipProvider>
+     <div className="space-y-6 animate-in fade-in duration-500">
+       <div className="flex justify-between items-center">
+         <h1 className="text-2xl font-bold text-text-primary">{t('analysis')}</h1>
+         <div className="flex gap-2">
+            <button 
+              onClick={exportCSV}
+              className="flex items-center gap-2 px-4 py-2 bg-bg-secondary border border-border rounded-lg text-sm font-bold text-text-primary hover:bg-gray-50 dark:hover:bg-[#2a2d3e] transition-all shadow-sm"
+            >
+             <Download size={20} />
+               Exportar CSV
+            </button>
+         </div>
+       </div>
+ 
+       {/* Metrics Cards */}
+       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+         <MetricCard title="Total Conexões" value={metrics.total} icon={<Activity className="text-accent" size={20} />} />
+         <MetricCard title="IPs Únicos" value={metrics.uniqueIPs} icon={<Users className="text-success" size={20} />} />
+         <MetricCard title="Países" value={metrics.distinctCountries} icon={<Globe className="text-warning" size={20} />} />
+         <MetricCard title="Altíssimo Volume" value={metrics.suspicious} icon={<AlertCircle className="text-danger" size={20} />} />
+       </div>
+ 
+       {/* MELHORIA 1 — Análise Avançada (Filtros) */}
+       <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm space-y-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+            {/* Row 1 */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">IP Origem</label>
+              <input
+                type="text"
+                placeholder="Ex: 45.175.50 ou IP completo"
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                value={filters.src_ip}
+                onChange={(e) => setFilters(prev => ({ ...prev, src_ip: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">IP Destino</label>
+              <input
+                type="text"
+                placeholder="Ex: 45.175.50 ou IP completo"
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                value={filters.dst_ip}
+                onChange={(e) => setFilters(prev => ({ ...prev, dst_ip: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Porta Origem</label>
+              <input
+                type="number"
+                placeholder="1-65535"
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                value={filters.src_port}
+                onChange={(e) => setFilters(prev => ({ ...prev, src_port: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Porta Destino</label>
+              <input
+                type="number"
+                placeholder="1-65535"
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                value={filters.dst_port}
+                onChange={(e) => setFilters(prev => ({ ...prev, dst_port: e.target.value }))}
+              />
+            </div>
+
+            {/* Row 2 */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Protocolo</label>
+              <select
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 appearance-none text-sm text-text-primary"
+                value={filters.proto}
+                onChange={(e) => setFilters(prev => ({ ...prev, proto: e.target.value }))}
+              >
+                <option value="">Todos</option>
+                <option value="6">TCP (6)</option>
+                <option value="17">UDP (17)</option>
+                <option value="1">ICMP (1)</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">País</label>
+              <select
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 appearance-none text-sm text-text-primary"
+                value={filters.country}
+                onChange={(e) => setFilters(prev => ({ ...prev, country: e.target.value }))}
+              >
+                <option value="">Todos</option>
+                {countryList.map((c: string) => (
+                  <option key={c} value={c}>{c}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Direção</label>
+              <select
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 appearance-none text-sm text-text-primary"
+                value={filters.direction}
+                onChange={(e) => setFilters(prev => ({ ...prev, direction: e.target.value }))}
+              >
+                <option value="">Todos</option>
+                <option value="outgoing">Saindo (outgoing)</option>
+                <option value="incoming">Entrando (incoming)</option>
+              </select>
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Ordenar por</label>
+              <select
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 appearance-none text-sm text-text-primary"
+                value={filters.order}
+                onChange={(e) => setFilters(prev => ({ ...prev, order: e.target.value }))}
+              >
+                <option value="bytes">Maior volume</option>
+                <option value="packets">Maior PPS</option>
+                <option value="time_received">Mais recente</option>
+              </select>
+            </div>
+
+            {/* Row 3 */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Data/Hora Início</label>
+              <input
+                type="datetime-local"
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                value={filters.start}
+                onChange={(e) => setFilters(prev => ({ ...prev, start: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Data/Hora Fim</label>
+              <input
+                type="datetime-local"
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                value={filters.end}
+                onChange={(e) => setFilters(prev => ({ ...prev, end: e.target.value }))}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Período</label>
+              <select
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 appearance-none text-sm text-text-primary"
+                value={filters.minutes}
+                onChange={(e) => setFilters(prev => ({ ...prev, minutes: e.target.value }))}
+                disabled={!!filters.start}
+              >
+                <option value="2">2 min</option>
+                <option value="5">5 min</option>
+                <option value="15">15 min</option>
+                <option value="30">30 min</option>
+                <option value="60">1 hora</option>
+                <option value="360">6 horas</option>
+                <option value="1440">24 horas</option>
+              </select>
+            </div>
+            <div className="flex items-end gap-2">
+              <button 
+                onClick={() => refetch()}
+                className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold py-1.5 rounded-lg transition-all shadow-sm text-sm uppercase tracking-wider"
+              >
+                Aplicar Filtros
+              </button>
+              <button 
+                onClick={() => setFilters({
+                  src_ip: '', dst_ip: '', src_port: '', dst_port: '', proto: '', country: '', direction: '', start: '', end: '', order: 'bytes', minutes: '30'
+                })}
+                className="p-2 bg-bg-primary border border-border rounded-lg text-text-secondary hover:text-text-primary transition-all"
+                title="Limpar filtros"
+              >
+                <X size={18} />
+              </button>
+            </div>
+          </div>
+
+          <div className="flex justify-between items-center pt-3 border-t border-border/50">
+             <div className="flex items-center gap-4">
+               <button 
+                 onClick={() => setGroupByIP(!groupByIP)}
+                 className={clsx(
+                   "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border",
+                   groupByIP 
+                     ? "bg-accent border-accent text-white shadow-md" 
+                     : "bg-bg-primary border-border text-text-secondary hover:text-text-primary"
+                 )}
+               >
+                 {groupByIP ? <LayoutGrid size={14} /> : <List size={14} />}
+                 Agrupar por IP
+               </button>
+             </div>
+             <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
+               {metrics.total} conexões · {filters.direction === 'outgoing' ? 'Saindo' : filters.direction === 'incoming' ? 'Entrando' : 'Todas Direções'} · período: {filters.start ? 'Customizado' : filters.minutes < 60 ? `${filters.minutes} min` : `${parseInt(filters.minutes)/60}h`}
+             </p>
+          </div>
+       </div>
+ 
+        {/* Table */}
+        <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse min-w-[1200px]">
+               <thead>
+                 <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+                   <th className="px-6 py-4 border-b border-border">Quando</th>
+                   <th className="px-6 py-4 border-b border-border text-center">Direção</th>
+                   <th className="px-6 py-4 border-b border-border">IP Origem</th>
+                   <th className="px-6 py-4 border-b border-border">IP Destino</th>
+                   <th className="px-6 py-4 border-b border-border">Serviço</th>
+                   <th className="px-6 py-4 border-b border-border">Empresa</th>
+                   <th className="px-6 py-4 border-b border-border">Proto</th>
+                   <SortHeader field="bytes" label="Bytes" align="right" />
+                   <SortHeader field="packets" label="PPS" align="right" />
+                   {isAdmin && <th className="px-6 py-4 border-b border-border text-center">Ação</th>}
+                 </tr>
+               </thead>
+              <tbody className="text-sm divide-y divide-border/50">
+                {isLoading ? (
+                  Array.from({ length: 5 }).map((_, i) => (
+                    <tr key={i}><td colSpan={10} className="px-6 py-4"><div className="w-full h-8 bg-bg-primary rounded animate-pulse" /></td></tr>
+                  ))
+                ) : connectionItems.length === 0 ? (
+                  <tr>
+                    <td colSpan={10} className="px-6 py-12 text-center text-text-secondary italic">
+                      Nenhuma conexão encontrada com os filtros atuais
+                    </td>
+                  </tr>
+                ) : (
+                  connectionItems.map((item: any, i: number) => {
+                    const flipped = shouldFlip(item);
+                    const direction = item.flow_direction || (flipped ? 'incoming' : 'outgoing');
+                    
+                    const src = flipped ? item.dst_addr : item.src_addr;
+                    const srcPort = flipped ? item.dst_port : item.src_port;
+                    const srcCountry = flipped ? item.dst_country : item.src_country;
+                    
+                    const dst = flipped ? item.src_addr : item.dst_addr;
+                    const dstPort = flipped ? item.src_port : item.dst_port;
+                    const dstCountry = flipped ? item.src_country : item.dst_country;
+                    
+                    const dstOrg = flipped ? item.src_org : item.dst_org;
+                    
+                    const isSuspicious = item.bytes > 1e9;
+  
+                     return (
+                       <tr key={i} className="hover:bg-accent/5 transition-colors group">
+                         <td className="px-6 py-4 text-[10px] text-text-secondary font-mono whitespace-nowrap">
+                           {item.time_received ? new Date(item.time_received).toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit', second: '2-digit' }) : '—'}
+                         </td>
+                         <td className="px-6 py-4 text-center">
+                           <TooltipProvider>
+                             <Tooltip>
+                               <TooltipTrigger asChild>
+                                 <div className={clsx(
+                                   "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[9px] font-bold uppercase tracking-wider border cursor-help",
+                                   direction === 'outgoing' 
+                                     ? "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:text-green-400 dark:border-green-800" 
+                                     : "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800"
+                                 )}>
+                                   {direction === 'outgoing' ? <><ArrowUp size={10} /> Saindo</> : <><ArrowDown size={10} /> Entrando</>}
+                                 </div>
+                               </TooltipTrigger>
+                               <TooltipContent className="max-w-[200px] text-[10px]">
+                                 {direction === 'outgoing' 
+                                   ? "Saindo = upload / ataque gerado pelo seu cliente" 
+                                   : "Entrando = download / ataque recebido pelo seu cliente"}
+                               </TooltipContent>
+                             </Tooltip>
+                           </TooltipProvider>
+                         </td>
+                         <td className="px-6 py-4">
+                           <div className="flex items-center gap-2">
+                             <span className={clsx("w-2 h-2 rounded-full", isSuspicious ? "bg-danger animate-pulse" : "bg-success")} />
+                             <Flag code={srcCountry} />
+                              <span className="font-mono font-bold text-text-primary text-xs">{src}</span>
+                              {!groupByIP && <span className="text-text-secondary text-[10px]">:{srcPort}</span>}
+                           </div>
+                         </td>
+                         <td className="px-6 py-4">
+                           <div className="flex items-center gap-2">
+                             <Flag code={dstCountry} />
+                             <span className="font-mono text-text-primary text-xs">{dst}</span>
+                             <span className="text-text-secondary text-[10px]">:{dstPort}</span>
+                           </div>
+                         </td>
+                        <td className="px-6 py-4">
+                          <span className="text-[11px] font-bold text-text-primary">{getService(dstPort)}</span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className="text-[11px] text-text-secondary font-medium truncate max-w-[150px] inline-block" title={dstOrg}>
+                            {dstOrg || '—'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-4">
+                          <span className={clsx(
+                            "px-2 py-0.5 rounded text-[9px] font-black uppercase border",
+                            item.proto === 6 ? "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400" :
+                            item.proto === 17 ? "bg-purple-50 text-purple-600 border-purple-100 dark:bg-purple-900/20 dark:text-purple-400" :
+                            item.proto === 1 ? "bg-yellow-50 text-yellow-600 border-yellow-100 dark:bg-yellow-900/20 dark:text-yellow-400" :
+                            "bg-gray-50 text-gray-600 border-gray-100"
+                          )}>
+                            {protoName(item.proto)}
+                          </span>
+                        </td>
+                          <td className="px-6 py-4 text-right font-bold text-text-primary text-xs">{fmtBytes(item.bytes)}</td>
+                          <td className="px-6 py-4 text-right text-text-secondary">
+                            <PPSIntensity pps={Math.round((item.packets || 0) / (parseInt(filters.minutes) * 60))} />
+                          </td>
+                        {isAdmin && (
+                          <td className="px-6 py-4 text-center">
+                            <button 
+                              onClick={() => handleMitigate(item)}
+                              className="p-1.5 text-danger hover:bg-danger/10 rounded-lg transition-all"
+                              title="Mitigar"
+                            >
+                              <Shield size={18} />
+                            </button>
+                          </td>
+                        )}
+                      </tr>
+                    );
+                  })
+                )}
+              </tbody>
+            </table>
+          </div>
+        </div>
+ 
+        <MitigationModal
+          isOpen={isMitigationOpen}
+          onClose={() => setIsMitigationOpen(false)}
+          targetIP={mitigationData.ip}
+          protocol={mitigationData.proto}
+          port={mitigationData.port}
+         onSuccess={handleMitigationSuccess}
+        />
+      </div>
+     </TooltipProvider>
+   );
+ }
