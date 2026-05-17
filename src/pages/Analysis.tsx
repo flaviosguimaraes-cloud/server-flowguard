@@ -5,11 +5,14 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
   import { 
     Search, Filter, X, Shield, Globe, Users, Activity,
     ArrowRight, AlertCircle, Download, MoreHorizontal,
-    ArrowUp, ArrowDown, LayoutGrid, List
+    ArrowUp, ArrowDown, LayoutGrid, List, Clock
   } from 'lucide-react';
   import Flag from '../components/Flag';
  import { Skeleton } from '../components/Skeleton';
  import { clsx } from 'clsx';
+  import { 
+    Tooltip, TooltipTrigger, TooltipContent, TooltipProvider 
+  } from '../components/ui/tooltip';
 import MitigationModal from '../components/MitigationModal';
 
 function MetricCard({ title, value, icon }: any) {
