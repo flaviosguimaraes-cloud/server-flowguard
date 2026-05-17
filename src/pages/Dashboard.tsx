@@ -624,32 +624,97 @@ export default function Dashboard() {
               Ver histórico completo <ArrowRight size={12} />
             </Link>
           </div>
-          <div className="space-y-3">
-            {eventsHistory?.items?.map((event: any, i: number) => (
-              <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-bg-primary/50 border border-border/40 hover:border-primary/20 transition-all">
-                <div className="flex items-center gap-4">
-                  <div className="font-mono text-xs font-bold text-text-primary">{event.ip}</div>
-                  <div className="flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-bg-secondary border border-border text-[9px] font-bold uppercase tracking-wider">
-                    {event.flow_direction === 'incoming' ? (
-                      <><ArrowDown size={10} className="text-blue-500" /> Entrada</>
-                    ) : (
-                      <><ArrowUp size={10} className="text-green-500" /> Saída</>
-                    )}
-                  </div>
-                  <div className="text-[10px] text-text-secondary">
-                    <span className="font-bold text-text-primary">{(event.peak_pps / 1000).toFixed(1)}k</span> pps
-                  </div>
-                  <div className="text-[10px] text-text-secondary opacity-60 flex items-center gap-1">
-                     <Clock size={10} /> {timeAgo(event.started_at || event.start_time)}
+          <div className="space-y-0">
+            {eventsHistory?.items?.map((item: any, i: number) => (
+              <div key={i} style={{
+                padding: '10px 0',
+                borderBottom: '1px solid rgba(136, 146, 164, 0.1)'
+              }}>
+                <div style={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  marginBottom: 4
+                }}>
+                  <span style={{
+                    fontFamily: 'monospace',
+                    fontSize: 13,
+                    color: isDark ? '#e2e8f0' : '#1e293b',
+                    fontWeight: 700
+                  }}>
+                    {item.ip}
+                  </span>
+                  <div style={{display:'flex', gap:6}}>
+                    {/* Status */}
+                    <span style={{
+                      fontSize: 10,
+                      padding: '2px 6px',
+                      borderRadius: 4,
+                      background: item.status === 'active'
+                        ? (isDark ? '#3b1212' : '#fee2e2') : (isDark ? '#1a1a2e' : '#f1f5f9'),
+                      color: item.status === 'active'
+                        ? '#ef4444' : '#8892a4',
+                      fontWeight: 600
+                    }}>
+                      {item.status === 'active'
+                        ? '● ATIVO' : 'RESOLVIDO'}
+                    </span>
+                    {/* Origem */}
+                    <span style={{
+                      fontSize: 10,
+                      padding: '2px 6px',
+                      borderRadius: 4,
+                      background: isDark ? '#1e2130' : '#f8fafc',
+                      color: '#8892a4',
+                      border: isDark ? 'none' : '1px solid #e2e8f0'
+                    }}>
+                      {item.triggered_by === 'detector'
+                        ? 'AUTO' : 'MANUAL'}
+                    </span>
                   </div>
                 </div>
-                <div className={clsx(
-                  "text-[9px] font-black px-2 py-0.5 rounded uppercase tracking-tighter",
-                  event.status === 'active' 
-                    ? "bg-danger/10 text-danger animate-pulse" 
-                    : "bg-success/10 text-success"
-                )}>
-                  {event.status === 'active' ? 'ATIVO' : 'RESOLVIDO'}
+
+                <div style={{
+                  fontSize: 11,
+                  color: '#8892a4',
+                  display: 'flex',
+                  gap: 12,
+                  flexWrap: 'wrap',
+                  fontWeight: 500
+                }}>
+                  {/* Direção */}
+                  <span style={{
+                    color: item.flow_direction === 'outgoing'
+                      ? '#22c55e' : '#3b82f6'
+                  }}>
+                    {item.flow_direction === 'outgoing'
+                      ? '↑ Saída' : '↓ Entrada'}
+                  </span>
+
+                  {/* Volume */}
+                  {item.peak_pps > 0 && (
+                    <span style={{color:'#f59e0b'}}>
+                      {item.peak_pps > 1000
+                        ? (item.peak_pps/1000).toFixed(1)
+                          + 'k pps'
+                        : item.peak_pps + ' pps'}
+                      {item.peak_mbps > 0
+                        ? ' · ' + item.peak_mbps + ' Mbps'
+                        : ''}
+                    </span>
+                  )}
+
+                  {/* Horário início */}
+                  <span>
+                    Início: {formatDate(item.started_at || item.start_time)}
+                  </span>
+
+                  {/* Horário fim se resolvido */}
+                  {(item.ended_at || item.end_time) && (
+                    <span>
+                      Fim: {formatDate(item.ended_at || item.end_time)}
+                    </span>
+                  )}
                 </div>
               </div>
             ))}
@@ -663,30 +728,29 @@ export default function Dashboard() {
       <div className="bg-white dark:bg-bg-secondary p-6 rounded-2xl border border-border shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none transition-all">
         <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 gap-4 border-b border-border/50 pb-5">
           <div className="flex items-center gap-3">
-            <h2 className="text-lg font-bold text-text-primary">Tráfego da Interface</h2>
+            <h2 className="text-lg font-bold text-text-primary">Tráfego do Coletor</h2>
             <div className="px-2.5 py-1 rounded-full bg-accent/10 text-accent text-[9px] font-black uppercase tracking-wider">
-              {source === 'snmp' ? 'SNMP Realtime' : 'FLOW IPv4'}
+              SNMP Realtime
             </div>
           </div>
-          
+
           <div className="flex flex-wrap items-center gap-3">
-            {/* Seletor de Fonte */}
-            <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
-              {(['snmp', 'flow'] as const).map((s) => (
-                <button
-                  key={s}
-                  onClick={() => setSource(s)}
-                  className={clsx(
-                    "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all",
-                    source === s 
-                      ? "bg-white dark:bg-[#2a2d3e] text-accent shadow-sm" 
-                      : "text-text-secondary hover:text-text-primary"
-                  )}
-                >
-                  {s}
-                </button>
-              ))}
-            </div>
+            <button
+              onClick={() => setShowIfaceSelector(true)}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                padding: '6px 12px',
+                borderRadius: 6,
+                border: '1px solid #2a2d3e',
+                background: 'transparent',
+                color: '#8892a4',
+                cursor: 'pointer',
+                fontSize: 12,
+              }}>
+              ⚙ Interfaces ({selectedIfaces.length} selecionadas)
+            </button>
 
             <div className="flex items-center gap-2 px-3 py-1.5 bg-bg-primary rounded-lg border border-border">
               <Settings2 size={14} className="text-text-secondary" />
