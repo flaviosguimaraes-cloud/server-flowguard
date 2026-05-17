@@ -1547,9 +1547,13 @@ export default function Dashboard() {
              </button>
            </div>
          </div>
-       )}
+        )}
 
-       </TooltipProvider>
+        </div>
+        </div>
+        </div>
+        </div>
+        </TooltipProvider>
      );
    }
 
