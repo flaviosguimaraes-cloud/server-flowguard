@@ -47,19 +47,21 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
   const [eventFilter, setEventFilter] = useState<'all' | 'active' | 'removed'>('all');
   const [timeRange, setTimeRange] = useState<'all' | '1h' | '24h'>('all');
 
-  const { data: eventsHistory, isLoading: historyLoading } = useQuery({
-    queryKey: ['events-history-full', eventFilter, timeRange],
-    queryFn: async () => {
-      const params = new URLSearchParams({ limit: '50' });
-      if (eventFilter !== 'all') params.append('status', eventFilter);
-      if (timeRange === '1h') params.append('minutes', '60');
-      if (timeRange === '24h') params.append('minutes', '1440');
-      
-      const r = await api.get(`/api/events/history?${params}`);
-      return r.data;
-    },
-    refetchInterval: 30000,
-  });
+   const { data: eventsHistory, isLoading: historyLoading } = useQuery({
+     queryKey: ['events-history-page', eventFilter, timeRange],
+     queryFn: async () => {
+       const params = new URLSearchParams({ limit: '100' });
+       if (eventFilter && eventFilter !== 'all') params.append('status', eventFilter);
+       if (timeRange === '1h') params.append('minutes', '60');
+       if (timeRange === '24h') params.append('minutes', '1440');
+       
+       const r = await api.get(`/api/events/history?${params}`);
+       console.log('events full raw:', r.data);
+       return r.data;
+     },
+     refetchInterval: 10000,
+     staleTime: 0,
+   });
 
    const formatDate = (dateStr: string) => {
      if (!dateStr) return '—';
