@@ -532,22 +532,6 @@ export default function Dashboard() {
    }, [timePeriod, metricsHistory, history, selectedIfaces]);
 
 
-    const portDataDst = processPortData(portsDst);
-    const portDataSrc = processPortData(portsSrc);
-
-    const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
-
-    const ifaceColors = ['#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6','#06b6d4','#f97316','#ec4899'];
-
-  const relevantInterfaces = (Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
-    .filter((i: any) => (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0)
-    .filter((i: any) => {
-      const name = (i.display_name || i.if_name || '').toLowerCase();
-      return !name.includes('null') && !name.includes('loopback') && !name.includes('virtual') &&
-        !name.includes('template') && !name.includes('inloop');
-    })
-    .sort((a: any, b: any) => ((b.in_bps || 0) + (b.out_bps || 0)) - ((a.in_bps || 0) + (a.out_bps || 0)))
-    .slice(0, 6);
 
    const formatDate = (dateStr: string) => {
      if (!dateStr) return '—';
