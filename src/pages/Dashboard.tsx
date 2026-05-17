@@ -1228,11 +1228,12 @@ export default function Dashboard() {
                  </div>
                );
              })}
-           </div>
-         </div>
-      </div>
-
-        {/* Active Connections Table */}
+            </div>
+          </div>
+        </div>
+       </div>
+ 
+         {/* Active Connections Table */}
         <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
         <div className="p-5 border-b border-border flex flex-wrap justify-between items-center bg-bg-primary/30 gap-4">
            <div className="flex flex-col gap-0.5">
