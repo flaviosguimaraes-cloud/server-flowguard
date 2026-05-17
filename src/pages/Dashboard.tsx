@@ -733,7 +733,7 @@ export default function Dashboard() {
                             minWidth: 180,
                             boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                           }}>
-                            <div style={{ color: '#8892a4', fontSize: 10, marginBottom: 6 }}>{label}</div>
+                            <div style={{ color: '#8892a4', fontSize: 10, marginBottom: 6 }}>{formatTime(label)}</div>
                             <div style={{ color: top.color, fontWeight: 700, marginBottom: 4 }}>{ifName}</div>
                             {!isTotal && rxPoint && rxPoint.value !== undefined && (
                               <div style={{color:'#93c5fd'}}>↓ RX: {formatBpsRaw((Number(rxPoint.value)||0) * 1e6)}</div>
@@ -822,7 +822,7 @@ export default function Dashboard() {
                             minWidth: 180,
                             boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                           }}>
-                            <div style={{ color: '#8892a4', fontSize: 10, marginBottom: 6 }}>{label}</div>
+                            <div style={{ color: '#8892a4', fontSize: 10, marginBottom: 6 }}>{formatTime(label)}</div>
                             <div style={{ color: top.color, fontWeight: 700, marginBottom: 4 }}>{ifName}</div>
                             {!isTotal && rxPoint && rxPoint.value !== undefined && (
                               <div style={{color:'#93c5fd'}}>↓ RX: {formatBpsRaw((Number(rxPoint.value)||0) * 1e6)}</div>
