@@ -190,25 +190,22 @@ export default function Dashboard() {
 
    const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
    const [serviceFilter, setServiceFilter] = useState<string | null>(null);
-   const [timePeriod, setTimePeriod] = useState<'realtime' | '1h' | '6h' | '24h' | '48h'>('realtime');
+   const [timePeriod, setTimePeriod] = useState<'30m' | '1h' | '6h' | '24h' | '48h'>('30m');
    const [showIfaceSelector, setShowIfaceSelector] = useState(false);
 
-  // 1. Forçar refetch quando timePeriod ou interfaces selecionadas mudam
   useEffect(() => {
-    if (timePeriod !== 'realtime') {
-      queryClient.invalidateQueries({
-        queryKey: ['iface-history']
-      });
-    }
+    queryClient.invalidateQueries({
+      queryKey: ['iface-history']
+    });
   }, [timePeriod, selectedIfaces, queryClient]);
 
   const { data: metricsHistory, isLoading: metricsHistoryLoading } = useQuery({
     queryKey: ['iface-history', selectedCollector, timePeriod, selectedIfaces],
     queryFn: async () => {
-      if (timePeriod === 'realtime' || selectedIfaces.length === 0 || !selectedCollector)
+      if (selectedIfaces.length === 0 || !selectedCollector)
         return null;
 
-       const minutes = timePeriod === '1h' ? 60 : timePeriod === '6h' ? 360 : timePeriod === '24h' ? 1440 : 2880;
+       const minutes = timePeriod === '30m' ? 30 : timePeriod === '1h' ? 60 : timePeriod === '6h' ? 360 : timePeriod === '24h' ? 1440 : 2880;
 
       console.log('Buscando histórico:', selectedCollector, selectedIfaces, minutes);
 
@@ -226,7 +223,7 @@ export default function Dashboard() {
       );
       return results;
     },
-    enabled: timePeriod !== 'realtime' && selectedIfaces.length > 0 && !!selectedCollector,
+    enabled: selectedIfaces.length > 0 && !!selectedCollector,
     refetchInterval: 60000,
   });
  
