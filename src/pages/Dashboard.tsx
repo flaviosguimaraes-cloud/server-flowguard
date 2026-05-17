@@ -669,13 +669,11 @@ export default function Dashboard() {
           <span className="font-medium">
             {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).find((c: any) => c.id === selectedCollector)?.name || 'NE-20'} 
             <span className="mx-2 opacity-30">|</span>
-            {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).find((c: any) => c.id === selectedCollector)?.host || '45.175.50.209'} 
-            <span className="mx-2 opacity-30">|</span>
-            v2c
+            {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).find((c: any) => c.id === selectedCollector)?.host || '45.175.50.209'}
           </span>
         </div>
 
-         <div className="space-y-2 bg-[#F8FAFC] dark:bg-[#0f172a]/40 p-4 rounded-xl border border-border/50 relative min-h-[350px] flex items-center justify-center">
+         <div className="space-y-4 bg-[#F8FAFC] dark:bg-[#0f172a]/40 p-4 rounded-xl border border-border/50 relative flex flex-col items-center justify-center">
           {metricsHistoryLoading ? (
             <div className="flex flex-col items-center gap-3">
               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -687,121 +685,184 @@ export default function Dashboard() {
               <span className="text-xs font-bold uppercase tracking-wider">Sem dados para o período selecionado</span>
             </div>
           ) : (
-            <div className="relative w-full h-[300px] mt-4">
-               <ResponsiveContainer width="100%" height="100%">
-                 <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                   <defs>
-                     {selectedIfaces.map((name, idx) => (
-                       <linearGradient
-                         key={name}
-                         id={`grad_${idx}`}
-                         x1="0" y1="0" x2="0" y2="1">
-                         <stop offset="5%"
-                           stopColor={COLORS[idx % COLORS.length]}
-                           stopOpacity={0.4}/>
-                         <stop offset="95%"
-                           stopColor={COLORS[idx % COLORS.length]}
-                           stopOpacity={0.05}/>
-                       </linearGradient>
-                     ))}
-                   </defs>
-                   <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#334155" : "#E2E8F0"} vertical={false} opacity={isDark ? 0.3 : 0.6} />
-                   <XAxis 
-                     dataKey="time" 
-                     tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
-                     tickLine={false} 
-                     axisLine={false}
-                     tickFormatter={formatTime}
-                     minTickGap={30}
-                   />
-                   <YAxis 
-                     tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
-                     tickLine={false} 
-                     axisLine={false} 
-                     tickFormatter={v => formatBps(v)} 
-                   />
-                  <RechartsTooltip
-                    cursor={{ stroke: isDark ? '#2a2d3e' : '#e2e8f0', strokeWidth: 1 }}
-                    content={({ active, payload, label }) => {
-                      if (!active || !payload?.length) return null;
-                      
-                      // Filtrar apenas o item mais próximo do cursor (maior valor no ponto)
-                      const topItem = payload.reduce(
-                        (best: any, curr: any) =>
-                          (curr.value || 0) > (best.value || 0) ? curr : best,
-                        payload[0]
-                      );
+            <div className="w-full space-y-4 mt-4">
+              {/* Chart RX */}
+              <div className="relative w-full h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="grad_total_rx" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={RX_TOTAL_COLOR} stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor={RX_TOTAL_COLOR} stopOpacity={0.02}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#334155" : "#E2E8F0"} vertical={false} opacity={isDark ? 0.3 : 0.6} />
+                    <XAxis 
+                      dataKey="time" 
+                      tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
+                      tickLine={false} 
+                      axisLine={false}
+                      tickFormatter={formatTime}
+                      minTickGap={30}
+                    />
+                    <YAxis 
+                      tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
+                      tickLine={false} 
+                      axisLine={false} 
+                      tickFormatter={v => formatBps(v)} 
+                    />
+                    <RechartsTooltip
+                      cursor={{ stroke: isDark ? '#2a2d3e' : '#e2e8f0', strokeWidth: 1 }}
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload?.length) return null;
+                        const top = payload.reduce((a, b) => (b.value || 0) > (a.value || 0) ? b : a);
+                        const isTotal = top.dataKey === '__total_rx';
+                        const ifName = isTotal ? `Total (${selectedIfaces.length} interfaces)` : top.name;
+                        const rxKey = isTotal ? '__total_rx' : `${top.name}_rx`;
+                        const txKey = isTotal ? '__total_tx' : `${top.name}_tx`;
+                        const rxPoint = payload.find(p => p.dataKey === rxKey);
+                        const txPoint = payload.find(p => p.dataKey === txKey) || { value: chartData.find(d => d.time === top.payload.time)?.[`${top.name}_tx`] };
 
-                      if (!topItem) return null;
-
-                      const ifName = topItem.dataKey
-                        .replace(/_in$/, '')
-                        .replace(/_out$/, '');
-                      const isRx = topItem.dataKey.endsWith('_in');
-
-                      return (
-                        <div style={{
-                          background: isDark ? '#1e2130' : '#ffffff',
-                          border: `1px solid ${topItem.color}`,
-                          borderRadius: 6,
-                          padding: '8px 12px',
-                          fontSize: 12,
-                          minWidth: 160,
-                          boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                        }}>
+                        return (
                           <div style={{
-                            color: '#8892a4',
-                            fontSize: 10,
-                            marginBottom: 4,
-                          }}>
-                            {label}
-                          </div>
-                          <div style={{
-                            color: topItem.color,
-                            fontWeight: 600,
-                            fontSize: 13,
-                            marginBottom: 2,
-                          }}>
-                            {ifName}
-                          </div>
-                          <div style={{
-                            color: isDark ? '#e2e8f0' : '#1e293b',
+                            background: isDark ? '#1e2130' : '#ffffff',
+                            border: `1px solid ${top.color}`,
+                            borderRadius: 6,
+                            padding: '8px 12px',
                             fontSize: 12,
+                            minWidth: 180,
+                            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
                           }}>
-                            {isRx ? '↓ RX' : '↑ TX'}:{' '}
-                            {formatBpsRaw((topItem.value || 0) * 1e6)}
+                            <div style={{ color: '#8892a4', fontSize: 10, marginBottom: 6 }}>{label}</div>
+                            <div style={{ color: top.color, fontWeight: 700, marginBottom: 4 }}>{ifName}</div>
+                            {!isTotal && rxPoint && (
+                              <div style={{color:'#93c5fd'}}>↓ RX: {formatBpsRaw((rxPoint.value||0) * 1e6)}</div>
+                            )}
+                            {!isTotal && txPoint && txPoint.value !== undefined && (
+                              <div style={{color:'#86efac'}}>↑ TX: {formatBpsRaw((txPoint.value||0) * 1e6)}</div>
+                            )}
+                            {isTotal && (
+                              <div style={{color: isDark ? '#e2e8f0' : '#1e293b'}}>↓ RX: {formatBpsRaw((top.value||0) * 1e6)}</div>
+                            )}
                           </div>
-                        </div>
-                      );
-                    }}
-                  />
-                   {selectedIfaces.flatMap((name, idx) => [
-                     <Area 
-                       key={`${name}_in`}
-                       type="monotone"
-                       dataKey={`${name}_in`}
-                       stroke={COLORS[idx % COLORS.length]}
-                       strokeWidth={2} 
-                       fill={`url(#grad_${idx})`}
-                       dot={false} 
-                       isAnimationActive={false}
-                       name={`${name} ↓`}
-                     />,
-                     <Area 
-                       key={`${name}_out`}
-                       type="monotone"
-                       dataKey={`${name}_out`}
-                       stroke={COLORS[idx % COLORS.length]}
-                       strokeWidth={1.5}
-                       strokeDasharray="4 2"
-                       fill="none"
-                       dot={false} 
-                       isAnimationActive={false}
-                       name={`${name} ↑`}
-                     />
-                   ])}
-                 </AreaChart>
-               </ResponsiveContainer>
+                        );
+                      }}
+                    />
+                    {selectedIfaces.map((name, idx) => (
+                      <Line
+                        key={`${name}_rx`}
+                        type="monotone"
+                        dataKey={`${name}_rx`}
+                        stroke={RX_IFACE_COLORS[idx % RX_IFACE_COLORS.length]}
+                        strokeWidth={1}
+                        dot={false}
+                        opacity={0.6}
+                        name={name}
+                        isAnimationActive={false}
+                      />
+                    ))}
+                    <Area
+                      type="monotone"
+                      dataKey="__total_rx"
+                      stroke={RX_TOTAL_COLOR}
+                      strokeWidth={2.5}
+                      fill="url(#grad_total_rx)"
+                      dot={false}
+                      name="Total RX"
+                      isAnimationActive={false}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
+
+              {/* Chart TX */}
+              <div className="relative w-full h-[200px]">
+                <ResponsiveContainer width="100%" height="100%">
+                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
+                    <defs>
+                      <linearGradient id="grad_total_tx" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor={TX_TOTAL_COLOR} stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor={TX_TOTAL_COLOR} stopOpacity={0.02}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#334155" : "#E2E8F0"} vertical={false} opacity={isDark ? 0.3 : 0.6} />
+                    <XAxis 
+                      dataKey="time" 
+                      tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
+                      tickLine={false} 
+                      axisLine={false}
+                      tickFormatter={formatTime}
+                      minTickGap={30}
+                    />
+                    <YAxis 
+                      tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
+                      tickLine={false} 
+                      axisLine={false} 
+                      tickFormatter={v => formatBps(v)} 
+                    />
+                    <RechartsTooltip
+                      cursor={{ stroke: isDark ? '#2a2d3e' : '#e2e8f0', strokeWidth: 1 }}
+                      content={({ active, payload, label }) => {
+                        if (!active || !payload?.length) return null;
+                        const top = payload.reduce((a, b) => (b.value || 0) > (a.value || 0) ? b : a);
+                        const isTotal = top.dataKey === '__total_tx';
+                        const ifName = isTotal ? `Total (${selectedIfaces.length} interfaces)` : top.name;
+                        const rxKey = isTotal ? '__total_rx' : `${top.name}_rx`;
+                        const txKey = isTotal ? '__total_tx' : `${top.name}_tx`;
+                        const txPoint = payload.find(p => p.dataKey === txKey);
+                        const rxPoint = payload.find(p => p.dataKey === rxKey) || { value: chartData.find(d => d.time === top.payload.time)?.[`${top.name}_rx`] };
+
+                        return (
+                          <div style={{
+                            background: isDark ? '#1e2130' : '#ffffff',
+                            border: `1px solid ${top.color}`,
+                            borderRadius: 6,
+                            padding: '8px 12px',
+                            fontSize: 12,
+                            minWidth: 180,
+                            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+                          }}>
+                            <div style={{ color: '#8892a4', fontSize: 10, marginBottom: 6 }}>{label}</div>
+                            <div style={{ color: top.color, fontWeight: 700, marginBottom: 4 }}>{ifName}</div>
+                            {!isTotal && rxPoint && rxPoint.value !== undefined && (
+                              <div style={{color:'#93c5fd'}}>↓ RX: {formatBpsRaw((rxPoint.value||0) * 1e6)}</div>
+                            )}
+                            {!isTotal && txPoint && (
+                              <div style={{color:'#86efac'}}>↑ TX: {formatBpsRaw((txPoint.value||0) * 1e6)}</div>
+                            )}
+                            {isTotal && (
+                              <div style={{color: isDark ? '#e2e8f0' : '#1e293b'}}>↑ TX: {formatBpsRaw((top.value||0) * 1e6)}</div>
+                            )}
+                          </div>
+                        );
+                      }}
+                    />
+                    {selectedIfaces.map((name, idx) => (
+                      <Line
+                        key={`${name}_tx`}
+                        type="monotone"
+                        dataKey={`${name}_tx`}
+                        stroke={TX_IFACE_COLORS[idx % TX_IFACE_COLORS.length]}
+                        strokeWidth={1}
+                        dot={false}
+                        opacity={0.6}
+                        name={name}
+                        isAnimationActive={false}
+                      />
+                    ))}
+                    <Area
+                      type="monotone"
+                      dataKey="__total_tx"
+                      stroke={TX_TOTAL_COLOR}
+                      strokeWidth={2.5}
+                      fill="url(#grad_total_tx)"
+                      dot={false}
+                      name="Total TX"
+                      isAnimationActive={false}
+                    />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </div>
             </div>
           )}
         </div>
