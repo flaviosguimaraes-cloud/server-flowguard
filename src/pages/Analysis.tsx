@@ -149,7 +149,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       // Retorna: "17/05 08:00"
     };
 
-    const [pageSize, setPageSize] = useState(50);
+    const [pageSize, setPageSize] = useState(100);
     const [page, setPage] = useState(1);
     const [searchTrigger, setSearchTrigger] = useState(0);
 
@@ -182,23 +182,30 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       dst_port: '',
       proto: '',
       country: '',
-      direction: '',
-      order: 'bytes',
+      direction: ''
     });
+    const [sortCol, setSortCol] = useState('bytes');
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
     const [groupByIP, setGroupByIP] = useState(false);
     const [hoveredMitIP, setHoveredMitIP] = useState<string | null>(null);
 
     useEffect(() => {
       setPage(1);
-    }, [pageSize, filters.src_ip, filters.dst_ip, filters.src_port, filters.dst_port, filters.proto, filters.country, filters.direction, filters.order]);
+    }, [pageSize, filters.src_ip, filters.dst_ip, filters.src_port, filters.dst_port, filters.proto, filters.country, filters.direction, sortCol, sortDir]);
 
     useEffect(() => {
-      setFilters(prev => ({
-        ...prev,
-        order: filterMode === 'custom' ? 'recent' : 'bytes'
-      }));
+      setSortCol(filterMode === 'custom' ? 'time_received' : 'bytes');
+      setSortDir('desc');
     }, [filterMode]);
+
+    const SORT_MAP: Record<string, string> = {
+      'bytes': 'bytes',
+      'packets': 'pps',
+      'time_received': 'recent',
+      'bpp': 'bpp',
+      'duration': 'duration',
+    };
 
     const buildQuery = useCallback(() => {
       const params = new URLSearchParams({
@@ -221,23 +228,45 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       if (filters.proto) params.append('proto', filters.proto);
       if (filters.country) params.append('country', filters.country);
       if (filters.direction) params.append('direction', filters.direction);
-      if (filters.order) params.append('order', filters.order);
+      
+      const orderVal = SORT_MAP[sortCol] || 'bytes';
+      params.append('order', orderVal);
       
       return params.toString();
-    }, [pageSize, page, filterMode, startDate, endDate, minutes, filters]);
+    }, [pageSize, page, filterMode, startDate, endDate, minutes, filters, sortCol, sortDir]);
+
+    const handleSort = (col: string) => {
+      if (sortCol === col) {
+        setSortDir(d => d === 'desc' ? 'asc' : 'desc');
+      } else {
+        setSortCol(col);
+        setSortDir('desc');
+      }
+      setPage(1);
+    };
 
     const SortHeader = ({ field, label, align = 'left' }: { field: string, label: string, align?: 'left' | 'right' | 'center' }) => {
-      const isSelected = filters.order === field;
+      const isSelected = sortCol === field;
+      const isSortable = ['time_received', 'bytes', 'packets', 'bpp', 'duration'].includes(field);
+
       return (
         <th 
-          className={clsx("px-6 py-4 border-b border-border cursor-pointer hover:bg-bg-secondary transition-colors", align === 'right' && 'text-right', align === 'center' && 'text-center')}
+          className={clsx("px-6 py-4 border-b border-border transition-colors", 
+            isSortable && "cursor-pointer hover:bg-bg-secondary",
+            align === 'right' && 'text-right', 
+            align === 'center' && 'text-center'
+          )}
           onClick={() => {
-            setFilters(prev => ({ ...prev, order: field }));
+            if (isSortable) handleSort(field);
           }}
         >
           <div className={clsx("flex items-center gap-1", align === 'right' && 'justify-end')}>
             {label}
-            {isSelected && <ArrowDown size={12} />}
+            {isSelected && (
+              <span className="ml-1">
+                {sortDir === 'desc' ? <ArrowDown size={12} /> : <ArrowUp size={12} />}
+              </span>
+            )}
           </div>
         </th>
       );
