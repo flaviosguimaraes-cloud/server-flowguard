@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
   import Flag from '../components/Flag';
  import { Skeleton } from '../components/Skeleton';
  import { clsx } from 'clsx';
+import { toast } from 'sonner';
   import { 
     Tooltip, TooltipTrigger, TooltipContent, TooltipProvider 
   } from '../components/ui/tooltip';
@@ -53,6 +54,8 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
    const { t } = useTranslation();
    const isAdmin = localStorage.getItem('role') === 'admin';
   const queryClient = useQueryClient();
+
+  const MAX_HOURS = 6;
    
     const isLocalIP = (ip: string) => ip?.startsWith('45.175.50.');
     const shouldFlip = (item: any) => !isLocalIP(item.src_addr) && isLocalIP(item.dst_addr);
@@ -161,6 +164,23 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     const [minutes, setMinutes] = useState(30);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [maxEndDate, setMaxEndDate] = useState('');
+
+    const handleStartChange = (value: string) => {
+      setStartDate(value);
+      if (!value) {
+        setMaxEndDate('');
+        return;
+      }
+      const start = new Date(value);
+      const maxEnd = new Date(start.getTime() + MAX_HOURS * 60 * 60 * 1000);
+      const maxEndStr = maxEnd.toISOString().slice(0, 16);
+      
+      if (endDate > maxEndStr) {
+        setEndDate(maxEndStr);
+      }
+      setMaxEndDate(maxEndStr);
+    };
 
     const [filters, setFilters] = useState({
       src_ip: '',
@@ -242,26 +262,23 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       setSearchTrigger(prev => prev + 1);
     };
 
-    const { data: connections, isLoading, refetch } = useQuery({
+    const { data: connections, isLoading } = useQuery({
       queryKey: ['connections-analysis', searchTrigger, filters, page, pageSize, filterMode, minutes, startDate, endDate],
       queryFn: async () => {
-        const q = buildQuery();
-        const r = await api.get(`/api/flows/connections?${q}`);
-        return r.data;
+        try {
+          const q = buildQuery();
+          const r = await api.get(`/api/flows/connections?${q}`);
+          return r.data;
+        } catch (error: any) {
+          if (error.response?.status === 400) {
+            toast.error(error.response?.data?.detail || "Intervalo muito grande. Máximo: 6 horas.");
+          }
+          throw error;
+        }
       },
       staleTime: 0,
       refetchInterval: filterMode === 'custom' ? false : 30000,
     });
-
-    const isLargeInterval = useMemo(() => {
-      if (filterMode === 'custom' && startDate && endDate) {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        const diff = end.getTime() - start.getTime();
-        return diff > 24 * 60 * 60 * 1000;
-      }
-      return false;
-    }, [filterMode, startDate, endDate]);
 
     const total = connections?.total || 0;
     const totalPages = Math.ceil(total / pageSize);
@@ -525,31 +542,29 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
               </div>
             ) : (
               <>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">De</label>
-                  <input
-                    type="datetime-local"
-                    className="w-full bg-bg-primary/50 border border-border rounded-lg py-1 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Até</label>
-                  <input
-                    type="datetime-local"
-                    className="w-full bg-bg-primary/50 border border-border rounded-lg py-1 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                  />
-                </div>
-                <div className="flex items-end">
-                   {isLargeInterval && (
-                     <div className="flex items-center gap-1.5 text-warning text-[10px] font-bold uppercase mb-2 animate-pulse">
-                       <AlertCircle size={12} />
-                        ⚠ Intervalo &gt; 24h pode demorar
-                     </div>
-                   )}
+                <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">De</label>
+                    <input
+                      type="datetime-local"
+                      className="w-full bg-bg-primary/50 border border-border rounded-lg py-1 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                      value={startDate}
+                      onChange={(e) => handleStartChange(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Até</label>
+                    <input
+                      type="datetime-local"
+                      className="w-full bg-bg-primary/50 border border-border rounded-lg py-1 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                      value={endDate}
+                      max={maxEndDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                    />
+                    <div className="text-[11px] text-text-secondary mt-1 flex items-center gap-1">
+                      <span>⚡ Intervalo máximo: 6 horas. Para análises maiores use o Histórico de Anomalias.</span>
+                    </div>
+                  </div>
                 </div>
               </>
             )}
