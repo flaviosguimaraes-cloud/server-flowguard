@@ -90,7 +90,7 @@ export default function BGP() {
                       </div>
                       <div>
                         <p className="text-[10px] font-bold text-text-secondary uppercase mb-1">Speaker</p>
-                        <p className="text-text-primary capitalize">{s.speaker || '—'}</p>
+                       <p className="text-text-primary capitalize">{s.speaker || 'BGP Speaker'}</p>
                       </div>
                       <div>
                         <p className="text-[10px] font-bold text-text-secondary uppercase mb-1">FlowSpec</p>
