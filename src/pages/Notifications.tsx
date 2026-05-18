@@ -334,6 +334,8 @@ export default function Notifications() {
       />
     </div>
   );
+}
+
 function ChannelModalComponent({ isOpen, onClose, mode, data, onSubmit, isLoading }: any) {
   const [name, setName] = useState('');
   const [type, setType] = useState('telegram');
