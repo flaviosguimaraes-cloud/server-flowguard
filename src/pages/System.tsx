@@ -12,12 +12,17 @@ const System = () => {
   const queryClient = useQueryClient();
   const [restarting, setRestarting] = useState<string | null>(null);
 
-  const { data: status, isLoading: loadingStatus, dataUpdatedAt } = useQuery({
+  const { data: status, dataUpdatedAt } = useQuery({
     queryKey: ['system-status'],
-    queryFn: () => api.get('/api/system/status').then(r => r.data),
+    queryFn: async () => {
+      const r = await api.get('/api/system/status');
+      return r.data;
+    },
     refetchInterval: 10000,
     staleTime: 0,
-    refetchOnMount: 'always',
+    gcTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: versionData } = useQuery({
@@ -44,13 +49,16 @@ const System = () => {
     }
   };
 
-   const services = [
-     { id: 'fastnetmon', name: 'Mitigador' },
-     { id: 'flowguard-api', name: 'FlowGuard API' },
-     { id: 'exabgp', name: 'BGP Speaker' },
-     { id: 'clickhouse', name: 'Banco de Flows' },
-     { id: 'nginx', name: 'Proxy Web' },
-   ];
+  const services = [
+    { id: 'flow_collector', name: 'Coletor de Fluxos' },
+    { id: 'detection_engine', name: 'Motor de Detecção' },
+    { id: 'api', name: 'FlowGuard API' },
+    { id: 'flow_database', name: 'Banco de Flows' },
+    { id: 'config_database', name: 'Configurações' },
+    { id: 'cache', name: 'Cache do Sistema' },
+    { id: 'bgp_engine', name: 'Motor BGP' },
+    { id: 'web', name: 'Interface Web' },
+  ];
 
   const systemInfo = [
     { label: 'Versão do FlowGuard', value: versionData?.version || '1.2.0-stable' },
@@ -132,9 +140,9 @@ const System = () => {
         </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {renderMetric('CPU', status?.cpu || 12, <Cpu size={14} />)}
-          {renderMetric('Memória', status?.ram || 45, <ShieldCheck size={14} />)}
-          {renderMetric('Disco', status?.disk || 28, <HardDrive size={14} />)}
+          {renderMetric('CPU', status?.cpu_percent || 0, <Cpu size={14} />)}
+          {renderMetric('Memória', status?.ram_percent || 0, <ShieldCheck size={14} />)}
+          {renderMetric('Disco', status?.disk_percent || 0, <HardDrive size={14} />)}
           <div className="bg-bg-secondary p-4 rounded-xl border border-border flex flex-col justify-between">
             <div className="flex items-center gap-2 text-text-secondary">
               <Clock size={14} />
