@@ -308,3 +308,5 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: an
         </form>
       </DialogContent>
     </Dialog>
+  );
+}
