@@ -552,31 +552,29 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
               </div>
             ) : (
               <>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">De</label>
-                  <input
-                    type="datetime-local"
-                    className="w-full bg-bg-primary/50 border border-border rounded-lg py-1 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-1">
-                  <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Até</label>
-                  <input
-                    type="datetime-local"
-                    className="w-full bg-bg-primary/50 border border-border rounded-lg py-1 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                  />
-                </div>
-                <div className="flex items-end">
-                   {isLargeInterval && (
-                     <div className="flex items-center gap-1.5 text-warning text-[10px] font-bold uppercase mb-2 animate-pulse">
-                       <AlertCircle size={12} />
-                        ⚠ Intervalo &gt; 24h pode demorar
-                     </div>
-                   )}
+                <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">De</label>
+                    <input
+                      type="datetime-local"
+                      className="w-full bg-bg-primary/50 border border-border rounded-lg py-1 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                      value={startDate}
+                      onChange={(e) => handleStartChange(e.target.value)}
+                    />
+                  </div>
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Até</label>
+                    <input
+                      type="datetime-local"
+                      className="w-full bg-bg-primary/50 border border-border rounded-lg py-1 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                      value={endDate}
+                      max={maxEndDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                    />
+                    <div className="text-[11px] text-text-secondary mt-1 flex items-center gap-1">
+                      <span>⚡ Intervalo máximo: 6 horas. Para análises maiores use o Histórico de Anomalias.</span>
+                    </div>
+                  </div>
                 </div>
               </>
             )}
