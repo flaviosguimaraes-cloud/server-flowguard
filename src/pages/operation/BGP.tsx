@@ -236,6 +236,5 @@ export default function BGP() {
         </div>
       </div>
     </div>
-    </div>
   );
 }
