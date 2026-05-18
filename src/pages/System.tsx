@@ -148,7 +148,7 @@ const System = () => {
               <Clock size={14} />
               <span className="text-[10px] font-bold uppercase tracking-wider">Uptime</span>
             </div>
-            <span className="text-lg font-bold text-text-primary">{status?.uptime || '15d 4h 22m'}</span>
+            <span className="text-lg font-bold text-text-primary">{status?.uptime || '-'}</span>
           </div>
         </div>
       </div>
