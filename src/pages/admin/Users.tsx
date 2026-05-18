@@ -91,10 +91,10 @@ export default function Users() {
   });
 
   const deleteMutation = useMutation({
-    mutationFn: (id: number) => api.delete(`/api/users/${id}`),
+    mutationFn: (id: number) => api.delete(`/api/users/${id}?force=true`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
-      toast.success('✅ Usuário removido');
+      toast.success('✅ Usuário excluído com sucesso');
       setDeleteDialog({ open: false, user: null });
     },
     onError: (err: any) => {
@@ -141,7 +141,7 @@ export default function Users() {
                      key={user.id} 
                      className={clsx(
                        "hover:bg-bg-primary/30 transition-colors",
-                       !user.active && "opacity-60"
+                        !user.active && "opacity-50"
                      )}
                    >
                     <td className="px-6 py-4">
@@ -154,11 +154,16 @@ export default function Users() {
                     </td>
                     <td className="px-6 py-4 text-text-secondary text-sm">{user.email}</td>
                     <td className="px-6 py-4">
-                      {user.role === 'admin' ? (
-                        <Badge className="bg-blue-500/10 text-blue-500 border-blue-500/20">Admin</Badge>
-                      ) : (
-                        <Badge variant="outline" className="text-text-secondary">Leitura</Badge>
-                      )}
+                      <Badge 
+                        variant={user.role === 'admin' ? 'default' : 'outline'}
+                        className={clsx(
+                          user.role === 'admin' 
+                            ? "bg-blue-500/10 text-blue-500 border-blue-500/20" 
+                            : "text-text-secondary"
+                        )}
+                      >
+                        {user.role === 'admin' ? 'Administrador' : 'Somente leitura'}
+                      </Badge>
                     </td>
                     <td className="px-6 py-4">
                       {user.active ? (
@@ -213,7 +218,7 @@ export default function Users() {
                                size="icon" 
                                className={clsx("h-8 w-8", user.active ? "text-amber-500 hover:text-amber-600" : "text-success hover:text-success")}
                                onClick={() => toggleActiveMutation.mutate({ id: user.id, active: !user.active })}
-                               title={user.active ? "Desativar" : "Ativar"}
+                              title={user.active ? "Desativar" : "Reativar"}
                              >
                                {user.active ? <PowerOff size={14} /> : <Power size={14} />}
                              </Button>
@@ -415,8 +420,8 @@ function UserModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: any) {
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="admin">Admin — acesso total</SelectItem>
-                <SelectItem value="viewer">Leitura — somente visualização</SelectItem>
+                <SelectItem value="admin">Administrador</SelectItem>
+                <SelectItem value="viewer">Somente leitura</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -424,7 +429,7 @@ function UserModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: any) {
           <div className="flex flex-col gap-4 pt-2">
             <div className="flex items-center justify-between">
               <div className="space-y-0.5">
-                <Label>Troca de senha obrigatória</Label>
+                <Label>Forçar troca de senha</Label>
                 <p className="text-[10px] text-text-secondary">Forçar troca no primeiro acesso</p>
               </div>
               <Switch checked={mustChangePassword} onCheckedChange={setMustChangePassword} />
