@@ -189,8 +189,6 @@ export default function Audit() {
             </button>
           </div>
         </div>
-          </table>
-        </div>
       </div>
     </div>
   );
