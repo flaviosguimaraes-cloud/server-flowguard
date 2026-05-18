@@ -18,7 +18,7 @@ import {
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
 } from '@/components/ui/select';
 import { Switch } from '@/components/ui/switch';
-import Skeleton from '@/components/Skeleton';
+import { Skeleton } from '@/components/Skeleton';
 
 export default function Notifications() {
   const queryClient = useQueryClient();
@@ -138,34 +138,75 @@ export default function Notifications() {
   });
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex items-center gap-3">
-        <Bell className="text-primary" size={24} />
-        <h1 className="text-2xl font-bold text-text-primary">Notificações</h1>
+    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Bell className="text-primary" size={24} />
+          <h1 className="text-2xl font-bold text-text-primary">Notificações</h1>
+        </div>
+        {isAdmin && (
+          <div className="flex gap-2">
+            <Button onClick={() => setChannelModal({ open: true, mode: 'add' })} className="gap-2">
+              <Plus size={16} /> Novo Canal
+            </Button>
+            <Button variant="outline" onClick={() => setRuleModal({ open: true, mode: 'add' })} className="gap-2">
+              <Plus size={16} /> Nova Regra
+            </Button>
+          </div>
+        )}
       </div>
 
       <section className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
-        <div className="px-6 py-4 border-b border-border">
+        <div className="px-6 py-4 border-b border-border flex items-center justify-between">
           <h2 className="text-sm font-bold uppercase tracking-widest text-text-secondary">Canais Configurados</h2>
         </div>
-        <div className="divide-y divide-border/50">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 p-6 bg-bg-primary/30">
           {lc ? (
-            <div className="px-6 py-12 text-center text-text-secondary italic">Carregando...</div>
+            <Skeleton count={3} />
           ) : channelItems.length === 0 ? (
-            <div className="px-6 py-12 text-center text-text-secondary italic">Nenhum canal configurado</div>
-          ) : channelItems.map((c: any, i: number) => (
-            <div key={c.id || i} className="px-6 py-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                {iconFor(c.type)}
-                <div>
-                  <p className="font-bold text-sm text-text-primary">{c.name || c.type}</p>
-                  <p className="text-xs text-text-secondary font-mono">{c.target || c.endpoint || c.chat_id || ''}</p>
+            <div className="col-span-full py-12 text-center text-text-secondary italic">Nenhum canal configurado</div>
+          ) : channelItems.map((c: any) => (
+            <div key={c.id} className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm space-y-4 hover:border-primary/50 transition-colors">
+              <div className="flex items-start justify-between">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-bg-primary flex items-center justify-center border border-border">
+                    {iconFor(c.type)}
+                  </div>
+                  <div>
+                    <h3 className="font-bold text-text-primary">{c.name}</h3>
+                    <p className="text-[10px] uppercase font-bold text-text-secondary">{c.type}</p>
+                  </div>
                 </div>
+                <Switch 
+                  checked={c.enabled !== false}
+                  disabled={!isAdmin || updateChannelMutation.isPending}
+                  onCheckedChange={(checked) => updateChannelMutation.mutate({ id: c.id, data: { enabled: checked } })}
+                />
               </div>
-              <span className={clsx(
-                "px-2 py-0.5 rounded text-[10px] font-bold uppercase border",
-                c.enabled !== false ? "bg-success/10 text-success border-success/20" : "bg-bg-primary text-text-secondary border-border"
-              )}>{c.enabled !== false ? 'Ativo' : 'Inativo'}</span>
+              
+              <div className="text-xs space-y-1">
+                {c.type === 'telegram' && <p className="text-text-secondary"><span className="font-mono text-[10px] bg-bg-primary px-1.5 py-0.5 rounded">ChatID: {c.config?.chat_id}</span></p>}
+                {c.type === 'email' && <p className="text-text-secondary font-mono truncate">{c.config?.to_addrs?.join(', ')}</p>}
+                {c.type === 'webhook' && <p className="text-text-secondary font-mono truncate">{c.config?.url}</p>}
+              </div>
+
+              {isAdmin && (
+                <div className="flex items-center gap-2 pt-2 border-t border-border/50">
+                  <Button variant="outline" size="sm" className="h-8 px-2 flex-1 gap-1 text-[10px]" 
+                    onClick={() => testChannelMutation.mutate(c.id)}
+                    disabled={testChannelMutation.isPending}>
+                    <Send size={12} /> Testar
+                  </Button>
+                  <Button variant="outline" size="sm" className="h-8 px-2 flex-1 gap-1 text-[10px]"
+                    onClick={() => setChannelModal({ open: true, mode: 'edit', data: c })}>
+                    <Edit2 size={12} /> Editar
+                  </Button>
+                  <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10"
+                    onClick={() => setDeleteConfirm({ open: true, type: 'channel', id: c.id, name: c.name })}>
+                    <Trash2 size={14} />
+                  </Button>
+                </div>
+              )}
             </div>
           ))}
         </div>
@@ -182,31 +223,63 @@ export default function Notifications() {
                 <th className="px-6 py-3 border-b border-border">Nome</th>
                 <th className="px-6 py-3 border-b border-border">Evento</th>
                 <th className="px-6 py-3 border-b border-border">Canal</th>
-                <th className="px-6 py-3 border-b border-border text-center">Status</th>
+                <th className="px-6 py-3 border-b border-border text-center">Mín PPS/Mbps</th>
+                <th className="px-6 py-3 border-b border-border text-center">Ativo</th>
+                {isAdmin && <th className="px-6 py-3 border-b border-border text-right">Ações</th>}
               </tr>
             </thead>
             <tbody className="text-sm divide-y divide-border/50">
               {lr ? (
-                <tr><td colSpan={4} className="px-6 py-12 text-center text-text-secondary italic">Carregando...</td></tr>
+                <tr><td colSpan={isAdmin ? 6 : 5} className="px-6 py-12 text-center text-text-secondary italic">Carregando...</td></tr>
               ) : ruleItems.length === 0 ? (
-                <tr><td colSpan={4} className="px-6 py-12 text-center text-text-secondary italic">Nenhuma regra configurada</td></tr>
-              ) : ruleItems.map((r: any, i: number) => (
-                <tr key={r.id || i} className="hover:bg-accent/5">
-                  <td className="px-6 py-3 font-bold text-text-primary text-xs">{r.name || `Regra ${i + 1}`}</td>
-                  <td className="px-6 py-3 text-text-secondary text-xs">{r.event || r.trigger || '—'}</td>
-                  <td className="px-6 py-3 text-text-secondary text-xs">{r.channel || r.channel_name || '—'}</td>
-                  <td className="px-6 py-3 text-center">
-                    <span className={clsx(
-                      "px-2 py-0.5 rounded text-[10px] font-bold uppercase border",
-                      r.enabled !== false ? "bg-success/10 text-success border-success/20" : "bg-bg-primary text-text-secondary border-border"
-                    )}>{r.enabled !== false ? 'Ativa' : 'Inativa'}</span>
+                <tr><td colSpan={isAdmin ? 6 : 5} className="px-6 py-12 text-center text-text-secondary italic">Nenhuma regra configurada</td></tr>
+              ) : ruleItems.map((r: any) => (
+                <tr key={r.id} className="hover:bg-accent/5">
+                  <td className="px-6 py-3 font-bold text-text-primary text-xs">{r.name}</td>
+                  <td className="px-6 py-3 text-text-secondary text-xs">
+                    <span className="bg-bg-primary px-2 py-0.5 rounded border border-border/50">
+                      {eventLabels[r.event_type] || r.event_type}
+                    </span>
                   </td>
+                  <td className="px-6 py-3 text-text-secondary text-xs">
+                    <div className="flex items-center gap-2">
+                      {iconFor(r.channel_type)}
+                      {r.channel_name}
+                    </div>
+                  </td>
+                  <td className="px-6 py-3 text-center text-[10px] font-mono text-text-secondary">
+                    {r.min_pps?.toLocaleString() || 0} / {r.min_mbps?.toLocaleString() || 0}
+                  </td>
+                  <td className="px-6 py-3 text-center">
+                    <Switch 
+                      checked={r.enabled !== false}
+                      disabled={!isAdmin || updateRuleMutation.isPending}
+                      onCheckedChange={(checked) => updateRuleMutation.mutate({ 
+                        id: r.id, 
+                        data: { ...r, enabled: checked } 
+                      })}
+                    />
+                  </td>
+                  {isAdmin && (
+                    <td className="px-6 py-3 text-right space-x-2">
+                      <button className="text-text-secondary hover:text-primary transition-colors" 
+                        onClick={() => setRuleModal({ open: true, mode: 'edit', data: r })}>
+                        <Edit2 size={16} />
+                      </button>
+                      <button className="text-text-secondary hover:text-destructive transition-colors"
+                        onClick={() => setDeleteConfirm({ open: true, type: 'rule', id: r.id, name: r.name })}>
+                        <Trash2 size={16} />
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
             </tbody>
           </table>
         </div>
       </section>
+
+      {/* Modal Deletion Confirmation and other modals will come here */}
     </div>
   );
 }
