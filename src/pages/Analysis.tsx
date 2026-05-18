@@ -262,12 +262,19 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       setSearchTrigger(prev => prev + 1);
     };
 
-    const { data: connections, isLoading, refetch } = useQuery({
+    const { data: connections, isLoading } = useQuery({
       queryKey: ['connections-analysis', searchTrigger, filters, page, pageSize, filterMode, minutes, startDate, endDate],
       queryFn: async () => {
-        const q = buildQuery();
-        const r = await api.get(`/api/flows/connections?${q}`);
-        return r.data;
+        try {
+          const q = buildQuery();
+          const r = await api.get(`/api/flows/connections?${q}`);
+          return r.data;
+        } catch (error: any) {
+          if (error.response?.status === 400) {
+            toast.error(error.response?.data?.detail || "Intervalo muito grande. Máximo: 6 horas.");
+          }
+          throw error;
+        }
       },
       staleTime: 0,
       refetchInterval: filterMode === 'custom' ? false : 30000,
