@@ -155,6 +155,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
 
     const [pageSize, setPageSize] = useState(50);
     const [page, setPage] = useState(1);
+    const [searchTrigger, setSearchTrigger] = useState(0);
 
     const [filterMode, setFilterMode] = useState<'relative' | 'custom'>('relative');
     const [minutes, setMinutes] = useState(30);
@@ -186,8 +187,8 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       });
 
       if (filterMode === 'custom') {
-        if (startDate) params.append('start', startDate.replace('T', ' ') + ':00');
-        if (endDate) params.append('end', endDate.replace('T', ' ') + ':00');
+        if (startDate) params.append('start', startDate);
+        if (endDate) params.append('end', endDate);
       } else {
         params.append('minutes', String(minutes));
       }
@@ -236,8 +237,13 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
      return items.map((c: any) => c.country).sort();
    }, [countriesData]);
  
+    const handleSearch = () => {
+      setPage(1);
+      setSearchTrigger(prev => prev + 1);
+    };
+
     const { data: connections, isLoading, refetch } = useQuery({
-      queryKey: ['connections-analysis', filters, page, pageSize, filterMode, minutes, startDate, endDate],
+      queryKey: ['connections-analysis', searchTrigger, filters, page, pageSize, filterMode, minutes, startDate, endDate],
       queryFn: async () => {
         const q = buildQuery();
         const r = await api.get(`/api/flows/connections?${q}`);
@@ -550,7 +556,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
 
             <div className="flex items-end gap-2">
               <button 
-                onClick={() => refetch()}
+                onClick={handleSearch}
                 className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold py-1.5 rounded-lg transition-all shadow-sm text-sm uppercase tracking-wider h-[38px]"
               >
                 {filterMode === 'custom' ? 'Buscar' : 'Aplicar'}
