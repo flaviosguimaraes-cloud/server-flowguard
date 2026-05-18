@@ -44,7 +44,9 @@ import {
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
+ import { Label } from '@/components/ui/label';
+ import { Textarea } from '@/components/ui/textarea';
+ import { Checkbox } from '@/components/ui/checkbox';
 import { 
   Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
 } from '@/components/ui/select';
@@ -289,73 +291,288 @@ export default function Collectors() {
    );
  }
 
-function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: any) {
-  const [name, setName] = useState('');
-  const [host, setHost] = useState('');
-  const [community, setCommunity] = useState('public');
-  const [version, setVersion] = useState('2c');
-  const [active, setActive] = useState(true);
-
-  useEffect(() => {
-    if (isOpen) {
-      setName(data?.name || '');
-      setHost(data?.host || data?.ip || '');
-      setCommunity(data?.snmp_community || 'public');
-      setVersion(data?.snmp_version || '2c');
-      setActive(data?.active !== false);
-    }
-  }, [isOpen, data]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    onSubmit({ name, host, snmp_community: community, snmp_version: version, active });
-  };
-
-  return (
-    <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-md">
-        <DialogHeader>
-          <DialogTitle>{mode === 'add' ? 'Novo Coletor' : 'Editar Coletor'}</DialogTitle>
-        </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="name">Nome</Label>
-            <Input id="name" value={name} onChange={(e) => setName(e.target.value)} placeholder="router-core-01" required />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="host">Host / IP</Label>
-            <Input id="host" value={host} onChange={(e) => setHost(e.target.value)} placeholder="45.175.50.209" required />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="community">Comunidade SNMP</Label>
-              <Input id="community" value={community} onChange={(e) => setCommunity(e.target.value)} required />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="version">Versão SNMP</Label>
-              <Select value={version} onValueChange={setVersion}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="1">v1</SelectItem>
-                  <SelectItem value="2c">v2c</SelectItem>
-                  <SelectItem value="3">v3</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Switch checked={active} onCheckedChange={setActive} />
-            <Label>Coletor Ativo</Label>
-          </div>
-
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Salvando...' : 'Salvar'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  );
-}
+ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: any) {
+   const [formData, setFormData] = useState({
+     name: '',
+     comment: '',
+     host: '',
+     brand: 'huawei',
+     flow_protocol: 'netflow_v9',
+     flow_port: 2055,
+     snmp_community: 'public',
+     snmp_version: '2c',
+     snmp_port: 161,
+     snmp_ip: '',
+     active: true,
+     bgp_enabled: false,
+     bgp_remote_ip: '',
+     bgp_remote_asn: '',
+     bgp_local_ip: '',
+     bgp_local_asn: 65000,
+     bgp_ipv4_unicast: true,
+     bgp_flowspec: false
+   });
+ 
+   useEffect(() => {
+     if (isOpen) {
+       if (mode === 'edit' && data) {
+         setFormData({
+           name: data.name || '',
+           comment: data.comment || '',
+           host: data.host || '',
+           brand: data.brand || 'huawei',
+           flow_protocol: data.flow_protocol || 'netflow_v9',
+           flow_port: data.flow_port || 2055,
+           snmp_community: data.snmp_community || 'public',
+           snmp_version: data.snmp_version || '2c',
+           snmp_port: data.snmp_port || 161,
+           snmp_ip: data.snmp_ip || '',
+           active: data.active !== false,
+           bgp_enabled: data.bgp_enabled || false,
+           bgp_remote_ip: data.bgp_remote_ip || '',
+           bgp_remote_asn: data.bgp_remote_asn || '',
+           bgp_local_ip: data.bgp_local_ip || '',
+           bgp_local_asn: data.bgp_local_asn || 65000,
+           bgp_ipv4_unicast: data.bgp_ipv4_unicast !== false,
+           bgp_flowspec: data.bgp_flowspec || false
+         });
+       } else {
+         setFormData({
+           name: '',
+           comment: '',
+           host: '',
+           brand: 'huawei',
+           flow_protocol: 'netflow_v9',
+           flow_port: 2055,
+           snmp_community: 'public',
+           snmp_version: '2c',
+           snmp_port: 161,
+           snmp_ip: '',
+           active: true,
+           bgp_enabled: false,
+           bgp_remote_ip: '',
+           bgp_remote_asn: '',
+           bgp_local_ip: '',
+           bgp_local_asn: 65000,
+           bgp_ipv4_unicast: true,
+           bgp_flowspec: false
+         });
+       }
+     }
+   }, [isOpen, mode, data]);
+ 
+   const handleBrandChange = (brand: string) => {
+     const defaults = BRAND_DEFAULTS[brand] || BRAND_DEFAULTS.outro;
+     setFormData(prev => ({
+       ...prev,
+       brand,
+       flow_protocol: defaults.protocol,
+       flow_port: defaults.port
+     }));
+   };
+ 
+   const handleSubmit = (e: React.FormEvent) => {
+     e.preventDefault();
+     
+     // Validation
+     if (!formData.name) return toast.error('Nome é obrigatório');
+     if (!formData.host) return toast.error('IP de Gerência é obrigatório');
+     
+     const flowPort = Number(formData.flow_port);
+     if (isNaN(flowPort) || flowPort < 1 || flowPort > 65535) return toast.error('Porta Flow inválida (1-65535)');
+     
+     const snmpPort = Number(formData.snmp_port);
+     if (isNaN(snmpPort) || snmpPort < 1 || snmpPort > 65535) return toast.error('Porta SNMP inválida (1-65535)');
+ 
+     if (formData.bgp_enabled) {
+       if (!formData.bgp_remote_ip && !formData.host) return toast.error('IP Remoto BGP é obrigatório');
+       if (!formData.bgp_remote_asn) return toast.error('ASN Remoto BGP é obrigatório');
+       
+       const rasn = Number(formData.bgp_remote_asn);
+       if (isNaN(rasn) || rasn < 1 || rasn > 4294967295) return toast.error('ASN Remoto inválido');
+       
+       const lasn = Number(formData.bgp_local_asn);
+       if (isNaN(lasn) || lasn < 1 || lasn > 4294967295) return toast.error('ASN Local inválido');
+     }
+ 
+     const submission = {
+       ...formData,
+       snmp_ip: formData.snmp_ip || formData.host,
+       bgp_remote_ip: formData.bgp_remote_ip || formData.host,
+       flow_port: Number(formData.flow_port),
+       snmp_port: Number(formData.snmp_port),
+       bgp_remote_asn: Number(formData.bgp_remote_asn),
+       bgp_local_asn: Number(formData.bgp_local_asn)
+     };
+ 
+     onSubmit(submission);
+   };
+ 
+   return (
+     <Dialog open={isOpen} onOpenChange={onClose}>
+       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+         <DialogHeader>
+           <DialogTitle>{mode === 'add' ? 'Novo Coletor' : 'Editar Coletor'}</DialogTitle>
+         </DialogHeader>
+         
+         <form onSubmit={handleSubmit} className="space-y-8 py-4">
+           {/* SEÇÃO 1 — Identificação */}
+           <section className="space-y-4">
+             <div className="flex items-center gap-2 text-primary">
+               <Server size={18} />
+               <h3 className="font-bold text-sm uppercase tracking-wider">Identificação</h3>
+             </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div className="space-y-2">
+                 <Label htmlFor="name">Nome *</Label>
+                 <Input id="name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="router-core-01" required />
+               </div>
+               <div className="space-y-2">
+                 <Label htmlFor="host">IP de Gerência *</Label>
+                 <Input id="host" value={formData.host} onChange={e => setFormData({ ...formData, host: e.target.value })} placeholder="Ex: 192.168.1.1" required />
+               </div>
+               <div className="space-y-2 md:col-span-2">
+                 <Label htmlFor="brand">Marca *</Label>
+                 <Select value={formData.brand} onValueChange={handleBrandChange}>
+                   <SelectTrigger><SelectValue /></SelectTrigger>
+                   <SelectContent>
+                     {BRANDS.map(b => <SelectItem key={b.value} value={b.value}>{b.label}</SelectItem>)}
+                   </SelectContent>
+                 </Select>
+               </div>
+               <div className="space-y-2 md:col-span-2">
+                 <Label htmlFor="comment">Comentário</Label>
+                 <Textarea id="comment" value={formData.comment} onChange={e => setFormData({ ...formData, comment: e.target.value })} placeholder="Opcional..." rows={2} />
+               </div>
+             </div>
+           </section>
+ 
+           {/* SEÇÃO 2 — Coleta de Flows */}
+           <section className="space-y-4">
+             <div className="flex items-center gap-2 text-primary">
+               <Activity size={18} />
+               <h3 className="font-bold text-sm uppercase tracking-wider">Coleta de Flows</h3>
+             </div>
+             <div className="grid grid-cols-2 gap-4">
+               <div className="space-y-2">
+                 <Label>Protocolo</Label>
+                 <Select value={formData.flow_protocol} onValueChange={v => setFormData({ ...formData, flow_protocol: v })}>
+                   <SelectTrigger><SelectValue /></SelectTrigger>
+                   <SelectContent>
+                     {PROTOCOLS.map(p => <SelectItem key={p.value} value={p.value}>{p.label}</SelectItem>)}
+                   </SelectContent>
+                 </Select>
+               </div>
+               <div className="space-y-2">
+                 <Label htmlFor="flow_port">Porta</Label>
+                 <Input id="flow_port" type="number" value={formData.flow_port} onChange={e => setFormData({ ...formData, flow_port: parseInt(e.target.value) || 0 })} />
+               </div>
+             </div>
+           </section>
+ 
+           {/* SEÇÃO 3 — SNMP */}
+           <section className="space-y-4">
+             <div className="flex items-center gap-2 text-primary">
+               <Info size={18} />
+               <h3 className="font-bold text-sm uppercase tracking-wider">SNMP</h3>
+             </div>
+             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+               <div className="space-y-2">
+                 <Label>Versão SNMP</Label>
+                 <Select value={formData.snmp_version} onValueChange={v => setFormData({ ...formData, snmp_version: v })}>
+                   <SelectTrigger><SelectValue /></SelectTrigger>
+                   <SelectContent>
+                     {SNMP_VERSIONS.map(v => <SelectItem key={v.value} value={v.value}>{v.label}</SelectItem>)}
+                   </SelectContent>
+                 </Select>
+               </div>
+               <div className="space-y-2">
+                 <Label htmlFor="snmp_community">Comunidade</Label>
+                 <Input id="snmp_community" value={formData.snmp_community} onChange={e => setFormData({ ...formData, snmp_community: e.target.value })} />
+               </div>
+               <div className="space-y-2">
+                 <Label htmlFor="snmp_port">Porta SNMP</Label>
+                 <Input id="snmp_port" type="number" value={formData.snmp_port} onChange={e => setFormData({ ...formData, snmp_port: parseInt(e.target.value) || 0 })} />
+               </div>
+               <div className="space-y-2">
+                 <Label htmlFor="snmp_ip">IP SNMP</Label>
+                 <Input id="snmp_ip" value={formData.snmp_ip} onChange={e => setFormData({ ...formData, snmp_ip: e.target.value })} placeholder={formData.host || "Mesmo que gerência"} />
+                 <p className="text-[10px] text-text-secondary">Deixe igual ao IP se o mesmo</p>
+               </div>
+             </div>
+           </section>
+ 
+           {/* SEÇÃO 4 — BGP */}
+           <section className="space-y-4 border-t border-border pt-6">
+             <div className="flex items-center justify-between">
+               <div className="flex items-center gap-2 text-primary">
+                 <Shield size={18} />
+                 <h3 className="font-bold text-sm uppercase tracking-wider">BGP</h3>
+               </div>
+               <div className="flex items-center gap-2">
+                 <Switch checked={formData.bgp_enabled} onCheckedChange={v => setFormData({ ...formData, bgp_enabled: v })} />
+                 <Label className="text-xs font-bold uppercase">Habilitar BGP</Label>
+               </div>
+             </div>
+ 
+             <AnimatePresence>
+               {formData.bgp_enabled && (
+                 <motion.div 
+                   initial={{ height: 0, opacity: 0 }}
+                   animate={{ height: 'auto', opacity: 1 }}
+                   exit={{ height: 0, opacity: 0 }}
+                   className="overflow-hidden"
+                 >
+                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-2">
+                     <div className="space-y-2">
+                       <Label htmlFor="bgp_remote_ip">IP Remoto (Roteador)</Label>
+                       <Input id="bgp_remote_ip" value={formData.bgp_remote_ip} onChange={e => setFormData({ ...formData, bgp_remote_ip: e.target.value })} placeholder={formData.host || "IP do roteador"} />
+                     </div>
+                     <div className="space-y-2">
+                       <Label htmlFor="bgp_remote_asn">ASN Remoto</Label>
+                       <Input id="bgp_remote_asn" type="number" value={formData.bgp_remote_asn} onChange={e => setFormData({ ...formData, bgp_remote_asn: e.target.value })} placeholder="268884" />
+                     </div>
+                     <div className="space-y-2">
+                       <Label htmlFor="bgp_local_ip">IP Local</Label>
+                       <Input id="bgp_local_ip" value={formData.bgp_local_ip} onChange={e => setFormData({ ...formData, bgp_local_ip: e.target.value })} />
+                       <p className="text-[10px] text-text-secondary">IP local do servidor FlowGuard</p>
+                     </div>
+                     <div className="space-y-2">
+                       <Label htmlFor="bgp_local_asn">ASN Local</Label>
+                       <Input id="bgp_local_asn" type="number" value={formData.bgp_local_asn} onChange={e => setFormData({ ...formData, bgp_local_asn: e.target.value })} />
+                     </div>
+                     <div className="md:col-span-2 space-y-3">
+                       <Label>Famílias</Label>
+                       <div className="flex gap-6">
+                         <div className="flex items-center space-x-2">
+                           <Checkbox id="unicast" checked={formData.bgp_ipv4_unicast} onCheckedChange={v => setFormData({ ...formData, bgp_ipv4_unicast: !!v })} />
+                           <label htmlFor="unicast" className="text-sm font-medium leading-none cursor-pointer">IPv4 Unicast</label>
+                         </div>
+                         <div className="flex items-center space-x-2">
+                           <Checkbox id="flowspec" checked={formData.bgp_flowspec} onCheckedChange={v => setFormData({ ...formData, bgp_flowspec: !!v })} />
+                           <label htmlFor="flowspec" className="text-sm font-medium leading-none cursor-pointer">IPv4 FlowSpec</label>
+                         </div>
+                       </div>
+                     </div>
+                   </div>
+                 </motion.div>
+               )}
+             </AnimatePresence>
+           </section>
+ 
+           <div className="flex items-center gap-2 border-t border-border pt-6">
+             <Switch checked={formData.active} onCheckedChange={v => setFormData({ ...formData, active: v })} />
+             <Label>Coletor Ativo</Label>
+           </div>
+ 
+           <DialogFooter className="sticky bottom-0 bg-bg-secondary pt-2">
+             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+             <Button type="submit" disabled={isLoading} className="min-w-[100px]">
+               {isLoading ? 'Salvando...' : 'Salvar'}
+             </Button>
+           </DialogFooter>
+         </form>
+       </DialogContent>
+     </Dialog>
+   );
+ }
