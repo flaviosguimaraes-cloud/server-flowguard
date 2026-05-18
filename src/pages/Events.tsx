@@ -10,7 +10,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
  import { Skeleton } from '../components/Skeleton';
  import { clsx } from 'clsx';
  import MitigationModal from '../components/MitigationModal';
- import { TooltipProvider } from '../components/ui/tooltip';
+  import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../components/ui/tooltip';
  import { MitigationTooltip } from '../components/MitigationTooltip';
  
   export default function Events() {
