@@ -200,7 +200,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       country: '',
       direction: ''
     });
-    const [sortCol, setSortCol] = useState('bytes');
+    const [sortCol, setSortCol] = useState('when');
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
     const [groupByIP, setGroupByIP] = useState(false);
@@ -215,7 +215,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
         setSortCol('when');
         setSortDir('asc');
       } else {
-        setSortCol('bytes');
+        setSortCol('when');
         setSortDir('desc');
       }
       setPage(1);
@@ -666,7 +666,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
               <button 
                 onClick={() => {
                   setFilters({ src_ip: '', dst_ip: '', src_port: '', dst_port: '', proto: '', country: '', direction: '' });
-                  setSortCol('bytes');
+                  setSortCol('when');
                   setSortDir('desc');
                   setFilterMode('relative');
                   setMinutes(30);
