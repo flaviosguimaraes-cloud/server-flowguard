@@ -517,7 +517,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
               >
                 <option value="bytes">Maior volume</option>
                 <option value="packets">Maior PPS</option>
-                <option value="time_received">Mais recente</option>
+                    <option value="recent">Mais recente</option>
               </select>
             </div>
 
