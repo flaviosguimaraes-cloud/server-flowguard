@@ -280,16 +280,6 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       refetchInterval: filterMode === 'custom' ? false : 30000,
     });
 
-    const isLargeInterval = useMemo(() => {
-      if (filterMode === 'custom' && startDate && endDate) {
-        const start = new Date(startDate);
-        const end = new Date(endDate);
-        const diff = end.getTime() - start.getTime();
-        return diff > 24 * 60 * 60 * 1000;
-      }
-      return false;
-    }, [filterMode, startDate, endDate]);
-
     const total = connections?.total || 0;
     const totalPages = Math.ceil(total / pageSize);
  
