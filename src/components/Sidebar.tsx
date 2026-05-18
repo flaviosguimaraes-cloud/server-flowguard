@@ -19,7 +19,8 @@ export const Sidebar = () => {
     return saved ? JSON.parse(saved) : ['mitigation', 'operation'];
   });
   const { t } = useTranslation();
-  const { logout } = useAuth();
+  const { logout, user } = useAuth();
+  const isAdminUser = user?.role === 'admin';
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -61,7 +62,8 @@ export const Sidebar = () => {
         { path: '/notifications', label: t('notifications'), icon: Bell },
         { path: '/audit', label: t('audit'), icon: ClipboardList },
         { path: '/settings', label: t('settings'), icon: Settings },
-        { path: '/admin/users', label: 'Usuários', icon: UsersIcon },
+        isAdminUser && { path: '/admin/users', label: 'Usuários', icon: UsersIcon },
+      ].filter(Boolean) as any
       ]
     },
     { path: '/system', label: t('system'), icon: Monitor },
