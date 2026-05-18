@@ -25,7 +25,7 @@ import { toast } from 'sonner';
      refetchInterval: 10000,
    });
  
-   const activeFlowspecCount = (flowspecData?.items || []).filter((item: any) => item.bgp_status === 'announced').length;
+    const activeFlowspecCount = (flowspecData?.items || []).filter((item: any) => item.status === 'active').length;
  
    const calcUptime = (logTail: string) => {
      if (!logTail) return '—';
@@ -103,7 +103,7 @@ import { toast } from 'sonner';
              {sessions.map((s: any, i: number) => {
                const state = (s.state || '').toString().toLowerCase();
                const established = state === 'established' || state === 'up';
-               const uptime = calcUptime(sessionsData.bgp_log_tail);
+                const uptime = s.uptime || calcUptime(sessionsData.bgp_log_tail);
  
               const cards = [];
               
