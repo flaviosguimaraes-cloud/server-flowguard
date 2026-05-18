@@ -1,17 +1,49 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { useTheme } from '../contexts/ThemeContext';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
- import api from '../services/api';
- import { useTranslation } from '../hooks/useTranslation';
- import { 
-   Shield, AlertTriangle, Clock, ArrowDown, ArrowUp, 
-   Activity, History, Zap, CheckCircle
- } from 'lucide-react';
- import { Skeleton } from '../components/Skeleton';
- import { clsx } from 'clsx';
- import MitigationModal from '../components/MitigationModal';
-  import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../components/ui/tooltip';
- import { MitigationTooltip } from '../components/MitigationTooltip';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../../services/api';
+import { useTranslation } from '../../hooks/useTranslation';
+import { 
+  Shield, AlertTriangle, Clock, ArrowDown, ArrowUp, 
+  Activity, History, Zap, CheckCircle, Trash2
+} from 'lucide-react';
+import { Skeleton } from '../../components/Skeleton';
+import { clsx } from 'clsx';
+import { toast } from 'sonner';
+import MitigationModal from '../../components/MitigationModal';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../../components/ui/tooltip';
+import { MitigationTooltip } from '../../components/MitigationTooltip';
+
+function SectionDivider({ title }: { title: string }) {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+      margin: '24px 0 16px',
+    }}>
+      <div style={{
+        height: 1,
+        flex: 1,
+        background: '#2a2d3e'
+      }} />
+      <span style={{
+        fontSize: 11,
+        fontWeight: 600,
+        color: '#8892a4',
+        textTransform: 'uppercase',
+        letterSpacing: '1px'
+      }}>
+        {title}
+      </span>
+      <div style={{
+        height: 1,
+        flex: 1,
+        background: '#2a2d3e'
+      }} />
+    </div>
+  );
+}
  
   export default function Events() {
     const { t } = useTranslation();
@@ -20,8 +52,25 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
    const isAdmin = localStorage.getItem('role') === 'admin';
   const queryClient = useQueryClient();
    const [isMitigationOpen, setIsMitigationOpen] = useState(false);
-   const [targetIP, setTargetIP] = useState('');
- 
+    const [targetIP, setTargetIP] = useState('');
+
+    const handleRemove = async (ip: string) => {
+      const cleanIP = ip.replace('/32', '').trim();
+
+      if (!window.confirm(`Remover bloqueio de ${cleanIP}?`)) {
+        return;
+      }
+
+      try {
+        await api.post('/api/mitigation/remove', { ip: cleanIP });
+        toast.success(`Mitigação removida: ${cleanIP}`);
+        queryClient.invalidateQueries({ queryKey: ['mitigation-active-events'] });
+        queryClient.invalidateQueries({ queryKey: ['detection-stats-events'] });
+      } catch (error: any) {
+        toast.error(error.response?.data?.detail || 'Erro ao remover mitigação');
+      }
+    };
+
     const [now, setNow] = useState(Date.now());
     useEffect(() => {
       const timer = setInterval(() => setNow(Date.now()), 1000);
@@ -249,9 +298,9 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
               <AlertTriangle size={28} />
             </div>
             <div>
-              <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mb-1">Detecções Ativas</p>
+              <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mb-1">DETECÇÕES ATIVAS</p>
               <h3 className="text-2xl font-bold text-text-primary">{stats?.active_detections || 0}</h3>
-              <p className="text-[11px] text-text-secondary mt-0.5 opacity-70">Anomalias identificadas agora</p>
+              <p className="text-[11px] text-text-secondary mt-0.5 opacity-70">Anomalias agora</p>
             </div>
           </div>
   
@@ -261,11 +310,11 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
               <Shield size={28} />
             </div>
             <div>
-              <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mb-1">Mitigações em Curso</p>
+              <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mb-1">MITIGAÇÕES ATIVAS</p>
               <h3 className="text-2xl font-bold text-text-primary">
                 {activeMitigations?.total || activeMitigations?.items?.length || 0}
               </h3>
-              <p className="text-[11px] text-text-secondary mt-0.5 opacity-70">Bloqueios ativos no BGP</p>
+              <p className="text-[11px] text-text-secondary mt-0.5 opacity-70">Bloqueios no BGP</p>
             </div>
           </div>
         </div>
@@ -285,11 +334,15 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
                )}
             </div>
             <div className="flex gap-4 text-[11px] font-bold">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-primary/5 text-primary rounded-lg border border-primary/10">
-                <ArrowDown size={12} /> {(stats?.incoming_mbps / 1000).toFixed(1)} Gbps
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-bg-primary text-text-primary rounded-lg border border-border shadow-sm">
+                <span className="text-text-secondary opacity-60 font-medium">TOTAL RX:</span>
+                <span className="font-black">{(stats?.incoming_mbps / 1000).toFixed(1)} Gbps</span>
+                <ArrowDown size={14} className="text-primary" />
               </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-success/5 text-success rounded-lg border border-success/10">
-                <ArrowUp size={12} /> {(stats?.outgoing_mbps / 1000).toFixed(1)} Gbps
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-bg-primary text-text-primary rounded-lg border border-border shadow-sm">
+                <span className="text-text-secondary opacity-60 font-medium">TOTAL TX:</span>
+                <span className="font-black">{(stats?.outgoing_mbps / 1000).toFixed(1)} Gbps</span>
+                <ArrowUp size={14} className="text-success" />
               </div>
             </div>
           </div>
@@ -359,7 +412,73 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
          </div>
        </div>
  
-        {/* MELHORIA 2 — Histórico de Anomalias em Eventos */}
+        {/* SEÇÃO 2 — Blackholes Ativos (condicional) */}
+        {(activeMitigations?.items || []).length > 0 ? (
+          <>
+            <SectionDivider title="Bloqueios Ativos Agora" />
+            <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden mb-6">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+                      <th className="px-6 py-4 border-b border-border">IP em Blackhole</th>
+                      <th className="px-6 py-4 border-b border-border">Início</th>
+                      <th className="px-6 py-4 border-b border-border">Volume</th>
+                      <th className="px-6 py-4 border-b border-border text-center">Direção</th>
+                      <th className="px-6 py-4 border-b border-border text-center">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-sm divide-y divide-border/40">
+                    {(activeMitigations.items || []).map((item: any, i: number) => (
+                      <tr key={i} className="hover:bg-danger/5 transition-colors group">
+                        <td className="px-6 py-3.5 font-mono font-bold text-text-primary text-xs">
+                          <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse" />
+                            {item.ip}
+                          </div>
+                        </td>
+                        <td className="px-6 py-3.5 text-text-secondary text-xs whitespace-nowrap">
+                          <div className="flex items-center gap-1.5">
+                            <Clock size={13} opacity={0.5} /> {item.since || 'Recente'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-3.5">
+                          <p className="font-bold text-text-primary text-xs">
+                            {item.pps > 1000 ? (item.pps / 1000).toFixed(1) + 'k' : item.pps} pps · {item.mbps || 0} Mbps
+                          </p>
+                        </td>
+                        <td className="px-6 py-3.5 text-center">
+                          <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20 text-[10px] font-bold rounded uppercase">
+                            {item.direction === 'outgoing' ? '↑ Upload' : '↓ Download'}
+                          </span>
+                        </td>
+                        <td className="px-6 py-3.5 text-center">
+                          {isAdmin && (
+                            <button 
+                              onClick={() => handleRemove(item.ip)}
+                              className="p-1.5 text-text-secondary hover:text-danger hover:bg-danger/10 rounded-lg transition-all"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex items-center justify-center py-4">
+            <span className="px-3 py-1 bg-success/10 text-success border border-success/20 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-2">
+              <CheckCircle size={12} /> ✓ Nenhum IP em bloqueio no momento
+            </span>
+          </div>
+        )}
+
+        <SectionDivider title="Histórico" />
+
         <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
           <div className="p-5 border-b border-border bg-bg-primary/30">
             <div className="flex justify-between items-center mb-6">
@@ -775,7 +894,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
           </span>
 
           {isBanned && (
-            <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20 rounded text-[9px] font-bold uppercase tracking-wider shadow-sm">
+            <span className="px-2 py-0.5 bg-danger text-white border border-danger/20 rounded text-[9px] font-black uppercase tracking-wider shadow-sm animate-pulse">
               EM MITIGAÇÃO
             </span>
           )}

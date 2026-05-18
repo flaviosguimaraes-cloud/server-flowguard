@@ -1,6 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
-import ActiveMitigation from '../../pages/mitigation/Active'
+import { createFileRoute, Navigate } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/mitigation/active')({
-  component: ActiveMitigation,
+  component: () => <Navigate to="/mitigation/events" replace />,
 })
