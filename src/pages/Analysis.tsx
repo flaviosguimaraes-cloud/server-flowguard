@@ -138,22 +138,15 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       } catch { return '—'; }
     };
 
-    const formatUTC = (dateStr: string) => {
-      if (!dateStr) return '—';
-      try {
-         // Banco de Flows retorna sem timezone, assumir UTC e converter para local
-         const d = new Date(dateStr.replace(' ', 'T') + 'Z');
-        if (isNaN(d.getTime())) return '—';
-        return d.toLocaleString('pt-BR', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          timeZone: 'America/Sao_Paulo'
-        });
-      } catch { return '—'; }
+    const formatTime = (str: string) => {
+      if (!str) return '—';
+      // Pegar apenas data e hora do string
+      const parts = str.split(' ');
+      const date = parts[0]; // 2026-05-17
+      const time = parts[1]?.substring(0, 5); // 08:00
+      const [y, m, d] = date.split('-');
+      return `${d}/${m} ${time}`;
+      // Retorna: "17/05 08:00"
     };
 
     const [pageSize, setPageSize] = useState(50);
@@ -198,12 +191,20 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
 
     useEffect(() => {
       setPage(1);
-    }, [pageSize, filters]);
+    }, [pageSize, filters.src_ip, filters.dst_ip, filters.src_port, filters.dst_port, filters.proto, filters.country, filters.direction, filters.order]);
+
+    useEffect(() => {
+      setFilters(prev => ({
+        ...prev,
+        order: filterMode === 'custom' ? 'recent' : 'bytes'
+      }));
+    }, [filterMode]);
 
     const buildQuery = useCallback(() => {
       const params = new URLSearchParams({
         limit: String(pageSize),
         offset: String((page - 1) * pageSize),
+        le: '1000',
       });
 
       if (filterMode === 'custom') {
@@ -262,7 +263,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       setSearchTrigger(prev => prev + 1);
     };
 
-    const { data: connections, isLoading } = useQuery({
+    const { data: connections, isLoading, isPlaceholderData } = useQuery({
       queryKey: ['connections-analysis', searchTrigger, filters, page, pageSize, filterMode, minutes, startDate, endDate],
       queryFn: async () => {
         try {
@@ -340,16 +341,16 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
 
   const exportCSV = () => {
     const headers = ["IP Origem", "IP Destino", "Serviço", "Empresa", "Protocolo", "Bytes", "PPS", "Última vez visto"];
-    const rows = connectionItems.map((i: any) => [
-      i.src_addr,
-      i.dst_addr,
-      getService(i.dst_port),
-      i.dst_org || '',
-      protoName(i.proto),
-      i.bytes,
-      Math.round((i.packets || 0) / 1800),
-      formatUTC(i.time_received)
-    ]);
+      const rows = connectionItems.map((i: any) => [
+        i.src_addr,
+        i.dst_addr,
+        getService(i.dst_port),
+        i.dst_org || '',
+        protoName(i.proto),
+        i.bytes,
+        Math.round((i.packets || 0) / 1800),
+        formatTime(i.time_received)
+      ]);
     
     const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
