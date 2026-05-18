@@ -336,19 +336,20 @@ export default function Notifications() {
   );
 }
 
-function ChannelModalComponent({ isOpen, onClose, mode, data, onSubmit, isLoading }: any) {
-  const [name, setName] = useState(data?.name || '');
-  const [type, setType] = useState(data?.type || 'telegram');
-  const [config, setConfig] = useState(data?.config || {});
+import { useEffect } from 'react';
 
-  // Reset local state when data changes
-  useState(() => {
-    if (data) {
-      setName(data.name || '');
-      setType(data.type || 'telegram');
-      setConfig(data.config || {});
+function ChannelModalComponent({ isOpen, onClose, mode, data, onSubmit, isLoading }: any) {
+  const [name, setName] = useState('');
+  const [type, setType] = useState('telegram');
+  const [config, setConfig] = useState<any>({});
+
+  useEffect(() => {
+    if (isOpen) {
+      setName(data?.name || '');
+      setType(data?.type || 'telegram');
+      setConfig(data?.config || {});
     }
-  });
+  }, [isOpen, data]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -458,23 +459,23 @@ function ChannelModalComponent({ isOpen, onClose, mode, data, onSubmit, isLoadin
 }
 
 function RuleModalComponent({ isOpen, onClose, mode, data, onSubmit, isLoading, channels, eventLabels }: any) {
-  const [name, setName] = useState(data?.name || '');
-  const [eventType, setEventType] = useState(data?.event_type || 'attack_detected');
-  const [channelId, setChannelId] = useState(data?.channel_id || '');
-  const [minPps, setMinPps] = useState(data?.min_pps || 0);
-  const [minMbps, setMinMbps] = useState(data?.min_mbps || 0);
-  const [enabled, setEnabled] = useState(data?.enabled !== false);
+  const [name, setName] = useState('');
+  const [eventType, setEventType] = useState('attack_detected');
+  const [channelId, setChannelId] = useState('');
+  const [minPps, setMinPps] = useState(0);
+  const [minMbps, setMinMbps] = useState(0);
+  const [enabled, setEnabled] = useState(true);
 
-  useState(() => {
-    if (data) {
-      setName(data.name || '');
-      setEventType(data.event_type || 'attack_detected');
-      setChannelId(data.channel_id || '');
-      setMinPps(data.min_pps || 0);
-      setMinMbps(data.min_mbps || 0);
-      setEnabled(data.enabled !== false);
+  useEffect(() => {
+    if (isOpen) {
+      setName(data?.name || '');
+      setEventType(data?.event_type || 'attack_detected');
+      setChannelId(data?.channel_id?.toString() || '');
+      setMinPps(data?.min_pps || 0);
+      setMinMbps(data?.min_mbps || 0);
+      setEnabled(data?.enabled !== false);
     }
-  });
+  }, [isOpen, data]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
