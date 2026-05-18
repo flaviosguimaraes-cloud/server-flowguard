@@ -310,9 +310,6 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       refetchInterval: filterMode === 'custom' ? false : 30000,
     });
 
-    const total = connections?.total || 0;
-    const totalPages = Math.ceil(total / pageSize);
- 
     const connectionItems = useMemo(() => {
       let items = Array.isArray(connections) ? [...connections] : [...(connections?.items || connections?.data || [])];
       
@@ -342,6 +339,9 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       return items;
     }, [connections, groupByIP]);
  
+    const hasMore = connectionItems.length === pageSize;
+    const totalPages = hasMore ? page + 1 : page;
+
    const metrics = useMemo(() => {
      const items = connectionItems;
      const uniqueIPs = new Set(items.flatMap((i: any) => [i.src_addr, i.dst_addr])).size;
