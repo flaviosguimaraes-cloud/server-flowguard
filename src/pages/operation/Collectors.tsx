@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
- import { Server, Eye, X, Clock, Plus, Edit2, Trash2, Power, PowerOff, Shield, Check, Info } from 'lucide-react';
+ import { Server, Eye, X, Clock, Plus, Edit2, Trash2, Power, PowerOff, Shield, Check, Info, Activity } from 'lucide-react';
  import { motion, AnimatePresence } from 'framer-motion';
  const BRAND_DEFAULTS: Record<string, { protocol: string, port: number }> = {
    huawei: { protocol: 'netflow_v9', port: 2055 },
@@ -306,9 +306,9 @@ export default function Collectors() {
      active: true,
      bgp_enabled: false,
      bgp_remote_ip: '',
-     bgp_remote_asn: '',
+     bgp_remote_asn: '' as string | number,
      bgp_local_ip: '',
-     bgp_local_asn: 65000,
+     bgp_local_asn: 65000 as string | number,
      bgp_ipv4_unicast: true,
      bgp_flowspec: false
    });
