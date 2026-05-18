@@ -338,7 +338,7 @@ export default function Notifications() {
   );
 }
 
-function ChannelModalComponent({ isOpen, onClose, mode, data, onSubmit, isLoading }: any) {
+function ChannelModalComponent({ isOpen, onClose, mode, data, onSubmit, isLoading, onTest }: any) {
   const [name, setName] = useState('');
   const [type, setType] = useState('telegram');
   const [config, setConfig] = useState<any>({});
@@ -442,6 +442,44 @@ function ChannelModalComponent({ isOpen, onClose, mode, data, onSubmit, isLoadin
               <div className="space-y-2">
                 <Label htmlFor="token_bearer">Token Bearer (Opcional)</Label>
                 <Input id="token_bearer" value={config.token || ''} onChange={(e) => updateConfig('token', e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-[10px] uppercase font-bold text-text-secondary">Headers Customizados</Label>
+                <div className="space-y-2">
+                  {Object.entries(config.headers || {}).map(([k, v]: [string, any], idx) => (
+                    <div key={idx} className="flex gap-2">
+                      <Input placeholder="Key" value={k} readOnly className="h-8 text-xs bg-bg-primary" />
+                      <Input placeholder="Value" value={v} readOnly className="h-8 text-xs bg-bg-primary" />
+                      <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive" 
+                        onClick={(e) => {
+                          e.preventDefault();
+                          const newHeaders = { ...config.headers };
+                          delete newHeaders[k];
+                          updateConfig('headers', newHeaders);
+                        }}>
+                        <X size={14} />
+                      </Button>
+                    </div>
+                  ))}
+                  <div className="flex gap-2">
+                    <Input id="new-header-key" placeholder="Key" className="h-8 text-xs" />
+                    <Input id="new-header-val" placeholder="Value" className="h-8 text-xs" />
+                    <Button variant="outline" size="sm" className="h-8 px-2" onClick={(e) => {
+                      e.preventDefault();
+                      const keyInput = document.getElementById('new-header-key') as HTMLInputElement;
+                      const valInput = document.getElementById('new-header-val') as HTMLInputElement;
+                      const key = keyInput.value;
+                      const val = valInput.value;
+                      if (key) {
+                        updateConfig('headers', { ...(config.headers || {}), [key]: val });
+                        keyInput.value = '';
+                        valInput.value = '';
+                      }
+                    }}>
+                      <PlusCircle size={14} />
+                    </Button>
+                  </div>
+                </div>
               </div>
             </div>
           )}
