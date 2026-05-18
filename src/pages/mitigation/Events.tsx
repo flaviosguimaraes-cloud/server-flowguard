@@ -424,6 +424,7 @@ function SectionDivider({ title }: { title: string }) {
                       <th className="px-6 py-4 border-b border-border">IP em Blackhole</th>
                       <th className="px-6 py-4 border-b border-border">Início</th>
                       <th className="px-6 py-4 border-b border-border">Volume</th>
+                      <th className="px-6 py-4 border-b border-border text-center">Direção</th>
                       <th className="px-6 py-4 border-b border-border text-center">Ações</th>
                     </tr>
                   </thead>
@@ -445,6 +446,11 @@ function SectionDivider({ title }: { title: string }) {
                           <p className="font-bold text-text-primary text-xs">
                             {item.pps > 1000 ? (item.pps / 1000).toFixed(1) + 'k' : item.pps} pps · {item.mbps || 0} Mbps
                           </p>
+                        </td>
+                        <td className="px-6 py-3.5 text-center">
+                          <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20 text-[10px] font-bold rounded uppercase">
+                            {item.direction === 'outgoing' ? '↑ Upload' : '↓ Download'}
+                          </span>
                         </td>
                         <td className="px-6 py-3.5 text-center">
                           {isAdmin && (
