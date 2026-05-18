@@ -666,7 +666,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
               <button 
                 onClick={() => {
                   setFilters({ src_ip: '', dst_ip: '', src_port: '', dst_port: '', proto: '', country: '', direction: '' });
-                  setSortCol('bytes');
+                  setSortCol('when');
                   setSortDir('desc');
                   setFilterMode('relative');
                   setMinutes(30);
