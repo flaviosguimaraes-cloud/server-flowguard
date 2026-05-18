@@ -342,7 +342,7 @@ export default function Collectors() {
             bgp_local_ip: data.bgp_local_ip || '',
             bgp_local_asn: data.bgp_local_asn?.toString() || '65000',
             bgp_ipv4_unicast: data.bgp_ipv4_unicast !== false,
-            bgp_flowspec: data.bgp_flowspec || false
+            bgp_flowspec: data.bgp_flowspec === true
           });
           setSnmpIpTouched(true);
           setBgpLocalIpTouched(true);
@@ -580,14 +580,22 @@ export default function Collectors() {
                      <div className="md:col-span-2 space-y-3">
                        <Label>Famílias</Label>
                        <div className="flex gap-6">
-                         <div className="flex items-center space-x-2">
-                           <Checkbox id="unicast" checked={formData.bgp_ipv4_unicast} onCheckedChange={v => setFormData({ ...formData, bgp_ipv4_unicast: !!v })} />
-                           <label htmlFor="unicast" className="text-sm font-medium leading-none cursor-pointer">IPv4 Unicast</label>
-                         </div>
-                         <div className="flex items-center space-x-2">
-                           <Checkbox id="flowspec" checked={formData.bgp_flowspec} onCheckedChange={v => setFormData({ ...formData, bgp_flowspec: !!v })} />
-                           <label htmlFor="flowspec" className="text-sm font-medium leading-none cursor-pointer">IPv4 FlowSpec</label>
-                         </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="unicast" 
+                              checked={formData.bgp_ipv4_unicast === true} 
+                              onCheckedChange={v => setFormData({ ...formData, bgp_ipv4_unicast: v === true })} 
+                            />
+                            <label htmlFor="unicast" className="text-sm font-medium leading-none cursor-pointer">IPv4 Unicast</label>
+                          </div>
+                          <div className="flex items-center space-x-2">
+                            <Checkbox 
+                              id="flowspec" 
+                              checked={formData.bgp_flowspec === true} 
+                              onCheckedChange={v => setFormData({ ...formData, bgp_flowspec: v === true })} 
+                            />
+                            <label htmlFor="flowspec" className="text-sm font-medium leading-none cursor-pointer">IPv4 FlowSpec</label>
+                          </div>
                        </div>
                      </div>
                    </div>
