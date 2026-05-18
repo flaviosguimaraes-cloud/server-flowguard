@@ -644,6 +644,45 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
               </tbody>
             </table>
           </div>
+
+          {/* Paginação */}
+          <div className="p-4 border-t border-border bg-bg-primary/30 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-text-secondary font-bold uppercase tracking-widest">Linhas por página:</span>
+              <select 
+                value={pageSize} 
+                onChange={e => setPageSize(Number(e.target.value))}
+                className="bg-bg-primary border border-border rounded px-2 py-1 text-xs text-text-primary outline-none"
+              >
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={200}>200</option>
+              </select>
+              <span className="text-xs text-text-secondary ml-4">
+                Total: <span className="text-text-primary font-bold">{total}</span>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button 
+                disabled={page === 1}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                className="px-3 py-1.5 bg-bg-primary border border-border rounded-lg text-xs font-bold text-text-secondary hover:text-text-primary disabled:opacity-30 transition-all"
+              >
+                Anterior
+              </button>
+              <span className="text-xs font-bold text-text-primary px-2">
+                Página {page} de {Math.max(1, totalPages)}
+              </span>
+              <button 
+                disabled={page >= totalPages}
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                className="px-3 py-1.5 bg-bg-primary border border-border rounded-lg text-xs font-bold text-text-secondary hover:text-text-primary disabled:opacity-30 transition-all"
+              >
+                Próxima
+              </button>
+            </div>
+          </div>
         </div>
  
        <MitigationModal
