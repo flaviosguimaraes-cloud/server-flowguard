@@ -334,9 +334,8 @@ export default function Collectors() {
            bgp_remote_asn: data.bgp_remote_asn?.toString() || '',
            bgp_local_ip: data.bgp_local_ip || '',
            bgp_local_asn: data.bgp_local_asn?.toString() || '65000',
-           bgp_ipv4_unicast: data.bgp_ipv4_unicast !== false,
-            bgp_flowspec: data.bgp_flowspec || false,
-            bgp_ipv4_unicast: data.bgp_ipv4_unicast !== false
+            bgp_ipv4_unicast: data.bgp_ipv4_unicast !== false,
+            bgp_flowspec: data.bgp_flowspec || false
          });
           setSnmpIpTouched(true);
        } else {
@@ -356,10 +355,9 @@ export default function Collectors() {
            bgp_remote_ip: '',
            bgp_remote_asn: '',
            bgp_local_ip: '',
-           bgp_local_asn: '65000',
-           bgp_ipv4_unicast: true,
-            bgp_flowspec: false,
-            bgp_ipv4_unicast: true
+            bgp_local_asn: '65000',
+            bgp_ipv4_unicast: true,
+            bgp_flowspec: false
          });
           setSnmpIpTouched(false);
        }
