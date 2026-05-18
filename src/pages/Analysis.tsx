@@ -194,10 +194,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       setPage(1);
     }, [pageSize, filters.src_ip, filters.dst_ip, filters.src_port, filters.dst_port, filters.proto, filters.country, filters.direction, sortCol, sortDir]);
 
-    useEffect(() => {
-      setSortCol(filterMode === 'custom' ? 'time_received' : 'bytes');
-      setSortDir('desc');
-    }, [filterMode]);
+    // Removido reset de ordenação ao mudar modo para não quebrar a UX
 
     const SORT_MAP: Record<string, string> = {
       'when':      'recent',
@@ -252,32 +249,36 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       setPage(1);
     };
 
-    const SortHeader = ({ field, label, align = 'left' }: { field: string, label: string, align?: 'left' | 'right' | 'center' }) => {
-      const isSelected = sortCol === field;
-      const isSortable = ['time_received', 'bytes', 'packets', 'bpp', 'duration'].includes(field);
-
-      return (
-        <th 
-          className={clsx("px-6 py-4 border-b border-border transition-colors", 
-            isSortable && "cursor-pointer hover:bg-bg-secondary",
-            align === 'right' && 'text-right', 
-            align === 'center' && 'text-center'
-          )}
-          onClick={() => {
-            if (isSortable) handleSort(field);
-          }}
-        >
-          <div className={clsx("flex items-center gap-1", align === 'right' && 'justify-end')}>
-            {label}
-            {isSelected && (
-              <span className="ml-1">
-                {sortDir === 'desc' ? <ArrowDown size={12} /> : <ArrowUp size={12} />}
-              </span>
-            )}
-          </div>
-        </th>
-      );
-    };
+    const SortableHeader = ({
+      col, label, align = 'left'
+    }: {
+      col: string, label: string, align?: 'left' | 'right' | 'center'
+    }) => (
+      <th
+        onClick={() => handleSort(col)}
+        className={clsx(
+          "px-6 py-4 border-b border-border transition-colors cursor-pointer hover:bg-bg-secondary",
+          align === 'right' && 'text-right',
+          align === 'center' && 'text-center'
+        )}
+        style={{
+          userSelect: 'none',
+          whiteSpace: 'nowrap',
+        }}>
+        <div className={clsx("flex items-center gap-1", align === 'right' && 'justify-end', align === 'center' && 'justify-center')}>
+          {label}
+          <span style={{
+            marginLeft: 4,
+            opacity: sortCol === col ? 1 : 0.3,
+            fontSize: 10,
+          }}>
+            {sortCol === col
+              ? (sortDir === 'desc' ? ' ↓' : ' ↑')
+              : ' ↕'}
+          </span>
+        </div>
+      </th>
+    );
    const [isMitigationOpen, setIsMitigationOpen] = useState(false);
    const [mitigationData, setMitigationData] = useState({ ip: '', proto: '', port: 0 });
  
@@ -300,7 +301,19 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     };
 
     const { data: connections, isLoading, isPlaceholderData } = useQuery({
-      queryKey: ['connections-analysis', searchTrigger, filters, page, pageSize, filterMode, minutes, startDate, endDate],
+      queryKey: [
+        'connections-analysis', 
+        searchTrigger, 
+        filters, 
+        page, 
+        pageSize, 
+        filterMode, 
+        minutes, 
+        startDate, 
+        endDate,
+        sortCol,
+        sortDir
+      ],
       queryFn: async () => {
         try {
           const q = buildQuery();
