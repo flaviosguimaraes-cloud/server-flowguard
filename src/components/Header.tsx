@@ -118,12 +118,18 @@ export const Header = () => {
             </div>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-56">
-            <DropdownMenuLabel>
-              <div className="flex flex-col space-y-1">
-                <p className="text-sm font-medium leading-none">{user?.username}</p>
-                <p className="text-xs leading-none text-text-secondary">{user?.email || 'Sem email'}</p>
-              </div>
-            </DropdownMenuLabel>
+             <DropdownMenuLabel className="font-normal">
+               <div className="flex flex-col space-y-2">
+                 <div className="space-y-0.5">
+                   <p className="text-[10px] text-text-secondary uppercase tracking-wider font-bold">Perfil</p>
+                   <p className="text-sm font-bold text-primary">{user?.role === 'admin' ? 'Administrador' : 'Visualizador'}</p>
+                 </div>
+                 <div className="space-y-0.5">
+                   <p className="text-[10px] text-text-secondary uppercase tracking-wider font-bold">Email</p>
+                   <p className="text-xs font-medium text-text-primary">{user?.email || '—'}</p>
+                 </div>
+               </div>
+             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem className="cursor-pointer" onClick={() => setIsPasswordModalOpen(true)}>
               <Key className="mr-2 h-4 w-4" />
