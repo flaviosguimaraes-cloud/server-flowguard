@@ -1,25 +1,60 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
-import { Globe, Clock, BarChart3, TrendingUp } from 'lucide-react';
+import { Globe, Clock, BarChart3, TrendingUp, Activity, Award, Users } from 'lucide-react';
 import { clsx } from 'clsx';
 
-const CDN_COLORS: Record<string, string> = {
-  'Netflix': '#E50914',
-  'Google': '#4285F4',
-  'YouTube': '#FF0000',
-  'Akamai': '#009BDE',
-  'Cloudflare': '#F48120',
-  'Amazon': '#FF9900',
-  'AWS': '#FF9900',
-  'Meta': '#1877F2',
-  'Facebook': '#1877F2',
-  'Instagram': '#E4405F',
-  'Microsoft': '#00BCF2',
-  'Azure': '#008AD7',
-  'Apple': '#555555',
-  'Disney': '#113CCF',
-  'Fastly': '#FF282D',
+const CDN_INFO: Record<string, { color: string; abbr: string; desc: string }> = {
+  'Netflix': {
+    color: '#E50914',
+    abbr: 'NF',
+    desc: 'Streaming de vídeo'
+  },
+  'Google': {
+    color: '#4285F4',
+    abbr: 'GO',
+    desc: 'Busca e serviços'
+  },
+  'YouTube': {
+    color: '#FF0000',
+    abbr: 'YT',
+    desc: 'Streaming de vídeo'
+  },
+  'Cloudflare': {
+    color: '#F48120',
+    abbr: 'CF',
+    desc: 'CDN e segurança'
+  },
+  'Akamai': {
+    color: '#009BDE',
+    abbr: 'AK',
+    desc: 'CDN enterprise'
+  },
+  'Amazon': {
+    color: '#FF9900',
+    abbr: 'AZ',
+    desc: 'Cloud e streaming'
+  },
+  'Meta': {
+    color: '#1877F2',
+    abbr: 'FB',
+    desc: 'Redes sociais'
+  },
+  'Microsoft': {
+    color: '#00BCF2',
+    abbr: 'MS',
+    desc: 'Cloud e serviços'
+  },
+  'Disney': {
+    color: '#113CCF',
+    abbr: 'DI',
+    desc: 'Streaming de vídeo'
+  },
+  'Fastly': {
+    color: '#FF282D',
+    abbr: 'FA',
+    desc: 'CDN edge'
+  },
 };
 
 const CDNs = () => {
