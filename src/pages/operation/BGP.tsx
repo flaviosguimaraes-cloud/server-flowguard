@@ -205,11 +205,12 @@ import { toast } from 'sonner';
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-bg-primary/50 border-b border-border">
-                  <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Prefixo</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Next-hop</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Community</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Tipo</th>
-                  <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Anunciado em</th>
+                   <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Prefixo</th>
+                   <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Next-hop</th>
+                   <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Community</th>
+                   <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Tipo</th>
+                   <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Anunciado em</th>
+                   <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Tempo ativo</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
@@ -219,39 +220,47 @@ import { toast } from 'sonner';
                       <td colSpan={5} className="px-4 py-4"><div className="h-4 bg-border/50 rounded w-full" /></td>
                     </tr>
                   ))
-                ) : routes.length === 0 ? (
-                  <tr>
-                    <td colSpan={5} className="px-4 py-10 text-center text-text-secondary italic font-medium">Nenhuma rota anunciada no momento</td>
-                  </tr>
-                ) : (
-                  routes.map((route: any, i: number) => {
-                    const type = (route.type || '').toLowerCase();
-                    return (
-                      <tr key={i} className="hover:bg-bg-primary/30 transition-colors group">
-                        <td className="px-4 py-3 font-mono text-sm text-text-primary font-bold group-hover:text-primary transition-colors">{route.prefix}</td>
-                        <td className="px-4 py-3 font-mono text-xs text-text-secondary">{route.nexthop || '—'}</td>
-                        <td className="px-4 py-3 font-mono text-xs text-text-secondary">{route.community || '—'}</td>
-                        <td className="px-4 py-3">
-                          <span className={clsx(
-                            "px-2 py-0.5 rounded text-[10px] font-bold uppercase border",
-                            type === 'blackhole' ? "bg-danger/10 text-danger border-danger/20" : 
-                            type === 'external' ? "bg-warning/10 text-warning border-warning/20" :
-                            type === 'flowspec' ? "bg-purple-500/10 text-purple-500 border-purple-500/20" :
-                            "bg-primary/10 text-primary border-primary/20"
-                          )}>
-                            {type === 'blackhole' ? 'Blackhole' : 
-                             type === 'external' ? 'Ext. Mitigação' : 
-                             type === 'flowspec' ? 'FlowSpec' : (route.type || 'Standard')}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-xs text-text-primary flex items-center gap-2">
-                          <Clock size={12} className="text-text-secondary" />
-                          {route.age || '—'}
-                        </td>
-                      </tr>
-                    );
-                  })
-                )}
+                 ) : routes.length === 0 ? (
+                   <tr>
+                     <td colSpan={6} className="px-4 py-10 text-center text-text-secondary font-medium">
+                       <div className="flex flex-col items-center gap-2">
+                         <p className="italic">Nenhuma mitigação BGP ativa no momento.</p>
+                         <p className="text-[10px] opacity-70">Rotas aparecem aqui quando IPs são colocados em blackhole.</p>
+                       </div>
+                     </td>
+                   </tr>
+                 ) : (
+                   routes.map((route: any, i: number) => {
+                     const type = (route.type || '').toLowerCase();
+                     return (
+                       <tr key={i} className="hover:bg-bg-primary/30 transition-colors group">
+                         <td className="px-4 py-3 font-mono text-sm text-text-primary font-bold group-hover:text-primary transition-colors">{route.prefix}</td>
+                         <td className="px-4 py-3 font-mono text-xs text-text-secondary">{route.nexthop || '—'}</td>
+                         <td className="px-4 py-3 font-mono text-xs text-text-secondary">{route.community || '—'}</td>
+                         <td className="px-4 py-3">
+                           <span className={clsx(
+                             "px-2 py-0.5 rounded text-[10px] font-bold uppercase border",
+                             type === 'blackhole' ? "bg-danger/10 text-danger border-danger/20" : 
+                             type === 'external' ? "bg-warning/10 text-warning border-warning/20" :
+                             type === 'flowspec' ? "bg-purple-500/10 text-purple-500 border-purple-500/20" :
+                             "bg-primary/10 text-primary border-primary/20"
+                           )}>
+                             {type === 'blackhole' ? 'Blackhole' : 
+                              type === 'external' ? 'Ext. Mitigação' : 
+                              type === 'flowspec' ? 'FlowSpec' : (route.type || 'Standard')}
+                           </span>
+                         </td>
+                         <td className="px-4 py-3 text-xs text-text-primary flex items-center gap-2">
+                           <Clock size={12} className="text-text-secondary" />
+                           {route.age || '—'}
+                         </td>
+                         <td className="px-4 py-3 text-xs text-text-primary font-bold">
+                           {timeActive(route.age)}
+                         </td>
+                       </tr>
+                     );
+                   })
+                 )}
               </tbody>
             </table>
           </div>
