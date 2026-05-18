@@ -1,7 +1,41 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
-import { Server, Eye, X, Clock, Plus, Edit2, Trash2, Power, PowerOff } from 'lucide-react';
+ import { Server, Eye, X, Clock, Plus, Edit2, Trash2, Power, PowerOff, Shield, Check, Info } from 'lucide-react';
+ import { motion, AnimatePresence } from 'framer-motion';
+ const BRAND_DEFAULTS: Record<string, { protocol: string, port: number }> = {
+   huawei: { protocol: 'netflow_v9', port: 2055 },
+   cisco_iosxe: { protocol: 'netflow_v9', port: 2055 },
+   cisco_ios: { protocol: 'netflow_v5', port: 2055 },
+   juniper: { protocol: 'ipfix', port: 4739 },
+   mikrotik: { protocol: 'ipfix', port: 4739 },
+   zte: { protocol: 'netflow_v9', port: 2055 },
+   outro: { protocol: 'netflow_v9', port: 2055 },
+ };
+
+ const BRANDS = [
+   { value: 'huawei', label: 'Huawei' },
+   { value: 'cisco_iosxe', label: 'Cisco IOS-XE' },
+   { value: 'cisco_ios', label: 'Cisco IOS' },
+   { value: 'juniper', label: 'Juniper' },
+   { value: 'mikrotik', label: 'MikroTik' },
+   { value: 'zte', label: 'ZTE' },
+   { value: 'outro', label: 'Outro' },
+ ];
+
+ const PROTOCOLS = [
+   { value: 'netflow_v5', label: 'NetFlow v5' },
+   { value: 'netflow_v9', label: 'NetFlow v9' },
+   { value: 'ipfix', label: 'IPFIX' },
+   { value: 'sflow', label: 'sFlow' },
+ ];
+
+ const SNMP_VERSIONS = [
+   { value: '1', label: 'v1' },
+   { value: '2c', label: 'v2c' },
+   { value: '3', label: 'v3' },
+ ];
+
 import { clsx } from 'clsx';
 import { toast } from 'sonner';
 import { 
