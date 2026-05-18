@@ -308,29 +308,3 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: an
         </form>
       </DialogContent>
     </Dialog>
-  );
-}
-
-      {openIfaces && (
-        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setOpenIfaces(null)}>
-          <div className="bg-bg-secondary border border-border rounded-xl shadow-2xl w-full max-w-xl max-h-[80vh] overflow-hidden flex flex-col" onClick={e => e.stopPropagation()}>
-            <div className="flex items-center justify-between px-6 py-4 border-b border-border">
-              <h3 className="font-bold text-text-primary">Interfaces de {openIfaces.name}</h3>
-              <button onClick={() => setOpenIfaces(null)} className="text-text-secondary hover:text-text-primary"><X size={18} /></button>
-            </div>
-            <div className="overflow-y-auto p-4 space-y-1">
-              {openIfaces.ifaces.map((iface: any, i: number) => (
-                <div key={i} className="flex items-center justify-between px-3 py-2 bg-bg-primary rounded-lg border border-border">
-                  <span className="font-mono text-sm text-text-primary">{typeof iface === 'string' ? iface : (iface.name || iface.ifname || iface.alias || JSON.stringify(iface))}</span>
-                  {typeof iface === 'object' && iface.status && (
-                    <span className="text-[10px] font-bold uppercase text-text-secondary">{iface.status}</span>
-                  )}
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
