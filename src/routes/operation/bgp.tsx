@@ -1,6 +1,6 @@
 import { createFileRoute } from '@tanstack/react-router'
-import BGPSessions from '../../pages/operation/BGPSessions'
+import BGP from '../../pages/operation/BGP'
 
 export const Route = createFileRoute('/operation/bgp')({
-  component: BGPSessions,
+  component: BGP,
 })
