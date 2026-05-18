@@ -31,25 +31,18 @@ export const Sidebar = () => {
   const navItems = [
     { path: '/dashboard', label: t('dashboard'), icon: LayoutDashboard },
     { path: '/analysis', label: t('analysis'), icon: Search },
-    { path: '/events', label: t('events'), icon: Activity },
+    { path: '/cdns', label: t('cdns'), icon: BarChart3 },
     { 
       id: 'mitigation',
       label: t('mitigation'), 
       icon: Shield,
       children: [
-        { path: '/mitigation/active', label: t('active'), icon: Zap },
-        { path: '/mitigation/flowspec', label: t('flowspec_short'), icon: List },
+        { path: '/mitigation/events', label: t('events'), icon: Activity },
+        { path: '/operation/bgp', label: 'BGP', icon: LinkIcon },
+        { path: '/mitigation/flowspec', label: 'FlowSpec', icon: Zap },
         { path: '/mitigation/policy', label: 'Política', icon: Sliders },
-      ]
-    },
-    { path: '/cdns', label: t('cdns'), icon: BarChart3 },
-    { 
-      id: 'operation',
-      label: t('operation'), 
-      icon: Settings2,
-      children: [
-         { path: '/operation/bgp', label: 'BGP', icon: LinkIcon },
-         { path: '/operation/collectors', label: t('collectors'), icon: Server },
+        { path: '/mitigation/whitelist', label: t('whitelist'), icon: CheckCircle },
+        { path: '/mitigation/blacklist', label: t('blacklist'), icon: XCircle },
       ]
     },
     { 
@@ -57,8 +50,7 @@ export const Sidebar = () => {
       label: t('administration'), 
       icon: Lock,
       children: [
-        { path: '/mitigation/whitelist', label: t('whitelist'), icon: CheckCircle },
-        { path: '/mitigation/blacklist', label: t('blacklist'), icon: XCircle },
+        { path: '/operation/collectors', label: t('collectors'), icon: Server },
         { path: '/notifications', label: t('notifications'), icon: Bell },
         { path: '/audit', label: t('audit'), icon: ClipboardList },
         { path: '/settings', label: t('settings'), icon: Settings },
