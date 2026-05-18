@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, Search, Bell, Shield, Zap, List, 
+  LayoutDashboard, Search, Bell, Shield, Zap, List, Activity,
   Network, CheckCircle, XCircle, BarChart3, Settings2, Server, 
   Link as LinkIcon, Sliders, Monitor, ClipboardList, 
   Settings, LogOut, ChevronDown, ChevronRight, Lock, 
