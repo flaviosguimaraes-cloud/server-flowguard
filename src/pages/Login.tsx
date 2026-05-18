@@ -7,6 +7,7 @@
    import { useTheme } from '../contexts/ThemeContext';
  
  export default function Login() {
+   const { login } = useAuth();
    const navigate = useNavigate();
    const [username, setUsername] = useState('');
    const [password, setPassword] = useState('');
@@ -41,19 +42,7 @@
       );
 
        const data = response.data;
-       localStorage.setItem('access_token', data.access_token);
-       localStorage.setItem('refresh_token', data.refresh_token);
-       localStorage.setItem('username', data.username);
-       localStorage.setItem('role', data.role);
- 
-       if (data.must_change_password) {
-         navigate({ 
-           to: '/change-password',
-           search: { mandatory: true, username: data.username }
-         });
-       } else {
-         navigate({ to: '/dashboard' });
-       }
+       login(data);
     } catch (error: any) {
       setError(
         error.response?.data?.detail || 
