@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { 
@@ -311,7 +311,7 @@ export default function Notifications() {
         onClose={() => setChannelModal({ ...channelModal, open: false })}
         mode={channelModal.mode}
         data={channelModal.data}
-        onSubmit={(data) => {
+        onSubmit={(data: any) => {
           if (channelModal.mode === 'add') createChannelMutation.mutate(data);
           else updateChannelMutation.mutate({ id: channelModal.data.id, data });
         }}
@@ -326,7 +326,7 @@ export default function Notifications() {
         data={ruleModal.data}
         channels={channelItems}
         eventLabels={eventLabels}
-        onSubmit={(data) => {
+        onSubmit={(data: any) => {
           if (ruleModal.mode === 'add') createRuleMutation.mutate(data);
           else updateRuleMutation.mutate({ id: ruleModal.data.id, data });
         }}
@@ -334,10 +334,6 @@ export default function Notifications() {
       />
     </div>
   );
-}
-
-import { useEffect } from 'react';
-
 function ChannelModalComponent({ isOpen, onClose, mode, data, onSubmit, isLoading }: any) {
   const [name, setName] = useState('');
   const [type, setType] = useState('telegram');
