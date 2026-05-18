@@ -292,6 +292,7 @@ export default function Collectors() {
  }
 
  function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: any) {
+    const [snmpIpTouched, setSnmpIpTouched] = useState(false);
    const [formData, setFormData] = useState({
      name: '',
      comment: '',
@@ -334,8 +335,10 @@ export default function Collectors() {
            bgp_local_ip: data.bgp_local_ip || '',
            bgp_local_asn: data.bgp_local_asn?.toString() || '65000',
            bgp_ipv4_unicast: data.bgp_ipv4_unicast !== false,
-           bgp_flowspec: data.bgp_flowspec || false
+            bgp_flowspec: data.bgp_flowspec || false,
+            bgp_ipv4_unicast: data.bgp_ipv4_unicast !== false
          });
+          setSnmpIpTouched(true);
        } else {
          setFormData({
            name: '',
@@ -355,12 +358,20 @@ export default function Collectors() {
            bgp_local_ip: '',
            bgp_local_asn: '65000',
            bgp_ipv4_unicast: true,
-           bgp_flowspec: false
+            bgp_flowspec: false,
+            bgp_ipv4_unicast: true
          });
+          setSnmpIpTouched(false);
        }
      }
    }, [isOpen, mode, data]);
  
+    useEffect(() => {
+      if (!snmpIpTouched && formData.host) {
+        setFormData(prev => ({ ...prev, snmp_ip: formData.host }));
+      }
+    }, [formData.host, snmpIpTouched]);
+
    const handleBrandChange = (brand: string) => {
      const defaults = BRAND_DEFAULTS[brand] || BRAND_DEFAULTS.outro;
      setFormData(prev => ({
@@ -427,10 +438,10 @@ export default function Collectors() {
                  <Label htmlFor="name">Nome *</Label>
                  <Input id="name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="router-core-01" required />
                </div>
-               <div className="space-y-2">
-                 <Label htmlFor="host">IP de Gerência *</Label>
-                 <Input id="host" value={formData.host} onChange={e => setFormData({ ...formData, host: e.target.value })} placeholder="Ex: 192.168.1.1" required />
-               </div>
+                <div className="space-y-2">
+                  <Label htmlFor="host">IP *</Label>
+                  <Input id="host" value={formData.host} onChange={e => setFormData({ ...formData, host: e.target.value })} placeholder="Ex: 192.168.1.1" required />
+                </div>
                <div className="space-y-2 md:col-span-2">
                  <Label htmlFor="brand">Marca *</Label>
                  <Select value={formData.brand} onValueChange={handleBrandChange}>
@@ -494,11 +505,17 @@ export default function Collectors() {
                  <Label htmlFor="snmp_port">Porta SNMP</Label>
                  <Input id="snmp_port" type="number" value={formData.snmp_port} onChange={e => setFormData({ ...formData, snmp_port: e.target.value })} />
                </div>
-               <div className="space-y-2">
-                 <Label htmlFor="snmp_ip">IP SNMP</Label>
-                 <Input id="snmp_ip" value={formData.snmp_ip} onChange={e => setFormData({ ...formData, snmp_ip: e.target.value })} placeholder={formData.host || "Mesmo que gerência"} />
-                 <p className="text-[10px] text-text-secondary">Deixe igual ao IP se o mesmo</p>
-               </div>
+                <div className="space-y-2">
+                  <Label htmlFor="snmp_ip">IP SNMP</Label>
+                  <Input 
+                    id="snmp_ip" 
+                    value={formData.snmp_ip} 
+                    onFocus={() => setSnmpIpTouched(true)}
+                    onChange={e => setFormData({ ...formData, snmp_ip: e.target.value })} 
+                    placeholder={formData.host || "Mesmo que gerência"} 
+                  />
+                  <p className="text-[10px] text-text-secondary">Deixe igual ao IP se o mesmo</p>
+                </div>
              </div>
            </section>
  
@@ -524,19 +541,19 @@ export default function Collectors() {
                    className="overflow-hidden"
                  >
                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-2">
-                     <div className="space-y-2">
-                       <Label htmlFor="bgp_remote_ip">IP Remoto (Roteador)</Label>
-                       <Input id="bgp_remote_ip" value={formData.bgp_remote_ip} onChange={e => setFormData({ ...formData, bgp_remote_ip: e.target.value })} placeholder={formData.host || "IP do roteador"} />
-                     </div>
-                     <div className="space-y-2">
-                       <Label htmlFor="bgp_remote_asn">ASN Remoto</Label>
-                       <Input id="bgp_remote_asn" type="number" value={formData.bgp_remote_asn} onChange={e => setFormData({ ...formData, bgp_remote_asn: e.target.value })} placeholder="268884" />
-                     </div>
-                     <div className="space-y-2">
-                       <Label htmlFor="bgp_local_ip">IP Local</Label>
-                       <Input id="bgp_local_ip" value={formData.bgp_local_ip} onChange={e => setFormData({ ...formData, bgp_local_ip: e.target.value })} />
-                       <p className="text-[10px] text-text-secondary">IP local do servidor FlowGuard</p>
-                     </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="bgp_remote_ip">IP Remoto (Roteador)</Label>
+                        <Input id="bgp_remote_ip" value={formData.bgp_remote_ip} onChange={e => setFormData({ ...formData, bgp_remote_ip: e.target.value })} placeholder="Ex: 192.168.1.1" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="bgp_remote_asn">ASN Remoto</Label>
+                        <Input id="bgp_remote_asn" type="number" value={formData.bgp_remote_asn} onChange={e => setFormData({ ...formData, bgp_remote_asn: e.target.value })} placeholder="65001" />
+                      </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="bgp_local_ip">IP Local</Label>
+                        <Input id="bgp_local_ip" value={formData.bgp_local_ip} onChange={e => setFormData({ ...formData, bgp_local_ip: e.target.value })} placeholder="45.175.50.219" />
+                        <p className="text-[10px] text-text-secondary">IP local do servidor FlowGuard</p>
+                      </div>
                      <div className="space-y-2">
                        <Label htmlFor="bgp_local_asn">ASN Local</Label>
                        <Input id="bgp_local_asn" type="number" value={formData.bgp_local_asn} onChange={e => setFormData({ ...formData, bgp_local_asn: e.target.value })} />
