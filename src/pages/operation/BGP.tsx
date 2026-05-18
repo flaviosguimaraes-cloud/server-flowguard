@@ -105,89 +105,93 @@ import { toast } from 'sonner';
                const established = state === 'established' || state === 'up';
                const uptime = calcUptime(sessionsData.bgp_log_tail);
  
-               return (
-                 <>
-                   {/* Card 1 — IPv4 Unicast */}
-                   <div key={`${s.peer_address}-unicast-${i}`} className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm space-y-4 hover:border-primary/30 transition-colors">
-                     <div className="flex items-center justify-between">
-                       <div className="flex items-center gap-2">
-                         <div className={clsx("w-2 h-2 rounded-full", established ? "bg-success animate-pulse" : "bg-danger")} />
-                         <span className="font-mono font-bold text-text-primary">{s.peer_address}</span>
-                       </div>
-                       <span className={clsx(
-                         "px-2 py-0.5 rounded text-[10px] font-bold uppercase border",
-                         established ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"
-                       )}>{established ? 'ESTABLISHED' : (s.state || 'OFFLINE')}</span>
-                     </div>
-                     
-                     <div className="text-text-primary font-bold text-sm">
-                       IPv4 Unicast
-                     </div>
- 
-                     <div className="space-y-3 text-xs">
-                       <div>
-                         <p className="text-[10px] font-bold text-text-secondary uppercase">AS Local: {s.local_as} → AS Remoto: {s.remote_as}</p>
-                         <p className="text-text-primary mt-1">Speaker: {s.speaker || 'ExaBGP'}</p>
-                       </div>
- 
-                       <div className="flex gap-4 pt-2 border-t border-border/50">
-                         <div>
-                           <div className="text-[10px] text-text-secondary uppercase">Enviadas</div>
-                           <div className="text-lg font-bold text-text-primary">{s.prefixes_sent || 0}</div>
-                           <div className="text-[10px] text-text-secondary">rotas anunciadas ao peer</div>
-                         </div>
-                         <div>
-                           <div className="text-[10px] text-text-secondary uppercase">Recebidas</div>
-                           <div className="text-lg font-bold text-text-primary">{s.prefixes_received || 0}</div>
-                           <div className="text-[10px] text-text-secondary">rotas recebidas do peer</div>
-                         </div>
-                       </div>
- 
-                       <div className="pt-2 flex items-center gap-1.5 text-text-secondary font-medium">
-                         <Clock size={12} />
-                         <span>Uptime: {uptime}</span>
-                       </div>
-                     </div>
-                   </div>
- 
-                   {/* Card 2 — IPv4 FlowSpec */}
-                   {s.flowspec_enabled && (
-                     <div key={`${s.peer_address}-flowspec-${i}`} className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm space-y-4 hover:border-primary/30 transition-colors">
-                       <div className="flex items-center justify-between">
-                         <div className="flex items-center gap-2">
-                           <div className={clsx("w-2 h-2 rounded-full", established ? "bg-success animate-pulse" : "bg-danger")} />
-                           <span className="font-mono font-bold text-text-primary">{s.peer_address}</span>
-                         </div>
-                         <span className={clsx(
-                           "px-2 py-0.5 rounded text-[10px] font-bold uppercase border",
-                           established ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"
-                         )}>{established ? 'ESTABLISHED' : (s.state || 'OFFLINE')}</span>
-                       </div>
-                       
-                       <div className="text-text-primary font-bold text-sm">
-                         IPv4 FlowSpec
-                       </div>
- 
-                       <div className="space-y-3 text-xs">
-                         <div>
-                           <p className="text-[10px] font-bold text-text-secondary uppercase">AS Local: {s.local_as} → AS Remoto: {s.remote_as}</p>
-                           <p className="text-text-primary mt-1">Speaker: {s.speaker || 'ExaBGP'}</p>
-                         </div>
- 
-                         <div className="pt-2 border-t border-border/50">
-                           <div className="text-[10px] text-text-secondary uppercase">Regras ativas</div>
-                           <div className="text-lg font-bold text-text-primary">{activeFlowspecCount}</div>
-                         </div>
- 
-                         <div className="pt-2 flex items-center gap-1.5 text-text-secondary font-medium">
-                           <Clock size={12} />
-                           <span>Uptime: {uptime} (mesma sessão)</span>
-                         </div>
-                       </div>
-                     </div>
-                   )}
-                 </>
-               );
+              const cards = [];
+              
+              // Card 1 — IPv4 Unicast
+              cards.push(
+                <div key={`${s.peer_address}-unicast-${i}`} className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm space-y-4 hover:border-primary/30 transition-colors">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <div className={clsx("w-2 h-2 rounded-full", established ? "bg-success animate-pulse" : "bg-danger")} />
+                      <span className="font-mono font-bold text-text-primary">{s.peer_address}</span>
+                    </div>
+                    <span className={clsx(
+                      "px-2 py-0.5 rounded text-[10px] font-bold uppercase border",
+                      established ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"
+                    )}>{established ? 'ESTABLISHED' : (s.state || 'OFFLINE')}</span>
+                  </div>
+                  
+                  <div className="text-text-primary font-bold text-sm">
+                    IPv4 Unicast
+                  </div>
+
+                  <div className="space-y-3 text-xs">
+                    <div>
+                      <p className="text-[10px] font-bold text-text-secondary uppercase">AS Local: {s.local_as} → AS Remoto: {s.remote_as}</p>
+                      <p className="text-text-primary mt-1">Speaker: {s.speaker || 'ExaBGP'}</p>
+                    </div>
+
+                    <div className="flex gap-4 pt-2 border-t border-border/50">
+                      <div>
+                        <div className="text-[10px] text-text-secondary uppercase">Enviadas</div>
+                        <div className="text-lg font-bold text-text-primary">{s.prefixes_sent || 0}</div>
+                        <div className="text-[10px] text-text-secondary">rotas anunciadas ao peer</div>
+                      </div>
+                      <div>
+                        <div className="text-[10px] text-text-secondary uppercase">Recebidas</div>
+                        <div className="text-lg font-bold text-text-primary">{s.prefixes_received || 0}</div>
+                        <div className="text-[10px] text-text-secondary">rotas recebidas do peer</div>
+                      </div>
+                    </div>
+
+                    <div className="pt-2 flex items-center gap-1.5 text-text-secondary font-medium">
+                      <Clock size={12} />
+                      <span>Uptime: {uptime}</span>
+                    </div>
+                  </div>
+                </div>
+              );
+
+              // Card 2 — IPv4 FlowSpec
+              if (s.flowspec_enabled) {
+                cards.push(
+                  <div key={`${s.peer_address}-flowspec-${i}`} className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm space-y-4 hover:border-primary/30 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className={clsx("w-2 h-2 rounded-full", established ? "bg-success animate-pulse" : "bg-danger")} />
+                        <span className="font-mono font-bold text-text-primary">{s.peer_address}</span>
+                      </div>
+                      <span className={clsx(
+                        "px-2 py-0.5 rounded text-[10px] font-bold uppercase border",
+                        established ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"
+                      )}>{established ? 'ESTABLISHED' : (s.state || 'OFFLINE')}</span>
+                    </div>
+                    
+                    <div className="text-text-primary font-bold text-sm">
+                      IPv4 FlowSpec
+                    </div>
+
+                    <div className="space-y-3 text-xs">
+                      <div>
+                        <p className="text-[10px] font-bold text-text-secondary uppercase">AS Local: {s.local_as} → AS Remoto: {s.remote_as}</p>
+                        <p className="text-text-primary mt-1">Speaker: {s.speaker || 'ExaBGP'}</p>
+                      </div>
+
+                      <div className="pt-2 border-t border-border/50">
+                        <div className="text-[10px] text-text-secondary uppercase">Regras ativas</div>
+                        <div className="text-lg font-bold text-text-primary">{activeFlowspecCount}</div>
+                      </div>
+
+                      <div className="pt-2 flex items-center gap-1.5 text-text-secondary font-medium">
+                        <Clock size={12} />
+                        <span>Uptime: {uptime} (mesma sessão)</span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              }
+
+              return cards;
              })}
            </div>
          )}
