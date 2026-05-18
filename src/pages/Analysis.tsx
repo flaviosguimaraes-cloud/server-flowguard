@@ -237,15 +237,25 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
    }, [countriesData]);
  
     const { data: connections, isLoading, refetch } = useQuery({
-      queryKey: ['connections-analysis', filters, page, pageSize],
+      queryKey: ['connections-analysis', filters, page, pageSize, filterMode, minutes, startDate, endDate],
       queryFn: async () => {
         const q = buildQuery();
         const r = await api.get(`/api/flows/connections?${q}`);
         return r.data;
       },
       staleTime: 0,
-      refetchInterval: 30000,
+      refetchInterval: filterMode === 'custom' ? false : 30000,
     });
+
+    const isLargeInterval = useMemo(() => {
+      if (filterMode === 'custom' && startDate && endDate) {
+        const start = new Date(startDate);
+        const end = new Date(endDate);
+        const diff = end.getTime() - start.getTime();
+        return diff > 24 * 60 * 60 * 1000;
+      }
+      return false;
+    }, [filterMode, startDate, endDate]);
 
     const total = connections?.total || 0;
     const totalPages = Math.ceil(total / pageSize);
