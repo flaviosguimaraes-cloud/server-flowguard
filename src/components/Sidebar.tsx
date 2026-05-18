@@ -62,8 +62,7 @@ export const Sidebar = () => {
         { path: '/notifications', label: t('notifications'), icon: Bell },
         { path: '/audit', label: t('audit'), icon: ClipboardList },
         { path: '/settings', label: t('settings'), icon: Settings },
-        isAdminUser && { path: '/admin/users', label: 'Usuários', icon: UsersIcon },
-      ].filter(Boolean) as any
+        ...(isAdminUser ? [{ path: '/admin/users', label: 'Usuários', icon: UsersIcon }] : []),
       ]
     },
     { path: '/system', label: t('system'), icon: Monitor },
