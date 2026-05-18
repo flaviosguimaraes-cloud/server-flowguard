@@ -59,9 +59,10 @@
       asns: 'ASNs',
       active_connections: 'Conexões Ativas',
       top_interfaces: 'Top Interfaces SNMP',
-     cdns: 'Ranking de CDNs',
-   },
-   'en': {
+      cdns: 'Ranking de CDNs',
+      administration: 'Administração',
+    },
+    'en': {
      dashboard: 'Dashboard',
      analysis: 'Advanced Analysis',
      events: 'Events',
@@ -119,9 +120,10 @@
       asns: 'ASNs',
       active_connections: 'Active Connections',
       top_interfaces: 'Top SNMP Interfaces',
-     cdns: 'CDN Ranking',
-   },
-   'es': {
+      cdns: 'CDN Ranking',
+      administration: 'Administration',
+    },
+    'es': {
      dashboard: 'Tablero',
      analysis: 'Análisis Avanzado',
      events: 'Eventos',
@@ -179,8 +181,9 @@
       asns: 'ASNs',
       active_connections: 'Conexiones Activas',
       top_interfaces: 'Top Interfaces SNMP',
-     cdns: 'Ranking de CDNs',
-   }
- };
+      cdns: 'Ranking de CDNs',
+      administration: 'Administración',
+    }
+  };
  
  export type TranslationKey = keyof typeof translations['en'];

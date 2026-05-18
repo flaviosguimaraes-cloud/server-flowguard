@@ -1,9 +1,10 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { 
-  LayoutDashboard, Activity, ShieldAlert, Shield, Zap, List, 
-  Network, CheckCircle, XCircle, Globe, Settings2, Server, 
-  Link as LinkIcon, Sliders, Monitor, ClipboardList, Bell, 
-  Settings, LogOut, ChevronDown, ChevronRight, Menu, X
+  LayoutDashboard, Search, Bell, Shield, Zap, List, Activity,
+  Network, CheckCircle, XCircle, BarChart3, Settings2, Server, 
+  Link as LinkIcon, Sliders, Monitor, ClipboardList, 
+  Settings, LogOut, ChevronDown, ChevronRight, Lock, 
+  ChevronLeft
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from '../hooks/useTranslation';
@@ -13,11 +14,71 @@ import { useUI } from '../contexts/UIContext';
  
 export const Sidebar = () => {
   const { sidebarCollapsed: collapsed, setSidebarCollapsed: setCollapsed } = useUI();
-  const [openGroups, setOpenGroups] = useState<string[]>(['mitigation', 'operation']);
+  const [openGroups, setOpenGroups] = useState<string[]>(() => {
+    const saved = localStorage.getItem('sidebar_open_groups');
+    return saved ? JSON.parse(saved) : ['mitigation', 'operation'];
+  });
   const { t } = useTranslation();
   const { logout } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+
+  useEffect(() => {
+    localStorage.setItem('sidebar_open_groups', JSON.stringify(openGroups));
+  }, [openGroups]);
+
+  const navItems = [
+    { path: '/dashboard', label: t('dashboard'), icon: LayoutDashboard },
+    { path: '/analysis', label: t('analysis'), icon: Search },
+    { path: '/events', label: t('events'), icon: Activity },
+    { 
+      id: 'mitigation',
+      label: t('mitigation'), 
+      icon: Shield,
+      children: [
+        { path: '/mitigation/active', label: t('active'), icon: Zap },
+        { path: '/mitigation/flowspec', label: t('flowspec_short'), icon: List },
+        { path: '/mitigation/policy', label: 'Política', icon: Sliders },
+      ]
+    },
+    { path: '/cdns', label: t('cdns'), icon: BarChart3 },
+    { 
+      id: 'operation',
+      label: t('operation'), 
+      icon: Settings2,
+      children: [
+        { path: '/operation/bgp', label: 'BGP', icon: LinkIcon },
+        { path: '/operation/collectors', label: t('collectors'), icon: Server },
+        { path: '/operation/thresholds', label: t('thresholds'), icon: Sliders },
+      ]
+    },
+    { 
+      id: 'administration',
+      label: t('administration'), 
+      icon: Lock,
+      children: [
+        { path: '/mitigation/whitelist', label: t('whitelist'), icon: CheckCircle },
+        { path: '/mitigation/blacklist', label: t('blacklist'), icon: XCircle },
+        { path: '/notifications', label: t('notifications'), icon: Bell },
+        { path: '/audit', label: t('audit'), icon: ClipboardList },
+        { path: '/settings', label: t('settings'), icon: Settings },
+      ]
+    },
+    { path: '/system', label: t('system'), icon: Monitor },
+  ];
+
+  const isActive = (path: string) => location.pathname === path;
+  const isGroupActive = (children: any[]) => children.some(child => isActive(child.path));
+
+  useEffect(() => {
+    navItems.forEach(item => {
+      if (item.children && isGroupActive(item.children)) {
+        if (!openGroups.includes(item.id)) {
+          setOpenGroups(prev => [...prev, item.id]);
+        }
+      }
+    });
+  }, [location.pathname]);
 
   const toggleGroup = (group: string) => {
     if (collapsed) {
@@ -29,43 +90,6 @@ export const Sidebar = () => {
       prev.includes(group) ? prev.filter(g => g !== group) : [...prev, group]
     );
   };
-
-  const navItems = [
-    { path: '/dashboard', label: t('dashboard'), icon: LayoutDashboard },
-    { path: '/analysis', label: t('analysis'), icon: Activity },
-    { path: '/events', label: t('events'), icon: ShieldAlert },
-    { 
-      id: 'mitigation',
-      label: t('mitigation'), 
-      icon: Shield,
-      children: [
-        { path: '/mitigation/active', label: t('active'), icon: Zap },
-        { path: '/mitigation/flowspec', label: t('flowspec_short'), icon: List },
-        { path: '/mitigation/bgp', label: t('bgp'), icon: Network },
-        { path: '/mitigation/whitelist', label: t('whitelist'), icon: CheckCircle },
-        { path: '/mitigation/blacklist', label: t('blacklist'), icon: XCircle },
-        { path: '/mitigation/policy', label: 'Política', icon: Sliders },
-      ]
-    },
-    { path: '/cdns', label: t('cdns'), icon: Globe },
-    { 
-      id: 'operation',
-      label: t('operation'), 
-      icon: Settings2,
-      children: [
-        { path: '/operation/collectors', label: t('collectors'), icon: Server },
-        { path: '/operation/bgp', label: 'BGP', icon: LinkIcon },
-        { path: '/operation/thresholds', label: t('thresholds'), icon: Sliders },
-      ]
-    },
-    { path: '/system', label: t('system'), icon: Monitor },
-    { path: '/audit', label: t('audit'), icon: ClipboardList },
-    { path: '/notifications', label: t('notifications'), icon: Bell },
-    { path: '/settings', label: t('settings'), icon: Settings },
-  ];
-
-  const isActive = (path: string) => location.pathname === path;
-  const isGroupActive = (children: any[]) => children.some(child => isActive(child.path));
 
   return (
     <div className={clsx(
@@ -174,7 +198,3 @@ export const Sidebar = () => {
     </div>
   );
 };
-
-const ChevronLeft = ({ size }: { size: number }) => (
-  <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="m15 18-6-6 6-6"/></svg>
-);
