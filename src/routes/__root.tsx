@@ -69,14 +69,16 @@ function RootComponent() {
  function AuthWrapper() {
    const { user } = useAuth();
    const location = useLocation();
-   const isLoginPage = location.pathname === "/login";
+    const isLoginPage = location.pathname === "/login";
+    const isChangePasswordPage = location.pathname === "/change-password";
+    const isMandatoryChange = isChangePasswordPage && location.searchStr.includes("mandatory=true");
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
  
    if (!token && !isLoginPage) {
      return <Navigate to="/login" replace />;
    }
 
-  if (isLoginPage) {
+   if (isLoginPage || isMandatoryChange) {
     return (
       <>
         <Outlet />
