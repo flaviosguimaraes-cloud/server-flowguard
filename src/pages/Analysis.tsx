@@ -184,7 +184,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       country: '',
       direction: ''
     });
-    const [sortCol, setSortCol] = useState('bytes');
+    const [sortCol, setSortCol] = useState('when');
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
     const [groupByIP, setGroupByIP] = useState(false);
@@ -195,16 +195,25 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     }, [pageSize, filters.src_ip, filters.dst_ip, filters.src_port, filters.dst_port, filters.proto, filters.country, filters.direction, sortCol, sortDir]);
 
     useEffect(() => {
-      setSortCol(filterMode === 'custom' ? 'time_received' : 'bytes');
-      setSortDir('desc');
+      if (filterMode === 'custom') {
+        setSortCol('when');
+        setSortDir('desc');
+      }
     }, [filterMode]);
 
     const SORT_MAP: Record<string, string> = {
-      'bytes': 'bytes',
-      'packets': 'pps',
-      'time_received': 'recent',
-      'bpp': 'bpp',
-      'duration': 'duration',
+      'when':      'recent',
+      'bytes':     'bytes',
+      'pps':       'pps',
+      'bpp':       'bpp',
+      'duration':  'duration',
+      'src_addr':  'recent',
+      'dst_addr':  'recent',
+      'proto':     'recent',
+      'direction': 'recent',
+      'tcp_flags': 'recent',
+      'in_iface':  'recent',
+      'company':   'recent',
     };
 
     const buildQuery = useCallback(() => {
@@ -229,8 +238,8 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       if (filters.country) params.append('country', filters.country);
       if (filters.direction) params.append('direction', filters.direction);
       
-      const orderVal = SORT_MAP[sortCol] || 'bytes';
-      params.append('order', orderVal);
+      const orderParam = SORT_MAP[sortCol] || 'recent';
+      params.set('order', sortDir === 'asc' ? orderParam + '_asc' : orderParam);
       
       return params.toString();
     }, [pageSize, page, filterMode, startDate, endDate, minutes, filters, sortCol, sortDir]);
@@ -245,32 +254,36 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       setPage(1);
     };
 
-    const SortHeader = ({ field, label, align = 'left' }: { field: string, label: string, align?: 'left' | 'right' | 'center' }) => {
-      const isSelected = sortCol === field;
-      const isSortable = ['time_received', 'bytes', 'packets', 'bpp', 'duration'].includes(field);
-
-      return (
-        <th 
-          className={clsx("px-6 py-4 border-b border-border transition-colors", 
-            isSortable && "cursor-pointer hover:bg-bg-secondary",
-            align === 'right' && 'text-right', 
-            align === 'center' && 'text-center'
-          )}
-          onClick={() => {
-            if (isSortable) handleSort(field);
-          }}
-        >
-          <div className={clsx("flex items-center gap-1", align === 'right' && 'justify-end')}>
-            {label}
-            {isSelected && (
-              <span className="ml-1">
-                {sortDir === 'desc' ? <ArrowDown size={12} /> : <ArrowUp size={12} />}
-              </span>
-            )}
-          </div>
-        </th>
-      );
-    };
+    const SortableHeader = ({
+      col, label, align = 'left'
+    }: {
+      col: string, label: string, align?: 'left' | 'right' | 'center'
+    }) => (
+      <th
+        onClick={() => handleSort(col)}
+        className={clsx(
+          "px-6 py-4 border-b border-border transition-colors cursor-pointer hover:bg-bg-secondary",
+          align === 'right' && 'text-right',
+          align === 'center' && 'text-center'
+        )}
+        style={{
+          userSelect: 'none',
+          whiteSpace: 'nowrap',
+        }}>
+        <div className={clsx("flex items-center gap-1", align === 'right' && 'justify-end', align === 'center' && 'justify-center')}>
+          {label}
+          <span style={{
+            marginLeft: 4,
+            opacity: sortCol === col ? 1 : 0.3,
+            fontSize: 10,
+          }}>
+            {sortCol === col
+              ? (sortDir === 'desc' ? ' ↓' : ' ↑')
+              : ' ↕'}
+          </span>
+        </div>
+      </th>
+    );
    const [isMitigationOpen, setIsMitigationOpen] = useState(false);
    const [mitigationData, setMitigationData] = useState({ ip: '', proto: '', port: 0 });
  
@@ -293,7 +306,19 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     };
 
     const { data: connections, isLoading, isPlaceholderData } = useQuery({
-      queryKey: ['connections-analysis', searchTrigger, filters, page, pageSize, filterMode, minutes, startDate, endDate],
+      queryKey: [
+        'connections-analysis', 
+        searchTrigger, 
+        filters, 
+        page, 
+        pageSize, 
+        filterMode, 
+        minutes, 
+        startDate, 
+        endDate,
+        sortCol,
+        sortDir
+      ],
       queryFn: async () => {
         try {
           const q = buildQuery();
@@ -647,22 +672,22 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[1200px]">
                <thead>
-                 <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-                   <SortHeader field="time_received" label="Quando" />
-                   <th className="px-6 py-4 border-b border-border text-center">Direção</th>
-                   <th className="px-6 py-4 border-b border-border">IP Origem</th>
-                   <th className="px-6 py-4 border-b border-border">IP Destino</th>
-                    <th className="px-6 py-4 border-b border-border">Serviço</th>
-                    <th className="px-6 py-4 border-b border-border text-center">Protocolo</th>
-                    <th className="px-6 py-4 border-b border-border text-center">TCP Flags</th>
-                    <th className="px-6 py-4 border-b border-border">Interface ↓/↑</th>
-                    <th className="px-6 py-4 border-b border-border">Empresa</th>
-                    <SortHeader field="bytes" label="Bytes" align="right" />
-                    <SortHeader field="packets" label="PPS" align="right" />
-                    <SortHeader field="bpp" label="BPP" align="right" />
-                    <SortHeader field="duration" label="Duração" align="right" />
-                    {isAdmin && <th className="px-6 py-4 border-b border-border text-center">Ação</th>}
-                 </tr>
+                  <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+                    <SortableHeader col="when" label="QUANDO" />
+                    <SortableHeader col="direction" label="DIREÇÃO" align="center" />
+                    <SortableHeader col="src_addr" label="IP ORIGEM" />
+                    <SortableHeader col="dst_addr" label="IP DESTINO" />
+                    <th className="px-6 py-4 border-b border-border">SERVIÇO</th>
+                    <SortableHeader col="proto" label="PROTOCOLO" align="center" />
+                    <SortableHeader col="tcp_flags" label="TCP FLAGS" align="center" />
+                    <SortableHeader col="in_iface" label="INTERFACE" />
+                    <SortableHeader col="company" label="EMPRESA" />
+                    <SortableHeader col="bytes" label="BYTES" align="right" />
+                    <SortableHeader col="pps" label="PPS" align="right" />
+                    <SortableHeader col="bpp" label="BPP" align="right" />
+                    <SortableHeader col="duration" label="DURAÇÃO" align="right" />
+                    {isAdmin && <th className="px-6 py-4 border-b border-border text-center">AÇÃO</th>}
+                  </tr>
                </thead>
               <tbody className="text-sm divide-y divide-border/50">
                 {isLoading ? (
