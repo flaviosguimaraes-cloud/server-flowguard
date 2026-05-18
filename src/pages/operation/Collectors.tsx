@@ -190,89 +190,104 @@ export default function Collectors() {
   );
 }
 
-function CollectorCard({ collector, isAdmin, onEdit, onDelete, onToggle, onViewIfaces }: any) {
-  const { data: ifacesData, isLoading: loadingIfaces } = useQuery({
-    queryKey: ['collector-interfaces', collector.id],
-    queryFn: () => api.get(`/api/collectors/${collector.id}/interfaces`).then(r => r.data).catch(() => []),
-    refetchInterval: 60000
-  });
-
-  const ifaces = Array.isArray(ifacesData) ? ifacesData : [];
-  const active = collector.active !== false;
-
-  const formatLastSeen = (s?: string) => {
-    if (!s) return 'nunca';
-    try {
-      const date = new Date(s.replace(' ', 'T'));
-      const diff = Math.floor((Date.now() - date.getTime()) / 1000);
-      if (diff < 60) return `há ${diff}s`;
-      if (diff < 3600) return `há ${Math.floor(diff / 60)}m`;
-      return date.toLocaleString('pt-BR');
-    } catch { return s; }
-  };
-
-  return (
-    <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm space-y-3 hover:border-primary/50 transition-colors">
-      <div className="flex items-start justify-between">
-        <div className="flex items-center gap-3">
-          <div className={clsx("w-2.5 h-2.5 rounded-full mt-1", active ? "bg-success shadow-[0_0_8px_rgba(34,197,94,0.5)]" : "bg-destructive")} />
-          <div>
-            <h3 className="font-bold text-text-primary text-lg leading-none">{collector.name}</h3>
-            <p className="text-xs text-text-secondary font-mono mt-1">
-              {collector.host || collector.ip} · SNMP v{collector.snmp_version || '2c'}
-            </p>
-          </div>
-        </div>
-        <span className={clsx(
-          "px-2 py-0.5 rounded text-[10px] font-bold uppercase border",
-          active ? "bg-success/10 text-success border-success/20" : "bg-destructive/10 text-destructive border-destructive/20"
-        )}>{active ? 'Ativo' : 'Inativo'}</span>
-      </div>
-
-      <div className="flex items-center gap-4 text-xs text-text-secondary">
-        <div className="flex items-center gap-1.5">
-          <Eye size={14} className="text-primary/70" />
-          <span className="font-bold text-text-primary">{loadingIfaces ? '...' : ifaces.length}</span> interfaces
-        </div>
-        <div className="flex items-center gap-1.5">
-          <Clock size={14} className="text-primary/70" />
-          {formatLastSeen(collector.last_seen || collector.last_poll)}
-        </div>
-      </div>
-
-      {isAdmin && (
-        <div className="flex items-center gap-2 pt-3 border-t border-border/50">
-          <Button variant="outline" size="sm" className="h-8 flex-1 gap-1 text-[11px]" onClick={onEdit}>
-            <Edit2 size={12} /> Editar
-          </Button>
-          <Button 
-            variant="outline" 
-            size="sm" 
-            className={clsx("h-8 flex-1 gap-1 text-[11px]", active ? "text-amber-500 hover:text-amber-600" : "text-success hover:text-success")}
-            onClick={() => onToggle(!active)}
-          >
-            {active ? <><PowerOff size={12} /> Desativar</> : <><Power size={12} /> Ativar</>}
-          </Button>
-          <Button variant="ghost" size="sm" className="h-8 w-8 p-0 text-destructive hover:bg-destructive/10" onClick={onDelete}>
-            <Trash2 size={14} />
-          </Button>
-        </div>
-      )}
-      
-      {!isAdmin && ifaces.length > 0 && (
-        <Button variant="outline" size="sm" className="w-full h-8 gap-2 text-[11px]" onClick={() => onViewIfaces(collector.name, ifaces)}>
-          <Eye size={12} /> Ver Interfaces
-        </Button>
-      )}
-
-      {isAdmin && ifaces.length > 0 && (
-        <button onClick={() => onViewIfaces(collector.name, ifaces)} className="w-full text-center text-[10px] text-text-secondary hover:text-primary transition-colors mt-1">
-          Visualizar {ifaces.length} interfaces
-        </button>
-      )}
-    </div>
-  );
-}
+ function CollectorCard({ collector, isAdmin, onEdit, onDelete, onToggle, onViewIfaces }: any) {
+   const { data: ifacesData, isLoading: loadingIfaces } = useQuery({
+     queryKey: ['collector-interfaces', collector.id],
+     queryFn: () => api.get(`/api/collectors/${collector.id}/interfaces`).then(r => r.data).catch(() => []),
+     refetchInterval: 60000
+   });
+ 
+   const ifaces = Array.isArray(ifacesData) ? ifacesData : [];
+   const active = collector.active !== false;
+   
+   const brandLabel = BRANDS.find(b => b.value === collector.brand)?.label || collector.brand || 'Outro';
+   const protocolLabel = PROTOCOLS.find(p => p.value === collector.flow_protocol)?.label || collector.flow_protocol || 'NetFlow';
+ 
+   return (
+     <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm space-y-4 hover:border-primary/50 transition-colors">
+       <div className="flex items-start justify-between">
+         <div className="flex items-center gap-3">
+           <div className={clsx("w-2.5 h-2.5 rounded-full mt-1", active ? "bg-success shadow-[0_0_8px_rgba(34,197,94,0.5)]" : "bg-destructive")} />
+           <div>
+             <h3 className="font-bold text-text-primary text-lg leading-none">{collector.name}</h3>
+             <p className="text-xs text-text-secondary mt-1">
+               {brandLabel} · {protocolLabel} · porta {collector.flow_port}
+             </p>
+             <p className="text-xs text-text-secondary font-mono mt-0.5">
+               {collector.host} · SNMP v{collector.snmp_version || '2c'}
+             </p>
+             <div className="flex items-center gap-2 mt-1">
+               <span className="text-[10px] text-text-secondary">
+                 <span className="font-bold text-text-primary">{loadingIfaces ? '...' : ifaces.length}</span> interfaces
+               </span>
+               <span className="text-[10px] font-bold uppercase text-success">{active ? 'Ativo' : 'Inativo'}</span>
+             </div>
+           </div>
+         </div>
+         {isAdmin && (
+           <Button variant="ghost" size="icon" className="h-8 w-8 text-text-secondary hover:text-primary" onClick={onEdit}>
+             <Edit2 size={14} />
+           </Button>
+         )}
+       </div>
+ 
+       <div className="bg-bg-primary/50 p-3 rounded-lg border border-border/50 space-y-2">
+         <div className="flex items-center justify-between">
+           <div className="flex items-center gap-2 text-[11px] font-semibold text-text-primary">
+             <Shield size={12} className="text-primary" />
+             BGP: {collector.bgp_enabled ? (
+               <span className="flex items-center gap-1 text-success">
+                 <div className="w-1.5 h-1.5 rounded-full bg-success" /> Ativo
+               </span>
+             ) : (
+               <span className="text-text-secondary italic">Desativado</span>
+             )}
+           </div>
+         </div>
+         
+         {collector.bgp_enabled && (
+           <div className="space-y-1">
+             <div className="text-[10px] text-text-secondary">
+               AS {collector.bgp_local_asn || 65000} → AS {collector.bgp_remote_asn}
+             </div>
+             <div className="flex items-center gap-3">
+               <div className="flex items-center gap-1 text-[10px] text-text-secondary">
+                 <Check size={10} className={collector.bgp_ipv4_unicast ? "text-success" : "text-text-secondary/30"} />
+                 IPv4 Unicast
+               </div>
+               <div className="flex items-center gap-1 text-[10px] text-text-secondary">
+                 <Check size={10} className={collector.bgp_flowspec ? "text-success" : "text-text-secondary/30"} />
+                 FlowSpec
+               </div>
+             </div>
+           </div>
+         )}
+       </div>
+ 
+       {isAdmin && (
+         <div className="flex items-center gap-2">
+           <Button 
+             variant="outline" 
+             size="sm" 
+             className={clsx("h-8 flex-1 gap-1 text-[11px]", active ? "text-amber-500 hover:text-amber-600" : "text-success hover:text-success")}
+             onClick={() => onToggle(!active)}
+           >
+             {active ? <><PowerOff size={12} /> Desativar</> : <><Power size={12} /> Ativar</>}
+           </Button>
+           <Button variant="ghost" size="sm" className="h-8 px-3 text-destructive hover:bg-destructive/10 text-[11px]" onClick={onDelete}>
+             <Trash2 size={14} className="mr-1" /> Deletar
+           </Button>
+         </div>
+       )}
+ 
+       {ifaces.length > 0 && (
+         <button onClick={() => onViewIfaces(collector.name, ifaces)} className="w-full text-center text-[10px] text-text-secondary hover:text-primary transition-colors">
+           Visualizar {ifaces.length} interfaces
+         </button>
+       )}
+     </div>
+   );
+ }
 
 function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: any) {
   const [name, setName] = useState('');
