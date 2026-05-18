@@ -153,6 +153,9 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       } catch { return '—'; }
     };
 
+    const [pageSize, setPageSize] = useState(50);
+    const [page, setPage] = useState(1);
+
     const [filters, setFilters] = useState({
       src_ip: '',
       dst_ip: '',
@@ -170,9 +173,14 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     const [groupByIP, setGroupByIP] = useState(false);
     const [hoveredMitIP, setHoveredMitIP] = useState<string | null>(null);
 
+    useEffect(() => {
+      setPage(1);
+    }, [pageSize, filters]);
+
     const buildQuery = () => {
       const params = new URLSearchParams({
-        limit: '200',
+        limit: String(pageSize),
+        offset: String((page - 1) * pageSize),
       });
       if (filters.minutes && !filters.start)
         params.append('minutes', filters.minutes);
@@ -232,7 +240,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
    }, [countriesData]);
  
     const { data: connections, isLoading, refetch } = useQuery({
-      queryKey: ['connections-analysis', filters],
+      queryKey: ['connections-analysis', filters, page, pageSize],
       queryFn: async () => {
         const q = buildQuery();
         const r = await api.get(`/api/flows/connections?${q}`);
@@ -241,6 +249,9 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       staleTime: 0,
       refetchInterval: 30000,
     });
+
+    const total = connections?.total || 0;
+    const totalPages = Math.ceil(total / pageSize);
  
     const connectionItems = useMemo(() => {
       let items = Array.isArray(connections) ? [...connections] : [...(connections?.items || connections?.data || [])];
