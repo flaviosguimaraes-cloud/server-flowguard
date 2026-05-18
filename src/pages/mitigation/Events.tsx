@@ -298,9 +298,9 @@ function SectionDivider({ title }: { title: string }) {
               <AlertTriangle size={28} />
             </div>
             <div>
-              <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mb-1">Detecções Ativas</p>
+              <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mb-1">DETECÇÕES ATIVAS</p>
               <h3 className="text-2xl font-bold text-text-primary">{stats?.active_detections || 0}</h3>
-              <p className="text-[11px] text-text-secondary mt-0.5 opacity-70">Anomalias identificadas agora</p>
+              <p className="text-[11px] text-text-secondary mt-0.5 opacity-70">Anomalias agora</p>
             </div>
           </div>
   
@@ -310,11 +310,11 @@ function SectionDivider({ title }: { title: string }) {
               <Shield size={28} />
             </div>
             <div>
-              <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mb-1">Mitigações em Curso</p>
+              <p className="text-[11px] font-bold text-text-secondary uppercase tracking-wider mb-1">MITIGAÇÕES ATIVAS</p>
               <h3 className="text-2xl font-bold text-text-primary">
                 {activeMitigations?.total || activeMitigations?.items?.length || 0}
               </h3>
-              <p className="text-[11px] text-text-secondary mt-0.5 opacity-70">Bloqueios ativos no BGP</p>
+              <p className="text-[11px] text-text-secondary mt-0.5 opacity-70">Bloqueios no BGP</p>
             </div>
           </div>
         </div>
@@ -334,11 +334,15 @@ function SectionDivider({ title }: { title: string }) {
                )}
             </div>
             <div className="flex gap-4 text-[11px] font-bold">
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-primary/5 text-primary rounded-lg border border-primary/10">
-                <ArrowDown size={12} /> {(stats?.incoming_mbps / 1000).toFixed(1)} Gbps
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-bg-primary text-text-primary rounded-lg border border-border shadow-sm">
+                <span className="text-text-secondary opacity-60 font-medium">TOTAL RX:</span>
+                <span className="font-black">{(stats?.incoming_mbps / 1000).toFixed(1)} Gbps</span>
+                <ArrowDown size={14} className="text-primary" />
               </div>
-              <div className="flex items-center gap-1.5 px-2.5 py-1 bg-success/5 text-success rounded-lg border border-success/10">
-                <ArrowUp size={12} /> {(stats?.outgoing_mbps / 1000).toFixed(1)} Gbps
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-bg-primary text-text-primary rounded-lg border border-border shadow-sm">
+                <span className="text-text-secondary opacity-60 font-medium">TOTAL TX:</span>
+                <span className="font-black">{(stats?.outgoing_mbps / 1000).toFixed(1)} Gbps</span>
+                <ArrowUp size={14} className="text-success" />
               </div>
             </div>
           </div>
@@ -884,7 +888,7 @@ function SectionDivider({ title }: { title: string }) {
           </span>
 
           {isBanned && (
-            <span className="px-1.5 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-400 dark:border-blue-500/20 rounded text-[9px] font-bold uppercase tracking-wider shadow-sm">
+            <span className="px-2 py-0.5 bg-danger text-white border border-danger/20 rounded text-[9px] font-black uppercase tracking-wider shadow-sm animate-pulse">
               EM MITIGAÇÃO
             </span>
           )}
