@@ -541,7 +541,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                    {isLargeInterval && (
                      <div className="flex items-center gap-1.5 text-warning text-[10px] font-bold uppercase mb-2 animate-pulse">
                        <AlertCircle size={12} />
-                       ⚠ Intervalo > 24h pode demorar
+                        ⚠ Intervalo &gt; 24h pode demorar
                      </div>
                    )}
                 </div>
@@ -588,9 +588,11 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                  Agrupar por IP
                </button>
              </div>
-             <p className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">
-               {metrics.total} conexões · {filters.direction === 'outgoing' ? '↑ Upload' : filters.direction === 'incoming' ? '↓ Download' : 'Todas Direções'} · período: {filters.start ? 'Customizado' : parseInt(filters.minutes) < 60 ? `${filters.minutes} min` : `${parseInt(filters.minutes)/60}h`}
-             </p>
+             <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest flex items-center gap-2">
+               {metrics.total} conexões · 
+               {filters.direction === 'outgoing' ? '↑ Upload' : filters.direction === 'incoming' ? '↓ Download' : 'Todas Direções'} · 
+               período: {filterMode === 'custom' ? 'Customizado' : minutes < 60 ? `${minutes} min` : `${minutes/60}h`}
+             </div>
           </div>
        </div>
  
@@ -726,7 +728,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                         </td>
                         <td className="px-6 py-4 text-right font-bold text-text-primary text-xs">{fmtBytes(item.bytes)}</td>
                         <td className="px-6 py-4 text-right text-text-secondary">
-                          <PPSIntensity pps={calcPPS(item.packets, filters.minutes)} />
+                         <PPSIntensity pps={calcPPS(item.packets, String(minutes))} />
                         </td>
                         <td className="px-6 py-4 text-right">
                           {(() => {
