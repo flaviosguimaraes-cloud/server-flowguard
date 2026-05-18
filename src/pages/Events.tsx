@@ -10,7 +10,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
  import { Skeleton } from '../components/Skeleton';
  import { clsx } from 'clsx';
  import MitigationModal from '../components/MitigationModal';
- import { TooltipProvider } from '../components/ui/tooltip';
+  import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../components/ui/tooltip';
  import { MitigationTooltip } from '../components/MitigationTooltip';
  
   export default function Events() {
@@ -510,27 +510,53 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
                     <td className="px-6 py-3.5">
                       <div style={{ display: 'flex', gap: 6 }}>
                         {(() => {
-                          const byPps = event.peak_pps >= 100000;
-                          return (
+                          const THRESH_PPS = 100000;
+                          const THRESH_MBPS = 1000;
+                          const byPps = event.peak_pps >= THRESH_PPS;
+                          const byMbps = event.peak_mbps >= THRESH_MBPS;
+                          const byPpsFallback = !byPps && !byMbps && event.triggered_by === 'detector';
+                          
+                          const ppsColor = byPps ? '#ef4444' : (byPpsFallback ? '#f97316' : '#8892a4');
+                          const ppsBg = byPps ? (isDark ? '#3b1212' : '#fee2e2') : (byPpsFallback ? (isDark ? '#331a0a' : '#ffedd5') : 'transparent');
+                          
+                          const ppsContent = (
                             <span style={{
-                              fontWeight: byPps ? 700 : 400,
-                              color: byPps ? '#ef4444' : (isDark ? '#94a3b8' : '#6b7280'),
-                              background: byPps ? (isDark ? '#3b1212' : '#fee2e2') : 'transparent',
-                              padding: byPps ? '1px 6px' : '0',
+                              fontWeight: (byPps || byPpsFallback) ? 700 : 400,
+                              color: ppsColor,
+                              background: ppsBg,
+                              padding: (byPps || byPpsFallback) ? '1px 6px' : '0',
                               borderRadius: 3,
                               fontSize: 12,
+                              cursor: byPpsFallback ? 'help' : 'default'
                             }}>
                               {(event.peak_pps / 1000).toFixed(1)}k pps
                               {byPps ? ' ⚡' : ''}
+                              {byPpsFallback ? ' 🕒' : ''}
                             </span>
                           );
+
+                          if (byPpsFallback) {
+                            return (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  {ppsContent}
+                                </TooltipTrigger>
+                                <TooltipContent className="bg-bg-secondary text-text-primary border border-border shadow-xl">
+                                  <p className="text-[11px] font-bold">Valor capturado após o pico.</p>
+                                  <p className="text-[10px] opacity-80 mt-0.5">Gatilho provável: PPS</p>
+                                </TooltipContent>
+                              </Tooltip>
+                            );
+                          }
+                          
+                          return ppsContent;
                         })()}
                         {event.peak_mbps > 0 && (() => {
                           const byMbps = event.peak_mbps >= 1000;
                           return (
                             <span style={{
                               fontWeight: byMbps ? 700 : 400,
-                              color: byMbps ? '#f59e0b' : (isDark ? '#94a3b8' : '#6b7280'),
+                              color: byMbps ? '#f59e0b' : '#8892a4',
                               background: byMbps ? (isDark ? '#2d1f0a' : '#fef3c7') : 'transparent',
                               padding: byMbps ? '1px 6px' : '0',
                               borderRadius: 3,
