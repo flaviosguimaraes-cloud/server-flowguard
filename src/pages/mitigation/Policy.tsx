@@ -159,13 +159,15 @@ export default function Policy() {
         <ModeCard
           value="blackhole"
           title="Modo A — Blackhole /32"
-          community="65000:666"
+          community={blackholeCommunity}
+          onChangeCommunity={setBlackholeCommunity}
           description="Cada IP banido recebe rota /32 para blackhole."
         />
         <ModeCard
           value="external"
           title="Modo B — Mitigação Externa"
-          community="65000:999"
+          community={externalCommunity}
+          onChangeCommunity={setExternalCommunity}
           description={`Anuncia bloco ${externalBlock || '45.175.50.0/24'} para scrubbing externo.`}
         />
       </div>
