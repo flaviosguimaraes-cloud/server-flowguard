@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+ import { useState } from 'react';
+ import { useNavigate, useSearch } from '@tanstack/react-router';
  import { useTranslation } from '../hooks/useTranslation';
  import api from '../services/api';
  import { toast } from 'sonner';
@@ -10,6 +10,9 @@ import { Label } from '@/components/ui/label';
 import { clsx } from 'clsx';
  
  export default function ChangePassword() {
+   const search = useSearch({ from: '/change-password' }) as any;
+   const mandatory = search.mandatory === true || search.mandatory === 'true';
+   
   const [oldPassword, setOldPassword] = useState('');
    const [newPassword, setNewPassword] = useState('');
    const [confirmPassword, setConfirmPassword] = useState('');
@@ -21,26 +24,33 @@ import { clsx } from 'clsx';
    const handleSubmit = async (e: React.FormEvent) => {
      e.preventDefault();
      if (newPassword !== confirmPassword) {
-      toast.error('As senhas não coincidem');
+       toast.error('As senhas não coincidem');
        return;
      }
-    if (newPassword.length < 8) {
-      toast.error('A senha deve ter pelo menos 8 caracteres');
-      return;
-    }
-
-    setIsLoading(true);
+     if (newPassword.length < 8) {
+       toast.error('A senha deve ter pelo menos 8 caracteres');
+       return;
+     }
+ 
+     setIsLoading(true);
      try {
-      await api.post('/api/auth/change-password', { 
-        old_password: oldPassword, 
-        new_password: newPassword 
-      });
-      toast.success('Senha alterada com sucesso');
-      navigate({ to: '/dashboard' });
+       await api.post('/api/auth/change-password', { 
+         old_password: mandatory ? null : oldPassword, 
+         new_password: newPassword 
+       });
+       toast.success(mandatory ? 'Senha definida com sucesso' : 'Senha alterada com sucesso');
+       
+       if (mandatory) {
+         // Se for obrigatória, redireciona para home (dashboard)
+         // e garante que o login é considerado concluído
+         navigate({ to: '/' });
+       } else {
+         navigate({ to: '/dashboard' });
+       }
      } catch (error) {
-      toast.error('Falha ao alterar senha. Verifique a senha atual.');
-    } finally {
-      setIsLoading(false);
+       toast.error('Falha ao alterar senha. Verifique os dados informados.');
+     } finally {
+       setIsLoading(false);
      }
    };
  
@@ -53,21 +63,29 @@ import { clsx } from 'clsx';
           <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-xl mb-4">
             <Lock className="text-primary" size={32} />
           </div>
-          <h1 className="text-2xl font-bold text-text-primary">Alterar Senha</h1>
-          <p className="text-text-secondary text-sm mt-1">Por segurança, você precisa alterar sua senha inicial.</p>
+           <h1 className="text-2xl font-bold text-text-primary">
+             {mandatory ? 'Troca de senha obrigatória' : 'Alterar Senha'}
+           </h1>
+           <p className="text-text-secondary text-sm mt-1">
+             {mandatory 
+               ? 'Por segurança, defina uma nova senha antes de continuar.' 
+               : 'Por segurança, você precisa alterar sua senha inicial.'}
+           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="oldPassword">Senha Atual</Label>
-            <Input
-              id="oldPassword"
-              type="password"
-              value={oldPassword}
-              onChange={(e) => setOldPassword(e.target.value)}
-              required
-            />
-          </div>
+           {!mandatory && (
+             <div className="space-y-2">
+               <Label htmlFor="oldPassword">Senha Atual</Label>
+               <Input
+                 id="oldPassword"
+                 type="password"
+                 value={oldPassword}
+                 onChange={(e) => setOldPassword(e.target.value)}
+                 required
+               />
+             </div>
+           )}
 
           <div className="space-y-2">
             <Label htmlFor="newPassword">Nova Senha</Label>
@@ -110,26 +128,30 @@ import { clsx } from 'clsx';
   );
 }
 
-function PasswordStrength({ password }: { password: string }) {
-  if (!password) return null;
-  
-  let score = 0;
-  if (password.length >= 8) score++;
-  if (password.length >= 12) score++;
-  if (/[A-Z]/.test(password)) score++;
-  if (/[0-9]/.test(password)) score++;
-  if (/[^A-Za-z0-9]/.test(password)) score++;
-
-  let label = 'Fraca';
-  let color = 'bg-destructive';
-  
-  if (score >= 4) {
-    label = 'Forte';
-    color = 'bg-success';
-  } else if (score >= 2) {
-    label = 'Média';
-    color = 'bg-amber-500';
-  }
+ function PasswordStrength({ password }: { password: string }) {
+   if (!password) return null;
+   
+   let label = 'Fraca';
+   let color = 'bg-destructive';
+   let score = 1; // Mínimo
+   
+   const hasSpecial = /[^A-Za-z0-9]/.test(password);
+   
+   if (password.length >= 12 && hasSpecial) {
+     label = 'Forte';
+     color = 'bg-success';
+     score = 3;
+   } else if (password.length >= 8) {
+     label = 'Média';
+     color = 'bg-amber-500';
+     score = 2;
+   } else {
+     label = 'Fraca';
+     color = 'bg-destructive';
+     score = 1;
+   }
+ 
+   const percentage = (score / 3) * 100;
 
   return (
     <div className="space-y-1">
@@ -143,7 +165,7 @@ function PasswordStrength({ password }: { password: string }) {
       <div className="h-1 w-full bg-bg-primary rounded-full overflow-hidden">
         <div 
           className={clsx("h-full transition-all duration-300", color)} 
-          style={{ width: `${(score / 5) * 100}%` }}
+           style={{ width: `${percentage}%` }}
         />
       </div>
      </div>

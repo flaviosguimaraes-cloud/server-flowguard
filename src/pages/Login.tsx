@@ -1,4 +1,6 @@
-import { useState, FormEvent, useEffect } from 'react';
+ import { useState, FormEvent, useEffect } from 'react';
+ import { useAuth } from '../contexts/AuthContext';
+ import { useNavigate } from '@tanstack/react-router';
  import { useTranslation } from '../hooks/useTranslation';
  import api from '../services/api';
  import { toast } from 'sonner';
@@ -6,6 +8,8 @@ import { useState, FormEvent, useEffect } from 'react';
    import { useTheme } from '../contexts/ThemeContext';
  
  export default function Login() {
+   const { login } = useAuth();
+   const navigate = useNavigate();
    const [username, setUsername] = useState('');
    const [password, setPassword] = useState('');
   const [error, setError] = useState('');
@@ -38,17 +42,8 @@ import { useState, FormEvent, useEffect } from 'react';
         }
       );
 
-      const data = response.data;
-      localStorage.setItem('access_token', data.access_token);
-      localStorage.setItem('refresh_token', data.refresh_token);
-      localStorage.setItem('username', data.username);
-      localStorage.setItem('role', data.role);
-
-      if (data.must_change_password) {
-        window.location.href = '/change-password';
-      } else {
-        window.location.href = '/dashboard';
-      }
+       const data = response.data;
+       login(data);
     } catch (error: any) {
       setError(
         error.response?.data?.detail || 

@@ -99,13 +99,20 @@ export default function Users() {
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary">Email</th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary">Perfil</th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary">Status</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary">Troca obrigatória</th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary">Último acesso</th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary text-right">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {items.map((user: any) => (
-                  <tr key={user.id} className="hover:bg-bg-primary/30 transition-colors">
+                 {items.map((user: any) => (
+                   <tr 
+                     key={user.id} 
+                     className={clsx(
+                       "hover:bg-bg-primary/30 transition-colors",
+                       !user.active && "opacity-60"
+                     )}
+                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
@@ -131,6 +138,15 @@ export default function Users() {
                         <span className="flex items-center gap-1.5 text-destructive text-xs font-bold uppercase">
                           <div className="w-1.5 h-1.5 rounded-full bg-destructive" /> Inativo
                         </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      {user.must_change_password ? (
+                        <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 gap-1">
+                          <span className="text-[10px]">⚠</span> Pendente
+                        </Badge>
+                      ) : (
+                        <span className="text-text-secondary text-sm">—</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-text-secondary text-sm">
@@ -434,26 +450,30 @@ function PasswordModal({ isOpen, onClose, user, onSubmit, isLoading }: any) {
   );
 }
 
-function PasswordStrength({ password }: { password: string }) {
-  if (!password) return null;
-  
-  let score = 0;
-  if (password.length >= 8) score++;
-  if (password.length >= 12) score++;
-  if (/[A-Z]/.test(password)) score++;
-  if (/[0-9]/.test(password)) score++;
-  if (/[^A-Za-z0-9]/.test(password)) score++;
-
-  let label = 'Fraca';
-  let color = 'bg-destructive';
-  
-  if (score >= 4) {
-    label = 'Forte';
-    color = 'bg-success';
-  } else if (score >= 2) {
-    label = 'Média';
-    color = 'bg-amber-500';
-  }
+ function PasswordStrength({ password }: { password: string }) {
+   if (!password) return null;
+   
+   let label = 'Fraca';
+   let color = 'bg-destructive';
+   let score = 1;
+   
+   const hasSpecial = /[^A-Za-z0-9]/.test(password);
+   
+   if (password.length >= 12 && hasSpecial) {
+     label = 'Forte';
+     color = 'bg-success';
+     score = 3;
+   } else if (password.length >= 8) {
+     label = 'Média';
+     color = 'bg-amber-500';
+     score = 2;
+   } else {
+     label = 'Fraca';
+     color = 'bg-destructive';
+     score = 1;
+   }
+ 
+   const percentage = (score / 3) * 100;
 
   return (
     <div className="space-y-1">
@@ -467,7 +487,7 @@ function PasswordStrength({ password }: { password: string }) {
       <div className="h-1 w-full bg-bg-primary rounded-full overflow-hidden">
         <div 
           className={clsx("h-full transition-all duration-300", color)} 
-          style={{ width: `${(score / 5) * 100}%` }}
+           style={{ width: `${percentage}%` }}
         />
       </div>
     </div>
