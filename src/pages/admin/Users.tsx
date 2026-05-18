@@ -99,13 +99,20 @@ export default function Users() {
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary">Email</th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary">Perfil</th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary">Status</th>
+                  <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary">Troca obrigatória</th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary">Último acesso</th>
                   <th className="px-6 py-4 text-xs font-bold uppercase tracking-wider text-text-secondary text-right">Ações</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
-                {items.map((user: any) => (
-                  <tr key={user.id} className="hover:bg-bg-primary/30 transition-colors">
+                 {items.map((user: any) => (
+                   <tr 
+                     key={user.id} 
+                     className={clsx(
+                       "hover:bg-bg-primary/30 transition-colors",
+                       !user.active && "opacity-60"
+                     )}
+                   >
                     <td className="px-6 py-4">
                       <div className="flex items-center gap-3">
                         <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center text-primary font-bold text-sm">
@@ -131,6 +138,15 @@ export default function Users() {
                         <span className="flex items-center gap-1.5 text-destructive text-xs font-bold uppercase">
                           <div className="w-1.5 h-1.5 rounded-full bg-destructive" /> Inativo
                         </span>
+                      )}
+                    </td>
+                    <td className="px-6 py-4">
+                      {user.must_change_password ? (
+                        <Badge className="bg-amber-500/10 text-amber-500 border-amber-500/20 gap-1">
+                          <span className="text-[10px]">⚠</span> Pendente
+                        </Badge>
+                      ) : (
+                        <span className="text-text-secondary text-sm">—</span>
                       )}
                     </td>
                     <td className="px-6 py-4 text-text-secondary text-sm">
