@@ -97,19 +97,29 @@ const CDNs = () => {
     };
   };
 
-  const SummaryCard = ({ title, value, icon, color = 'primary' }: any) => (
-    <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm flex flex-col justify-between min-h-[120px] transition-all hover:border-primary/30 group">
-      <div className="flex justify-between items-start">
-        <div className={clsx("p-2 rounded-lg text-white", `bg-${color}`)}>
-          {icon}
+  const SummaryCard = ({ title, value, icon, color = 'primary' }: any) => {
+    const colorClasses: Record<string, string> = {
+      primary: 'bg-primary',
+      accent: 'bg-accent',
+      success: 'bg-success',
+      warning: 'bg-warning',
+      danger: 'bg-danger'
+    };
+
+    return (
+      <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm flex flex-col justify-between min-h-[120px] transition-all hover:border-primary/30 group">
+        <div className="flex justify-between items-start">
+          <div className={clsx("p-2 rounded-lg text-white shadow-sm", colorClasses[color] || 'bg-primary')}>
+            {icon}
+          </div>
+        </div>
+        <div className="mt-4">
+          <p className="text-text-secondary text-[10px] font-bold uppercase tracking-widest mb-1 opacity-70">{title}</p>
+          <h3 className="text-xl font-bold text-text-primary truncate tracking-tight">{value}</h3>
         </div>
       </div>
-      <div className="mt-4">
-        <p className="text-text-secondary text-[10px] font-bold uppercase tracking-widest mb-1">{title}</p>
-        <h3 className="text-xl font-bold text-text-primary truncate">{value}</h3>
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
