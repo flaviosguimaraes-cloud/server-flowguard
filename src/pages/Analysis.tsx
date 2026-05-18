@@ -184,7 +184,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       country: '',
       direction: ''
     });
-    const [sortCol, setSortCol] = useState('bytes');
+    const [sortCol, setSortCol] = useState('when');
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
     const [groupByIP, setGroupByIP] = useState(false);
@@ -200,11 +200,18 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     }, [filterMode]);
 
     const SORT_MAP: Record<string, string> = {
-      'bytes': 'bytes',
-      'packets': 'pps',
-      'time_received': 'recent',
-      'bpp': 'bpp',
-      'duration': 'duration',
+      'when':      'recent',
+      'bytes':     'bytes',
+      'pps':       'pps',
+      'bpp':       'bpp',
+      'duration':  'duration',
+      'src_addr':  'recent',
+      'dst_addr':  'recent',
+      'proto':     'recent',
+      'direction': 'recent',
+      'tcp_flags': 'recent',
+      'in_iface':  'recent',
+      'company':   'recent',
     };
 
     const buildQuery = useCallback(() => {
@@ -229,8 +236,8 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       if (filters.country) params.append('country', filters.country);
       if (filters.direction) params.append('direction', filters.direction);
       
-      const orderVal = SORT_MAP[sortCol] || 'bytes';
-      params.append('order', orderVal);
+      const orderParam = SORT_MAP[sortCol] || 'recent';
+      params.set('order', sortDir === 'asc' ? orderParam + '_asc' : orderParam);
       
       return params.toString();
     }, [pageSize, page, filterMode, startDate, endDate, minutes, filters, sortCol, sortDir]);
