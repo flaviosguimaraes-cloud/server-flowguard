@@ -1,13 +1,48 @@
 import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
 import api from '../../services/api';
-import { Link as LinkIcon, Activity, Clock, ArrowUpRight, Network, RefreshCw, Cpu, FileCode, Database, Wifi } from 'lucide-react';
+ import { Link as LinkIcon, Activity, Clock, Network, RefreshCw, Wifi } from 'lucide-react';
 import { clsx } from 'clsx';
 import { toast } from 'sonner';
 
 export default function BGP() {
   const queryClient = useQueryClient();
   
-  const { data: sessionsData, isLoading: loadingSessions, isRefetching: refetchingSessions, refetch: refetchSessions } = useQuery({
+   const { data: sessionsData, isLoading: loadingSessions, isRefetching: refetchingSessions, refetch: refetchSessions } = useQuery({
+   const { data: flowspecData } = useQuery({
+     queryKey: ['mitigation-flowspec'],
+     queryFn: () => api.get('/api/mitigation/flowspec').then(r => r.data).catch(() => ({ items: [] })),
+     refetchInterval: 10000,
+   });
+ 
+   const activeFlowspecCount = (flowspecData?.items || []).filter((item: any) => item.bgp_status === 'announced').length;
+ 
+   const calcUptime = (logTail: string) => {
+     if (!logTail) return '—';
+     const lines = logTail.split('\n');
+     for (const line of lines.reverse()) {
+       const match = line.match(/(\w+\s+\d+\s+\d+:\d+:\d+)/);
+       if (match && line.includes('connected')) {
+         const connTime = new Date(match[1] + ' 2026');
+         const diff = Math.floor((Date.now() - connTime.getTime()) / 1000);
+         if (diff < 0) return '—';
+         if (diff < 60) return `${diff}s`;
+         if (diff < 3600) return `${Math.floor(diff/60)}m ${diff%60}s`;
+         return `${Math.floor(diff/3600)}h ${Math.floor((diff%3600)/60)}m`;
+       }
+     }
+     return '—';
+   };
+ 
+   const timeActive = (age: string) => {
+     if (!age) return '—';
+     const d = new Date(age.replace(' ', 'T'));
+     const diff = Math.floor((Date.now() - d.getTime()) / 1000);
+     if (diff < 0) return '—';
+     if (diff < 60) return `${diff}s`;
+     if (diff < 3600) return `${Math.floor(diff/60)}m`;
+     return `${Math.floor(diff/3600)}h ${Math.floor((diff%3600)/60)}m`;
+   };
+ 
     queryKey: ['bgp-sessions'],
     queryFn: () => api.get('/api/bgp/sessions').then(r => r.data).catch(() => ({ sessions: [] })),
     refetchInterval: 10000,
