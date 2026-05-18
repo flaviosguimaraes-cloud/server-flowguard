@@ -537,19 +537,6 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                 <option value="incoming">↓ Download</option>
               </select>
             </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Ordenar por</label>
-              <select
-                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 appearance-none text-sm text-text-primary"
-                value={filters.order}
-                onChange={(e) => setFilters(prev => ({ ...prev, order: e.target.value }))}
-              >
-                <option value="bytes">Maior volume</option>
-                <option value="packets">Maior PPS</option>
-                    <option value="recent">Mais recente</option>
-              </select>
-            </div>
-
             {filterMode === 'relative' ? (
               <div className="lg:col-span-3 space-y-1">
                 <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Período Relativo</label>
@@ -608,9 +595,9 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
               </button>
               <button 
                 onClick={() => {
-                  setFilters({
-                    src_ip: '', dst_ip: '', src_port: '', dst_port: '', proto: '', country: '', direction: '', order: 'bytes'
-                  });
+                  setFilters({ src_ip: '', dst_ip: '', src_port: '', dst_port: '', proto: '', country: '', direction: '' });
+                  setSortCol('bytes');
+                  setSortDir('desc');
                   setFilterMode('relative');
                   setMinutes(30);
                   setStartDate('');
