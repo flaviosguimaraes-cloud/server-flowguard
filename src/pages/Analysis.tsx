@@ -633,11 +633,24 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                       className="w-full bg-bg-primary/50 border border-border rounded-lg py-1 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
                       value={endDate}
                       max={maxEndDate}
-                      onChange={(e) => setEndDate(e.target.value)}
+                      onChange={(e) => handleEndChange(e.target.value)}
                     />
-                    <div className="text-[11px] text-text-secondary mt-1 flex items-center gap-1">
-                      <span>⚡ Intervalo máximo: 6 horas. Para análises maiores use o Histórico de Anomalias.</span>
-                    </div>
+                    {intervalWarning ? (
+                      <div style={{
+                        fontSize: 11,
+                        color: '#f59e0b',
+                        marginTop: 4,
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 4,
+                      }}>
+                        ⚠ Intervalo ajustado para 6 horas (limite máximo permitido)
+                      </div>
+                    ) : (
+                      <div className="text-[11px] text-text-secondary mt-1 flex items-center gap-1">
+                        <span>⚡ Intervalo máximo: 6 horas. Para análises maiores use o Histórico de Anomalias.</span>
+                      </div>
+                    )}
                   </div>
                 </div>
               </>
