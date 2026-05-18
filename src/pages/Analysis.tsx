@@ -618,6 +618,14 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
           </div>
        </div>
  
+        {/* Warning if hits limit */}
+        {!isLoading && connectionItems.length >= pageSize && (
+          <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/50 p-3 rounded-lg flex items-center gap-3 text-amber-700 dark:text-amber-400 text-xs font-medium">
+            <AlertCircle size={16} />
+            <span>Exibindo as {pageSize} conexões de maior volume. Use filtros para refinar.</span>
+          </div>
+        )}
+
         {/* Table */}
         <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
@@ -854,6 +862,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                 <option value={50}>50</option>
                 <option value={100}>100</option>
                 <option value={200}>200</option>
+                <option value={500}>500</option>
               </select>
               <span className="text-xs text-text-secondary ml-4">
                 Total: <span className="text-text-primary font-bold">{total}</span>
