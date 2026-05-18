@@ -27,34 +27,10 @@ export const Sidebar = () => {
     localStorage.setItem('sidebar_open_groups', JSON.stringify(openGroups));
   }, [openGroups]);
 
-  const isActive = (path: string) => location.pathname === path;
-  const isGroupActive = (children: any[]) => children.some(child => isActive(child.path));
-
-  useEffect(() => {
-    navItems.forEach(item => {
-      if (item.children && isGroupActive(item.children)) {
-        if (!openGroups.includes(item.id)) {
-          setOpenGroups(prev => [...prev, item.id]);
-        }
-      }
-    });
-  }, [location.pathname]);
-
-  const toggleGroup = (group: string) => {
-    if (collapsed) {
-      setCollapsed(false);
-      setOpenGroups([group]);
-      return;
-    }
-    setOpenGroups(prev => 
-      prev.includes(group) ? prev.filter(g => g !== group) : [...prev, group]
-    );
-  };
-
   const navItems = [
     { path: '/dashboard', label: t('dashboard'), icon: LayoutDashboard },
     { path: '/analysis', label: t('analysis'), icon: Search },
-    { path: '/events', label: t('events'), icon: Bell },
+    { path: '/events', label: t('events'), icon: Activity },
     { 
       id: 'mitigation',
       label: t('mitigation'), 
@@ -90,6 +66,30 @@ export const Sidebar = () => {
     },
     { path: '/system', label: t('system'), icon: Monitor },
   ];
+
+  const isActive = (path: string) => location.pathname === path;
+  const isGroupActive = (children: any[]) => children.some(child => isActive(child.path));
+
+  useEffect(() => {
+    navItems.forEach(item => {
+      if (item.children && isGroupActive(item.children)) {
+        if (!openGroups.includes(item.id)) {
+          setOpenGroups(prev => [...prev, item.id]);
+        }
+      }
+    });
+  }, [location.pathname]);
+
+  const toggleGroup = (group: string) => {
+    if (collapsed) {
+      setCollapsed(false);
+      setOpenGroups([group]);
+      return;
+    }
+    setOpenGroups(prev => 
+      prev.includes(group) ? prev.filter(g => g !== group) : [...prev, group]
+    );
+  };
 
   return (
     <div className={clsx(
