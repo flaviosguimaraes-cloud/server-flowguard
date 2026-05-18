@@ -648,7 +648,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
             <table className="w-full text-left border-collapse min-w-[1200px]">
                <thead>
                  <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-                   <th className="px-6 py-4 border-b border-border">Quando</th>
+                   <SortHeader field="time_received" label="Quando" />
                    <th className="px-6 py-4 border-b border-border text-center">Direção</th>
                    <th className="px-6 py-4 border-b border-border">IP Origem</th>
                    <th className="px-6 py-4 border-b border-border">IP Destino</th>
@@ -659,8 +659,8 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                     <th className="px-6 py-4 border-b border-border">Empresa</th>
                     <SortHeader field="bytes" label="Bytes" align="right" />
                     <SortHeader field="packets" label="PPS" align="right" />
-                    <th className="px-6 py-4 border-b border-border text-right">BPP</th>
-                    <th className="px-6 py-4 border-b border-border text-right">Duração</th>
+                    <SortHeader field="bpp" label="BPP" align="right" />
+                    <SortHeader field="duration" label="Duração" align="right" />
                     {isAdmin && <th className="px-6 py-4 border-b border-border text-center">Ação</th>}
                  </tr>
                </thead>
@@ -869,40 +869,56 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
           {/* Paginação */}
           <div className="p-4 border-t border-border bg-bg-primary/30 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <span className="text-xs text-text-secondary font-bold uppercase tracking-widest">Linhas por página:</span>
-              <select 
-                value={pageSize} 
-                onChange={e => setPageSize(Number(e.target.value))}
-                className="bg-bg-primary border border-border rounded px-2 py-1 text-xs text-text-primary outline-none"
-              >
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-                <option value={200}>200</option>
-                <option value={500}>500</option>
-              </select>
-              <span className="text-xs text-text-secondary ml-4">
-                Total: <span className="text-text-primary font-bold">{total}</span>
-              </span>
+              <span className="text-xs text-text-secondary font-bold uppercase tracking-widest">Linhas:</span>
+              <div className="flex gap-1">
+                {[50, 100, 200, 500].map(size => (
+                  <button
+                    key={size}
+                    onClick={() => {
+                      setPageSize(size);
+                      setPage(1);
+                    }}
+                    className={clsx(
+                      "px-2 py-1 rounded text-xs font-bold transition-all border",
+                      pageSize === size
+                        ? "bg-primary border-primary text-white"
+                        : "bg-bg-primary border-border text-text-secondary hover:text-text-primary"
+                    )}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button 
-                disabled={page === 1}
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                className="px-3 py-1.5 bg-bg-primary border border-border rounded-lg text-xs font-bold text-text-secondary hover:text-text-primary disabled:opacity-30 transition-all"
-              >
-                Anterior
-              </button>
-              <span className="text-xs font-bold text-text-primary px-2">
-                Página {page} de {Math.max(1, totalPages)}
-              </span>
-              <button 
-                disabled={page >= totalPages}
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                className="px-3 py-1.5 bg-bg-primary border border-border rounded-lg text-xs font-bold text-text-secondary hover:text-text-primary disabled:opacity-30 transition-all"
-              >
-                Próxima
-              </button>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <button 
+                  disabled={page === 1}
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  className="px-3 py-1.5 bg-bg-primary border border-border rounded-lg text-xs font-bold text-text-secondary hover:text-text-primary disabled:opacity-30 transition-all"
+                >
+                  ← Anterior
+                </button>
+                <span className="text-xs font-bold text-text-primary px-2">
+                  Página {page}
+                </span>
+                <button 
+                  disabled={!hasMore}
+                  onClick={() => setPage(p => p + 1)}
+                  className="px-3 py-1.5 bg-bg-primary border border-border rounded-lg text-xs font-bold text-text-secondary hover:text-text-primary disabled:opacity-30 transition-all"
+                >
+                  Próxima →
+                </button>
+              </div>
+              
+              <div className="text-xs text-text-secondary font-medium bg-bg-primary/50 px-3 py-1.5 rounded-lg border border-border/50">
+                Exibindo <span className="text-text-primary font-bold">
+                  {connectionItems.length > 0 ? (page - 1) * pageSize + 1 : 0}-{(page - 1) * pageSize + connectionItems.length}
+                </span> de <span className="text-text-primary font-bold">
+                  {hasMore ? `${page * pageSize}+` : (page - 1) * pageSize + connectionItems.length}
+                </span> conexões
+              </div>
             </div>
           </div>
         </div>
