@@ -149,7 +149,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       // Retorna: "17/05 08:00"
     };
 
-    const [pageSize, setPageSize] = useState(50);
+    const [pageSize, setPageSize] = useState(100);
     const [page, setPage] = useState(1);
     const [searchTrigger, setSearchTrigger] = useState(0);
 
@@ -182,23 +182,30 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       dst_port: '',
       proto: '',
       country: '',
-      direction: '',
-      order: 'bytes',
+      direction: ''
     });
+    const [sortCol, setSortCol] = useState('bytes');
+    const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
     const [groupByIP, setGroupByIP] = useState(false);
     const [hoveredMitIP, setHoveredMitIP] = useState<string | null>(null);
 
     useEffect(() => {
       setPage(1);
-    }, [pageSize, filters.src_ip, filters.dst_ip, filters.src_port, filters.dst_port, filters.proto, filters.country, filters.direction, filters.order]);
+    }, [pageSize, filters.src_ip, filters.dst_ip, filters.src_port, filters.dst_port, filters.proto, filters.country, filters.direction, sortCol, sortDir]);
 
     useEffect(() => {
-      setFilters(prev => ({
-        ...prev,
-        order: filterMode === 'custom' ? 'recent' : 'bytes'
-      }));
+      setSortCol(filterMode === 'custom' ? 'time_received' : 'bytes');
+      setSortDir('desc');
     }, [filterMode]);
+
+    const SORT_MAP: Record<string, string> = {
+      'bytes': 'bytes',
+      'packets': 'pps',
+      'time_received': 'recent',
+      'bpp': 'bpp',
+      'duration': 'duration',
+    };
 
     const buildQuery = useCallback(() => {
       const params = new URLSearchParams({
@@ -221,23 +228,45 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       if (filters.proto) params.append('proto', filters.proto);
       if (filters.country) params.append('country', filters.country);
       if (filters.direction) params.append('direction', filters.direction);
-      if (filters.order) params.append('order', filters.order);
+      
+      const orderVal = SORT_MAP[sortCol] || 'bytes';
+      params.append('order', orderVal);
       
       return params.toString();
-    }, [pageSize, page, filterMode, startDate, endDate, minutes, filters]);
+    }, [pageSize, page, filterMode, startDate, endDate, minutes, filters, sortCol, sortDir]);
+
+    const handleSort = (col: string) => {
+      if (sortCol === col) {
+        setSortDir(d => d === 'desc' ? 'asc' : 'desc');
+      } else {
+        setSortCol(col);
+        setSortDir('desc');
+      }
+      setPage(1);
+    };
 
     const SortHeader = ({ field, label, align = 'left' }: { field: string, label: string, align?: 'left' | 'right' | 'center' }) => {
-      const isSelected = filters.order === field;
+      const isSelected = sortCol === field;
+      const isSortable = ['time_received', 'bytes', 'packets', 'bpp', 'duration'].includes(field);
+
       return (
         <th 
-          className={clsx("px-6 py-4 border-b border-border cursor-pointer hover:bg-bg-secondary transition-colors", align === 'right' && 'text-right', align === 'center' && 'text-center')}
+          className={clsx("px-6 py-4 border-b border-border transition-colors", 
+            isSortable && "cursor-pointer hover:bg-bg-secondary",
+            align === 'right' && 'text-right', 
+            align === 'center' && 'text-center'
+          )}
           onClick={() => {
-            setFilters(prev => ({ ...prev, order: field }));
+            if (isSortable) handleSort(field);
           }}
         >
           <div className={clsx("flex items-center gap-1", align === 'right' && 'justify-end')}>
             {label}
-            {isSelected && <ArrowDown size={12} />}
+            {isSelected && (
+              <span className="ml-1">
+                {sortDir === 'desc' ? <ArrowDown size={12} /> : <ArrowUp size={12} />}
+              </span>
+            )}
           </div>
         </th>
       );
@@ -281,9 +310,6 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       refetchInterval: filterMode === 'custom' ? false : 30000,
     });
 
-    const total = connections?.total || 0;
-    const totalPages = Math.ceil(total / pageSize);
- 
     const connectionItems = useMemo(() => {
       let items = Array.isArray(connections) ? [...connections] : [...(connections?.items || connections?.data || [])];
       
@@ -313,6 +339,9 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       return items;
     }, [connections, groupByIP]);
  
+    const hasMore = connectionItems.length === pageSize;
+    const totalPages = hasMore ? page + 1 : page;
+
    const metrics = useMemo(() => {
      const items = connectionItems;
      const uniqueIPs = new Set(items.flatMap((i: any) => [i.src_addr, i.dst_addr])).size;
@@ -508,19 +537,6 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                 <option value="incoming">↓ Download</option>
               </select>
             </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Ordenar por</label>
-              <select
-                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 appearance-none text-sm text-text-primary"
-                value={filters.order}
-                onChange={(e) => setFilters(prev => ({ ...prev, order: e.target.value }))}
-              >
-                <option value="bytes">Maior volume</option>
-                <option value="packets">Maior PPS</option>
-                    <option value="recent">Mais recente</option>
-              </select>
-            </div>
-
             {filterMode === 'relative' ? (
               <div className="lg:col-span-3 space-y-1">
                 <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Período Relativo</label>
@@ -579,9 +595,9 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
               </button>
               <button 
                 onClick={() => {
-                  setFilters({
-                    src_ip: '', dst_ip: '', src_port: '', dst_port: '', proto: '', country: '', direction: '', order: 'bytes'
-                  });
+                  setFilters({ src_ip: '', dst_ip: '', src_port: '', dst_port: '', proto: '', country: '', direction: '' });
+                  setSortCol('bytes');
+                  setSortDir('desc');
                   setFilterMode('relative');
                   setMinutes(30);
                   setStartDate('');
@@ -632,7 +648,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
             <table className="w-full text-left border-collapse min-w-[1200px]">
                <thead>
                  <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-                   <th className="px-6 py-4 border-b border-border">Quando</th>
+                   <SortHeader field="time_received" label="Quando" />
                    <th className="px-6 py-4 border-b border-border text-center">Direção</th>
                    <th className="px-6 py-4 border-b border-border">IP Origem</th>
                    <th className="px-6 py-4 border-b border-border">IP Destino</th>
@@ -643,8 +659,8 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                     <th className="px-6 py-4 border-b border-border">Empresa</th>
                     <SortHeader field="bytes" label="Bytes" align="right" />
                     <SortHeader field="packets" label="PPS" align="right" />
-                    <th className="px-6 py-4 border-b border-border text-right">BPP</th>
-                    <th className="px-6 py-4 border-b border-border text-right">Duração</th>
+                    <SortHeader field="bpp" label="BPP" align="right" />
+                    <SortHeader field="duration" label="Duração" align="right" />
                     {isAdmin && <th className="px-6 py-4 border-b border-border text-center">Ação</th>}
                  </tr>
                </thead>
@@ -853,40 +869,56 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
           {/* Paginação */}
           <div className="p-4 border-t border-border bg-bg-primary/30 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <span className="text-xs text-text-secondary font-bold uppercase tracking-widest">Linhas por página:</span>
-              <select 
-                value={pageSize} 
-                onChange={e => setPageSize(Number(e.target.value))}
-                className="bg-bg-primary border border-border rounded px-2 py-1 text-xs text-text-primary outline-none"
-              >
-                <option value={50}>50</option>
-                <option value={100}>100</option>
-                <option value={200}>200</option>
-                <option value={500}>500</option>
-              </select>
-              <span className="text-xs text-text-secondary ml-4">
-                Total: <span className="text-text-primary font-bold">{total}</span>
-              </span>
+              <span className="text-xs text-text-secondary font-bold uppercase tracking-widest">Linhas:</span>
+              <div className="flex gap-1">
+                {[50, 100, 200, 500].map(size => (
+                  <button
+                    key={size}
+                    onClick={() => {
+                      setPageSize(size);
+                      setPage(1);
+                    }}
+                    className={clsx(
+                      "px-2 py-1 rounded text-xs font-bold transition-all border",
+                      pageSize === size
+                        ? "bg-primary border-primary text-white"
+                        : "bg-bg-primary border-border text-text-secondary hover:text-text-primary"
+                    )}
+                  >
+                    {size}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <button 
-                disabled={page === 1}
-                onClick={() => setPage(p => Math.max(1, p - 1))}
-                className="px-3 py-1.5 bg-bg-primary border border-border rounded-lg text-xs font-bold text-text-secondary hover:text-text-primary disabled:opacity-30 transition-all"
-              >
-                Anterior
-              </button>
-              <span className="text-xs font-bold text-text-primary px-2">
-                Página {page} de {Math.max(1, totalPages)}
-              </span>
-              <button 
-                disabled={page >= totalPages}
-                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
-                className="px-3 py-1.5 bg-bg-primary border border-border rounded-lg text-xs font-bold text-text-secondary hover:text-text-primary disabled:opacity-30 transition-all"
-              >
-                Próxima
-              </button>
+            <div className="flex items-center gap-4">
+              <div className="flex items-center gap-2">
+                <button 
+                  disabled={page === 1}
+                  onClick={() => setPage(p => Math.max(1, p - 1))}
+                  className="px-3 py-1.5 bg-bg-primary border border-border rounded-lg text-xs font-bold text-text-secondary hover:text-text-primary disabled:opacity-30 transition-all"
+                >
+                  ← Anterior
+                </button>
+                <span className="text-xs font-bold text-text-primary px-2">
+                  Página {page}
+                </span>
+                <button 
+                  disabled={!hasMore}
+                  onClick={() => setPage(p => p + 1)}
+                  className="px-3 py-1.5 bg-bg-primary border border-border rounded-lg text-xs font-bold text-text-secondary hover:text-text-primary disabled:opacity-30 transition-all"
+                >
+                  Próxima →
+                </button>
+              </div>
+              
+              <div className="text-xs text-text-secondary font-medium bg-bg-primary/50 px-3 py-1.5 rounded-lg border border-border/50">
+                Exibindo <span className="text-text-primary font-bold">
+                  {connectionItems.length > 0 ? (page - 1) * pageSize + 1 : 0}-{(page - 1) * pageSize + connectionItems.length}
+                </span> de <span className="text-text-primary font-bold">
+                  {hasMore ? `${page * pageSize}+` : (page - 1) * pageSize + connectionItems.length}
+                </span> conexões
+              </div>
             </div>
           </div>
         </div>
