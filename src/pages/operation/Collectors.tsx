@@ -298,10 +298,10 @@ export default function Collectors() {
      host: '',
      brand: 'huawei',
      flow_protocol: 'netflow_v9',
-     flow_port: 2055,
+      flow_port: '2055',
      snmp_community: 'public',
      snmp_version: '2c',
-     snmp_port: 161,
+      snmp_port: '161',
      snmp_ip: '',
      active: true,
      bgp_enabled: false,
@@ -322,10 +322,10 @@ export default function Collectors() {
            host: data.host || '',
            brand: data.brand || 'huawei',
            flow_protocol: data.flow_protocol || 'netflow_v9',
-           flow_port: data.flow_port || 2055,
+            flow_port: data.flow_port?.toString() || '2055',
            snmp_community: data.snmp_community || 'public',
            snmp_version: data.snmp_version || '2c',
-           snmp_port: data.snmp_port || 161,
+            snmp_port: data.snmp_port?.toString() || '161',
            snmp_ip: data.snmp_ip || '',
            active: data.active !== false,
            bgp_enabled: data.bgp_enabled || false,
@@ -343,10 +343,10 @@ export default function Collectors() {
            host: '',
            brand: 'huawei',
            flow_protocol: 'netflow_v9',
-           flow_port: 2055,
+            flow_port: '2055',
            snmp_community: 'public',
            snmp_version: '2c',
-           snmp_port: 161,
+            snmp_port: '161',
            snmp_ip: '',
            active: true,
            bgp_enabled: false,
@@ -367,7 +367,7 @@ export default function Collectors() {
        ...prev,
        brand,
        flow_protocol: defaults.protocol,
-       flow_port: defaults.port
+        flow_port: defaults.port.toString()
      }));
    };
  
@@ -465,7 +465,7 @@ export default function Collectors() {
                </div>
                <div className="space-y-2">
                  <Label htmlFor="flow_port">Porta</Label>
-                 <Input id="flow_port" type="number" value={formData.flow_port} onChange={e => setFormData({ ...formData, flow_port: parseInt(e.target.value) || 0 })} />
+                 <Input id="flow_port" type="number" value={formData.flow_port} onChange={e => setFormData({ ...formData, flow_port: e.target.value })} />
                </div>
              </div>
            </section>
@@ -492,7 +492,7 @@ export default function Collectors() {
                </div>
                <div className="space-y-2">
                  <Label htmlFor="snmp_port">Porta SNMP</Label>
-                 <Input id="snmp_port" type="number" value={formData.snmp_port} onChange={e => setFormData({ ...formData, snmp_port: parseInt(e.target.value) || 0 })} />
+                 <Input id="snmp_port" type="number" value={formData.snmp_port} onChange={e => setFormData({ ...formData, snmp_port: e.target.value })} />
                </div>
                <div className="space-y-2">
                  <Label htmlFor="snmp_ip">IP SNMP</Label>
