@@ -1,4 +1,4 @@
-import { useState, useMemo, useCallback, useEffect } from 'react';
+import { useState, useMemo, useCallback, useEffect, useRef } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
  import api from '../services/api';
  import { useTranslation } from '../hooks/useTranslation';
@@ -10,6 +10,7 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
   import Flag from '../components/Flag';
  import { Skeleton } from '../components/Skeleton';
  import { clsx } from 'clsx';
+import { toast } from 'sonner';
   import { 
     Tooltip, TooltipTrigger, TooltipContent, TooltipProvider 
   } from '../components/ui/tooltip';
@@ -53,6 +54,8 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
    const { t } = useTranslation();
    const isAdmin = localStorage.getItem('role') === 'admin';
   const queryClient = useQueryClient();
+
+  const MAX_HOURS = 6;
    
     const isLocalIP = (ip: string) => ip?.startsWith('45.175.50.');
     const shouldFlip = (item: any) => !isLocalIP(item.src_addr) && isLocalIP(item.dst_addr);
@@ -161,6 +164,23 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     const [minutes, setMinutes] = useState(30);
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
+    const [maxEndDate, setMaxEndDate] = useState('');
+
+    const handleStartChange = (value: string) => {
+      setStartDate(value);
+      if (!value) {
+        setMaxEndDate('');
+        return;
+      }
+      const start = new Date(value);
+      const maxEnd = new Date(start.getTime() + MAX_HOURS * 60 * 60 * 1000);
+      const maxEndStr = maxEnd.toISOString().slice(0, 16);
+      
+      if (endDate > maxEndStr) {
+        setEndDate(maxEndStr);
+      }
+      setMaxEndDate(maxEndStr);
+    };
 
     const [filters, setFilters] = useState({
       src_ip: '',
