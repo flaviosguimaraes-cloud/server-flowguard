@@ -4,7 +4,7 @@ import {
   Network, CheckCircle, XCircle, BarChart3, Settings2, Server, 
   Link as LinkIcon, Sliders, Monitor, ClipboardList, 
   Settings, LogOut, ChevronDown, ChevronRight, Lock, 
-  ChevronLeft
+  ChevronLeft, Users as UsersIcon
 } from 'lucide-react';
 import { Link, useLocation, useNavigate } from '@tanstack/react-router';
 import { useTranslation } from '../hooks/useTranslation';
@@ -61,6 +61,7 @@ export const Sidebar = () => {
         { path: '/notifications', label: t('notifications'), icon: Bell },
         { path: '/audit', label: t('audit'), icon: ClipboardList },
         { path: '/settings', label: t('settings'), icon: Settings },
+        { path: '/admin/users', label: 'Usuários', icon: UsersIcon },
       ]
     },
     { path: '/system', label: t('system'), icon: Monitor },
