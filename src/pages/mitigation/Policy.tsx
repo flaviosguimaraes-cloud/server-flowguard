@@ -108,43 +108,52 @@ export default function Policy() {
      }
   };
 
-  const ModeCard = ({ value, title, community, onChangeCommunity, description }: any) => {
-    const selected = mode === value;
+  const ThresholdCard = ({ id, label, banKey, unit, placeholder, description }: any) => {
+    const enabled = !!thresholds[banKey];
     return (
-      <button
-        className={clsx(
-          "text-left p-5 rounded-xl border-2 transition-all w-full",
-          selected ? "border-primary bg-primary/5 shadow-lg shadow-primary/10" : "border-border bg-bg-secondary hover:border-text-secondary/30"
-        )}
-        onClick={() => setMode(value)}
-      >
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Shield size={18} className={selected ? 'text-primary' : 'text-text-secondary'} />
-            <h3 className="font-bold text-text-primary">{title}</h3>
-          </div>
-          <div className={clsx(
-            "w-10 h-6 rounded-full p-0.5 transition-all flex",
-            selected ? "bg-primary justify-end" : "bg-bg-primary justify-start"
-          )}>
-            <div className="w-5 h-5 rounded-full bg-white shadow" />
-          </div>
-        </div>
-        <div className="mb-3" onClick={e => e.stopPropagation()}>
-          <label className="text-[10px] font-bold text-text-secondary uppercase">Community BGP</label>
-          <input 
-            value={community} 
+      <div className={clsx(
+        "p-4 rounded-xl border transition-all space-y-3",
+        enabled ? "border-primary/30 bg-primary/5 shadow-sm" : "border-border bg-bg-secondary opacity-60"
+      )}>
+        <div className="flex items-center justify-between">
+          <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">{label}</span>
+          <button
+            type="button"
             disabled={!isAdmin}
-            onChange={(e) => onChangeCommunity(e.target.value)}
-            placeholder={value === 'blackhole' ? '65000:666' : '65000:999'}
-            className="w-full mt-1 bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30" 
-          />
+            onClick={() => setThresholds({ ...thresholds, [banKey]: !enabled })}
+            className={clsx(
+              "w-8 h-4 rounded-full p-0.5 transition-all flex",
+              enabled ? "bg-success justify-end" : "bg-bg-primary justify-start border border-border"
+            )}
+            title={enabled ? "Ativo: qualquer IP que exceder este valor será bloqueado" : "Inativo: este threshold não será verificado pelo mitigador"}
+          >
+            <div className="w-3 h-3 rounded-full bg-white shadow" />
+          </button>
         </div>
-        <p className="text-xs text-text-secondary">{description}</p>
-      </button>
+        <div className="flex items-center gap-2">
+          <input 
+            type="number" 
+            value={thresholds[id] ?? ''} 
+            placeholder={placeholder} 
+            readOnly={!isAdmin || !enabled} 
+            onChange={(e) => setThresholds({ ...thresholds, [id]: e.target.value })}
+            className={clsx(
+              "w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30",
+              !enabled && "bg-bg-secondary text-text-secondary cursor-not-allowed"
+            )} 
+          />
+          <span className="text-xs font-bold text-text-secondary">{unit}</span>
+        </div>
+        <div className="flex items-center gap-1.5 text-[10px]">
+          {enabled ? (
+            <><Zap size={10} className="text-warning" /> <span className="text-text-primary font-bold tracking-tight">Ativo — {description}</span></>
+          ) : (
+            <><Shield size={10} className="text-text-secondary" /> <span className="text-text-secondary">Inativo</span></>
+          )}
+        </div>
+      </div>
     );
   };
-
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center gap-3">
