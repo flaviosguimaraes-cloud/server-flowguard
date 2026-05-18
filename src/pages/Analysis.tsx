@@ -138,22 +138,15 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       } catch { return '—'; }
     };
 
-    const formatUTC = (dateStr: string) => {
-      if (!dateStr) return '—';
-      try {
-         // Banco de Flows retorna sem timezone, assumir UTC e converter para local
-         const d = new Date(dateStr.replace(' ', 'T') + 'Z');
-        if (isNaN(d.getTime())) return '—';
-        return d.toLocaleString('pt-BR', {
-          day: '2-digit',
-          month: '2-digit',
-          year: 'numeric',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit',
-          timeZone: 'America/Sao_Paulo'
-        });
-      } catch { return '—'; }
+    const formatTime = (str: string) => {
+      if (!str) return '—';
+      // Pegar apenas data e hora do string
+      const parts = str.split(' ');
+      const date = parts[0]; // 2026-05-17
+      const time = parts[1]?.substring(0, 5); // 08:00
+      const [y, m, d] = date.split('-');
+      return `${d}/${m} ${time}`;
+      // Retorna: "17/05 08:00"
     };
 
     const [pageSize, setPageSize] = useState(50);
@@ -198,12 +191,20 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
 
     useEffect(() => {
       setPage(1);
-    }, [pageSize, filters]);
+    }, [pageSize, filters.src_ip, filters.dst_ip, filters.src_port, filters.dst_port, filters.proto, filters.country, filters.direction, filters.order]);
+
+    useEffect(() => {
+      setFilters(prev => ({
+        ...prev,
+        order: filterMode === 'custom' ? 'recent' : 'bytes'
+      }));
+    }, [filterMode]);
 
     const buildQuery = useCallback(() => {
       const params = new URLSearchParams({
         limit: String(pageSize),
         offset: String((page - 1) * pageSize),
+        le: '1000',
       });
 
       if (filterMode === 'custom') {
@@ -262,7 +263,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       setSearchTrigger(prev => prev + 1);
     };
 
-    const { data: connections, isLoading } = useQuery({
+    const { data: connections, isLoading, isPlaceholderData } = useQuery({
       queryKey: ['connections-analysis', searchTrigger, filters, page, pageSize, filterMode, minutes, startDate, endDate],
       queryFn: async () => {
         try {
@@ -340,16 +341,16 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
 
   const exportCSV = () => {
     const headers = ["IP Origem", "IP Destino", "Serviço", "Empresa", "Protocolo", "Bytes", "PPS", "Última vez visto"];
-    const rows = connectionItems.map((i: any) => [
-      i.src_addr,
-      i.dst_addr,
-      getService(i.dst_port),
-      i.dst_org || '',
-      protoName(i.proto),
-      i.bytes,
-      Math.round((i.packets || 0) / 1800),
-      formatUTC(i.time_received)
-    ]);
+      const rows = connectionItems.map((i: any) => [
+        i.src_addr,
+        i.dst_addr,
+        getService(i.dst_port),
+        i.dst_org || '',
+        protoName(i.proto),
+        i.bytes,
+        Math.round((i.packets || 0) / 1800),
+        formatTime(i.time_received)
+      ]);
     
     const csvContent = [headers, ...rows].map(e => e.join(",")).join("\n");
     const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
@@ -516,7 +517,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
               >
                 <option value="bytes">Maior volume</option>
                 <option value="packets">Maior PPS</option>
-                <option value="time_received">Mais recente</option>
+                    <option value="recent">Mais recente</option>
               </select>
             </div>
 
@@ -617,6 +618,14 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
           </div>
        </div>
  
+        {/* Warning if hits limit */}
+        {!isLoading && connectionItems.length >= pageSize && (
+          <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/50 p-3 rounded-lg flex items-center gap-3 text-amber-700 dark:text-amber-400 text-xs font-medium">
+            <AlertCircle size={16} />
+            <span>Exibindo as {pageSize} conexões de maior volume. Use filtros para refinar.</span>
+          </div>
+        )}
+
         {/* Table */}
         <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
           <div className="overflow-x-auto">
@@ -672,7 +681,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                           <TooltipTrigger asChild>
                             <tr className="hover:bg-accent/5 transition-colors group cursor-default">
                                <td className="px-6 py-4 text-[10px] text-text-secondary font-mono whitespace-nowrap">
-                                 {formatUTC(item.time_received)}
+                                 {formatTime(item.time_received)}
                                </td>
                               <td className="px-6 py-4 text-center">
                                 <div className={clsx(
@@ -788,8 +797,8 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                     <TooltipContent className="p-4 w-80 bg-bg-secondary border-border shadow-xl">
                       <div className="space-y-3">
                         <div className="flex justify-between items-center border-b border-border pb-2">
-                          <span className="text-[10px] font-bold uppercase text-text-secondary">Detalhes do Fluxo</span>
-                          <span className="text-[10px] font-mono text-text-secondary">{formatUTC(item.time_received)}</span>
+                           <span className="text-[10px] font-bold uppercase text-text-secondary">Detalhes do Fluxo</span>
+                           <span className="text-[10px] font-mono text-text-secondary">{formatTime(item.time_received)}</span>
                         </div>
                         
                         <div className="grid grid-cols-2 gap-4">
@@ -853,6 +862,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                 <option value={50}>50</option>
                 <option value={100}>100</option>
                 <option value={200}>200</option>
+                <option value={500}>500</option>
               </select>
               <span className="text-xs text-text-secondary ml-4">
                 Total: <span className="text-text-primary font-bold">{total}</span>
