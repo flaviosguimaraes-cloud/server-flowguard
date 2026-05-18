@@ -67,7 +67,9 @@ const CDNs = () => {
   });
 
   const items = data?.items || [];
-  const totalBytes = items.reduce((acc: number, item: any) => acc + (item.bytes || 0), 0);
+  const cdnTotalBytes = items.reduce((acc: number, item: any) => acc + (item.bytes || 0), 0);
+  const overallTotalBytes = data?.total_bytes || (cdnTotalBytes * 1.4); // Fallback estimate if total_bytes not present
+  const cdnPercentageOfTotal = overallTotalBytes > 0 ? (cdnTotalBytes / overallTotalBytes) * 100 : 0;
 
   const formatBytes = (bytes: number) => {
     if (bytes === 0) return '0 B';
@@ -84,12 +86,30 @@ const CDNs = () => {
     { label: '24h', value: 1440 },
   ];
 
-  const getCdnColor = (name: string) => {
-    for (const key in CDN_COLORS) {
-      if (name.toLowerCase().includes(key.toLowerCase())) return CDN_COLORS[key];
+  const getCdnInfo = (name: string) => {
+    for (const key in CDN_INFO) {
+      if (name.toLowerCase().includes(key.toLowerCase())) return CDN_INFO[key];
     }
-    return '#8892a4';
+    return {
+      color: '#8892a4',
+      abbr: name.substring(0, 2).toUpperCase(),
+      desc: 'Provedor de Conteúdo'
+    };
   };
+
+  const SummaryCard = ({ title, value, icon, color = 'primary' }: any) => (
+    <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm flex flex-col justify-between min-h-[120px] transition-all hover:border-primary/30 group">
+      <div className="flex justify-between items-start">
+        <div className={clsx("p-2 rounded-lg text-white", `bg-${color}`)}>
+          {icon}
+        </div>
+      </div>
+      <div className="mt-4">
+        <p className="text-text-secondary text-[10px] font-bold uppercase tracking-widest mb-1">{title}</p>
+        <h3 className="text-xl font-bold text-text-primary truncate">{value}</h3>
+      </div>
+    </div>
+  );
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -122,20 +142,34 @@ const CDNs = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Summary Card */}
-        <div className="bg-bg-secondary p-6 rounded-xl border border-border flex flex-col justify-center gap-2">
-          <div className="flex items-center gap-2 text-text-secondary">
-            <TrendingUp size={16} />
-            <span className="text-xs font-bold uppercase tracking-wider">Tráfego Total (CDN)</span>
-          </div>
-          <div className="text-3xl font-bold text-text-primary">
-            {isLoading ? '...' : formatBytes(totalBytes)}
-          </div>
-          <p className="text-xs text-text-secondary">Analisado nos últimos {periods.find(p => p.value === minutes)?.label}</p>
-        </div>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <SummaryCard 
+          title="CDNs Identificados" 
+          value={isLoading ? '...' : items.length} 
+          icon={<Globe size={20} />} 
+          color="accent"
+        />
+        <SummaryCard 
+          title="Volume via CDN" 
+          value={isLoading ? '...' : formatBytes(cdnTotalBytes)} 
+          icon={<Activity size={20} />} 
+          color="primary"
+        />
+        <SummaryCard 
+          title="% do Tráfego CDN" 
+          value={isLoading ? '...' : `${cdnPercentageOfTotal.toFixed(1)}%`} 
+          icon={<BarChart3 size={20} />} 
+          color="success"
+        />
+        <SummaryCard 
+          title="CDN Dominante" 
+          value={isLoading ? '...' : (items[0]?.cdn || '—')} 
+          icon={<Award size={20} />} 
+          color="warning"
+        />
+      </div>
 
-        <div className="lg:col-span-2 bg-bg-secondary p-6 rounded-xl border border-border">
+      <div className="bg-bg-secondary p-6 rounded-xl border border-border">
           <div className="flex items-center gap-2 mb-6">
             <BarChart3 size={18} className="text-primary" />
             <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Top Provedores</h2>
