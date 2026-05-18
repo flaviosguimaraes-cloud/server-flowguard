@@ -175,41 +175,81 @@ const CDNs = () => {
             <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Top Provedores</h2>
           </div>
 
-          <div className="space-y-5">
+          <div className="divide-y divide-border/10">
             {isLoading ? (
               Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="space-y-2">
-                  <div className="flex justify-between h-3 w-24 bg-border/50 rounded animate-pulse" />
-                  <div className="h-2 bg-border/30 rounded w-full animate-pulse" />
+                <div key={i} className="py-4 space-y-3">
+                  <div className="flex gap-3">
+                    <div className="w-10 h-10 bg-border/20 rounded-lg animate-pulse" />
+                    <div className="flex-1 space-y-2">
+                      <div className="h-4 bg-border/20 rounded w-1/4 animate-pulse" />
+                      <div className="h-2 bg-border/20 rounded w-full animate-pulse" />
+                    </div>
+                  </div>
                 </div>
               ))
             ) : items.length === 0 ? (
               <div className="text-center py-10 text-text-secondary italic">Dados não disponíveis para este período</div>
             ) : (
-              items.map((item: any, i: number) => {
-                const percentage = totalBytes > 0 ? (item.bytes / totalBytes) * 100 : 0;
-                const color = getCdnColor(item.cdn);
+              items.map((item: any, idx: number) => {
+                const info = getCdnInfo(item.cdn);
+                const pct = cdnTotalBytes > 0 ? (item.bytes / cdnTotalBytes) * 100 : 0;
                 return (
-                  <div key={i} className="space-y-1.5 group">
-                    <div className="flex items-center justify-between text-xs">
-                      <div className="flex items-center gap-2">
-                        <span className="font-bold text-text-primary group-hover:text-primary transition-colors">{item.cdn}</span>
-                        <span className="text-[10px] text-text-secondary font-mono">({item.flows?.toLocaleString()} flows)</span>
-                      </div>
-                      <div className="flex items-center gap-3">
-                        <span className="font-mono text-text-secondary">{formatBytes(item.bytes)}</span>
-                        <span className="font-bold text-text-primary w-10 text-right">{percentage.toFixed(1)}%</span>
-                      </div>
+                  <div key={idx} className="flex items-center gap-4 py-4 group">
+                    {/* Ícone/inicial */}
+                    <div 
+                      className="w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 border-2 transition-transform group-hover:scale-105"
+                      style={{
+                        background: info.color + '15',
+                        borderColor: info.color,
+                        color: info.color
+                      }}
+                    >
+                      {info.abbr}
                     </div>
-                    <div className="h-2 w-full bg-bg-primary rounded-full overflow-hidden border border-border/50">
-                      <div 
-                        className="h-full rounded-full transition-all duration-1000 ease-out"
-                        style={{ 
-                          width: `${percentage}%`,
-                          backgroundColor: color,
-                          boxShadow: `0 0 8px ${color}40`
-                        }}
-                      />
+
+                    <div className="flex-1 min-w-0">
+                      {/* Nome + descrição + ranking */}
+                      <div className="flex justify-between items-start mb-1.5">
+                        <div className="flex items-baseline gap-2 overflow-hidden">
+                          <span className="font-bold text-sm text-text-primary truncate">
+                            {item.cdn}
+                          </span>
+                          <span className="text-[10px] text-text-secondary font-medium truncate opacity-70">
+                            {info.desc}
+                          </span>
+                        </div>
+                        <span className="text-[10px] font-bold text-text-secondary opacity-40">
+                          #{idx + 1}
+                        </span>
+                      </div>
+
+                      {/* Barra de progresso */}
+                      <div className="h-1.5 w-full bg-bg-primary rounded-full overflow-hidden mb-2 border border-border/5">
+                        <div 
+                          className="h-full rounded-full transition-all duration-1000 ease-out shadow-sm"
+                          style={{ 
+                            width: `${pct}%`,
+                            backgroundColor: info.color,
+                            boxShadow: `0 0 10px ${info.color}30`
+                          }}
+                        />
+                      </div>
+
+                      {/* Métricas */}
+                      <div className="flex items-center gap-4 text-[10px] font-bold tracking-tight">
+                        <span style={{ color: info.color }}>
+                          {pct.toFixed(1)}%
+                        </span>
+                        <span className="text-text-secondary opacity-60 flex items-center gap-1">
+                          <Activity size={10} />
+                          {formatBytes(item.bytes)}
+                        </span>
+                        <span className="text-text-secondary opacity-60 flex items-center gap-1">
+                          <Users size={10} />
+                          {item.flows.toLocaleString()} flows
+                        </span>
+                      </div>
                     </div>
                   </div>
                 );
@@ -218,7 +258,6 @@ const CDNs = () => {
           </div>
         </div>
       </div>
-    </div>
   );
 };
 
