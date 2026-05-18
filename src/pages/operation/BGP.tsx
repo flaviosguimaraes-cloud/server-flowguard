@@ -128,7 +128,7 @@ import { toast } from 'sonner';
                   <div className="space-y-3 text-xs">
                     <div>
                       <p className="text-[10px] font-bold text-text-secondary uppercase">AS Local: {s.local_as} → AS Remoto: {s.remote_as}</p>
-                      <p className="text-text-primary mt-1">Speaker: {s.speaker || 'ExaBGP'}</p>
+                       <p className="text-text-primary mt-1">Speaker: {s.speaker || 'BGP Speaker'}</p>
                     </div>
 
                     <div className="flex gap-4 pt-2 border-t border-border/50">
@@ -174,7 +174,7 @@ import { toast } from 'sonner';
                     <div className="space-y-3 text-xs">
                       <div>
                         <p className="text-[10px] font-bold text-text-secondary uppercase">AS Local: {s.local_as} → AS Remoto: {s.remote_as}</p>
-                        <p className="text-text-primary mt-1">Speaker: {s.speaker || 'ExaBGP'}</p>
+                         <p className="text-text-primary mt-1">Speaker: {s.speaker || 'BGP Speaker'}</p>
                       </div>
 
                       <div className="pt-2 border-t border-border/50">
