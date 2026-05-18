@@ -54,7 +54,7 @@ export const Sidebar = () => {
       icon: Settings2,
       children: [
         { path: '/operation/collectors', label: t('collectors'), icon: Server },
-        { path: '/operation/bgp-sessions', label: t('bgp_sessions'), icon: LinkIcon },
+        { path: '/operation/bgp', label: 'BGP', icon: LinkIcon },
         { path: '/operation/thresholds', label: t('thresholds'), icon: Sliders },
       ]
     },
