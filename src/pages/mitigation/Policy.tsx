@@ -129,7 +129,7 @@ export default function Policy() {
         <Shield className="text-primary" size={24} />
         <div>
           <h1 className="text-2xl font-bold text-text-primary">Política de Mitigação</h1>
-          <p className="text-sm text-text-secondary">Modo de bloqueio e thresholds de gatilho</p>
+           <p className="text-sm text-text-secondary">Configuração de bloqueio e limiares de detecção</p>
         </div>
       </div>
 
@@ -148,7 +148,7 @@ export default function Policy() {
         />
       </div>
 
-      <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm space-y-4">
+       <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm space-y-4">
         <label className="flex items-center gap-3 cursor-pointer">
           <input type="checkbox" checked={flowspec} disabled={!isAdmin} onChange={(e) => setFlowspec(e.target.checked)}
             className="w-4 h-4 accent-primary" />
@@ -166,24 +166,97 @@ export default function Policy() {
           </div>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2 border-t border-border">
-          <div>
-            <label className="text-[10px] font-bold text-text-secondary uppercase">PPS gatilho</label>
-            <input type="number" value={pps} readOnly={!isAdmin} onChange={(e) => setPps(Number(e.target.value))}
-              className="w-full mt-1 bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30 read-only:opacity-70" />
-          </div>
-          <div>
-            <label className="text-[10px] font-bold text-text-secondary uppercase">Mbps gatilho</label>
-            <input type="number" value={mbps} readOnly={!isAdmin} onChange={(e) => setMbps(Number(e.target.value))}
-              className="w-full mt-1 bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30 read-only:opacity-70" />
-          </div>
-        </div>
-
+         <div className="pt-4 border-t border-border space-y-4">
+           <div className="flex items-center gap-2 mb-2">
+             <Sliders size={18} className="text-primary" />
+             <div>
+               <h2 className="text-lg font-bold text-text-primary">Limiares de Detecção</h2>
+               <p className="text-xs text-text-secondary">Definem quando o mitigador aplica bloqueio automático</p>
+             </div>
+           </div>
+ 
+           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+             {/* Row 1 — Gatilhos globais */}
+             <div>
+               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Pacotes por segundo (PPS)</label>
+               <input type="number" value={thresholds.threshold_pps ?? ''} placeholder="100000" readOnly={!isAdmin} 
+                 onChange={(e) => setThresholds({ ...thresholds, threshold_pps: e.target.value })}
+                 className="w-full mt-1 bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30 read-only:opacity-70" />
+             </div>
+             <div>
+               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Largura de banda (Mbps)</label>
+               <input type="number" value={thresholds.threshold_mbps ?? ''} placeholder="1000" readOnly={!isAdmin}
+                 onChange={(e) => setThresholds({ ...thresholds, threshold_mbps: e.target.value })}
+                 className="w-full mt-1 bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30 read-only:opacity-70" />
+             </div>
+             <div>
+               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Flows simultâneos</label>
+               <input type="number" value={thresholds.threshold_flows ?? ''} placeholder="3500" readOnly={!isAdmin}
+                 onChange={(e) => setThresholds({ ...thresholds, threshold_flows: e.target.value })}
+                 className="w-full mt-1 bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30 read-only:opacity-70" />
+             </div>
+ 
+             {/* Row 2 — TCP */}
+             <div>
+               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">TCP PPS</label>
+               <input type="number" value={thresholds.threshold_tcp_pps ?? ''} readOnly={!isAdmin}
+                 onChange={(e) => setThresholds({ ...thresholds, threshold_tcp_pps: e.target.value })}
+                 className="w-full mt-1 bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30 read-only:opacity-70" />
+             </div>
+             <div>
+               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">TCP Mbps</label>
+               <input type="number" value={thresholds.threshold_tcp_mbps ?? ''} readOnly={!isAdmin}
+                 onChange={(e) => setThresholds({ ...thresholds, threshold_tcp_mbps: e.target.value })}
+                 className="w-full mt-1 bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30 read-only:opacity-70" />
+             </div>
+             <div className="hidden md:block" />
+ 
+             {/* Row 3 — UDP */}
+             <div>
+               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">UDP PPS</label>
+               <input type="number" value={thresholds.threshold_udp_pps ?? ''} readOnly={!isAdmin}
+                 onChange={(e) => setThresholds({ ...thresholds, threshold_udp_pps: e.target.value })}
+                 className="w-full mt-1 bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30 read-only:opacity-70" />
+             </div>
+             <div>
+               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">UDP Mbps</label>
+               <input type="number" value={thresholds.threshold_udp_mbps ?? ''} readOnly={!isAdmin}
+                 onChange={(e) => setThresholds({ ...thresholds, threshold_udp_mbps: e.target.value })}
+                 className="w-full mt-1 bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30 read-only:opacity-70" />
+             </div>
+             <div className="hidden md:block" />
+ 
+             {/* Row 4 — ICMP */}
+             <div>
+               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">ICMP PPS</label>
+               <input type="number" value={thresholds.threshold_icmp_pps ?? ''} readOnly={!isAdmin}
+                 onChange={(e) => setThresholds({ ...thresholds, threshold_icmp_pps: e.target.value })}
+                 className="w-full mt-1 bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30 read-only:opacity-70" />
+             </div>
+             <div>
+               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">ICMP Mbps</label>
+               <input type="number" value={thresholds.threshold_icmp_mbps ?? ''} readOnly={!isAdmin}
+                 onChange={(e) => setThresholds({ ...thresholds, threshold_icmp_mbps: e.target.value })}
+                 className="w-full mt-1 bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30 read-only:opacity-70" />
+             </div>
+             <div className="hidden md:block" />
+ 
+             {/* Row 5 — Comportamento */}
+             <div>
+               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Tempo de bloqueio (segundos)</label>
+               <input type="number" value={thresholds.ban_time ?? ''} readOnly={!isAdmin}
+                 onChange={(e) => setThresholds({ ...thresholds, ban_time: e.target.value })}
+                 className="w-full mt-1 bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30 read-only:opacity-70" />
+               <p className="text-[10px] text-text-secondary mt-1">120s = 2min · 1800s = 30min</p>
+             </div>
+           </div>
+         </div>
+ 
         {isAdmin && (
-          <div className="flex justify-end pt-2 border-t border-border">
-            <button onClick={submit} disabled={save.isPending}
+           <div className="flex justify-end pt-6 border-t border-border">
+             <button onClick={submit} disabled={isPending}
               className="flex items-center gap-2 px-5 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-semibold disabled:opacity-50">
-              <Save size={16} /> Salvar política
+               <Save size={16} /> Salvar e aplicar
             </button>
           </div>
         )}
