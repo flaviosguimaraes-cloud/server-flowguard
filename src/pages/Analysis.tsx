@@ -194,7 +194,12 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       setPage(1);
     }, [pageSize, filters.src_ip, filters.dst_ip, filters.src_port, filters.dst_port, filters.proto, filters.country, filters.direction, sortCol, sortDir]);
 
-    // Removido reset de ordenação ao mudar modo para não quebrar a UX
+    useEffect(() => {
+      if (filterMode === 'custom') {
+        setSortCol('when');
+        setSortDir('desc');
+      }
+    }, [filterMode]);
 
     const SORT_MAP: Record<string, string> = {
       'when':      'recent',
