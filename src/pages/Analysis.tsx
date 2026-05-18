@@ -667,22 +667,22 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[1200px]">
                <thead>
-                 <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-                   <SortHeader field="time_received" label="Quando" />
-                   <th className="px-6 py-4 border-b border-border text-center">Direção</th>
-                   <th className="px-6 py-4 border-b border-border">IP Origem</th>
-                   <th className="px-6 py-4 border-b border-border">IP Destino</th>
-                    <th className="px-6 py-4 border-b border-border">Serviço</th>
-                    <th className="px-6 py-4 border-b border-border text-center">Protocolo</th>
-                    <th className="px-6 py-4 border-b border-border text-center">TCP Flags</th>
-                    <th className="px-6 py-4 border-b border-border">Interface ↓/↑</th>
-                    <th className="px-6 py-4 border-b border-border">Empresa</th>
-                    <SortHeader field="bytes" label="Bytes" align="right" />
-                    <SortHeader field="packets" label="PPS" align="right" />
-                    <SortHeader field="bpp" label="BPP" align="right" />
-                    <SortHeader field="duration" label="Duração" align="right" />
-                    {isAdmin && <th className="px-6 py-4 border-b border-border text-center">Ação</th>}
-                 </tr>
+                  <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+                    <SortableHeader col="when" label="QUANDO" />
+                    <SortableHeader col="direction" label="DIREÇÃO" align="center" />
+                    <SortableHeader col="src_addr" label="IP ORIGEM" />
+                    <SortableHeader col="dst_addr" label="IP DESTINO" />
+                    <th className="px-6 py-4 border-b border-border">SERVIÇO</th>
+                    <SortableHeader col="proto" label="PROTOCOLO" align="center" />
+                    <SortableHeader col="tcp_flags" label="TCP FLAGS" align="center" />
+                    <SortableHeader col="in_iface" label="INTERFACE" />
+                    <SortableHeader col="company" label="EMPRESA" />
+                    <SortableHeader col="bytes" label="BYTES" align="right" />
+                    <SortableHeader col="pps" label="PPS" align="right" />
+                    <SortableHeader col="bpp" label="BPP" align="right" />
+                    <SortableHeader col="duration" label="DURAÇÃO" align="right" />
+                    {isAdmin && <th className="px-6 py-4 border-b border-border text-center">AÇÃO</th>}
+                  </tr>
                </thead>
               <tbody className="text-sm divide-y divide-border/50">
                 {isLoading ? (
