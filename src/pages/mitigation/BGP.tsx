@@ -128,7 +128,7 @@ export default function BGP() {
                 <Wifi size={20} />
               </div>
               <div>
-                <p className="text-sm font-bold text-text-primary">ExaBGP Speaker</p>
+                 <p className="text-sm font-bold text-text-primary">BGP Speaker</p>
                 <p className="text-[10px] text-text-secondary uppercase font-bold">Software de Anúncio</p>
               </div>
             </div>
@@ -138,14 +138,14 @@ export default function BGP() {
                 <FileCode size={14} className="mt-1 text-text-secondary" />
                 <div>
                   <p className="text-[10px] font-bold text-text-secondary uppercase">Configuração</p>
-                  <p className="text-xs font-mono text-text-primary">/etc/exabgp/exabgp.conf</p>
+                   <p className="text-xs font-mono text-text-primary">/etc/bgp-speaker/speaker.conf</p>
                 </div>
               </div>
               <div className="flex items-start gap-3">
                 <Database size={14} className="mt-1 text-text-secondary" />
                 <div>
                   <p className="text-[10px] font-bold text-text-secondary uppercase">Pipe FIFO</p>
-                  <p className="text-xs font-mono text-text-primary">/opt/flowguard/exabgp/cmd.fifo</p>
+                   <p className="text-xs font-mono text-text-primary">/opt/flowguard/bgp-speaker/cmd.fifo</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-4">
