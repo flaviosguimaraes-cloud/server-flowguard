@@ -153,6 +153,9 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       } catch { return '—'; }
     };
 
+    const [pageSize, setPageSize] = useState(50);
+    const [page, setPage] = useState(1);
+
     const [filters, setFilters] = useState({
       src_ip: '',
       dst_ip: '',
@@ -170,9 +173,14 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     const [groupByIP, setGroupByIP] = useState(false);
     const [hoveredMitIP, setHoveredMitIP] = useState<string | null>(null);
 
+    useEffect(() => {
+      setPage(1);
+    }, [pageSize, filters]);
+
     const buildQuery = () => {
       const params = new URLSearchParams({
-        limit: '200',
+        limit: String(pageSize),
+        offset: String((page - 1) * pageSize),
       });
       if (filters.minutes && !filters.start)
         params.append('minutes', filters.minutes);
@@ -232,7 +240,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
    }, [countriesData]);
  
     const { data: connections, isLoading, refetch } = useQuery({
-      queryKey: ['connections-analysis', filters],
+      queryKey: ['connections-analysis', filters, page, pageSize],
       queryFn: async () => {
         const q = buildQuery();
         const r = await api.get(`/api/flows/connections?${q}`);
@@ -241,6 +249,9 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       staleTime: 0,
       refetchInterval: 30000,
     });
+
+    const total = connections?.total || 0;
+    const totalPages = Math.ceil(total / pageSize);
  
     const connectionItems = useMemo(() => {
       let items = Array.isArray(connections) ? [...connections] : [...(connections?.items || connections?.data || [])];
@@ -742,6 +753,45 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Paginação */}
+          <div className="p-4 border-t border-border bg-bg-primary/30 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-text-secondary font-bold uppercase tracking-widest">Linhas por página:</span>
+              <select 
+                value={pageSize} 
+                onChange={e => setPageSize(Number(e.target.value))}
+                className="bg-bg-primary border border-border rounded px-2 py-1 text-xs text-text-primary outline-none"
+              >
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={200}>200</option>
+              </select>
+              <span className="text-xs text-text-secondary ml-4">
+                Total: <span className="text-text-primary font-bold">{total}</span>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button 
+                disabled={page === 1}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                className="px-3 py-1.5 bg-bg-primary border border-border rounded-lg text-xs font-bold text-text-secondary hover:text-text-primary disabled:opacity-30 transition-all"
+              >
+                Anterior
+              </button>
+              <span className="text-xs font-bold text-text-primary px-2">
+                Página {page} de {Math.max(1, totalPages)}
+              </span>
+              <button 
+                disabled={page >= totalPages}
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                className="px-3 py-1.5 bg-bg-primary border border-border rounded-lg text-xs font-bold text-text-secondary hover:text-text-primary disabled:opacity-30 transition-all"
+              >
+                Próxima
+              </button>
+            </div>
           </div>
         </div>
  

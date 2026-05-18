@@ -12,10 +12,12 @@ const System = () => {
   const queryClient = useQueryClient();
   const [restarting, setRestarting] = useState<string | null>(null);
 
-  const { data: status, isLoading: loadingStatus } = useQuery({
+  const { data: status, isLoading: loadingStatus, dataUpdatedAt } = useQuery({
     queryKey: ['system-status'],
     queryFn: () => api.get('/api/system/status').then(r => r.data),
     refetchInterval: 10000,
+    staleTime: 0,
+    refetchOnMount: 'always',
   });
 
   const { data: versionData } = useQuery({
@@ -86,11 +88,41 @@ const System = () => {
         <div className="p-2 bg-primary/10 rounded-lg text-primary">
           <Monitor size={24} />
         </div>
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">Sistema</h1>
-          <p className="text-sm text-text-secondary">Monitoramento de saúde e controle de serviços</p>
+        <div className="flex-1">
+          <div className="flex items-center justify-between flex-wrap gap-4">
+            <div>
+              <h1 className="text-2xl font-bold text-text-primary">Sistema</h1>
+              <p className="text-sm text-text-secondary">Monitoramento de saúde e controle de serviços</p>
+            </div>
+            
+            <div className="flex flex-col items-end gap-1">
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-success/5 border border-success/10 rounded-full">
+                <span style={{
+                  display: 'inline-block',
+                  width: 8, height: 8,
+                  borderRadius: '50%',
+                  background: '#22c55e',
+                  animation: 'pulse 2s infinite',
+                }} />
+                <span className="text-[10px] font-bold text-success uppercase tracking-widest">Atualização automática a cada 10s</span>
+              </div>
+              {dataUpdatedAt && (
+                <p className="text-[10px] text-text-secondary font-medium mr-1">
+                  Atualizado: {new Date(dataUpdatedAt).toLocaleTimeString('pt-BR')}
+                </p>
+              )}
+            </div>
+          </div>
         </div>
       </div>
+
+      <style>{`
+        @keyframes pulse {
+          0% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.7); }
+          70% { transform: scale(1); box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+          100% { transform: scale(0.95); box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+        }
+      `}</style>
 
       {/* Section 1: Health */}
       <div className="space-y-4">

@@ -63,18 +63,40 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
       maxPps: '',
     });
 
+    const [pageSize, setPageSize] = useState(50);
+    const [page, setPage] = useState(1);
+
     const { data: eventsHistory, isLoading: historyLoading, dataUpdatedAt: eventsUpdatedAt } = useQuery({
-      queryKey: ['events-history-page'],
+      queryKey: ['events-history-page', page, pageSize, filters],
       queryFn: async () => {
-        const r = await api.get('/api/events/history?limit=500');
+        const params = new URLSearchParams({
+          limit: String(pageSize),
+          offset: String((page - 1) * pageSize),
+        });
+        
+        // Add filters to API request if needed, but the current code filters client-side.
+        // However, the user asked for limit/offset, which implies server-side pagination.
+        // I'll add the filters to the URL as well to be safe and efficient if the API supports it.
+        if (filters.ip) params.append('ip', filters.ip);
+        if (filters.direction) params.append('direction', filters.direction);
+        if (filters.status) params.append('status', filters.status);
+        
+        const r = await api.get(`/api/events/history?${params.toString()}`);
         return r.data;
       },
-     staleTime: 0,
+      staleTime: 0,
       gcTime: 0,
       refetchInterval: 10000,
       refetchOnMount: 'always',
       refetchOnWindowFocus: true,
-   });
+    });
+
+    const total = eventsHistory?.total || 0;
+    const totalPages = Math.ceil(total / pageSize);
+
+    useEffect(() => {
+      setPage(1);
+    }, [pageSize, filters]);
 
    const formatDate = (dateStr: string) => {
      if (!dateStr) return '—';
@@ -621,6 +643,45 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
                 )}
               </tbody>
             </table>
+          </div>
+
+          {/* Paginação */}
+          <div className="p-4 border-t border-border bg-bg-primary/30 flex items-center justify-between">
+            <div className="flex items-center gap-4">
+              <span className="text-xs text-text-secondary font-bold uppercase tracking-widest">Linhas por página:</span>
+              <select 
+                value={pageSize} 
+                onChange={e => setPageSize(Number(e.target.value))}
+                className="bg-bg-primary border border-border rounded px-2 py-1 text-xs text-text-primary outline-none"
+              >
+                <option value={50}>50</option>
+                <option value={100}>100</option>
+                <option value={200}>200</option>
+              </select>
+              <span className="text-xs text-text-secondary ml-4">
+                Total: <span className="text-text-primary font-bold">{total}</span>
+              </span>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button 
+                disabled={page === 1}
+                onClick={() => setPage(p => Math.max(1, p - 1))}
+                className="px-3 py-1.5 bg-bg-primary border border-border rounded-lg text-xs font-bold text-text-secondary hover:text-text-primary disabled:opacity-30 transition-all"
+              >
+                Anterior
+              </button>
+              <span className="text-xs font-bold text-text-primary px-2">
+                Página {page} de {Math.max(1, totalPages)}
+              </span>
+              <button 
+                disabled={page >= totalPages}
+                onClick={() => setPage(p => Math.min(totalPages, p + 1))}
+                className="px-3 py-1.5 bg-bg-primary border border-border rounded-lg text-xs font-bold text-text-secondary hover:text-text-primary disabled:opacity-30 transition-all"
+              >
+                Próxima
+              </button>
+            </div>
           </div>
         </div>
  
