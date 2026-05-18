@@ -1,4 +1,5 @@
  import { useState, FormEvent, useEffect } from 'react';
+ import { useAuth } from '../contexts/AuthContext';
  import { useNavigate } from '@tanstack/react-router';
  import { useTranslation } from '../hooks/useTranslation';
  import api from '../services/api';
