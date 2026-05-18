@@ -1,82 +1,80 @@
-import { useState, useEffect } from 'react';
-import { useNavigate } from '@tanstack/react-router';
- import { useTranslation } from '../hooks/useTranslation';
- import api from '../services/api';
- import { toast } from 'sonner';
-import { Shield, Lock, Eye, EyeOff, CheckCircle2 } from 'lucide-react';
+import { useState } from 'react';
+import api from '../services/api';
+import { toast } from 'sonner';
+import { 
+  Dialog, DialogContent, DialogHeader, DialogTitle, 
+  DialogFooter, DialogDescription 
+} from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { Eye, EyeOff } from 'lucide-react';
 import { clsx } from 'clsx';
- 
- export default function ChangePassword() {
+
+export function ChangeOwnPasswordModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
   const [oldPassword, setOldPassword] = useState('');
-   const [newPassword, setNewPassword] = useState('');
-   const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
+  const [newPassword, setNewPassword] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [isLoading, setIsLoading] = useState(false);
-  const navigate = useNavigate();
-   const { t } = useTranslation();
- 
-   const handleSubmit = async (e: React.FormEvent) => {
-     e.preventDefault();
-     if (newPassword !== confirmPassword) {
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
       toast.error('As senhas não coincidem');
-       return;
-     }
+      return;
+    }
     if (newPassword.length < 8) {
       toast.error('A senha deve ter pelo menos 8 caracteres');
       return;
     }
 
     setIsLoading(true);
-     try {
+    try {
       await api.post('/api/auth/change-password', { 
         old_password: oldPassword, 
         new_password: newPassword 
       });
       toast.success('Senha alterada com sucesso');
-      navigate({ to: '/dashboard' });
-     } catch (error) {
-      toast.error('Falha ao alterar senha. Verifique a senha atual.');
+      onClose();
+      setOldPassword('');
+      setNewPassword('');
+      setConfirmPassword('');
+    } catch (err: any) {
+      toast.error(`Erro: ${err.response?.data?.message || err.message}`);
     } finally {
       setIsLoading(false);
-     }
-   };
- 
-   return (
-    <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4">
-      <div className="max-w-md w-full bg-bg-secondary p-8 rounded-2xl shadow-xl border border-border relative overflow-hidden">
-        <div className="absolute top-0 left-0 w-full h-1 bg-primary/20" />
-        
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center p-3 bg-primary/10 rounded-xl mb-4">
-            <Lock className="text-primary" size={32} />
-          </div>
-          <h1 className="text-2xl font-bold text-text-primary">Alterar Senha</h1>
-          <p className="text-text-secondary text-sm mt-1">Por segurança, você precisa alterar sua senha inicial.</p>
-        </div>
+    }
+  };
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>Alterar Minha Senha</DialogTitle>
+          <DialogDescription>
+            Informe sua senha atual e a nova senha desejada.
+          </DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label htmlFor="oldPassword">Senha Atual</Label>
-            <Input
-              id="oldPassword"
+            <Label>Senha Atual</Label>
+            <Input 
               type="password"
-              value={oldPassword}
-              onChange={(e) => setOldPassword(e.target.value)}
+              value={oldPassword} 
+              onChange={e => setOldPassword(e.target.value)} 
               required
             />
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="newPassword">Nova Senha</Label>
+            <Label>Nova Senha</Label>
             <div className="relative">
-              <Input
-                id="newPassword"
+              <Input 
                 type={showPassword ? 'text' : 'password'}
-                value={newPassword}
-                onChange={(e) => setNewPassword(e.target.value)}
+                value={newPassword} 
+                onChange={e => setNewPassword(e.target.value)} 
                 required
               />
               <button 
@@ -91,22 +89,24 @@ import { clsx } from 'clsx';
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
-            <Input
-              id="confirmPassword"
+            <Label>Confirmar Nova Senha</Label>
+            <Input 
               type={showPassword ? 'text' : 'password'}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
+              value={confirmPassword} 
+              onChange={e => setConfirmPassword(e.target.value)} 
               required
             />
           </div>
-
-          <Button className="w-full mt-6 py-6 text-base font-bold" disabled={isLoading}>
-            {isLoading ? 'Salvando...' : 'Alterar Senha e Acessar'}
-          </Button>
         </form>
-      </div>
-    </div>
+
+        <DialogFooter>
+          <Button variant="outline" onClick={onClose} disabled={isLoading}>Cancelar</Button>
+          <Button onClick={handleSubmit} disabled={isLoading}>
+            {isLoading ? 'Alterando...' : 'Alterar Senha'}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   );
 }
 
@@ -146,6 +146,6 @@ function PasswordStrength({ password }: { password: string }) {
           style={{ width: `${(score / 5) * 100}%` }}
         />
       </div>
-     </div>
-   );
- }
+    </div>
+  );
+}

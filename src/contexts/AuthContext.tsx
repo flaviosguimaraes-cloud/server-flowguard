@@ -5,6 +5,7 @@
    token: string;
    username: string;
    role: string;
+  email?: string;
  }
  
  interface AuthContextType {

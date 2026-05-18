@@ -1,4 +1,4 @@
- import { Moon, Sun, Globe, LogOut, Menu, User, RefreshCw } from 'lucide-react';
+import { Moon, Sun, Globe, LogOut, Menu, User, RefreshCw, Key, ChevronDown } from 'lucide-react';
  import { clsx } from 'clsx';
 import { useState, useEffect } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
@@ -6,15 +6,26 @@ import { useTranslation } from '../hooks/useTranslation';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
 import { useUI } from '../contexts/UIContext';
+import { 
+  DropdownMenu, 
+  DropdownMenuContent, 
+  DropdownMenuItem, 
+  DropdownMenuLabel, 
+  DropdownMenuSeparator, 
+  DropdownMenuTrigger 
+} from '@/components/ui/dropdown-menu';
+import { ChangeOwnPasswordModal } from './ChangeOwnPasswordModal';
+ 
  
 export const Header = () => {
   const { t, lang, changeLanguage } = useTranslation();
-  const { user } = useAuth();
+  const { user, logout } = useAuth();
   const { theme, toggleTheme } = useTheme();
   const { toggleSidebar } = useUI();
   const queryClient = useQueryClient();
   const [countdown, setCountdown] = useState(30);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -91,16 +102,46 @@ export const Header = () => {
           {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
         </button>
 
-        <div className="flex items-center gap-3 pl-4 border-l border-border ml-2 group cursor-pointer">
-          <div className="text-right hidden sm:block">
-            <p className="text-sm font-semibold text-text-primary leading-tight">{user?.username}</p>
-            <p className="text-[10px] text-primary uppercase tracking-wider font-bold opacity-80">{user?.role}</p>
-          </div>
-          <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm shadow-md shadow-primary/20 transition-all group-hover:bg-primary/90 border border-white/10">
-            {userInitial}
-          </div>
-        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <div className="flex items-center gap-3 pl-4 border-l border-border ml-2 group cursor-pointer outline-none">
+              <div className="text-right hidden sm:block">
+                <p className="text-sm font-semibold text-text-primary leading-tight group-hover:text-primary transition-colors">{user?.username}</p>
+                <p className="text-[10px] text-primary uppercase tracking-wider font-bold opacity-80">{user?.role}</p>
+              </div>
+              <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm shadow-md shadow-primary/20 transition-all group-hover:scale-105 border border-white/10 relative">
+                {userInitial}
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-bg-secondary rounded-full border border-border flex items-center justify-center">
+                  <ChevronDown size={10} className="text-text-secondary" />
+                </div>
+              </div>
+            </div>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-56">
+            <DropdownMenuLabel>
+              <div className="flex flex-col space-y-1">
+                <p className="text-sm font-medium leading-none">{user?.username}</p>
+                <p className="text-xs leading-none text-text-secondary">{user?.email || 'Sem email'}</p>
+              </div>
+            </DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer" onClick={() => setIsPasswordModalOpen(true)}>
+              <Key className="mr-2 h-4 w-4" />
+              <span>Trocar senha</span>
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer text-danger focus:text-danger" onClick={logout}>
+              <LogOut className="mr-2 h-4 w-4" />
+              <span>Sair</span>
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
+
+      <ChangeOwnPasswordModal 
+        isOpen={isPasswordModalOpen} 
+        onClose={() => setIsPasswordModalOpen(false)} 
+      />
     </header>
   );
 };
