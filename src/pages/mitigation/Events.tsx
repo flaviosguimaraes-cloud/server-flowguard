@@ -408,7 +408,67 @@ function SectionDivider({ title }: { title: string }) {
          </div>
        </div>
  
-        {/* MELHORIA 2 — Histórico de Anomalias em Eventos */}
+        {/* SEÇÃO 2 — Blackholes Ativos (condicional) */}
+        {(activeMitigations?.items || []).length > 0 ? (
+          <>
+            <SectionDivider title="Bloqueios Ativos Agora" />
+            <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden mb-6">
+              <div className="overflow-x-auto">
+                <table className="w-full text-left border-collapse">
+                  <thead>
+                    <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
+                      <th className="px-6 py-4 border-b border-border">IP em Blackhole</th>
+                      <th className="px-6 py-4 border-b border-border">Início</th>
+                      <th className="px-6 py-4 border-b border-border">Volume</th>
+                      <th className="px-6 py-4 border-b border-border text-center">Ações</th>
+                    </tr>
+                  </thead>
+                  <tbody className="text-sm divide-y divide-border/40">
+                    {(activeMitigations.items || []).map((item: any, i: number) => (
+                      <tr key={i} className="hover:bg-danger/5 transition-colors group">
+                        <td className="px-6 py-3.5 font-mono font-bold text-text-primary text-xs">
+                          <div className="flex items-center gap-2">
+                            <div className="w-1.5 h-1.5 rounded-full bg-danger animate-pulse" />
+                            {item.ip}
+                          </div>
+                        </td>
+                        <td className="px-6 py-3.5 text-text-secondary text-xs whitespace-nowrap">
+                          <div className="flex items-center gap-1.5">
+                            <Clock size={13} opacity={0.5} /> {item.since || 'Recente'}
+                          </div>
+                        </td>
+                        <td className="px-6 py-3.5">
+                          <p className="font-bold text-text-primary text-xs">
+                            {item.pps > 1000 ? (item.pps / 1000).toFixed(1) + 'k' : item.pps} pps · {item.mbps || 0} Mbps
+                          </p>
+                        </td>
+                        <td className="px-6 py-3.5 text-center">
+                          {isAdmin && (
+                            <button 
+                              onClick={() => handleRemove(item.ip)}
+                              className="p-1.5 text-text-secondary hover:text-danger hover:bg-danger/10 rounded-lg transition-all"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          )}
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </>
+        ) : (
+          <div className="flex items-center justify-center py-4">
+            <span className="px-3 py-1 bg-success/10 text-success border border-success/20 rounded-full text-[10px] font-bold uppercase tracking-wider flex items-center gap-2">
+              <CheckCircle size={12} /> ✓ Nenhum IP em bloqueio no momento
+            </span>
+          </div>
+        )}
+
+        <SectionDivider title="Histórico" />
+
         <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
           <div className="p-5 border-b border-border bg-bg-primary/30">
             <div className="flex justify-between items-center mb-6">
