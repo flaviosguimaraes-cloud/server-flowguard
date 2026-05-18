@@ -23,6 +23,8 @@ export default function Policy() {
   const [mode, setMode] = useState<Mode>('blackhole');
   const [flowspec, setFlowspec] = useState(false);
   const [externalBlock, setExternalBlock] = useState('');
+  const [blackholeCommunity, setBlackholeCommunity] = useState('65000:666');
+  const [externalCommunity, setExternalCommunity] = useState('65000:999');
  
    const [thresholds, setThresholds] = useState<any>({
      threshold_pps: '',
@@ -33,8 +35,17 @@ export default function Policy() {
      threshold_udp_pps: '',
      threshold_udp_mbps: '',
      threshold_icmp_pps: '',
-     threshold_icmp_mbps: '',
-     ban_time: ''
+      threshold_icmp_mbps: '',
+      ban_for_pps: true,
+      ban_for_bandwidth: true,
+      ban_for_flows: false,
+      ban_for_tcp_pps: false,
+      ban_for_tcp_bandwidth: false,
+      ban_for_udp_pps: false,
+      ban_for_udp_bandwidth: false,
+      ban_for_icmp_pps: false,
+      ban_for_icmp_bandwidth: false,
+      ban_time: ''
    });
 
   useEffect(() => {
@@ -42,6 +53,8 @@ export default function Policy() {
       setMode((data.mode as Mode) || 'blackhole');
       setFlowspec(!!data.flowspec_enabled);
       setExternalBlock(data.external_block || '45.175.50.0/24');
+      setBlackholeCommunity(data.blackhole_community || '65000:666');
+      setExternalCommunity(data.external_community || '65000:999');
     }
   }, [data]);
 
@@ -66,6 +79,8 @@ export default function Policy() {
        await Promise.all([
          savePolicy.mutateAsync({
            mode,
+            blackhole_community: blackholeCommunity,
+            external_community: externalCommunity,
            threshold_pps: Number(thresholds.threshold_pps) || 0,
            threshold_mbps: Number(thresholds.threshold_mbps) || 0,
            external_block: externalBlock,
@@ -93,23 +108,21 @@ export default function Policy() {
      }
   };
 
-  const ModeCard = ({ value, title, community, description }: any) => {
+  const ModeCard = ({ value, title, community, onChangeCommunity, description }: any) => {
     const selected = mode === value;
     return (
       <button
-        type="button"
-        disabled={!isAdmin}
-        onClick={() => setMode(value)}
         className={clsx(
           "text-left p-5 rounded-xl border-2 transition-all w-full",
           selected ? "border-primary bg-primary/5 shadow-lg shadow-primary/10" : "border-border bg-bg-secondary hover:border-text-secondary/30"
         )}
+        onClick={() => setMode(value)}
       >
         <div className="flex items-center justify-between mb-3">
-          <h3 className="font-bold text-text-primary flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <Shield size={18} className={selected ? 'text-primary' : 'text-text-secondary'} />
-            {title}
-          </h3>
+            <h3 className="font-bold text-text-primary">{title}</h3>
+          </div>
           <div className={clsx(
             "w-10 h-6 rounded-full p-0.5 transition-all flex",
             selected ? "bg-primary justify-end" : "bg-bg-primary justify-start"
@@ -117,7 +130,16 @@ export default function Policy() {
             <div className="w-5 h-5 rounded-full bg-white shadow" />
           </div>
         </div>
-        <p className="text-xs text-text-secondary mb-2"><span className="font-bold">Community:</span> <span className="font-mono text-text-primary">{community}</span></p>
+        <div className="mb-3" onClick={e => e.stopPropagation()}>
+          <label className="text-[10px] font-bold text-text-secondary uppercase">Community BGP</label>
+          <input 
+            value={community} 
+            disabled={!isAdmin}
+            onChange={(e) => onChangeCommunity(e.target.value)}
+            placeholder={value === 'blackhole' ? '65000:666' : '65000:999'}
+            className="w-full mt-1 bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30" 
+          />
+        </div>
         <p className="text-xs text-text-secondary">{description}</p>
       </button>
     );
