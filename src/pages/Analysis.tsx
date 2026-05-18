@@ -365,8 +365,43 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
          <MetricCard title="Altíssimo Volume" value={metrics.suspicious} icon={<AlertCircle className="text-danger" size={20} />} />
        </div>
  
-       {/* MELHORIA 1 — Análise Avançada (Filtros) */}
-       <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm space-y-4">
+        <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm space-y-6">
+          {/* Toggle Modo de Filtro */}
+          <div className="flex items-center justify-between">
+            <div className="flex gap-1 bg-bg-primary/50 p-1 rounded-lg border border-border/50">
+              <button
+                onClick={() => setFilterMode('relative')}
+                className={clsx(
+                  "flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-bold transition-all",
+                  filterMode === 'relative' 
+                    ? "bg-primary text-white shadow-sm" 
+                    : "text-text-secondary hover:text-text-primary"
+                )}
+              >
+                <Clock size={14} />
+                Relativo
+              </button>
+              <button
+                onClick={() => setFilterMode('custom')}
+                className={clsx(
+                  "flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-bold transition-all",
+                  filterMode === 'custom' 
+                    ? "bg-primary text-white shadow-sm" 
+                    : "text-text-secondary hover:text-text-primary"
+                )}
+              >
+                <Filter size={14} />
+                Personalizado
+              </button>
+            </div>
+            {filterMode === 'relative' && (
+              <div className="flex items-center gap-2 text-[10px] text-text-secondary font-bold uppercase tracking-widest">
+                <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+                Atualização automática (30s)
+              </div>
+            )}
+          </div>
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
             {/* Row 1 */}
             <div className="space-y-1">
@@ -462,54 +497,75 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
               </select>
             </div>
 
-            {/* Row 3 */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Data/Hora Início</label>
-              <input
-                type="datetime-local"
-                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
-                value={filters.start}
-                onChange={(e) => setFilters(prev => ({ ...prev, start: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Data/Hora Fim</label>
-              <input
-                type="datetime-local"
-                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
-                value={filters.end}
-                onChange={(e) => setFilters(prev => ({ ...prev, end: e.target.value }))}
-              />
-            </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Período</label>
-              <select
-                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 appearance-none text-sm text-text-primary"
-                value={filters.minutes}
-                onChange={(e) => setFilters(prev => ({ ...prev, minutes: e.target.value }))}
-                disabled={!!filters.start}
-              >
-                <option value="2">2 min</option>
-                <option value="5">5 min</option>
-                <option value="15">15 min</option>
-                <option value="30">30 min</option>
-                <option value="60">1 hora</option>
-                <option value="360">6 horas</option>
-                <option value="1440">24 horas</option>
-              </select>
-            </div>
+            {filterMode === 'relative' ? (
+              <div className="lg:col-span-3 space-y-1">
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Período Relativo</label>
+                <div className="flex gap-2">
+                  {[30, 60, 360, 1440, 2880].map(m => (
+                    <button
+                      key={m}
+                      onClick={() => setMinutes(m)}
+                      className={clsx(
+                        "px-4 py-1.5 rounded-lg text-xs font-bold transition-all border",
+                        minutes === m
+                          ? "bg-primary border-primary text-white"
+                          : "bg-bg-primary/50 border-border text-text-secondary hover:text-text-primary"
+                      )}
+                    >
+                      {m === 30 ? '30min' : m === 60 ? '1h' : m === 360 ? '6h' : m === 1440 ? '24h' : '48h'}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            ) : (
+              <>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">De</label>
+                  <input
+                    type="datetime-local"
+                    className="w-full bg-bg-primary/50 border border-border rounded-lg py-1 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                    value={startDate}
+                    onChange={(e) => setStartDate(e.target.value)}
+                  />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Até</label>
+                  <input
+                    type="datetime-local"
+                    className="w-full bg-bg-primary/50 border border-border rounded-lg py-1 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                    value={endDate}
+                    onChange={(e) => setEndDate(e.target.value)}
+                  />
+                </div>
+                <div className="flex items-end">
+                   {isLargeInterval && (
+                     <div className="flex items-center gap-1.5 text-warning text-[10px] font-bold uppercase mb-2 animate-pulse">
+                       <AlertCircle size={12} />
+                       ⚠ Intervalo > 24h pode demorar
+                     </div>
+                   )}
+                </div>
+              </>
+            )}
+
             <div className="flex items-end gap-2">
               <button 
                 onClick={() => refetch()}
-                className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold py-1.5 rounded-lg transition-all shadow-sm text-sm uppercase tracking-wider"
+                className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold py-1.5 rounded-lg transition-all shadow-sm text-sm uppercase tracking-wider h-[38px]"
               >
-                Aplicar Filtros
+                {filterMode === 'custom' ? 'Buscar' : 'Aplicar'}
               </button>
               <button 
-                onClick={() => setFilters({
-                  src_ip: '', dst_ip: '', src_port: '', dst_port: '', proto: '', country: '', direction: '', start: '', end: '', order: 'bytes', minutes: '30'
-                })}
-                className="p-2 bg-bg-primary border border-border rounded-lg text-text-secondary hover:text-text-primary transition-all"
+                onClick={() => {
+                  setFilters({
+                    src_ip: '', dst_ip: '', src_port: '', dst_port: '', proto: '', country: '', direction: '', order: 'bytes'
+                  });
+                  setFilterMode('relative');
+                  setMinutes(30);
+                  setStartDate('');
+                  setEndDate('');
+                }}
+                className="p-2 bg-bg-primary border border-border rounded-lg text-text-secondary hover:text-text-primary transition-all h-[38px] flex items-center justify-center"
                 title="Limpar filtros"
               >
                 <X size={18} />
