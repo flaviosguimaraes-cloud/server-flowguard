@@ -47,9 +47,8 @@ export const Sidebar = () => {
       label: t('operation'), 
       icon: Settings2,
       children: [
-        { path: '/operation/bgp', label: 'BGP', icon: LinkIcon },
-        { path: '/operation/collectors', label: t('collectors'), icon: Server },
-        { path: '/operation/thresholds', label: t('thresholds'), icon: Sliders },
+         { path: '/operation/bgp', label: 'BGP', icon: LinkIcon },
+         { path: '/operation/collectors', label: t('collectors'), icon: Server },
       ]
     },
     { 
