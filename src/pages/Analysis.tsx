@@ -184,7 +184,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       country: '',
       direction: ''
     });
-    const [sortCol, setSortCol] = useState('when');
+    const [sortCol, setSortCol] = useState('bytes');
     const [sortDir, setSortDir] = useState<'asc' | 'desc'>('desc');
 
     const [groupByIP, setGroupByIP] = useState(false);
@@ -197,8 +197,12 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     useEffect(() => {
       if (filterMode === 'custom') {
         setSortCol('when');
+        setSortDir('asc');
+      } else {
+        setSortCol('bytes');
         setSortDir('desc');
       }
+      setPage(1);
     }, [filterMode]);
 
     const SORT_MAP: Record<string, string> = {
@@ -230,8 +234,20 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
         params.append('minutes', String(minutes));
       }
 
-      if (filters.src_ip) params.append('src_ip', filters.src_ip);
-      if (filters.dst_ip) params.append('dst_ip', filters.dst_ip);
+      if (filters.src_ip) {
+        if (filters.src_ip.includes('/')) {
+          params.append('src_net', filters.src_ip);
+        } else {
+          params.append('src_ip', filters.src_ip);
+        }
+      }
+      if (filters.dst_ip) {
+        if (filters.dst_ip.includes('/')) {
+          params.append('dst_net', filters.dst_ip);
+        } else {
+          params.append('dst_ip', filters.dst_ip);
+        }
+      }
       if (filters.src_port) params.append('src_port', filters.src_port);
       if (filters.dst_port) params.append('dst_port', filters.dst_port);
       if (filters.proto) params.append('proto', filters.proto);
@@ -486,7 +502,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">IP Origem</label>
               <input
                 type="text"
-                placeholder="Ex: 45.175.50 ou IP completo"
+                placeholder="Ex: 192.168.1.1 ou 10.0.0"
                 className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
                 value={filters.src_ip}
                 onChange={(e) => setFilters(prev => ({ ...prev, src_ip: e.target.value }))}
@@ -496,7 +512,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">IP Destino</label>
               <input
                 type="text"
-                placeholder="Ex: 45.175.50 ou IP completo"
+                placeholder="Ex: 192.168.1.1 ou 10.0.0"
                 className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
                 value={filters.dst_ip}
                 onChange={(e) => setFilters(prev => ({ ...prev, dst_ip: e.target.value }))}
