@@ -51,23 +51,46 @@ export default function Policy() {
      }
    }, [thresholdData]);
 
-  const save = useMutation({
-    mutationFn: (body: any) => api.put('/api/mitigation/policy', body),
-    onSuccess: () => {
-      toast.success('Política de mitigação salva');
-      qc.invalidateQueries({ queryKey: ['mitigation-policy'] });
-    },
-    onError: (e: any) => toast.error(e.response?.data?.detail || 'Erro ao salvar'),
+   const savePolicy = useMutation({
+     mutationFn: (body: any) => api.put('/api/mitigation/policy', body),
+   });
+ 
+   const saveThresholds = useMutation({
+     mutationFn: (body: any) => api.put('/api/thresholds', body),
   });
 
-  const submit = () => {
-    save.mutate({
-      mode,
-      threshold_pps: Number(pps) || 0,
-      threshold_mbps: Number(mbps) || 0,
-      external_block: externalBlock,
-      flowspec_enabled: flowspec,
-    });
+   const isPending = savePolicy.isPending || saveThresholds.isPending;
+ 
+   const submit = async () => {
+     try {
+       await Promise.all([
+         savePolicy.mutateAsync({
+           mode,
+           threshold_pps: Number(thresholds.threshold_pps) || 0,
+           threshold_mbps: Number(thresholds.threshold_mbps) || 0,
+           external_block: externalBlock,
+           flowspec_enabled: flowspec,
+         }),
+         saveThresholds.mutateAsync({
+           ...thresholds,
+           threshold_pps: Number(thresholds.threshold_pps) || 0,
+           threshold_mbps: Number(thresholds.threshold_mbps) || 0,
+           threshold_flows: Number(thresholds.threshold_flows) || 0,
+           threshold_tcp_pps: Number(thresholds.threshold_tcp_pps) || 0,
+           threshold_tcp_mbps: Number(thresholds.threshold_tcp_mbps) || 0,
+           threshold_udp_pps: Number(thresholds.threshold_udp_pps) || 0,
+           threshold_udp_mbps: Number(thresholds.threshold_udp_mbps) || 0,
+           threshold_icmp_pps: Number(thresholds.threshold_icmp_pps) || 0,
+           threshold_icmp_mbps: Number(thresholds.threshold_icmp_mbps) || 0,
+           ban_time: Number(thresholds.ban_time) || 0,
+         })
+       ]);
+       toast.success('✅ Política e limiares salvos e aplicados ao mitigador');
+       qc.invalidateQueries({ queryKey: ['mitigation-policy'] });
+       qc.invalidateQueries({ queryKey: ['thresholds-policy'] });
+     } catch (e: any) {
+       toast.error(e.response?.data?.detail || 'Erro ao salvar');
+     }
   };
 
   const ModeCard = ({ value, title, community, description }: any) => {
