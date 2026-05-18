@@ -123,30 +123,16 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
      };
     const protoName = (p: number) => p === 6 ? 'TCP' : p === 17 ? 'UDP' : p === 1 ? 'ICMP' : String(p);
 
-    const formatDate = (dateStr: string) => {
-      if (!dateStr) return '—';
-      try {
-        const d = new Date(dateStr.replace(' ', 'T'));
-        if (isNaN(d.getTime())) return '—';
-        return d.toLocaleString('pt-BR', {
-          day: '2-digit',
-          month: '2-digit',
-          hour: '2-digit',
-          minute: '2-digit',
-          second: '2-digit'
-        });
-      } catch { return '—'; }
-    };
-
     const formatTime = (str: string) => {
       if (!str) return '—';
-      // Pegar apenas data e hora do string
-      const parts = str.split(' ');
-      const date = parts[0]; // 2026-05-17
-      const time = parts[1]?.substring(0, 5); // 08:00
-      const [y, m, d] = date.split('-');
-      return `${d}/${m} ${time}`;
-      // Retorna: "17/05 08:00"
+      try {
+        const [date, time] = str.split(' ');
+        const [y, m, d] = date.split('-');
+        const hhmm = time?.slice(0, 5);
+        return `${d}/${m} ${hhmm}`;
+      } catch {
+        return str.slice(0, 16);
+      }
     };
 
     const [pageSize, setPageSize] = useState(100);
@@ -158,21 +144,51 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     const [startDate, setStartDate] = useState('');
     const [endDate, setEndDate] = useState('');
     const [maxEndDate, setMaxEndDate] = useState('');
+    const [intervalWarning, setIntervalWarning] = useState(false);
+
+    const MAX_MS = MAX_HOURS * 3600 * 1000;
 
     const handleStartChange = (value: string) => {
       setStartDate(value);
+      setIntervalWarning(false);
+
       if (!value) {
         setMaxEndDate('');
         return;
       }
+
       const start = new Date(value);
-      const maxEnd = new Date(start.getTime() + MAX_HOURS * 60 * 60 * 1000);
-      const maxEndStr = maxEnd.toISOString().slice(0, 16);
+      const maxEnd = new Date(start.getTime() + MAX_MS);
       
-      if (endDate > maxEndStr) {
+      // Para datetime-local o formato esperado é YYYY-MM-DDTHH:mm
+      // Usamos ajuste de timezone para evitar o problema de UTC
+      const tzOffset = maxEnd.getTimezoneOffset() * 60000;
+      const maxEndStr = new Date(maxEnd.getTime() - tzOffset).toISOString().slice(0, 16);
+      
+      if (endDate && endDate > maxEndStr) {
         setEndDate(maxEndStr);
+        setIntervalWarning(true);
       }
       setMaxEndDate(maxEndStr);
+    };
+
+    const handleEndChange = (value: string) => {
+      if (startDate && value) {
+        const start = new Date(startDate);
+        const end = new Date(value);
+        const diff = end.getTime() - start.getTime();
+
+        if (diff > MAX_MS) {
+          const maxEnd = new Date(start.getTime() + MAX_MS);
+          const tzOffset = maxEnd.getTimezoneOffset() * 60000;
+          const maxEndStr = new Date(maxEnd.getTime() - tzOffset).toISOString().slice(0, 16);
+          setEndDate(maxEndStr);
+          setIntervalWarning(true);
+          return;
+        }
+      }
+      setEndDate(value);
+      setIntervalWarning(false);
     };
 
     const [filters, setFilters] = useState({
