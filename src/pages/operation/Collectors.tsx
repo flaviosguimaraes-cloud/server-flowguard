@@ -291,8 +291,15 @@ export default function Collectors() {
    );
  }
 
- function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: any) {
+  function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: any) {
     const [snmpIpTouched, setSnmpIpTouched] = useState(false);
+    const [bgpLocalIpTouched, setBgpLocalIpTouched] = useState(false);
+
+    const normalizeSnmpVersion = (v: any) => {
+      if (!v) return '2c';
+      return v.toString().replace(/^v/, '');
+    };
+
    const [formData, setFormData] = useState({
      name: '',
      comment: '',
@@ -316,29 +323,30 @@ export default function Collectors() {
  
    useEffect(() => {
      if (isOpen) {
-       if (mode === 'edit' && data) {
-         setFormData({
-           name: data.name || '',
-           comment: data.comment || '',
-           host: data.host || '',
-           brand: data.brand || 'huawei',
-           flow_protocol: data.flow_protocol || 'netflow_v9',
+        if (mode === 'edit' && data) {
+          setFormData({
+            name: data.name || '',
+            comment: data.comment || '',
+            host: data.host || '',
+            brand: data.brand || 'huawei',
+            flow_protocol: data.flow_protocol || 'netflow_v9',
             flow_port: data.flow_port?.toString() || '2055',
-           snmp_community: data.snmp_community || 'public',
-           snmp_version: data.snmp_version || '2c',
+            snmp_community: data.snmp_community || 'public',
+            snmp_version: normalizeSnmpVersion(data.snmp_version),
             snmp_port: data.snmp_port?.toString() || '161',
-           snmp_ip: data.snmp_ip || '',
-           active: data.active !== false,
-           bgp_enabled: data.bgp_enabled || false,
-           bgp_remote_ip: data.bgp_remote_ip || '',
-           bgp_remote_asn: data.bgp_remote_asn?.toString() || '',
-           bgp_local_ip: data.bgp_local_ip || '',
-           bgp_local_asn: data.bgp_local_asn?.toString() || '65000',
+            snmp_ip: data.snmp_ip || data.host || '',
+            active: data.active !== false,
+            bgp_enabled: data.bgp_enabled || false,
+            bgp_remote_ip: data.bgp_remote_ip || '',
+            bgp_remote_asn: data.bgp_remote_asn?.toString() || '',
+            bgp_local_ip: data.bgp_local_ip || '',
+            bgp_local_asn: data.bgp_local_asn?.toString() || '65000',
             bgp_ipv4_unicast: data.bgp_ipv4_unicast !== false,
             bgp_flowspec: data.bgp_flowspec || false
-         });
+          });
           setSnmpIpTouched(true);
-       } else {
+          setBgpLocalIpTouched(true);
+        } else {
          setFormData({
            name: '',
            comment: '',
@@ -358,9 +366,10 @@ export default function Collectors() {
             bgp_local_asn: '65000',
             bgp_ipv4_unicast: true,
             bgp_flowspec: false
-         });
+          });
           setSnmpIpTouched(false);
-       }
+          setBgpLocalIpTouched(false);
+        }
      }
    }, [isOpen, mode, data]);
  
@@ -369,6 +378,12 @@ export default function Collectors() {
         setFormData(prev => ({ ...prev, snmp_ip: formData.host }));
       }
     }, [formData.host, snmpIpTouched]);
+
+    useEffect(() => {
+      if (formData.bgp_enabled && !bgpLocalIpTouched && formData.host) {
+        setFormData(prev => ({ ...prev, bgp_local_ip: formData.host }));
+      }
+    }, [formData.bgp_enabled, formData.host, bgpLocalIpTouched]);
 
    const handleBrandChange = (brand: string) => {
      const defaults = BRAND_DEFAULTS[brand] || BRAND_DEFAULTS.outro;
@@ -549,7 +564,13 @@ export default function Collectors() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="bgp_local_ip">IP Local</Label>
-                        <Input id="bgp_local_ip" value={formData.bgp_local_ip} onChange={e => setFormData({ ...formData, bgp_local_ip: e.target.value })} placeholder="45.175.50.219" />
+                        <Input 
+                          id="bgp_local_ip" 
+                          value={formData.bgp_local_ip} 
+                          onFocus={() => setBgpLocalIpTouched(true)}
+                          onChange={e => setFormData({ ...formData, bgp_local_ip: e.target.value })} 
+                          placeholder={formData.host || "Ex: 45.175.50.219"} 
+                        />
                         <p className="text-[10px] text-text-secondary">IP local do servidor FlowGuard</p>
                       </div>
                      <div className="space-y-2">
