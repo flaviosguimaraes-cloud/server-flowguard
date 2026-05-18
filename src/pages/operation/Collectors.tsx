@@ -94,8 +94,8 @@ export default function Collectors() {
                 isAdmin={isAdmin}
                 onEdit={() => setModal({ open: true, mode: 'edit', data: c })}
                 onDelete={() => setDeleteConfirm(c)}
-                onToggle={(active) => updateMutation.mutate({ id: c.id, data: { ...c, active } })}
-                onViewIfaces={(name, ifaces) => setOpenIfaces({ name, ifaces })}
+                onToggle={(active: boolean) => updateMutation.mutate({ id: c.id, data: { ...c, active } })}
+                onViewIfaces={(name: string, ifaces: any[]) => setOpenIfaces({ name, ifaces })}
               />
             );
           })}
