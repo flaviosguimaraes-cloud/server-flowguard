@@ -564,7 +564,13 @@ export default function Collectors() {
                       </div>
                       <div className="space-y-2">
                         <Label htmlFor="bgp_local_ip">IP Local</Label>
-                        <Input id="bgp_local_ip" value={formData.bgp_local_ip} onChange={e => setFormData({ ...formData, bgp_local_ip: e.target.value })} placeholder="45.175.50.219" />
+                        <Input 
+                          id="bgp_local_ip" 
+                          value={formData.bgp_local_ip} 
+                          onFocus={() => setBgpLocalIpTouched(true)}
+                          onChange={e => setFormData({ ...formData, bgp_local_ip: e.target.value })} 
+                          placeholder={formData.host || "Ex: 45.175.50.219"} 
+                        />
                         <p className="text-[10px] text-text-secondary">IP local do servidor FlowGuard</p>
                       </div>
                      <div className="space-y-2">
