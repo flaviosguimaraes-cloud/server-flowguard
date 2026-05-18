@@ -1,6 +1,5 @@
-import { createFileRoute } from '@tanstack/react-router'
-import Events from '../pages/Events'
+import { createFileRoute, Navigate } from '@tanstack/react-router'
 
 export const Route = createFileRoute('/events')({
-  component: Events,
+  component: () => <Navigate to="/mitigation/events" replace />,
 })
