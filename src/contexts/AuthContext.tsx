@@ -44,11 +44,14 @@
        role: data.role 
      });
  
-     if (data.must_change_password) {
-       navigate({ to: '/change-password' });
-     } else {
-       navigate({ to: '/dashboard' });
-     }
+      if (data.must_change_password) {
+        navigate({ 
+          to: '/change-password', 
+          search: { mandatory: true, username: data.username } as any
+        });
+      } else {
+        navigate({ to: '/dashboard' });
+      }
    };
  
     const logout = () => {
