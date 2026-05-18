@@ -1,9 +1,41 @@
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
-import { Bell, MessageCircle, Mail, Webhook } from 'lucide-react';
+import { 
+  Bell, MessageCircle, Mail, Webhook, Plus, Trash2, 
+  Edit2, Send, Check, X, AlertCircle, ToggleLeft, ToggleRight
+} from 'lucide-react';
 import { clsx } from 'clsx';
+import { toast } from 'sonner';
+import { 
+  Dialog, DialogContent, DialogHeader, DialogTitle, 
+  DialogFooter, DialogDescription 
+} from '@/components/ui/dialog';
+import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { 
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue 
+} from '@/components/ui/select';
+import { Switch } from '@/components/ui/switch';
+import Skeleton from '@/components/Skeleton';
 
 export default function Notifications() {
+  const queryClient = useQueryClient();
+  const isAdmin = localStorage.getItem('role') === 'admin';
+  
+  const [channelModal, setChannelModal] = useState<{ open: boolean; mode: 'add' | 'edit'; data?: any }>({
+    open: false,
+    mode: 'add'
+  });
+  
+  const [ruleModal, setRuleModal] = useState<{ open: boolean; mode: 'add' | 'edit'; data?: any }>({
+    open: false,
+    mode: 'add'
+  });
+
+  const [deleteConfirm, setDeleteConfirm] = useState<{ open: boolean; type: 'channel' | 'rule'; id: number; name: string } | null>(null);
+
   const { data: channels, isLoading: lc } = useQuery({
     queryKey: ['notif-channels'],
     queryFn: () => api.get('/api/notifications/channels').then(r => r.data).catch(() => ({ items: [] })),
@@ -16,13 +48,94 @@ export default function Notifications() {
   const channelItems = channels?.items || channels?.data || (Array.isArray(channels) ? channels : []);
   const ruleItems = rules?.items || rules?.data || (Array.isArray(rules) ? rules : []);
 
+  const eventLabels: Record<string, string> = {
+    attack_detected: "⚡ Ataque detectado",
+    mitigation_started: "🛡 Mitigação iniciada",
+    mitigation_removed: "✅ Mitigação removida",
+    bgp_session_down: "🔴 BGP offline",
+    service_down: "⚠️ Serviço offline",
+    disk_warning: "💾 Disco cheio",
+    login_failed: "🔐 Login falhou",
+    rule_created: "📋 Regra criada",
+    rule_removed: "🗑 Regra removida"
+  };
+
   const iconFor = (type: string) => {
     const t = (type || '').toLowerCase();
-    if (t.includes('telegram')) return <MessageCircle size={16} className="text-blue-500" />;
-    if (t.includes('mail') || t.includes('email')) return <Mail size={16} className="text-warning" />;
-    if (t.includes('webhook') || t.includes('http')) return <Webhook size={16} className="text-purple-500" />;
-    return <Bell size={16} className="text-primary" />;
+    if (t === 'telegram') return <MessageCircle size={18} className="text-blue-500" />;
+    if (t === 'email') return <Mail size={18} className="text-green-500" />;
+    if (t === 'webhook') return <Webhook size={18} className="text-orange-500" />;
+    if (t === 'whatsapp') return <MessageCircle size={18} className="text-green-600" />;
+    return <Bell size={18} className="text-primary" />;
   };
+
+  // Mutations for Channels
+  const createChannelMutation = useMutation({
+    mutationFn: (data: any) => api.post('/api/notifications/channels', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notif-channels'] });
+      toast.success('Canal criado com sucesso');
+      setChannelModal({ open: false, mode: 'add' });
+    },
+    onError: (err: any) => toast.error(`Erro ao criar canal: ${err.response?.data?.message || err.message}`)
+  });
+
+  const updateChannelMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => api.put(`/api/notifications/channels/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notif-channels'] });
+      toast.success('Canal atualizado');
+      setChannelModal({ open: false, mode: 'add' });
+    },
+    onError: (err: any) => toast.error(`Erro ao atualizar canal: ${err.response?.data?.message || err.message}`)
+  });
+
+  const deleteChannelMutation = useMutation({
+    mutationFn: (id: number) => api.delete(`/api/notifications/channels/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notif-channels'] });
+      toast.success('Canal removido');
+      setDeleteConfirm(null);
+    },
+    onError: (err: any) => toast.error(`Erro ao remover canal: ${err.response?.data?.message || err.message}`)
+  });
+
+  const testChannelMutation = useMutation({
+    mutationFn: (id: number) => api.post(`/api/notifications/channels/${id}/test`),
+    onSuccess: () => toast.success('✅ Mensagem de teste enviada'),
+    onError: (err: any) => toast.error(`❌ Erro no teste: ${err.response?.data?.message || err.message}`)
+  });
+
+  // Mutations for Rules
+  const createRuleMutation = useMutation({
+    mutationFn: (data: any) => api.post('/api/notifications/rules', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notif-rules'] });
+      toast.success('Regra criada com sucesso');
+      setRuleModal({ open: false, mode: 'add' });
+    },
+    onError: (err: any) => toast.error(`Erro ao criar regra: ${err.response?.data?.message || err.message}`)
+  });
+
+  const updateRuleMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => api.put(`/api/notifications/rules/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notif-rules'] });
+      toast.success('Regra atualizada');
+      setRuleModal({ open: false, mode: 'add' });
+    },
+    onError: (err: any) => toast.error(`Erro ao atualizar regra: ${err.response?.data?.message || err.message}`)
+  });
+
+  const deleteRuleMutation = useMutation({
+    mutationFn: (id: number) => api.delete(`/api/notifications/rules/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['notif-rules'] });
+      toast.success('Regra removida');
+      setDeleteConfirm(null);
+    },
+    onError: (err: any) => toast.error(`Erro ao remover regra: ${err.response?.data?.message || err.message}`)
+  });
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
