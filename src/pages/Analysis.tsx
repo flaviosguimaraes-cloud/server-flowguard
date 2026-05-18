@@ -673,7 +673,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                           <TooltipTrigger asChild>
                             <tr className="hover:bg-accent/5 transition-colors group cursor-default">
                                <td className="px-6 py-4 text-[10px] text-text-secondary font-mono whitespace-nowrap">
-                                 {formatUTC(item.time_received)}
+                                 {formatTime(item.time_received)}
                                </td>
                               <td className="px-6 py-4 text-center">
                                 <div className={clsx(
@@ -789,8 +789,8 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                     <TooltipContent className="p-4 w-80 bg-bg-secondary border-border shadow-xl">
                       <div className="space-y-3">
                         <div className="flex justify-between items-center border-b border-border pb-2">
-                          <span className="text-[10px] font-bold uppercase text-text-secondary">Detalhes do Fluxo</span>
-                          <span className="text-[10px] font-mono text-text-secondary">{formatUTC(item.time_received)}</span>
+                           <span className="text-[10px] font-bold uppercase text-text-secondary">Detalhes do Fluxo</span>
+                           <span className="text-[10px] font-mono text-text-secondary">{formatTime(item.time_received)}</span>
                         </div>
                         
                         <div className="grid grid-cols-2 gap-4">
