@@ -156,6 +156,11 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     const [pageSize, setPageSize] = useState(50);
     const [page, setPage] = useState(1);
 
+    const [filterMode, setFilterMode] = useState<'relative' | 'custom'>('relative');
+    const [minutes, setMinutes] = useState(30);
+    const [startDate, setStartDate] = useState('');
+    const [endDate, setEndDate] = useState('');
+
     const [filters, setFilters] = useState({
       src_ip: '',
       dst_ip: '',
@@ -164,10 +169,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       proto: '',
       country: '',
       direction: '',
-      start: '',
-      end: '',
       order: 'bytes',
-      minutes: '30',
     });
 
     const [groupByIP, setGroupByIP] = useState(false);
@@ -177,35 +179,30 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       setPage(1);
     }, [pageSize, filters]);
 
-    const buildQuery = () => {
+    const buildQuery = useCallback(() => {
       const params = new URLSearchParams({
         limit: String(pageSize),
         offset: String((page - 1) * pageSize),
       });
-      if (filters.minutes && !filters.start)
-        params.append('minutes', filters.minutes);
-      if (filters.src_ip)
-        params.append('src_ip', filters.src_ip);
-      if (filters.dst_ip)
-        params.append('dst_ip', filters.dst_ip);
-      if (filters.src_port)
-        params.append('src_port', filters.src_port);
-      if (filters.dst_port)
-        params.append('dst_port', filters.dst_port);
-      if (filters.proto)
-        params.append('proto', filters.proto);
-      if (filters.country)
-        params.append('country', filters.country);
-      if (filters.direction)
-        params.append('direction', filters.direction);
-      if (filters.start)
-        params.append('start', filters.start);
-      if (filters.end)
-        params.append('end', filters.end);
-      if (filters.order)
-        params.append('order', filters.order);
+
+      if (filterMode === 'custom') {
+        if (startDate) params.append('start', startDate.replace('T', ' ') + ':00');
+        if (endDate) params.append('end', endDate.replace('T', ' ') + ':00');
+      } else {
+        params.append('minutes', String(minutes));
+      }
+
+      if (filters.src_ip) params.append('src_ip', filters.src_ip);
+      if (filters.dst_ip) params.append('dst_ip', filters.dst_ip);
+      if (filters.src_port) params.append('src_port', filters.src_port);
+      if (filters.dst_port) params.append('dst_port', filters.dst_port);
+      if (filters.proto) params.append('proto', filters.proto);
+      if (filters.country) params.append('country', filters.country);
+      if (filters.direction) params.append('direction', filters.direction);
+      if (filters.order) params.append('order', filters.order);
+      
       return params.toString();
-    };
+    }, [pageSize, page, filterMode, startDate, endDate, minutes, filters]);
 
     const SortHeader = ({ field, label, align = 'left' }: { field: string, label: string, align?: 'left' | 'right' | 'center' }) => {
       const isSelected = filters.order === field;
