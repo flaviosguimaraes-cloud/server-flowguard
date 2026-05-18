@@ -22,7 +22,6 @@ import { Route as AnalysisRouteImport } from './routes/analysis'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as OperationIndexRouteImport } from './routes/operation/index'
 import { Route as MitigationIndexRouteImport } from './routes/mitigation/index'
-import { Route as OperationThresholdsRouteImport } from './routes/operation/thresholds'
 import { Route as OperationCollectorsRouteImport } from './routes/operation/collectors'
 import { Route as OperationBgpRouteImport } from './routes/operation/bgp'
 import { Route as MitigationWhitelistRouteImport } from './routes/mitigation/whitelist'
@@ -97,11 +96,6 @@ const MitigationIndexRoute = MitigationIndexRouteImport.update({
   path: '/mitigation/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const OperationThresholdsRoute = OperationThresholdsRouteImport.update({
-  id: '/operation/thresholds',
-  path: '/operation/thresholds',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const OperationCollectorsRoute = OperationCollectorsRouteImport.update({
   id: '/operation/collectors',
   path: '/operation/collectors',
@@ -163,7 +157,6 @@ export interface FileRoutesByFullPath {
   '/mitigation/whitelist': typeof MitigationWhitelistRoute
   '/operation/bgp': typeof OperationBgpRoute
   '/operation/collectors': typeof OperationCollectorsRoute
-  '/operation/thresholds': typeof OperationThresholdsRoute
   '/mitigation/': typeof MitigationIndexRoute
   '/operation/': typeof OperationIndexRoute
 }
@@ -187,7 +180,6 @@ export interface FileRoutesByTo {
   '/mitigation/whitelist': typeof MitigationWhitelistRoute
   '/operation/bgp': typeof OperationBgpRoute
   '/operation/collectors': typeof OperationCollectorsRoute
-  '/operation/thresholds': typeof OperationThresholdsRoute
   '/mitigation': typeof MitigationIndexRoute
   '/operation': typeof OperationIndexRoute
 }
@@ -212,7 +204,6 @@ export interface FileRoutesById {
   '/mitigation/whitelist': typeof MitigationWhitelistRoute
   '/operation/bgp': typeof OperationBgpRoute
   '/operation/collectors': typeof OperationCollectorsRoute
-  '/operation/thresholds': typeof OperationThresholdsRoute
   '/mitigation/': typeof MitigationIndexRoute
   '/operation/': typeof OperationIndexRoute
 }
@@ -238,7 +229,6 @@ export interface FileRouteTypes {
     | '/mitigation/whitelist'
     | '/operation/bgp'
     | '/operation/collectors'
-    | '/operation/thresholds'
     | '/mitigation/'
     | '/operation/'
   fileRoutesByTo: FileRoutesByTo
@@ -262,7 +252,6 @@ export interface FileRouteTypes {
     | '/mitigation/whitelist'
     | '/operation/bgp'
     | '/operation/collectors'
-    | '/operation/thresholds'
     | '/mitigation'
     | '/operation'
   id:
@@ -286,7 +275,6 @@ export interface FileRouteTypes {
     | '/mitigation/whitelist'
     | '/operation/bgp'
     | '/operation/collectors'
-    | '/operation/thresholds'
     | '/mitigation/'
     | '/operation/'
   fileRoutesById: FileRoutesById
@@ -311,7 +299,6 @@ export interface RootRouteChildren {
   MitigationWhitelistRoute: typeof MitigationWhitelistRoute
   OperationBgpRoute: typeof OperationBgpRoute
   OperationCollectorsRoute: typeof OperationCollectorsRoute
-  OperationThresholdsRoute: typeof OperationThresholdsRoute
   MitigationIndexRoute: typeof MitigationIndexRoute
   OperationIndexRoute: typeof OperationIndexRoute
 }
@@ -409,13 +396,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MitigationIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/operation/thresholds': {
-      id: '/operation/thresholds'
-      path: '/operation/thresholds'
-      fullPath: '/operation/thresholds'
-      preLoaderRoute: typeof OperationThresholdsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/operation/collectors': {
       id: '/operation/collectors'
       path: '/operation/collectors'
@@ -495,7 +475,6 @@ const rootRouteChildren: RootRouteChildren = {
   MitigationWhitelistRoute: MitigationWhitelistRoute,
   OperationBgpRoute: OperationBgpRoute,
   OperationCollectorsRoute: OperationCollectorsRoute,
-  OperationThresholdsRoute: OperationThresholdsRoute,
   MitigationIndexRoute: MitigationIndexRoute,
   OperationIndexRoute: OperationIndexRoute,
 }

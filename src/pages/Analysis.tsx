@@ -138,8 +138,8 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     const formatUTC = (dateStr: string) => {
       if (!dateStr) return '—';
       try {
-        // ClickHouse retorna sem timezone, assumir UTC e converter para local
-        const d = new Date(dateStr.replace(' ', 'T') + 'Z');
+         // Banco de Flows retorna sem timezone, assumir UTC e converter para local
+         const d = new Date(dateStr.replace(' ', 'T') + 'Z');
         if (isNaN(d.getTime())) return '—';
         return d.toLocaleString('pt-BR', {
           day: '2-digit',

@@ -42,13 +42,13 @@ const System = () => {
     }
   };
 
-  const services = [
-    { id: 'fastnetmon', name: 'FastNetMon' },
-    { id: 'flowguard-api', name: 'FlowGuard API' },
-    { id: 'exabgp', name: 'ExaBGP' },
-    { id: 'clickhouse', name: 'ClickHouse' },
-    { id: 'nginx', name: 'Nginx' },
-  ];
+   const services = [
+     { id: 'fastnetmon', name: 'Mitigador' },
+     { id: 'flowguard-api', name: 'FlowGuard API' },
+     { id: 'exabgp', name: 'BGP Speaker' },
+     { id: 'clickhouse', name: 'Banco de Flows' },
+     { id: 'nginx', name: 'Proxy Web' },
+   ];
 
   const systemInfo = [
     { label: 'Versão do FlowGuard', value: versionData?.version || '1.2.0-stable' },

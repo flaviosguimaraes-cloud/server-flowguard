@@ -69,16 +69,16 @@ function StatCard({ title, value, unit, icon, trend, tooltip, subtitle }: any) {
   );
 }
 
-const serviceNames: Record<string, string> = {
-  flow_collector: 'GoFlow2',
-  detection_engine: 'FastNetMon',
-  api: 'API FlowGuard',
-  flow_database: 'ClickHouse',
-  config_database: 'PostgreSQL',
-  cache: 'Redis',
-  bgp_engine: 'ExaBGP',
-  web: 'Nginx',
-};
+ const serviceNames: Record<string, string> = {
+   flow_collector: 'Coletor de Flows',
+   detection_engine: 'Mitigador',
+   api: 'API FlowGuard',
+   flow_database: 'Banco de Flows',
+   config_database: 'Banco de Configurações',
+   cache: 'Cache',
+   bgp_engine: 'BGP Speaker',
+   web: 'Proxy Web',
+ };
 
 export default function Dashboard() {
   const { t } = useTranslation();

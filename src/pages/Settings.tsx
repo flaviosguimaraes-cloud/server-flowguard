@@ -12,25 +12,13 @@ export default function Settings() {
     queryKey: ['settings'],
     queryFn: () => api.get('/api/settings').then(r => r.data).catch(() => ({})),
   });
-  const { data: thresholds } = useQuery({
-    queryKey: ['thresholds-settings'],
-    queryFn: () => api.get('/api/thresholds').then(r => r.data).catch(() => ({})),
-  });
-
   const [s, setS] = useState<any>({});
-  const [th, setTh] = useState<any>({});
 
   useEffect(() => { if (settings) setS(settings); }, [settings]);
-  useEffect(() => { if (thresholds) setTh(thresholds); }, [thresholds]);
 
   const saveSettings = useMutation({
     mutationFn: (body: any) => api.put('/api/settings', body),
     onSuccess: () => { toast.success('Configurações salvas'); qc.invalidateQueries({ queryKey: ['settings'] }); },
-    onError: (e: any) => toast.error(e.response?.data?.detail || 'Erro ao salvar'),
-  });
-  const saveThresholds = useMutation({
-    mutationFn: (body: any) => api.put('/api/thresholds', body),
-    onSuccess: () => { toast.success('Thresholds salvos'); qc.invalidateQueries({ queryKey: ['thresholds-settings'] }); },
     onError: (e: any) => toast.error(e.response?.data?.detail || 'Erro ao salvar'),
   });
 
@@ -72,25 +60,6 @@ export default function Settings() {
         )}
       </section>
 
-      <section className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm space-y-4">
-        <div className="flex items-center gap-2">
-          <Sliders className="text-warning" size={18} />
-          <h2 className="text-sm font-bold uppercase tracking-widest text-text-secondary">Thresholds</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <Field label="Threshold PPS" type="number" value={th.threshold_pps} onChange={(v: any) => setTh({ ...th, threshold_pps: v })} />
-          <Field label="Threshold Mbps" type="number" value={th.threshold_mbps} onChange={(v: any) => setTh({ ...th, threshold_mbps: v })} />
-          <Field label="Ban time (s)" type="number" value={th.ban_time} onChange={(v: any) => setTh({ ...th, ban_time: v })} />
-        </div>
-        {isAdmin && (
-          <div className="flex justify-end">
-            <button onClick={() => saveThresholds.mutate(th)} disabled={saveThresholds.isPending}
-              className="flex items-center gap-2 px-4 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-semibold disabled:opacity-50">
-              <Save size={16} /> Salvar thresholds
-            </button>
-          </div>
-        )}
-      </section>
     </div>
   );
 }
