@@ -30,6 +30,7 @@ import { Route as MitigationFlowspecRouteImport } from './routes/mitigation/flow
 import { Route as MitigationBlacklistRouteImport } from './routes/mitigation/blacklist'
 import { Route as MitigationBgpRouteImport } from './routes/mitigation/bgp'
 import { Route as MitigationActiveRouteImport } from './routes/mitigation/active'
+import { Route as AdminUsersRouteImport } from './routes/admin/users'
 
 const SystemRoute = SystemRouteImport.update({
   id: '/system',
@@ -136,6 +137,11 @@ const MitigationActiveRoute = MitigationActiveRouteImport.update({
   path: '/mitigation/active',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminUsersRoute = AdminUsersRouteImport.update({
+  id: '/admin/users',
+  path: '/admin/users',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -149,6 +155,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof NotificationsRoute
   '/settings': typeof SettingsRoute
   '/system': typeof SystemRoute
+  '/admin/users': typeof AdminUsersRoute
   '/mitigation/active': typeof MitigationActiveRoute
   '/mitigation/bgp': typeof MitigationBgpRoute
   '/mitigation/blacklist': typeof MitigationBlacklistRoute
@@ -172,6 +179,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof NotificationsRoute
   '/settings': typeof SettingsRoute
   '/system': typeof SystemRoute
+  '/admin/users': typeof AdminUsersRoute
   '/mitigation/active': typeof MitigationActiveRoute
   '/mitigation/bgp': typeof MitigationBgpRoute
   '/mitigation/blacklist': typeof MitigationBlacklistRoute
@@ -196,6 +204,7 @@ export interface FileRoutesById {
   '/notifications': typeof NotificationsRoute
   '/settings': typeof SettingsRoute
   '/system': typeof SystemRoute
+  '/admin/users': typeof AdminUsersRoute
   '/mitigation/active': typeof MitigationActiveRoute
   '/mitigation/bgp': typeof MitigationBgpRoute
   '/mitigation/blacklist': typeof MitigationBlacklistRoute
@@ -221,6 +230,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/settings'
     | '/system'
+    | '/admin/users'
     | '/mitigation/active'
     | '/mitigation/bgp'
     | '/mitigation/blacklist'
@@ -244,6 +254,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/settings'
     | '/system'
+    | '/admin/users'
     | '/mitigation/active'
     | '/mitigation/bgp'
     | '/mitigation/blacklist'
@@ -267,6 +278,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/settings'
     | '/system'
+    | '/admin/users'
     | '/mitigation/active'
     | '/mitigation/bgp'
     | '/mitigation/blacklist'
@@ -291,6 +303,7 @@ export interface RootRouteChildren {
   NotificationsRoute: typeof NotificationsRoute
   SettingsRoute: typeof SettingsRoute
   SystemRoute: typeof SystemRoute
+  AdminUsersRoute: typeof AdminUsersRoute
   MitigationActiveRoute: typeof MitigationActiveRoute
   MitigationBgpRoute: typeof MitigationBgpRoute
   MitigationBlacklistRoute: typeof MitigationBlacklistRoute
@@ -452,6 +465,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof MitigationActiveRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/users': {
+      id: '/admin/users'
+      path: '/admin/users'
+      fullPath: '/admin/users'
+      preLoaderRoute: typeof AdminUsersRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -467,6 +487,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotificationsRoute: NotificationsRoute,
   SettingsRoute: SettingsRoute,
   SystemRoute: SystemRoute,
+  AdminUsersRoute: AdminUsersRoute,
   MitigationActiveRoute: MitigationActiveRoute,
   MitigationBgpRoute: MitigationBgpRoute,
   MitigationBlacklistRoute: MitigationBlacklistRoute,
@@ -481,3 +502,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
