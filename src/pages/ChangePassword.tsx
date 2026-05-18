@@ -128,26 +128,30 @@ import { clsx } from 'clsx';
   );
 }
 
-function PasswordStrength({ password }: { password: string }) {
-  if (!password) return null;
-  
-  let score = 0;
-  if (password.length >= 8) score++;
-  if (password.length >= 12) score++;
-  if (/[A-Z]/.test(password)) score++;
-  if (/[0-9]/.test(password)) score++;
-  if (/[^A-Za-z0-9]/.test(password)) score++;
-
-  let label = 'Fraca';
-  let color = 'bg-destructive';
-  
-  if (score >= 4) {
-    label = 'Forte';
-    color = 'bg-success';
-  } else if (score >= 2) {
-    label = 'Média';
-    color = 'bg-amber-500';
-  }
+ function PasswordStrength({ password }: { password: string }) {
+   if (!password) return null;
+   
+   let label = 'Fraca';
+   let color = 'bg-destructive';
+   let score = 1; // Mínimo
+   
+   const hasSpecial = /[^A-Za-z0-9]/.test(password);
+   
+   if (password.length >= 12 && hasSpecial) {
+     label = 'Forte';
+     color = 'bg-success';
+     score = 3;
+   } else if (password.length >= 8) {
+     label = 'Média';
+     color = 'bg-amber-500';
+     score = 2;
+   } else {
+     label = 'Fraca';
+     color = 'bg-destructive';
+     score = 1;
+   }
+ 
+   const percentage = (score / 3) * 100;
 
   return (
     <div className="space-y-1">
@@ -161,7 +165,7 @@ function PasswordStrength({ password }: { password: string }) {
       <div className="h-1 w-full bg-bg-primary rounded-full overflow-hidden">
         <div 
           className={clsx("h-full transition-all duration-300", color)} 
-          style={{ width: `${(score / 5) * 100}%` }}
+           style={{ width: `${percentage}%` }}
         />
       </div>
      </div>
