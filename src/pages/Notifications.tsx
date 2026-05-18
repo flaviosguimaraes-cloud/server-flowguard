@@ -2,8 +2,9 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../services/api';
 import { 
-  Bell, MessageCircle, Mail, Webhook, Plus, Trash2, 
-  Edit2, Send, Check, X, AlertCircle, ToggleLeft, ToggleRight
+  Bell, MessageCircle, Mail, Webhook, Plus, Trash2,
+  Edit2, Send, Check, X, AlertCircle, ToggleLeft, ToggleRight,
+  PlusCircle
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { toast } from 'sonner';
