@@ -2,8 +2,18 @@ import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import { 
-  Users as UsersIcon, Plus, Edit2, Key, Power, PowerOff, 
-  User as UserIcon, Mail, Shield, Clock, Eye, EyeOff, Lock
+   Users as UsersIcon, Plus, Edit2, Key, Power, PowerOff, Trash2,
+   User as UserIcon, Mail, Shield, Clock, Eye, EyeOff, Lock, AlertTriangle
+ import {
+   AlertDialog,
+   AlertDialogAction,
+   AlertDialogCancel,
+   AlertDialogContent,
+   AlertDialogDescription,
+   AlertDialogFooter,
+   AlertDialogHeader,
+   AlertDialogTitle,
+ } from "@/components/ui/alert-dialog";
 } from 'lucide-react';
 import { toast } from 'sonner';
 import { 
@@ -28,6 +38,11 @@ export default function Users() {
   const [modal, setModal] = useState<{ open: boolean; mode: 'add' | 'edit' | 'password'; data?: any }>({
     open: false,
     mode: 'add'
+  });
+
+  const [deleteDialog, setDeleteDialog] = useState<{ open: boolean; user: any }>({
+    open: false,
+    user: null
   });
 
   const { data: users, isLoading } = useQuery({
@@ -73,6 +88,22 @@ export default function Users() {
       setModal({ open: false, mode: 'add' });
     },
     onError: (err: any) => toast.error(`Erro: ${err.response?.data?.message || err.message}`)
+  });
+
+  const deleteMutation = useMutation({
+    mutationFn: (id: number) => api.delete(`/api/users/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      toast.success('✅ Usuário removido');
+      setDeleteDialog({ open: false, user: null });
+    },
+    onError: (err: any) => {
+      if (err.response?.status === 500) {
+        toast.error("Não é possível excluir este usuário pois ele possui registros de auditoria. Use a opção Desativar instead.");
+      } else {
+        toast.error(`Erro: ${err.response?.data?.message || err.message}`);
+      }
+    }
   });
 
   return (
@@ -175,16 +206,28 @@ export default function Users() {
                         >
                           <Key size={14} />
                         </Button>
-                        {user.username !== currentUsername && (
-                          <Button 
-                            variant="ghost" 
-                            size="icon" 
-                            className={clsx("h-8 w-8", user.active ? "text-amber-500 hover:text-amber-600" : "text-success hover:text-success")}
-                            onClick={() => toggleActiveMutation.mutate({ id: user.id, active: !user.active })}
-                          >
-                            {user.active ? <PowerOff size={14} /> : <Power size={14} />}
-                          </Button>
-                        )}
+                         {user.username !== currentUsername && (
+                           <>
+                             <Button 
+                               variant="ghost" 
+                               size="icon" 
+                               className={clsx("h-8 w-8", user.active ? "text-amber-500 hover:text-amber-600" : "text-success hover:text-success")}
+                               onClick={() => toggleActiveMutation.mutate({ id: user.id, active: !user.active })}
+                               title={user.active ? "Desativar" : "Ativar"}
+                             >
+                               {user.active ? <PowerOff size={14} /> : <Power size={14} />}
+                             </Button>
+                             <Button 
+                               variant="ghost" 
+                               size="icon" 
+                               className="h-8 w-8 text-destructive hover:text-destructive/80 hover:bg-destructive/10"
+                               onClick={() => setDeleteDialog({ open: true, user })}
+                               title="Excluir"
+                             >
+                               <Trash2 size={14} />
+                             </Button>
+                           </>
+                         )}
                       </div>
                     </td>
                   </tr>
@@ -194,6 +237,37 @@ export default function Users() {
           </div>
         </div>
       )}
+
+      <AlertDialog open={deleteDialog.open} onOpenChange={(open) => setDeleteDialog({ ...deleteDialog, open })}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <div className="flex items-center gap-3 text-destructive mb-2">
+              <div className="w-10 h-10 rounded-full bg-destructive/10 flex items-center justify-center">
+                <AlertTriangle size={20} />
+              </div>
+              <AlertDialogTitle>Confirmar exclusão</AlertDialogTitle>
+            </div>
+            <AlertDialogDescription>
+              Tem certeza que deseja excluir o usuário <strong className="text-text-primary">{deleteDialog.user?.username}</strong>? Esta ação não pode ser desfeita.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel disabled={deleteMutation.isPending}>Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                if (deleteDialog.user) {
+                  deleteMutation.mutate(deleteDialog.user.id);
+                }
+              }}
+              className="bg-destructive hover:bg-destructive/90 text-white"
+              disabled={deleteMutation.isPending}
+            >
+              {deleteMutation.isPending ? 'Excluindo...' : 'Excluir'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       <UserModal 
         isOpen={modal.open && (modal.mode === 'add' || modal.mode === 'edit')}
