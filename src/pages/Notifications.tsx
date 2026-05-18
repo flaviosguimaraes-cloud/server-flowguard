@@ -484,11 +484,18 @@ function ChannelModalComponent({ isOpen, onClose, mode, data, onSubmit, isLoadin
             </div>
           )}
 
-          <DialogFooter>
-            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
-            <Button type="submit" disabled={isLoading}>
-              {isLoading ? 'Salvando...' : 'Salvar'}
-            </Button>
+          <DialogFooter className="flex justify-between items-center sm:justify-between">
+            {mode === 'edit' && (
+              <Button type="button" variant="ghost" size="sm" className="gap-2 text-xs" onClick={() => onTest(data.id)}>
+                <Send size={14} /> Testar Canal
+              </Button>
+            )}
+            <div className="flex gap-2">
+              <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+              <Button type="submit" disabled={isLoading}>
+                {isLoading ? 'Salvando...' : 'Salvar'}
+              </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>
