@@ -1,11 +1,17 @@
-import { createFileRoute } from '@tanstack/react-router';
+import { createFileRoute, Navigate } from '@tanstack/react-router';
 import Users from '../../pages/admin/Users';
 import { PrivateRoute } from '../../components/PrivateRoute';
 
 export const Route = createFileRoute('/admin/users')({
-  component: () => (
-    <PrivateRoute>
-      <Users />
-    </PrivateRoute>
-  ),
+  component: () => {
+    const role = localStorage.getItem('role');
+    if (role !== 'admin') {
+      return <Navigate to="/dashboard" replace />;
+    }
+    return (
+      <PrivateRoute>
+        <Users />
+      </PrivateRoute>
+    );
+  },
 });
