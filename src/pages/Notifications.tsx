@@ -307,7 +307,7 @@ export default function Notifications() {
       </Dialog>
 
       {/* Modal Canal */}
-      <ChannelModalComponent 
+      <ChannelModalComponent
         isOpen={channelModal.open}
         onClose={() => setChannelModal({ ...channelModal, open: false })}
         mode={channelModal.mode}
@@ -316,6 +316,7 @@ export default function Notifications() {
           if (channelModal.mode === 'add') createChannelMutation.mutate(data);
           else updateChannelMutation.mutate({ id: channelModal.data.id, data });
         }}
+        onTest={(id: number) => testChannelMutation.mutate(id)}
         isLoading={createChannelMutation.isPending || updateChannelMutation.isPending}
       />
 
