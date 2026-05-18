@@ -1,7 +1,7 @@
-import { useEffect, useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+ import { useEffect, useState } from 'react';
+ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
-import { Shield, Save, Zap } from 'lucide-react';
+ import { Shield, Save, Zap, Sliders } from 'lucide-react';
 import { toast } from 'sonner';
 import { clsx } from 'clsx';
 
@@ -15,7 +15,7 @@ export default function Policy() {
     queryKey: ['mitigation-policy'],
     queryFn: () => api.get('/api/mitigation/policy').then(r => r.data).catch(() => ({})),
   });
-  const { data: thresholds } = useQuery({
+   const { data: thresholdData } = useQuery({
     queryKey: ['thresholds-policy'],
     queryFn: () => api.get('/api/thresholds').then(r => r.data).catch(() => ({})),
   });
@@ -23,24 +23,33 @@ export default function Policy() {
   const [mode, setMode] = useState<Mode>('blackhole');
   const [flowspec, setFlowspec] = useState(false);
   const [externalBlock, setExternalBlock] = useState('');
-  const [pps, setPps] = useState<number | ''>('');
-  const [mbps, setMbps] = useState<number | ''>('');
+ 
+   const [thresholds, setThresholds] = useState<any>({
+     threshold_pps: '',
+     threshold_mbps: '',
+     threshold_flows: '',
+     threshold_tcp_pps: '',
+     threshold_tcp_mbps: '',
+     threshold_udp_pps: '',
+     threshold_udp_mbps: '',
+     threshold_icmp_pps: '',
+     threshold_icmp_mbps: '',
+     ban_time: ''
+   });
 
   useEffect(() => {
     if (data) {
       setMode((data.mode as Mode) || 'blackhole');
       setFlowspec(!!data.flowspec_enabled);
       setExternalBlock(data.external_block || '45.175.50.0/24');
-      setPps(data.threshold_pps ?? '');
-      setMbps(data.threshold_mbps ?? '');
     }
   }, [data]);
 
   useEffect(() => {
-    if (thresholds && pps === '') setPps(thresholds.threshold_pps ?? '');
-    if (thresholds && mbps === '') setMbps(thresholds.threshold_mbps ?? '');
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [thresholds]);
+     if (thresholdData) {
+       setThresholds(thresholdData);
+     }
+   }, [thresholdData]);
 
   const save = useMutation({
     mutationFn: (body: any) => api.put('/api/mitigation/policy', body),
