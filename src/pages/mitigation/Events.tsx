@@ -1,17 +1,49 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
-import { useTheme } from '../contexts/ThemeContext';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
- import api from '../services/api';
- import { useTranslation } from '../hooks/useTranslation';
- import { 
-   Shield, AlertTriangle, Clock, ArrowDown, ArrowUp, 
-   Activity, History, Zap, CheckCircle
- } from 'lucide-react';
- import { Skeleton } from '../components/Skeleton';
- import { clsx } from 'clsx';
- import MitigationModal from '../components/MitigationModal';
-  import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../components/ui/tooltip';
- import { MitigationTooltip } from '../components/MitigationTooltip';
+import { useTheme } from '../../contexts/ThemeContext';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../../services/api';
+import { useTranslation } from '../../hooks/useTranslation';
+import { 
+  Shield, AlertTriangle, Clock, ArrowDown, ArrowUp, 
+  Activity, History, Zap, CheckCircle, Trash2
+} from 'lucide-react';
+import { Skeleton } from '../../components/Skeleton';
+import { clsx } from 'clsx';
+import { toast } from 'sonner';
+import MitigationModal from '../../components/MitigationModal';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from '../../components/ui/tooltip';
+import { MitigationTooltip } from '../../components/MitigationTooltip';
+
+function SectionDivider({ title }: { title: string }) {
+  return (
+    <div style={{
+      display: 'flex',
+      alignItems: 'center',
+      gap: 12,
+      margin: '24px 0 16px',
+    }}>
+      <div style={{
+        height: 1,
+        flex: 1,
+        background: '#2a2d3e'
+      }} />
+      <span style={{
+        fontSize: 11,
+        fontWeight: 600,
+        color: '#8892a4',
+        textTransform: 'uppercase',
+        letterSpacing: '1px'
+      }}>
+        {title}
+      </span>
+      <div style={{
+        height: 1,
+        flex: 1,
+        background: '#2a2d3e'
+      }} />
+    </div>
+  );
+}
  
   export default function Events() {
     const { t } = useTranslation();
@@ -20,8 +52,25 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
    const isAdmin = localStorage.getItem('role') === 'admin';
   const queryClient = useQueryClient();
    const [isMitigationOpen, setIsMitigationOpen] = useState(false);
-   const [targetIP, setTargetIP] = useState('');
- 
+    const [targetIP, setTargetIP] = useState('');
+
+    const handleRemove = async (ip: string) => {
+      const cleanIP = ip.replace('/32', '').trim();
+
+      if (!window.confirm(`Remover bloqueio de ${cleanIP}?`)) {
+        return;
+      }
+
+      try {
+        await api.post('/api/mitigation/remove', { ip: cleanIP });
+        toast.success(`Mitigação removida: ${cleanIP}`);
+        queryClient.invalidateQueries({ queryKey: ['mitigation-active-events'] });
+        queryClient.invalidateQueries({ queryKey: ['detection-stats-events'] });
+      } catch (error: any) {
+        toast.error(error.response?.data?.detail || 'Erro ao remover mitigação');
+      }
+    };
+
     const [now, setNow] = useState(Date.now());
     useEffect(() => {
       const timer = setInterval(() => setNow(Date.now()), 1000);
