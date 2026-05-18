@@ -502,7 +502,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">IP Origem</label>
               <input
                 type="text"
-                placeholder="Ex: 192.168.1.1 ou 10.0.0"
+                placeholder="Ex: 192.168.1.1 ou 192.168.1.0/24"
                 className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
                 value={filters.src_ip}
                 onChange={(e) => setFilters(prev => ({ ...prev, src_ip: e.target.value }))}
@@ -512,7 +512,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">IP Destino</label>
               <input
                 type="text"
-                placeholder="Ex: 192.168.1.1 ou 10.0.0"
+                placeholder="Ex: 192.168.1.1 ou 192.168.1.0/24"
                 className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
                 value={filters.dst_ip}
                 onChange={(e) => setFilters(prev => ({ ...prev, dst_ip: e.target.value }))}
