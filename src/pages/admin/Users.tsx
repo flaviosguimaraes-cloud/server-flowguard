@@ -222,15 +222,24 @@ export default function Users() {
                              >
                                {user.active ? <PowerOff size={14} /> : <Power size={14} />}
                              </Button>
-                             <Button 
-                               variant="ghost" 
-                               size="icon" 
-                               className="h-8 w-8 text-destructive hover:text-destructive/80 hover:bg-destructive/10"
-                               onClick={() => setDeleteDialog({ open: true, user })}
-                               title="Excluir"
-                             >
-                               <Trash2 size={14} />
-                             </Button>
+                              <button
+                                onClick={() => setDeleteDialog({ open: true, user })}
+                                title="Excluir"
+                                style={{
+                                  background: 'transparent',
+                                  border: '1px solid #ef4444',
+                                  color: '#ef4444',
+                                  borderRadius: 6,
+                                  padding: '4px 8px',
+                                  cursor: 'pointer',
+                                  fontSize: 12,
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  justifyContent: 'center'
+                                }}
+                              >
+                                <Trash2 size={14} style={{ color: '#ef4444' }} />
+                              </button>
                            </>
                          )}
                       </div>
