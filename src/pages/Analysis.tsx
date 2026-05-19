@@ -331,8 +331,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
         filters, 
         page, 
         pageSize, 
-        filterMode, 
-        minutes, 
+        useCustomRange,
         startDate, 
         endDate,
         sortCol,
@@ -346,13 +345,13 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
           return r.data;
         } catch (error: any) {
           if (error.response?.status === 400) {
-            toast.error(error.response?.data?.detail || "Intervalo muito grande. Máximo: 6 horas.");
+            toast.error(error.response?.data?.detail || "Erro na consulta.");
           }
           throw error;
         }
       },
       staleTime: 0,
-      refetchInterval: filterMode === 'custom' ? false : 30000,
+      refetchInterval: useCustomRange ? false : 30000,
     });
 
     const connectionItems = useMemo(() => {
