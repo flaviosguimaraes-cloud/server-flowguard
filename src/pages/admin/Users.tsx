@@ -224,21 +224,15 @@ export default function Users() {
                              </Button>
                               <button
                                 onClick={() => setDeleteDialog({ open: true, user })}
-                                title="Excluir"
                                 style={{
                                   background: 'transparent',
-                                  border: '1px solid #ef4444',
-                                  color: '#ef4444',
-                                  borderRadius: 6,
-                                  padding: '4px 8px',
+                                  border: 'none',
                                   cursor: 'pointer',
-                                  fontSize: 12,
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'center'
+                                  color: 'var(--color-text-secondary)',
+                                  padding: '4px',
                                 }}
-                              >
-                                Excluir
+                                title="Excluir usuário">
+                                <Trash2 size={16} />
                               </button>
                            </>
                          )}
@@ -274,10 +268,23 @@ export default function Users() {
                   deleteMutation.mutate(deleteDialog.user.id);
                 }
               }}
-              className="bg-destructive hover:bg-destructive/90 text-white"
-              disabled={deleteMutation.isPending}
+              asChild
             >
-              {deleteMutation.isPending ? 'Excluindo...' : 'Excluir'}
+              <button
+                style={{
+                  background: '#ef4444',
+                  color: '#ffffff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '8px 16px',
+                  cursor: 'pointer',
+                  fontWeight: 500,
+                  fontSize: 14,
+                }}
+                disabled={deleteMutation.isPending}
+              >
+                {deleteMutation.isPending ? 'Excluindo...' : 'Excluir'}
+              </button>
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
