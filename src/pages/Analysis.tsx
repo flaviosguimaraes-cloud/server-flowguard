@@ -692,12 +692,6 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
             </div>
           )}
 
-          {!intervalError && !useCustomRange && (
-            <div className="flex items-center gap-2 text-[10px] text-text-secondary font-bold uppercase tracking-widest mt-2">
-              <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-              Exibindo últimos 5 minutos · Atualização automática (30s)
-            </div>
-          )}
 
           <div className="flex justify-between items-center pt-3 border-t border-border/50">
              <div className="flex items-center gap-4">
