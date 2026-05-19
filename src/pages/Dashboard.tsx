@@ -378,6 +378,7 @@ export default function Dashboard() {
     },
     enabled: isAuthenticated && selectedIfaces.length > 0 && !!selectedCollector,
     refetchInterval: 60000,
+    placeholderData: keepPreviousData,
   });
  
   useEffect(() => {
