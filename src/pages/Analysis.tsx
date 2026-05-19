@@ -653,7 +653,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
             <div className="flex items-end gap-2">
               <button 
                 onClick={() => {
-                  if (validateInterval(startDate, endDate)) {
+                  if (validateInterval()) {
                     setUseCustomRange(true);
                     handleSearch();
                   }
@@ -668,8 +668,12 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                   setSortCol('when');
                   setSortDir('desc');
                   setUseCustomRange(false);
-                  setStartDate(formatLocal(new Date(Date.now() - 5 * 60000)));
-                  setEndDate(formatLocal(new Date()));
+                  const now = new Date();
+                  const past = new Date(Date.now() - 5 * 60000);
+                  setStartDate(formatToDateInput(past));
+                  setStartTime(formatToTimeInput(past));
+                  setEndDate(formatToDateInput(now));
+                  setEndTime(formatToTimeInput(now));
                   setIntervalError('');
                   handleSearch();
                 }}
