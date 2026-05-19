@@ -34,7 +34,7 @@ import {
  } from '../components/ui/tooltip';
  import { MitigationTooltip } from '../components/MitigationTooltip';
 import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon, Settings2, Info, ArrowRight, History, Zap, CheckCircle, Clock, Globe, MapPin, Users } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { Skeleton } from '../components/Skeleton';
 import Flag from '../components/Flag';
 
