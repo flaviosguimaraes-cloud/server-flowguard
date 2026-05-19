@@ -780,10 +780,15 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                     
                     const isSuspicious = item.bytes > 1e9;
   
-                     return (
+                      return (
                         <Tooltip key={i} delayDuration={300}>
                           <TooltipTrigger asChild>
-                            <tr className="hover:bg-accent/5 transition-colors group cursor-default">
+                            <tr 
+                              onClick={() => setSelectedConnection(item)}
+                              className={clsx(
+                                "hover:bg-accent/5 transition-colors group cursor-pointer",
+                                selectedConnection === item && "bg-accent/10 border-l-2 border-accent"
+                              )}>
                                <td className="px-6 py-4 text-[10px] text-text-secondary font-mono whitespace-nowrap">
                                  {formatTime(item.time_received)}
                                </td>
