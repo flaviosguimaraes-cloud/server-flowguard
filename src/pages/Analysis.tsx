@@ -1024,7 +1024,87 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
           port={mitigationData.port}
          onSuccess={handleMitigationSuccess}
         />
+
+        <Sheet open={!!selectedConnection} onOpenChange={(open) => !open && setSelectedConnection(null)}>
+          <SheetContent side="right" className="w-[400px] sm:w-[540px] bg-bg-secondary border-l border-border p-0 overflow-y-auto">
+            {selectedConnection && (
+              <div className="flex flex-col h-full">
+                <SheetHeader className="p-6 border-b border-border bg-bg-primary/50">
+                  <SheetTitle className="text-xl font-bold text-text-primary flex items-center gap-2">
+                    Detalhes da Conexão
+                  </SheetTitle>
+                </SheetHeader>
+                
+                <div className="p-6 space-y-6">
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2 text-text-secondary font-mono text-sm">
+                      <Clock size={14} /> {formatTime(selectedConnection.time_received)}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className={clsx(
+                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
+                        (selectedConnection.flow_direction || (shouldFlip(selectedConnection) ? 'incoming' : 'outgoing')) === 'outgoing' 
+                          ? "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:text-green-400" 
+                          : "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400"
+                      )}>
+                        {(selectedConnection.flow_direction || (shouldFlip(selectedConnection) ? 'incoming' : 'outgoing')) === 'outgoing' ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+                        {(selectedConnection.flow_direction || (shouldFlip(selectedConnection) ? 'incoming' : 'outgoing')) === 'outgoing' ? 'Upload' : 'Download'}
+                      </div>
+                      <span className="text-sm font-bold text-text-primary">· {protoName(selectedConnection.proto)} · {getService(selectedConnection.dst_port)}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="bg-bg-primary/30 p-4 rounded-xl border border-border/50">
+                      <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3 border-b border-border/50 pb-1">Origem</h4>
+                      <div className="grid grid-cols-1 gap-2 text-sm">
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">IP:</span> <span className="font-mono font-bold text-text-primary">{selectedConnection.src_addr}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Porta:</span> <span className="font-mono text-text-primary">{selectedConnection.src_port}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">País:</span> <span className="flex items-center gap-1 font-medium text-text-primary"><Flag code={selectedConnection.src_country} /> {selectedConnection.src_country || '—'}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Organização:</span> <span className="text-text-primary text-right max-w-[220px] truncate font-medium" title={selectedConnection.src_org}>{selectedConnection.src_org || '—'}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Rede:</span> <span className="font-mono text-text-primary text-xs">{selectedConnection.src_net || '—'}</span></div>
+                      </div>
+                    </div>
+
+                    <div className="bg-bg-primary/30 p-4 rounded-xl border border-border/50">
+                      <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3 border-b border-border/50 pb-1">Destino</h4>
+                      <div className="grid grid-cols-1 gap-2 text-sm">
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">IP:</span> <span className="font-mono font-bold text-text-primary">{selectedConnection.dst_addr}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Porta:</span> <span className="font-mono text-text-primary">{selectedConnection.dst_port}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">País:</span> <span className="flex items-center gap-1 font-medium text-text-primary"><Flag code={selectedConnection.dst_country} /> {selectedConnection.dst_country || '—'}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Organização:</span> <span className="text-text-primary text-right max-w-[220px] truncate font-medium" title={selectedConnection.dst_org}>{selectedConnection.dst_org || '—'}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">CDN:</span> <span className="text-text-primary font-medium">{selectedConnection.cdn || '—'}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Rede:</span> <span className="font-mono text-text-primary text-xs">{selectedConnection.dst_net || '—'}</span></div>
+                      </div>
+                    </div>
+
+                    <div className="bg-bg-primary/30 p-4 rounded-xl border border-border/50">
+                      <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3 border-b border-border/50 pb-1">Tráfego</h4>
+                      <div className="grid grid-cols-1 gap-2 text-sm">
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Volume:</span> <span className="font-bold text-text-primary">{fmtBytes(selectedConnection.bytes)}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Pacotes:</span> <span className="text-text-primary font-mono">{selectedConnection.packets || '—'}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">BPP:</span> <span className="text-text-primary font-mono">{selectedConnection.bpp ? `${selectedConnection.bpp} B` : '—'}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Duração:</span> <span className="text-text-primary font-mono">{fmtDuration(selectedConnection.duration)}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">PPS:</span> <span className="text-text-primary font-mono">{selectedConnection.pps || '—'}</span></div>
+                      </div>
+                    </div>
+
+                    <div className="bg-bg-primary/30 p-4 rounded-xl border border-border/50">
+                      <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3 border-b border-border/50 pb-1">Rede</h4>
+                      <div className="grid grid-cols-1 gap-2 text-sm">
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Interface entrada:</span> <span className="text-text-primary font-medium">{selectedConnection.in_iface || '—'}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Interface saída:</span> <span className="text-text-primary font-medium">{selectedConnection.out_iface || '—'}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Next-hop:</span> <span className="font-mono text-text-primary text-xs">{selectedConnection.next_hop || '—'}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">TCP Flags:</span> <span className="font-mono font-bold" style={{ color: flagColor(selectedConnection.tcp_flags) }}>{selectedConnection.tcp_flags || '—'}</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </SheetContent>
+        </Sheet>
       </div>
      </TooltipProvider>
-   );
- }
+    );
+  }
