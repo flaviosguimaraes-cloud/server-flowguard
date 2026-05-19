@@ -50,7 +50,7 @@ export default function Notifications() {
   const ruleItems = rules?.items || rules?.data || (Array.isArray(rules) ? rules : []);
 
   const eventLabels: Record<string, string> = {
-    attack_detected: "⚡ Ataque detectado",
+    attack_detected: "⚡ Anomalia detectada",
     mitigation_started: "🛡 Mitigação iniciada",
     mitigation_removed: "✅ Mitigação removida",
     bgp_session_down: "🔴 BGP offline",
