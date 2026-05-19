@@ -152,9 +152,12 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     const toISO = (str: string) => {
       if (!str) return '';
       try {
-        const [date, time] = str.split(' ');
-        if (!date || !time) return '';
-        const [d, m, y] = date.split('/');
+        const parts = str.trim().split(' ');
+        if (parts.length !== 2) return '';
+        const [date, time] = parts;
+        const dateParts = date.split('/');
+        if (dateParts.length !== 3) return '';
+        const [d, m, y] = dateParts;
         return `${y}-${m}-${d}T${time}`;
       } catch {
         return '';
