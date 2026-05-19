@@ -126,10 +126,7 @@ import { toast } from 'sonner';
                   </div>
 
                   <div className="space-y-3 text-xs">
-                    <div>
-                      <p className="text-[10px] font-bold text-text-secondary uppercase">AS Local: {s.local_as} → AS Remoto: {s.remote_as}</p>
-                       <p className="text-text-primary mt-1">Speaker: {s.speaker || 'BGP Speaker'}</p>
-                    </div>
+                     <p className="text-[10px] font-bold text-text-secondary uppercase">AS Local: {s.local_as} → AS Remoto: {s.remote_as}</p>
 
                     <div className="flex gap-4 pt-2 border-t border-border/50">
                       <div>
@@ -171,11 +168,8 @@ import { toast } from 'sonner';
                       IPv4 FlowSpec
                     </div>
 
-                    <div className="space-y-3 text-xs">
-                      <div>
-                        <p className="text-[10px] font-bold text-text-secondary uppercase">AS Local: {s.local_as} → AS Remoto: {s.remote_as}</p>
-                         <p className="text-text-primary mt-1">Speaker: {s.speaker || 'BGP Speaker'}</p>
-                      </div>
+                     <div className="space-y-3 text-xs">
+                       <p className="text-[10px] font-bold text-text-secondary uppercase">AS Local: {s.local_as} → AS Remoto: {s.remote_as}</p>
 
                       <div className="pt-2 border-t border-border/50">
                         <div className="text-[10px] text-text-secondary uppercase">Regras ativas</div>
