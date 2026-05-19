@@ -126,7 +126,14 @@ const CDNs = () => {
     setExpandedCdn(prev => prev === cdn ? null : cdn);
   };
 
-  const items = data?.items || [];
+  const items = useMemo(() => {
+    const raw = data?.items || [];
+    return [...raw].sort((a, b) => 
+      String(b.bytes || 0).localeCompare(String(a.bytes || 0), undefined, { numeric: true }) ||
+      String(a.cdn || '').localeCompare(String(b.cdn || ''))
+    );
+  }, [data]);
+
   const cdnTotalBytes = items.reduce((acc: number, item: any) => acc + (item.bytes || 0), 0);
   
   const formatBytes = (bytes: number) => {

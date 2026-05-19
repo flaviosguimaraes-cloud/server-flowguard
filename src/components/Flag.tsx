@@ -7,7 +7,7 @@
    code, size = 20 }: FlagProps) => {
    if (!code) return <span>🌐</span>;
  
-   const lower = code.toLowerCase();
+   const lower = String(code || '').toLowerCase();
  
    return (
      <span
