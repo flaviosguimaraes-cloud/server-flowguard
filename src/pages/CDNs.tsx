@@ -140,11 +140,11 @@ const CDNs = () => {
   const barData = useMemo(() => {
     const top5 = items.slice(0, 5);
     return {
-      labels: top5.map((it: any) => it.cdn),
+      labels: top5.map((it: any) => String(it.cdn || 'Desconhecido')),
       datasets: [{
         label: 'Volume (Bytes)',
         data: top5.map((it: any) => it.bytes),
-        backgroundColor: top5.map((it: any) => CDN_COLORS[it.cdn] || '#8892a4'),
+        backgroundColor: top5.map((it: any) => CDN_COLORS[String(it.cdn)] || '#8892a4'),
         borderRadius: 4,
         barThickness: 20,
       }]
@@ -154,7 +154,8 @@ const CDNs = () => {
   const donutData = useMemo(() => {
     const cats: Record<string, number> = {};
     items.forEach((it: any) => {
-      const cat = CDN_CATEGORY[it.cdn] || 'Outros';
+      const cdnName = String(it.cdn || '');
+      const cat = CDN_CATEGORY[cdnName] || 'Outros';
       cats[cat] = (cats[cat] || 0) + it.bytes;
     });
     
