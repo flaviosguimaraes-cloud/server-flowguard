@@ -4,7 +4,7 @@ import {
   Network, CheckCircle, XCircle, BarChart3, Settings2, Server, 
   Link as LinkIcon, Sliders, Monitor, ClipboardList, 
   Settings, LogOut, ChevronDown, ChevronRight, Lock, 
-  ChevronLeft, Users as UsersIcon
+  ChevronLeft, Users as UsersIcon, Radar
 } from 'lucide-react';
  import { Link, useLocation, useNavigate } from '@tanstack/react-router';
  import { useQuery } from '@tanstack/react-query';
@@ -59,6 +59,7 @@ import { useUI } from '../contexts/UIContext';
       icon: Shield,
       children: [
         { path: '/mitigation/events', label: t('events'), icon: Activity },
+        { path: '/mitigation/threats', label: t('threats'), icon: Radar },
         { path: '/operation/bgp', label: 'BGP', icon: LinkIcon },
         { path: '/mitigation/flowspec', label: 'FlowSpec', icon: Zap },
         { path: '/mitigation/policy', label: 'Política', icon: Sliders },
