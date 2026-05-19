@@ -221,7 +221,6 @@ export default function Dashboard() {
 
   const { data: interfaces } = useQuery({
     queryKey: ['interfaces', selectedCollector],
-    enabled: isAuthenticated,
     queryFn: async () => {
       if (!selectedCollector) return null;
       const r = await api.get(`/api/collectors/${selectedCollector}/interfaces/summary`);
@@ -230,7 +229,7 @@ export default function Dashboard() {
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true,
-    enabled: !!selectedCollector,
+    enabled: isAuthenticated && !!selectedCollector,
   });
 
    const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
