@@ -34,7 +34,7 @@ import {
  } from '../components/ui/tooltip';
  import { MitigationTooltip } from '../components/MitigationTooltip';
 import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon, Settings2, Info, ArrowRight, History, Zap, CheckCircle, Clock, Globe, MapPin, Users } from 'lucide-react';
-import { Link } from '@tanstack/react-router';
+import { Link, useNavigate } from '@tanstack/react-router';
 import { Skeleton } from '../components/Skeleton';
 import Flag from '../components/Flag';
 
@@ -118,7 +118,8 @@ const sampleData = (data: any[]) => {
  };
 
 export default function Dashboard() {
-  const { t } = useTranslation();
+   const { t } = useTranslation();
+   const navigate = useNavigate();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const queryClient = useQueryClient();
@@ -188,11 +189,27 @@ export default function Dashboard() {
      const d = new Date(dateStr.replace(' ', 'T'));
      if (isNaN(d.getTime())) return '—';
      const diff = Date.now() - d.getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `há ${mins}min`;
-    const hrs = Math.floor(mins / 60);
-    return `há ${hrs}h`;
-  };
+     const mins = Math.floor(diff / 60000);
+     if (mins < 60) return `há ${mins}min`;
+     const hrs = Math.floor(mins / 60);
+     if (hrs < 24) return `há ${hrs}h`;
+     return d.toLocaleDateString('pt-BR');
+   };
+
+   const formatBw = (mbps: number) => {
+     if (mbps >= 1000)
+       return (mbps/1000).toFixed(1)+' Gbps';
+     return mbps + ' Mbps';
+   };
+
+   const formatEventTime = (str: string) => {
+     if (!str) return '—';
+     const parts = str.split(' ');
+     const date = parts[0];
+     const time = parts[1]?.slice(0,5);
+     const [y,m,d] = date.split('-');
+     return `${d}/${m} ${time}`;
+   };
 
   const { data: detection, isLoading: statsLoading } = useQuery({
     queryKey: ['detection-stats'],
@@ -756,19 +773,25 @@ export default function Dashboard() {
     );
   }
 
+  const activeCollectors = (Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || []))
+    .filter((c: any) => c.active || c.status === 'active' || c.status === 'Ativo');
+
+  const todayStr = new Date().toISOString().slice(0,10);
+  const attacksToday = activeEventsToday?.items?.filter((i: any) => i.started_at?.startsWith(todayStr)) || [];
+
   const cards = [
     {
       id: 'download',
       label: 'Download',
-      value: flowsSummary?.in_bps ? formatBpsRaw(flowsSummary.in_bps) : '0 bps',
-      detail: `Pico: ${flowsSummary?.peak_in_bps ? formatBpsRaw(flowsSummary.peak_in_bps) : '—'} · Ontem: ${flowsSummary?.yesterday_avg_in_bps ? formatBpsRaw(flowsSummary.yesterday_avg_in_bps) : '—'}`,
+      value: detection?.incoming_mbps !== undefined ? formatBw(detection.incoming_mbps) : '0 Mbps',
+      detail: detection?.incoming_pps ? `PPS: ${detection.incoming_pps.toLocaleString()}` : 'PPS: 0',
       icon: <ArrowDown className="text-blue-500" size={16} />
     },
     {
       id: 'upload',
       label: 'Upload',
-      value: flowsSummary?.out_bps ? formatBpsRaw(flowsSummary.out_bps) : '0 bps',
-      detail: `Pico: ${flowsSummary?.peak_out_bps ? formatBpsRaw(flowsSummary.peak_out_bps) : '—'} · Ontem: ${flowsSummary?.yesterday_avg_out_bps ? formatBpsRaw(flowsSummary.yesterday_avg_out_bps) : '—'}`,
+      value: detection?.outgoing_mbps !== undefined ? formatBw(detection.outgoing_mbps) : '0 Mbps',
+      detail: detection?.outgoing_pps ? `PPS: ${detection.outgoing_pps.toLocaleString()}` : 'PPS: 0',
       icon: <ArrowUp className="text-green-500" size={16} />
     },
     {
@@ -781,24 +804,28 @@ export default function Dashboard() {
     {
       id: 'collectors',
       label: 'Coletores',
-      value: (Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || []))
-        .filter((c: any) => c.status === 'active' || c.status === 'Ativo').length,
-      detail: `${(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || []))
-        .find((c: any) => c.status === 'active' || c.status === 'Ativo')?.name || '—'} · ${collectorDetailedInfo?.length || 0} interfaces`,
+      value: activeCollectors.length,
+      detail: activeCollectors.length === 1 
+        ? `${activeCollectors[0].name} · ${activeCollectors[0].host} · ${collectorDetailedInfo?.length || 0} interfaces`
+        : `${activeCollectors.length} coletores ativos`,
       icon: <Zap className="text-primary" size={16} />
     },
     {
       id: 'attacks',
       label: 'Ataques hoje',
-      value: activeEventsToday?.items?.length || 0,
-      detail: `Ontem: ${activeEventsToday?.yesterday_count || 0} · Último: ${eventsHistory?.items?.[0] ? timeAgo(eventsHistory.items[0].started_at || eventsHistory.items[0].start_time) : '—'}`,
+      value: attacksToday.length,
+      detail: attacksToday[0] 
+        ? `Último: ${attacksToday[0].ip} · ${timeAgo(attacksToday[0].started_at)}`
+        : 'Nenhum ataque hoje',
       icon: <Shield className="text-danger" size={16} />
     },
     {
       id: 'blackhole',
       label: 'Blackhole',
       value: activeMitigations?.total || 0,
-      detail: `Blacklist: ${activeMitigations?.blacklist_count || 0} · BGP: OK`,
+      detail: activeMitigations?.total > 0
+        ? activeMitigations.items.slice(0, 3).map((i: any) => `${i.ip} · ${i.pps.toLocaleString()} pps`).join(' | ')
+        : 'Nenhum IP em blackhole',
       icon: <Activity className="text-accent" size={16} />
     }
   ];
@@ -1149,30 +1176,45 @@ export default function Dashboard() {
                       event.status === 'active' ? "bg-danger animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" : "bg-text-secondary/30"
                     )} />
                     <div>
-                      <div className="text-xs font-mono font-bold text-text-primary">{event.ip}</div>
-                      <div className="text-[10px] text-text-secondary font-medium uppercase tracking-tighter opacity-70">
-                        {event.peak_pps ? `${(event.peak_pps/1000).toFixed(1)}k pps` : ''} 
-                        {event.peak_mbps ? ` · ${event.peak_mbps} Mbps` : ''}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                     <span className={clsx(
-                       "text-[9px] font-black px-1.5 py-0.5 rounded border",
-                       event.status === 'active' ? "bg-danger/10 text-danger border-danger/20" : "bg-bg-primary text-text-secondary border-border"
-                     )}>
-                       {event.status === 'active' ? 'ACTIVE' : 'REMOVED'}
-                     </span>
-                     <div className="hidden group-hover:block text-[9px] text-text-secondary animate-in fade-in slide-in-from-right-1">
-                       {fmtDuration(event.duration_seconds)} · {event.direction === 'incoming' ? 'Download' : 'Upload'} · {event.triggered_by === 'detector' ? 'Auto' : 'Manual'}
+                       <div className="text-xs font-mono font-bold text-text-primary">{event.ip}</div>
+                       <div className="text-[10px] text-text-secondary font-medium uppercase tracking-tighter opacity-70">
+                         {formatEventTime(event.started_at)} · {event.peak_pps ? `${(event.peak_pps/1000).toFixed(1)}k pps` : ''} 
+                         {event.peak_mbps ? ` · ${event.peak_mbps} Mbps` : ''}
+                       </div>
                      </div>
-                  </div>
-                </div>
-              ))}
-               {(!eventsHistory?.items || eventsHistory.items.length === 0) && (
-                <div className="py-8 text-center text-xs text-text-secondary italic">Histórico limpo</div>
-              )}
-            </div>
+                   </div>
+                   <div className="flex flex-col items-end gap-1">
+                      <span className={clsx(
+                        "text-[9px] font-black px-1.5 py-0.5 rounded border",
+                        event.status === 'active' ? "bg-danger/10 text-danger border-danger/20" : "bg-bg-primary text-text-secondary border-border"
+                      )}>
+                        {event.status === 'active' ? 'ACTIVE' : 'REMOVED'}
+                      </span>
+                      <div className="hidden group-hover:block text-[9px] text-text-secondary animate-in fade-in slide-in-from-right-1">
+                        {fmtDuration(event.duration_seconds)} · {event.direction === 'incoming' ? 'Download' : 'Upload'}
+                      </div>
+                   </div>
+                 </div>
+               ))}
+                {(!eventsHistory?.items || eventsHistory.items.length === 0) && (
+                 <div className="py-8 text-center text-xs text-text-secondary italic">Histórico limpo</div>
+               )}
+               <button
+                 onClick={() => navigate({ to: '/mitigation/events' })}
+                 style={{
+                   width: '100%',
+                   marginTop: 12,
+                   padding: '6px',
+                   fontSize: 12,
+                   background: 'transparent',
+                   border: '0.5px solid var(--color-border-tertiary)',
+                   borderRadius: 'var(--border-radius-md)',
+                   cursor: 'pointer',
+                   color: 'var(--color-text-secondary)'
+                 }}>
+                 Ver todos os eventos →
+               </button>
+             </div>
           </div>
 
           {/* PAÍSES COM MAIOR TRÁFEGO */}
@@ -1209,50 +1251,59 @@ export default function Dashboard() {
 
         {/* SEÇÃO 5 — Saúde do sistema */}
         <div className="bg-bg-secondary p-4 rounded-2xl border border-border shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-6 px-2">
-            <div className="flex items-center gap-8">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">CPU</span>
-                <span className={clsx("text-xs font-black", (sysStatus?.cpu_percent || 0) > 80 ? "text-danger" : "text-text-primary")}>
-                  {(sysStatus?.cpu_percent || 0).toFixed(1)}%
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">RAM</span>
-                <span className={clsx("text-xs font-black", (sysStatus?.ram_percent || 0) > 80 ? "text-danger" : "text-text-primary")}>
-                  {(sysStatus?.ram_percent || 0).toFixed(1)}%
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">Disco</span>
-                <span className={clsx("text-xs font-black", (sysStatus?.disk_percent || 0) > 80 ? "text-danger" : "text-text-primary")}>
-                  {(sysStatus?.disk_percent || 0).toFixed(0)}%
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">Uptime</span>
-                <span className="text-xs font-black text-text-primary">{sysStatus?.uptime || '—'}</span>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Linha 1: Recursos */}
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: 'CPU', value: sysStatus?.cpu_percent || 0, unit: '%' },
+                { label: 'RAM', value: sysStatus?.ram_percent || 0, unit: '%' },
+                { label: 'Disco', value: sysStatus?.disk_percent || 0, unit: '%' },
+              ].map((item) => (
+                <div key={item.label} className="bg-bg-primary/40 p-2 rounded-lg border border-border/40">
+                  <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60 mb-1">{item.label}</div>
+                  <div className={clsx("text-xs font-black", item.value > 80 ? "text-danger" : "text-text-primary")}>
+                    {item.value.toFixed(item.label === 'Disco' ? 0 : 1)}{item.unit}
+                  </div>
+                  <div className="h-1 bg-bg-primary rounded-full mt-1.5 overflow-hidden">
+                    <div 
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ 
+                        width: `${item.value}%`,
+                        backgroundColor: item.value > 80 ? '#E24B4A' : item.value > 60 ? '#EF9F27' : '#1D9E75'
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
 
-            <div className="flex items-center gap-8 md:border-l border-border/50 md:pl-8">
-               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">BGP</span>
-                <span className={clsx(
-                  "text-[9px] font-black px-1.5 py-0.5 rounded border",
-                  sysStatus?.services?.bgp_engine === 'active' ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"
-                )}>
-                  {sysStatus?.services?.bgp_engine === 'active' ? 'OK' : 'OFFLINE'}
-                </span>
+            {/* Linha 2: Status */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="bg-bg-primary/40 p-2 rounded-lg border border-border/40 flex flex-col justify-center">
+                <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60 mb-1">Uptime</div>
+                <div className="text-xs font-black text-text-primary truncate">{sysStatus?.uptime || '—'}</div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">Detector</span>
-                <span className={clsx(
-                  "text-[9px] font-black px-1.5 py-0.5 rounded border",
-                  sysStatus?.services?.detection_engine === 'active' ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"
-                )}>
-                  {sysStatus?.services?.detection_engine === 'active' ? 'OK' : 'OFFLINE'}
-                </span>
+              <div className="bg-bg-primary/40 p-2 rounded-lg border border-border/40 flex flex-col justify-center">
+                <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60 mb-1">BGP</div>
+                <div>
+                  <span className={clsx(
+                    "text-[9px] font-black px-1.5 py-0.5 rounded border",
+                    sysStatus?.services?.bgp_engine === 'active' ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"
+                  )}>
+                    {sysStatus?.services?.bgp_engine === 'active' ? 'OK' : 'OFFLINE'}
+                  </span>
+                </div>
+              </div>
+              <div className="bg-bg-primary/40 p-2 rounded-lg border border-border/40 flex flex-col justify-center">
+                <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60 mb-1">Detector</div>
+                <div>
+                  <span className={clsx(
+                    "text-[9px] font-black px-1.5 py-0.5 rounded border",
+                    sysStatus?.services?.detection_engine === 'active' ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"
+                  )}>
+                    {sysStatus?.services?.detection_engine === 'active' ? 'OK' : 'OFFLINE'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>

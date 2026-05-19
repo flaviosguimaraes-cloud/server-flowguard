@@ -140,11 +140,11 @@ const CDNs = () => {
   const barData = useMemo(() => {
     const top5 = items.slice(0, 5);
     return {
-      labels: top5.map((it: any) => it.cdn),
+      labels: top5.map((it: any) => String(it.cdn || 'Desconhecido')),
       datasets: [{
         label: 'Volume (Bytes)',
         data: top5.map((it: any) => it.bytes),
-        backgroundColor: top5.map((it: any) => CDN_COLORS[it.cdn] || '#8892a4'),
+        backgroundColor: top5.map((it: any) => CDN_COLORS[String(it.cdn)] || '#8892a4'),
         borderRadius: 4,
         barThickness: 20,
       }]
@@ -154,7 +154,8 @@ const CDNs = () => {
   const donutData = useMemo(() => {
     const cats: Record<string, number> = {};
     items.forEach((it: any) => {
-      const cat = CDN_CATEGORY[it.cdn] || 'Outros';
+      const cdnName = String(it.cdn || '');
+      const cat = CDN_CATEGORY[cdnName] || 'Outros';
       cats[cat] = (cats[cat] || 0) + it.bytes;
     });
     
@@ -322,9 +323,10 @@ const CDNs = () => {
         ) : (
           items.map((item: any, idx: number) => {
             const isExpanded = expandedCdn === item.cdn;
-            const color = CDN_COLORS[item.cdn] || '#8892a4';
-            const asn = CDN_ASN[item.cdn] || 'ASN Desconhecido';
-            const favicon = getFavicon(item.cdn);
+            const cdnName = String(item.cdn || '');
+            const color = CDN_COLORS[cdnName] || '#8892a4';
+            const asn = CDN_ASN[cdnName] || 'ASN Desconhecido';
+            const favicon = getFavicon(cdnName);
             
             return (
               <div key={idx} className="bg-bg-secondary rounded-2xl border border-border overflow-hidden shadow-sm transition-all hover:border-primary/30">
@@ -336,14 +338,14 @@ const CDNs = () => {
                     <div className="flex items-center gap-4">
                       <div className="w-12 h-12 rounded-xl bg-bg-primary flex items-center justify-center border border-border/50 overflow-hidden shadow-sm transition-transform group-hover:scale-105">
                         {favicon ? (
-                          <img src={favicon} alt={item.cdn} className="w-7 h-7 object-contain" />
+                          <img src={favicon} alt={cdnName} className="w-7 h-7 object-contain" />
                         ) : (
                           <Globe size={24} className="text-text-secondary opacity-30" />
                         )}
                       </div>
                       <div>
                         <div className="flex items-center gap-2">
-                          <h3 className="font-black text-text-primary text-base">{item.cdn}</h3>
+                          <h3 className="font-black text-text-primary text-base">{cdnName}</h3>
                           <span className="text-[10px] font-bold text-text-secondary bg-bg-primary px-1.5 py-0.5 rounded border border-border">
                             {asn}
                           </span>
