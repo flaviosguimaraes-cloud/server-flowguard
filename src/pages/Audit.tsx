@@ -28,9 +28,11 @@ export default function Audit() {
   const [filters, setFilters] = useState({ user: '', action: '', start: '', end: '' });
   const [pageSize, setPageSize] = useState(50);
   const [page, setPage] = useState(1);
+  const isAuthenticated = !!localStorage.getItem('access_token');
 
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['audit-logs', page, pageSize, filters],
+    enabled: isAuthenticated,
     queryFn: async () => {
       const params = new URLSearchParams({
         limit: String(pageSize),

@@ -54,6 +54,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
    const { t } = useTranslation();
    const isAdmin = localStorage.getItem('role') === 'admin';
   const queryClient = useQueryClient();
+  const isAuthenticated = !!localStorage.getItem('access_token');
 
   const MAX_HOURS = 6;
    
@@ -321,6 +322,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
  
    const { data: countriesData } = useQuery({
      queryKey: ['countries-list'],
+     enabled: isAuthenticated,
      queryFn: async () => {
        const r = await api.get('/api/flows/countries?minutes=30');
        return r.data;
@@ -351,6 +353,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
         sortCol,
         sortDir
       ],
+      enabled: isAuthenticated,
       queryFn: async () => {
         try {
           const q = buildQuery();
