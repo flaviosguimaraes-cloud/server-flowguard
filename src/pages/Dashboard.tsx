@@ -1251,50 +1251,59 @@ export default function Dashboard() {
 
         {/* SEÇÃO 5 — Saúde do sistema */}
         <div className="bg-bg-secondary p-4 rounded-2xl border border-border shadow-sm">
-          <div className="flex flex-wrap items-center justify-between gap-6 px-2">
-            <div className="flex items-center gap-8">
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">CPU</span>
-                <span className={clsx("text-xs font-black", (sysStatus?.cpu_percent || 0) > 80 ? "text-danger" : "text-text-primary")}>
-                  {(sysStatus?.cpu_percent || 0).toFixed(1)}%
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">RAM</span>
-                <span className={clsx("text-xs font-black", (sysStatus?.ram_percent || 0) > 80 ? "text-danger" : "text-text-primary")}>
-                  {(sysStatus?.ram_percent || 0).toFixed(1)}%
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">Disco</span>
-                <span className={clsx("text-xs font-black", (sysStatus?.disk_percent || 0) > 80 ? "text-danger" : "text-text-primary")}>
-                  {(sysStatus?.disk_percent || 0).toFixed(0)}%
-                </span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">Uptime</span>
-                <span className="text-xs font-black text-text-primary">{sysStatus?.uptime || '—'}</span>
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {/* Linha 1: Recursos */}
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { label: 'CPU', value: sysStatus?.cpu_percent || 0, unit: '%' },
+                { label: 'RAM', value: sysStatus?.ram_percent || 0, unit: '%' },
+                { label: 'Disco', value: sysStatus?.disk_percent || 0, unit: '%' },
+              ].map((item) => (
+                <div key={item.label} className="bg-bg-primary/40 p-2 rounded-lg border border-border/40">
+                  <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60 mb-1">{item.label}</div>
+                  <div className={clsx("text-xs font-black", item.value > 80 ? "text-danger" : "text-text-primary")}>
+                    {item.value.toFixed(item.label === 'Disco' ? 0 : 1)}{item.unit}
+                  </div>
+                  <div className="h-1 bg-bg-primary rounded-full mt-1.5 overflow-hidden">
+                    <div 
+                      className="h-full rounded-full transition-all duration-500"
+                      style={{ 
+                        width: `${item.value}%`,
+                        backgroundColor: item.value > 80 ? '#E24B4A' : item.value > 60 ? '#EF9F27' : '#1D9E75'
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
             </div>
 
-            <div className="flex items-center gap-8 md:border-l border-border/50 md:pl-8">
-               <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">BGP</span>
-                <span className={clsx(
-                  "text-[9px] font-black px-1.5 py-0.5 rounded border",
-                  sysStatus?.services?.bgp_engine === 'active' ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"
-                )}>
-                  {sysStatus?.services?.bgp_engine === 'active' ? 'OK' : 'OFFLINE'}
-                </span>
+            {/* Linha 2: Status */}
+            <div className="grid grid-cols-3 gap-2">
+              <div className="bg-bg-primary/40 p-2 rounded-lg border border-border/40 flex flex-col justify-center">
+                <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60 mb-1">Uptime</div>
+                <div className="text-xs font-black text-text-primary truncate">{sysStatus?.uptime || '—'}</div>
               </div>
-              <div className="flex items-center gap-2">
-                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">Detector</span>
-                <span className={clsx(
-                  "text-[9px] font-black px-1.5 py-0.5 rounded border",
-                  sysStatus?.services?.detection_engine === 'active' ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"
-                )}>
-                  {sysStatus?.services?.detection_engine === 'active' ? 'OK' : 'OFFLINE'}
-                </span>
+              <div className="bg-bg-primary/40 p-2 rounded-lg border border-border/40 flex flex-col justify-center">
+                <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60 mb-1">BGP</div>
+                <div>
+                  <span className={clsx(
+                    "text-[9px] font-black px-1.5 py-0.5 rounded border",
+                    sysStatus?.services?.bgp_engine === 'active' ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"
+                  )}>
+                    {sysStatus?.services?.bgp_engine === 'active' ? 'OK' : 'OFFLINE'}
+                  </span>
+                </div>
+              </div>
+              <div className="bg-bg-primary/40 p-2 rounded-lg border border-border/40 flex flex-col justify-center">
+                <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60 mb-1">Detector</div>
+                <div>
+                  <span className={clsx(
+                    "text-[9px] font-black px-1.5 py-0.5 rounded border",
+                    sysStatus?.services?.detection_engine === 'active' ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"
+                  )}>
+                    {sysStatus?.services?.detection_engine === 'active' ? 'OK' : 'OFFLINE'}
+                  </span>
+                </div>
               </div>
             </div>
           </div>
