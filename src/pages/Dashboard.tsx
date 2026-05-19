@@ -873,24 +873,24 @@ export default function Dashboard() {
                 onMouseEnter={() => setHoveredCard(card.id)}
                 onMouseLeave={() => setHoveredCard(null)}
                 className={clsx(
-                  "relative overflow-hidden flex flex-col justify-between p-5 rounded-2xl border transition-all duration-300 cursor-default min-h-[110px]",
-                  "bg-white dark:bg-bg-secondary border-border/40 shadow-[0_2px_8px_rgba(0,0,0,0.02)]",
-                  "hover:-translate-y-1 hover:shadow-[0_8px_20px_rgba(0,0,0,0.06)] hover:border-primary/20"
+                  "relative overflow-hidden flex flex-col justify-between p-5 rounded-2xl border transition-all duration-300 cursor-default min-h-[120px]",
+                  "bg-white dark:bg-bg-secondary border-border/40 shadow-[0_2px_10px_rgba(0,0,0,0.02)]",
+                  "hover:-translate-y-1.5 hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)] hover:border-primary/30"
                 )}
               >
                 <div className="flex justify-between items-start">
-                  <div className="flex flex-col gap-0.5">
+                  <div className="flex flex-col gap-1">
                     <span className="text-[9px] font-bold text-text-secondary uppercase tracking-widest opacity-60 flex items-center">
                       {card.label}
                       {(card.id === 'download' || card.id === 'upload' || card.id === 'flows' || card.id === 'blackhole') && <FlowBadge />}
                     </span>
-                    <div className="text-xl font-bold text-text-primary tracking-tight mt-1">
+                    <div className="text-2xl font-bold text-text-primary tracking-tight mt-1">
                       {card.value}
                     </div>
                   </div>
                   <div className={clsx(
-                    "p-2 rounded-xl bg-bg-primary/50 border border-border/30 transition-all duration-300",
-                    isHovered && "scale-110 bg-bg-primary border-primary/20"
+                    "p-2.5 rounded-xl bg-bg-primary/50 border border-border/30 transition-all duration-300",
+                    isHovered && "scale-110 bg-bg-primary border-primary/20 shadow-sm"
                   )}>
                     {card.icon}
                   </div>
@@ -898,9 +898,9 @@ export default function Dashboard() {
                 
                 <div className={clsx(
                   "overflow-hidden transition-all duration-300 ease-in-out",
-                  isHovered ? "max-h-12 opacity-100 mt-3" : "max-h-0 opacity-0 mt-0"
+                  isHovered ? "max-h-12 opacity-100 mt-4" : "max-h-0 opacity-0 mt-0"
                 )}>
-                  <div className="text-[10px] text-text-secondary pt-2 border-t border-border/20 whitespace-nowrap overflow-hidden text-ellipsis italic">
+                  <div className="text-[10px] text-text-secondary pt-3 border-t border-border/20 whitespace-nowrap overflow-hidden text-ellipsis italic">
                     {card.detail}
                   </div>
                 </div>
