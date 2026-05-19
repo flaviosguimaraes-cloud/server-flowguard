@@ -25,7 +25,7 @@ import { toast } from 'sonner';
      refetchInterval: 10000,
    });
  
-    const activeFlowspecCount = (flowspecData?.items || []).filter((item: any) => item.status === 'active').length;
+    const activeFlowspecCount = routes.filter((r: any) => r.type === 'flowspec').length;
  
    const calcUptime = (logTail: string) => {
      if (!logTail) return '—';
