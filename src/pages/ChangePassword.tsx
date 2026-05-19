@@ -62,11 +62,7 @@ import { clsx } from 'clsx';
 
         <div className="text-center mb-8">
           <div className="inline-flex items-center justify-center p-3.5 bg-primary/10 rounded-xl mb-6 border border-primary/10">
-            {mandatory ? (
-              <ShieldCheck className="text-primary" size={40} />
-            ) : (
-              <Lock className="text-primary" size={40} />
-            )}
+            <Lock className="text-primary" size={40} />
           </div>
           <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-1">FlowGuard</h1>
           <p className="text-text-secondary font-bold text-[10px] uppercase tracking-widest opacity-60 mb-8">Network Intelligence & DDoS Mitigation</p>
