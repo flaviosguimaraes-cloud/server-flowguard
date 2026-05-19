@@ -110,7 +110,32 @@ export default function Dashboard() {
   const isAuthenticated = !!localStorage.getItem('access_token');
   const [countdown, setCountdown] = useState(30);
   const [hoveredIP, setHoveredIP] = useState<string | null>(null);
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const [selectedCollector, setSelectedCollector] = useState<number>(() => {
+    const saved = localStorage.getItem('fg_collector');
+    const parsed = saved ? parseInt(saved) : 1;
+    return isNaN(parsed) ? 1 : parsed;
+  });
+
+  const [selectedIfaces, setSelectedIfaces] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('fg_ifaces');
+      const parsed = saved ? JSON.parse(saved) : null;
+      return Array.isArray(parsed) ? parsed : [];
+    } catch { return []; }
+  });
+
+  const [source] = useState<'snmp'>('snmp');
+  const [selectedMinutes, setSelectedMinutes] = useState(() => {
+    const saved = localStorage.getItem('fg_collector_period');
+    return saved ? parseInt(saved) : 30;
+  });
+  const [showIfaceSelector, setShowIfaceSelector] = useState(false);
+
+  const [periodASN, setPeriodASN] = useState(60);
+  const [periodCDN, setPeriodCDN] = useState(60);
 
   // Timer visual
   useEffect(() => {
@@ -136,6 +161,13 @@ export default function Dashboard() {
     };
   }, [queryClient]);
 
+  const cleanOrg = (org: string) => {
+    let cleaned = org.replace(/^(AS\d+)\s+/, '$1 · ');
+    return cleaned.length > 28
+      ? cleaned.substring(0, 25) + '...'
+      : cleaned;
+  };
+
    const timeAgo = (dateStr: string) => {
      if (!dateStr) return '—';
      const d = new Date(dateStr.replace(' ', 'T'));
@@ -160,14 +192,14 @@ export default function Dashboard() {
   });
 
   const { data: asnStats } = useQuery({
-    queryKey: ['asns'],
-    queryFn: () => api.get('/api/flows/asns?minutes=60&limit=5').then(r => r.data),
+    queryKey: ['asns', periodASN],
+    queryFn: () => api.get(`/api/flows/asns?minutes=${periodASN}&limit=5`).then(r => r.data),
     enabled: isAuthenticated,
   });
 
   const { data: cdnStats } = useQuery({
-    queryKey: ['cdns-consumption'],
-    queryFn: () => api.get('/api/flows/cdns?minutes=60').then(r => r.data),
+    queryKey: ['cdns-consumption', periodCDN],
+    queryFn: () => api.get(`/api/flows/cdns?minutes=${periodCDN}`).then(r => r.data),
     enabled: isAuthenticated,
   });
 
@@ -177,12 +209,12 @@ export default function Dashboard() {
     enabled: isAuthenticated,
   });
 
-   const { data: flowsSummary } = useQuery({
-     queryKey: ['flows-summary'],
-     queryFn: () => api.get('/api/flows/summary').then(r => r.data),
-     enabled: isAuthenticated,
-     refetchInterval: 30000,
-   });
+  const { data: flowsSummary } = useQuery({
+    queryKey: ['flows-summary'],
+    queryFn: () => api.get('/api/flows/summary').then(r => r.data),
+    enabled: isAuthenticated,
+    refetchInterval: 30000,
+  });
 
    const { data: eventsHistory, isLoading: loadingEvents, dataUpdatedAt: eventsUpdatedAt } = useQuery({
      queryKey: ['events-history-dashboard'],
@@ -210,6 +242,7 @@ export default function Dashboard() {
     queryFn: () => api.get(`/api/collectors/${selectedCollector}/interfaces`).then(r => r.data),
     enabled: isAuthenticated && !!selectedCollector,
   });
+
 
 
   const dirLabel = (dir: string) => {
