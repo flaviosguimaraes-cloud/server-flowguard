@@ -421,7 +421,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
         }
       },
       staleTime: 0,
-      refetchInterval: useCustomRange ? false : 30000,
+      refetchInterval: false,
     });
 
     const connectionItems = useMemo(() => {
