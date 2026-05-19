@@ -799,8 +799,18 @@ export default function Dashboard() {
   const activeCollectors = (Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || []))
     .filter((c: any) => c.active || c.status === 'active' || c.status === 'Ativo');
 
-  const todayStr = new Date().toISOString().slice(0,10);
-  const attacksToday = activeEventsToday?.items?.filter((i: any) => i.started_at?.startsWith(todayStr)) || [];
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterdayStr = yesterdayDate.toISOString().slice(0, 10);
+
+  const anomaliasHoje = activeEventsToday?.items?.filter((i: any) => 
+    i.started_at && i.started_at.slice(0, 10) === todayStr
+  ) || [];
+
+  const anomaliasOntem = activeEventsToday?.items?.filter((i: any) => 
+    i.started_at && i.started_at.slice(0, 10) === yesterdayStr
+  ) || [];
 
   const cards = [
     {
