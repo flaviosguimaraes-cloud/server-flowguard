@@ -11,9 +11,15 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
  import { Skeleton } from '../components/Skeleton';
  import { clsx } from 'clsx';
 import { toast } from 'sonner';
-  import { 
-    Tooltip, TooltipTrigger, TooltipContent, TooltipProvider 
-  } from '../components/ui/tooltip';
+import { 
+  Tooltip, TooltipTrigger, TooltipContent, TooltipProvider 
+} from '../components/ui/tooltip';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '../components/ui/sheet';
 import MitigationModal from '../components/MitigationModal';
 
 function MetricCard({ title, value, icon }: any) {
@@ -140,38 +146,74 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     const [page, setPage] = useState(1);
     const [searchTrigger, setSearchTrigger] = useState(0);
 
-    const formatLocal = (date: Date) => {
-      const d = String(date.getDate()).padStart(2, '0');
-      const m = String(date.getMonth() + 1).padStart(2, '0');
+    const formatToDateInput = (date: Date) => {
       const y = date.getFullYear();
-      const hh = String(date.getHours()).padStart(2, '0');
-      const mm = String(date.getMinutes()).padStart(2, '0');
-      return `${d}/${m}/${y} ${hh}:${mm}`;
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
     };
 
-    const toISO = (str: string) => {
-      if (!str) return '';
-      try {
-        const parts = str.trim().split(' ');
-        if (parts.length !== 2) return '';
-        const [date, time] = parts;
-        const dateParts = date.split('/');
-        if (dateParts.length !== 3) return '';
-        const [d, m, y] = dateParts;
-        return `${y}-${m}-${d}T${time}`;
-      } catch {
-        return '';
+    const formatToTimeInput = (date: Date) => {
+      const h = String(date.getHours()).padStart(2, '0');
+      const mm = String(date.getMinutes()).padStart(2, '0');
+      return `${h}:${mm}`;
+    };
+
+    const toISO = (dateStr: string, timeStr: string) => {
+      if (!dateStr || !timeStr) return '';
+      return `${dateStr}T${timeStr}`;
+    };
+
+    const [startDate, setStartDate] = useState(formatToDateInput(new Date(Date.now() - 5 * 60000)));
+    const [startTime, setStartTime] = useState(formatToTimeInput(new Date(Date.now() - 5 * 60000)));
+    const [endDate, setEndDate] = useState(formatToDateInput(new Date()));
+    const [endTime, setEndTime] = useState(formatToTimeInput(new Date()));
+    
+    const [useCustomRange, setUseCustomRange] = useState(false);
+    const [intervalError, setIntervalError] = useState('');
+    const [selectedConnection, setSelectedConnection] = useState<any>(null);
+
+    const handleStartChange = (newDate?: string, newTime?: string) => {
+      const d = newDate || startDate;
+      const t = newTime || startTime;
+      if (newDate) setStartDate(d);
+      if (newTime) setStartTime(t);
+
+      const s = new Date(`${d}T${t}`);
+      const e = new Date(`${endDate}T${endTime}`);
+      
+      const diffHours = (e.getTime() - s.getTime()) / 3600000;
+      if (diffHours > 2 || diffHours < 0) {
+        // Ajustar fim para início + 2h
+        const maxEnd = new Date(s.getTime() + 2 * 3600000);
+        setEndDate(formatToDateInput(maxEnd));
+        setEndTime(formatToTimeInput(maxEnd));
       }
     };
 
-    const [startDate, setStartDate] = useState(formatLocal(new Date(Date.now() - 5 * 60000)));
-    const [endDate, setEndDate] = useState(formatLocal(new Date()));
-    const [useCustomRange, setUseCustomRange] = useState(false);
-    const [intervalError, setIntervalError] = useState('');
+    const handleEndChange = (newDate?: string, newTime?: string) => {
+      const d = newDate || endDate;
+      const t = newTime || endTime;
+      if (newDate) setEndDate(d);
+      if (newTime) setEndTime(t);
 
-    const validateInterval = (start: string, end: string) => {
-      const s = new Date(toISO(start));
-      const e = new Date(toISO(end));
+      const s = new Date(`${startDate}T${startTime}`);
+      const e = new Date(`${d}T${t}`);
+      const diffHours = (e.getTime() - s.getTime()) / 3600000;
+      
+      if (diffHours > 2) {
+        const maxEnd = new Date(s.getTime() + 2 * 3600000);
+        setEndDate(formatToDateInput(maxEnd));
+        setEndTime(formatToTimeInput(maxEnd));
+      } else if (diffHours < 0) {
+        setEndDate(startDate);
+        setEndTime(startTime);
+      }
+    };
+
+    const validateInterval = () => {
+      const s = new Date(`${startDate}T${startTime}`);
+      const e = new Date(`${endDate}T${endTime}`);
       if (isNaN(s.getTime()) || isNaN(e.getTime())) return true;
       
       const diff = e.getTime() - s.getTime();
@@ -214,11 +256,11 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
 
     const currentIntervalMinutes = useMemo(() => {
       if (!useCustomRange) return 5;
-      const s = new Date(toISO(startDate));
-      const e = new Date(toISO(endDate));
+      const s = new Date(`${startDate}T${startTime}`);
+      const e = new Date(`${endDate}T${endTime}`);
       if (isNaN(s.getTime()) || isNaN(e.getTime())) return 5;
       return Math.max(1, Math.round((e.getTime() - s.getTime()) / 60000));
-    }, [useCustomRange, startDate, endDate]);
+    }, [useCustomRange, startDate, startTime, endDate, endTime]);
 
     const SORT_MAP: Record<string, string> = {
       'when':      'recent',
@@ -236,16 +278,33 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     };
 
     const buildQuery = useCallback(() => {
+      let defaultOrder = 'recent';
+      if (useCustomRange) {
+        defaultOrder = 'recent_asc';
+      }
+
+      const order = sortDir === 'asc' 
+        ? (SORT_MAP[sortCol] || defaultOrder) + (SORT_MAP[sortCol] ? '_asc' : '')
+        : (SORT_MAP[sortCol] || defaultOrder) + (SORT_MAP[sortCol] === 'recent' && defaultOrder === 'recent_asc' ? '_asc' : '');
+
+      // Simplified order logic for common case
+      let finalOrder = sortDir === 'asc' ? (SORT_MAP[sortCol] || 'recent') + '_asc' : (SORT_MAP[sortCol] || 'recent');
+      
+      // Override if it's the default sort and we have a custom range
+      if (sortCol === 'when' && sortDir === 'desc' && useCustomRange) {
+        finalOrder = 'recent_asc';
+      }
+
       const params = new URLSearchParams({
         limit: String(pageSize),
         offset: String((page - 1) * pageSize),
         le: '1000',
-        order: sortDir === 'asc' ? (SORT_MAP[sortCol] || 'recent') + '_asc' : (SORT_MAP[sortCol] || 'recent'),
+        order: finalOrder,
       });
 
       if (useCustomRange && startDate && endDate) {
-        params.append('start', toISO(startDate));
-        params.append('end', toISO(endDate));
+        params.append('start', toISO(startDate, startTime));
+        params.append('end', toISO(endDate, endTime));
       } else {
         params.append('minutes', '5');
       }
@@ -476,25 +535,39 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
         <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {/* Row 1 */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Início (dd/mm/aaaa HH:mm)</label>
-              <input
-                type="text"
-                placeholder="Ex: 19/05/2026 14:30"
-                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+            <div className="space-y-1 col-span-1 md:col-span-2">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">De</label>
+              <div className="flex gap-2">
+                <input
+                  type="date"
+                  className="flex-1 bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                  value={startDate}
+                  onChange={(e) => handleStartChange(e.target.value, undefined)}
+                />
+                <input
+                  type="time"
+                  className="w-32 bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                  value={startTime}
+                  onChange={(e) => handleStartChange(undefined, e.target.value)}
+                />
+              </div>
             </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Fim (dd/mm/aaaa HH:mm)</label>
-              <input
-                type="text"
-                placeholder="Ex: 19/05/2026 14:35"
-                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
+            <div className="space-y-1 col-span-1 md:col-span-2">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Até</label>
+              <div className="flex gap-2">
+                <input
+                  type="date"
+                  className="flex-1 bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                  value={endDate}
+                  onChange={(e) => handleEndChange(e.target.value, undefined)}
+                />
+                <input
+                  type="time"
+                  className="w-32 bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                  value={endTime}
+                  onChange={(e) => handleEndChange(undefined, e.target.value)}
+                />
+              </div>
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">IP Origem</label>
@@ -580,7 +653,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
             <div className="flex items-end gap-2">
               <button 
                 onClick={() => {
-                  if (validateInterval(startDate, endDate)) {
+                  if (validateInterval()) {
                     setUseCustomRange(true);
                     handleSearch();
                   }
@@ -595,8 +668,12 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                   setSortCol('when');
                   setSortDir('desc');
                   setUseCustomRange(false);
-                  setStartDate(formatLocal(new Date(Date.now() - 5 * 60000)));
-                  setEndDate(formatLocal(new Date()));
+                  const now = new Date();
+                  const past = new Date(Date.now() - 5 * 60000);
+                  setStartDate(formatToDateInput(past));
+                  setStartTime(formatToTimeInput(past));
+                  setEndDate(formatToDateInput(now));
+                  setEndTime(formatToTimeInput(now));
                   setIntervalError('');
                   handleSearch();
                 }}
@@ -703,10 +780,15 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                     
                     const isSuspicious = item.bytes > 1e9;
   
-                     return (
+                      return (
                         <Tooltip key={i} delayDuration={300}>
                           <TooltipTrigger asChild>
-                            <tr className="hover:bg-accent/5 transition-colors group cursor-default">
+                            <tr 
+                              onClick={() => setSelectedConnection(item)}
+                              className={clsx(
+                                "hover:bg-accent/5 transition-colors group cursor-pointer",
+                                selectedConnection === item && "bg-accent/10 border-l-2 border-accent"
+                              )}>
                                <td className="px-6 py-4 text-[10px] text-text-secondary font-mono whitespace-nowrap">
                                  {formatTime(item.time_received)}
                                </td>
@@ -942,7 +1024,87 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
           port={mitigationData.port}
          onSuccess={handleMitigationSuccess}
         />
+
+        <Sheet open={!!selectedConnection} onOpenChange={(open) => !open && setSelectedConnection(null)}>
+          <SheetContent side="right" className="w-[400px] sm:w-[540px] bg-bg-secondary border-l border-border p-0 overflow-y-auto">
+            {selectedConnection && (
+              <div className="flex flex-col h-full">
+                <SheetHeader className="p-6 border-b border-border bg-bg-primary/50">
+                  <SheetTitle className="text-xl font-bold text-text-primary flex items-center gap-2">
+                    Detalhes da Conexão
+                  </SheetTitle>
+                </SheetHeader>
+                
+                <div className="p-6 space-y-6">
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2 text-text-secondary font-mono text-sm">
+                      <Clock size={14} /> {formatTime(selectedConnection.time_received)}
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <div className={clsx(
+                        "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
+                        (selectedConnection.flow_direction || (shouldFlip(selectedConnection) ? 'incoming' : 'outgoing')) === 'outgoing' 
+                          ? "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:text-green-400" 
+                          : "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400"
+                      )}>
+                        {(selectedConnection.flow_direction || (shouldFlip(selectedConnection) ? 'incoming' : 'outgoing')) === 'outgoing' ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+                        {(selectedConnection.flow_direction || (shouldFlip(selectedConnection) ? 'incoming' : 'outgoing')) === 'outgoing' ? 'Upload' : 'Download'}
+                      </div>
+                      <span className="text-sm font-bold text-text-primary">· {protoName(selectedConnection.proto)} · {getService(selectedConnection.dst_port)}</span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="bg-bg-primary/30 p-4 rounded-xl border border-border/50">
+                      <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3 border-b border-border/50 pb-1">Origem</h4>
+                      <div className="grid grid-cols-1 gap-2 text-sm">
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">IP:</span> <span className="font-mono font-bold text-text-primary">{selectedConnection.src_addr}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Porta:</span> <span className="font-mono text-text-primary">{selectedConnection.src_port}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">País:</span> <span className="flex items-center gap-1 font-medium text-text-primary"><Flag code={selectedConnection.src_country} /> {selectedConnection.src_country || '—'}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Organização:</span> <span className="text-text-primary text-right max-w-[220px] truncate font-medium" title={selectedConnection.src_org}>{selectedConnection.src_org || '—'}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Rede:</span> <span className="font-mono text-text-primary text-xs">{selectedConnection.src_net || '—'}</span></div>
+                      </div>
+                    </div>
+
+                    <div className="bg-bg-primary/30 p-4 rounded-xl border border-border/50">
+                      <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3 border-b border-border/50 pb-1">Destino</h4>
+                      <div className="grid grid-cols-1 gap-2 text-sm">
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">IP:</span> <span className="font-mono font-bold text-text-primary">{selectedConnection.dst_addr}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Porta:</span> <span className="font-mono text-text-primary">{selectedConnection.dst_port}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">País:</span> <span className="flex items-center gap-1 font-medium text-text-primary"><Flag code={selectedConnection.dst_country} /> {selectedConnection.dst_country || '—'}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Organização:</span> <span className="text-text-primary text-right max-w-[220px] truncate font-medium" title={selectedConnection.dst_org}>{selectedConnection.dst_org || '—'}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">CDN:</span> <span className="text-text-primary font-medium">{selectedConnection.cdn || '—'}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Rede:</span> <span className="font-mono text-text-primary text-xs">{selectedConnection.dst_net || '—'}</span></div>
+                      </div>
+                    </div>
+
+                    <div className="bg-bg-primary/30 p-4 rounded-xl border border-border/50">
+                      <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3 border-b border-border/50 pb-1">Tráfego</h4>
+                      <div className="grid grid-cols-1 gap-2 text-sm">
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Volume:</span> <span className="font-bold text-text-primary">{fmtBytes(selectedConnection.bytes)}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Pacotes:</span> <span className="text-text-primary font-mono">{selectedConnection.packets || '—'}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">BPP:</span> <span className="text-text-primary font-mono">{selectedConnection.bpp ? `${selectedConnection.bpp} B` : '—'}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Duração:</span> <span className="text-text-primary font-mono">{fmtDuration(selectedConnection.duration)}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">PPS:</span> <span className="text-text-primary font-mono">{selectedConnection.pps || '—'}</span></div>
+                      </div>
+                    </div>
+
+                    <div className="bg-bg-primary/30 p-4 rounded-xl border border-border/50">
+                      <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-3 border-b border-border/50 pb-1">Rede</h4>
+                      <div className="grid grid-cols-1 gap-2 text-sm">
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Interface entrada:</span> <span className="text-text-primary font-medium">{selectedConnection.in_iface || '—'}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Interface saída:</span> <span className="text-text-primary font-medium">{selectedConnection.out_iface || '—'}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">Next-hop:</span> <span className="font-mono text-text-primary text-xs">{selectedConnection.next_hop || '—'}</span></div>
+                        <div className="flex justify-between items-center"><span className="text-text-secondary">TCP Flags:</span> <span className="font-mono font-bold" style={{ color: flagColor(selectedConnection.tcp_flags) }}>{selectedConnection.tcp_flags || '—'}</span></div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </SheetContent>
+        </Sheet>
       </div>
      </TooltipProvider>
-   );
- }
+    );
+  }
