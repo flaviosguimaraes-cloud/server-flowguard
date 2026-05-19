@@ -161,7 +161,7 @@ export default function PrefixListPage({ kind }: { kind: Kind }) {
               <div>
                 <label className="text-[10px] font-bold text-text-secondary uppercase">Prefixos (um por linha, CIDR)</label>
                 <textarea value={form.prefixes} onChange={e => setForm({ ...form, prefixes: e.target.value })}
-                  rows={5} placeholder="45.175.50.0/24&#10;200.149.59.0/24"
+                  rows={5} placeholder="192.168.1.0/24&#10;192.168.2.0/24"
                   className="w-full mt-1 bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30" />
               </div>
               <div>
