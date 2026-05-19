@@ -1,67 +1,62 @@
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
- import { Link as LinkIcon, Activity, Clock, Network, RefreshCw, Wifi } from 'lucide-react';
+import { Link as LinkIcon, Activity, Clock, Network, RefreshCw } from 'lucide-react';
 import { clsx } from 'clsx';
 import { toast } from 'sonner';
 
- export default function BGP() {
-   const queryClient = useQueryClient();
-   
-   const { data: flowspecData } = useQuery({
-     queryKey: ['mitigation-flowspec'],
-     queryFn: () => api.get('/api/mitigation/flowspec').then(r => r.data).catch(() => ({ items: [] })),
-     refetchInterval: 10000,
-   });
- 
-   const { data: sessionsData, isLoading: loadingSessions, isRefetching: refetchingSessions, refetch: refetchSessions } = useQuery({
-     queryKey: ['bgp-sessions'],
-     queryFn: () => api.get('/api/bgp/sessions').then(r => r.data).catch(() => ({ sessions: [] })),
-     refetchInterval: 10000,
-   });
- 
-   const { data: routesData, isLoading: loadingRoutes, isRefetching: refetchingRoutes, refetch: refetchRoutes } = useQuery({
-     queryKey: ['bgp-routes'],
-     queryFn: () => api.get('/api/bgp/routes').then(r => r.data).catch(() => ({ routes: [] })),
-     refetchInterval: 10000,
-   });
- 
-    const activeFlowspecCount = (flowspecData?.items || []).filter((item: any) => item.status === 'active').length;
- 
-   const calcUptime = (logTail: string) => {
-     if (!logTail) return '—';
-     const lines = logTail.split('\n');
-     for (const line of lines.reverse()) {
-       const match = line.match(/(\w+\s+\d+\s+\d+:\d+:\d+)/);
-       if (match && line.includes('connected')) {
-         const connTime = new Date(match[1] + ' 2026');
-         const diff = Math.floor((Date.now() - connTime.getTime()) / 1000);
-         if (diff < 0) return '—';
-         if (diff < 60) return `${diff}s`;
-         if (diff < 3600) return `${Math.floor(diff/60)}m ${diff%60}s`;
-         return `${Math.floor(diff/3600)}h ${Math.floor((diff%3600)/60)}m`;
-       }
-     }
-     return '—';
-   };
- 
-   const timeActive = (age: string) => {
-     if (!age) return '—';
-     const d = new Date(age.replace(' ', 'T'));
-     const diff = Math.floor((Date.now() - d.getTime()) / 1000);
-     if (diff < 0) return '—';
-     if (diff < 60) return `${diff}s`;
-     if (diff < 3600) return `${Math.floor(diff/60)}m`;
-     return `${Math.floor(diff/3600)}h ${Math.floor((diff%3600)/60)}m`;
-   };
- 
-   const sessions = sessionsData?.sessions || [];
-   const routes = routesData?.routes || [];
- 
-   const refresh = () => {
-     refetchSessions();
-     refetchRoutes();
-     toast.info('Dados BGP atualizados');
-   };
+export default function BGP() {
+  const queryClient = useQueryClient();
+  
+  const { data: sessionsData, isLoading: loadingSessions, isRefetching: refetchingSessions, refetch: refetchSessions } = useQuery({
+    queryKey: ['bgp-sessions'],
+    queryFn: () => api.get('/api/bgp/sessions').then(r => r.data).catch(() => ({ sessions: [] })),
+    refetchInterval: 10000,
+  });
+
+  const { data: routesData, isLoading: loadingRoutes, isRefetching: refetchingRoutes, refetch: refetchRoutes } = useQuery({
+    queryKey: ['bgp-routes'],
+    queryFn: () => api.get('/api/bgp/routes').then(r => r.data).catch(() => ({ routes: [] })),
+    refetchInterval: 10000,
+  });
+
+  const calcUptime = (logTail: string) => {
+    if (!logTail) return '—';
+    const lines = logTail.split('\n');
+    for (const line of lines.reverse()) {
+      const match = line.match(/(\w+\s+\d+\s+\d+:\d+:\d+)/);
+      if (match && line.includes('connected')) {
+        const connTime = new Date(match[1] + ' 2026');
+        const diff = Math.floor((Date.now() - connTime.getTime()) / 1000);
+        if (diff < 0) return '—';
+        if (diff < 60) return `${diff}s`;
+        if (diff < 3600) return `${Math.floor(diff/60)}m ${diff%60}s`;
+        return `${Math.floor(diff/3600)}h ${Math.floor((diff%3600)/60)}m`;
+      }
+    }
+    return '—';
+  };
+
+  const timeActive = (age: string) => {
+    if (!age) return '—';
+    const d = new Date(age.replace(' ', 'T'));
+    const diff = Math.floor((Date.now() - d.getTime()) / 1000);
+    if (diff < 0) return '—';
+    if (diff < 60) return `${diff}s`;
+    if (diff < 3600) return `${Math.floor(diff/60)}m`;
+    return `${Math.floor(diff/3600)}h ${Math.floor((diff%3600)/60)}m`;
+  };
+
+  const sessions = sessionsData?.sessions || [];
+  const routes = routesData?.routes || [];
+  
+  // AJUSTE 5 — Contador no card FlowSpec
+  const activeFlowspecCount = routes.filter((r: any) => r.type === 'flowspec').length;
+
+  const refresh = () => {
+    refetchSessions();
+    refetchRoutes();
+    toast.info('Dados BGP atualizados');
+  };
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500 pb-10">
@@ -86,25 +81,25 @@ import { toast } from 'sonner';
         </button>
       </div>
 
-       <div className="space-y-4">
-         <div className="flex items-center gap-2 px-1">
-           <LinkIcon className="text-primary" size={18} />
-           <h2 className="text-lg font-bold text-text-primary">Sessões BGP</h2>
-         </div>
- 
-         {loadingSessions ? (
-           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-             {[1, 2].map(i => <div key={i} className="bg-bg-secondary h-32 rounded-xl border border-border animate-pulse" />)}
-           </div>
-         ) : sessions.length === 0 ? (
-           <div className="bg-bg-secondary p-10 rounded-xl border border-border text-center text-text-secondary italic">Nenhuma sessão BGP configurada</div>
-         ) : (
-           <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-             {sessions.map((s: any, i: number) => {
-               const state = (s.state || '').toString().toLowerCase();
-               const established = state === 'established' || state === 'up';
-                const uptime = s.uptime || calcUptime(sessionsData.bgp_log_tail);
- 
+      <div className="space-y-4">
+        <div className="flex items-center gap-2 px-1">
+          <LinkIcon className="text-primary" size={18} />
+          <h2 className="text-lg font-bold text-text-primary">Sessões BGP</h2>
+        </div>
+
+        {loadingSessions ? (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {[1, 2].map(i => <div key={i} className="bg-bg-secondary h-32 rounded-xl border border-border animate-pulse" />)}
+          </div>
+        ) : sessions.length === 0 ? (
+          <div className="bg-bg-secondary p-10 rounded-xl border border-border text-center text-text-secondary italic">Nenhuma sessão BGP configurada</div>
+        ) : (
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {sessions.map((s: any, i: number) => {
+              const state = (s.state || '').toString().toLowerCase();
+              const established = state === 'established' || state === 'up';
+              const uptime = s.uptime || calcUptime(sessionsData.bgp_log_tail);
+
               const cards = [];
               
               // Card 1 — IPv4 Unicast
@@ -126,7 +121,7 @@ import { toast } from 'sonner';
                   </div>
 
                   <div className="space-y-3 text-xs">
-                     <p className="text-[10px] font-bold text-text-secondary uppercase">AS Local: {s.local_as} → AS Remoto: {s.remote_as}</p>
+                    <p className="text-[10px] font-bold text-text-secondary uppercase">AS Local: {s.local_as} → AS Remoto: {s.remote_as}</p>
 
                     <div className="flex gap-4 pt-2 border-t border-border/50">
                       <div>
@@ -168,8 +163,8 @@ import { toast } from 'sonner';
                       IPv4 FlowSpec
                     </div>
 
-                     <div className="space-y-3 text-xs">
-                       <p className="text-[10px] font-bold text-text-secondary uppercase">AS Local: {s.local_as} → AS Remoto: {s.remote_as}</p>
+                    <div className="space-y-3 text-xs">
+                      <p className="text-[10px] font-bold text-text-secondary uppercase">AS Local: {s.local_as} → AS Remoto: {s.remote_as}</p>
 
                       <div className="pt-2 border-t border-border/50">
                         <div className="text-[10px] text-text-secondary uppercase">Regras ativas</div>
@@ -186,10 +181,10 @@ import { toast } from 'sonner';
               }
 
               return cards;
-             })}
-           </div>
-         )}
-       </div>
+            })}
+          </div>
+        )}
+      </div>
 
       {/* Section 2: Announced Routes */}
       <div className="space-y-4">
@@ -203,71 +198,102 @@ import { toast } from 'sonner';
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="bg-bg-primary/50 border-b border-border">
-                   <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Prefixo</th>
-                   <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Next-hop</th>
-                   <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Community</th>
-                   <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Tipo</th>
-                   <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Origem</th>
-                   <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Anunciado em</th>
-                   <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Tempo ativo</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Prefixo</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Next-hop</th>
+                  {/* AJUSTE 3 — Coluna DETALHES */}
+                  <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Detalhes</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Tipo</th>
+                  {/* AJUSTE 4 — Coluna AÇÃO */}
+                  <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Ação</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Origem</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Anunciado em</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Tempo ativo</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-border">
                 {loadingRoutes ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      <td colSpan={7} className="px-4 py-4"><div className="h-4 bg-border/50 rounded w-full" /></td>
+                      <td colSpan={8} className="px-4 py-4"><div className="h-4 bg-border/50 rounded w-full" /></td>
                     </tr>
                   ))
-                 ) : routes.length === 0 ? (
-                   <tr>
-                     <td colSpan={7} className="px-4 py-10 text-center text-text-secondary font-medium">
-                       <div className="flex flex-col items-center gap-2">
-                         <p className="italic">Nenhuma mitigação BGP ativa no momento.</p>
-                         <p className="text-[10px] opacity-70">Rotas aparecem aqui quando IPs são colocados em blackhole ou bloqueados.</p>
-                       </div>
-                     </td>
-                   </tr>
-                 ) : (
-                   routes.map((route: any, i: number) => {
-                     const type = (route.type || '').toLowerCase();
-                     const source = (route.source || '').toLowerCase();
-                     return (
-                       <tr key={i} className="hover:bg-bg-primary/30 transition-colors group">
-                         <td className="px-4 py-3 font-mono text-sm text-text-primary font-bold group-hover:text-primary transition-colors">{route.prefix}</td>
-                         <td className="px-4 py-3 font-mono text-xs text-text-secondary">{route.nexthop || '—'}</td>
-                         <td className="px-4 py-3 font-mono text-xs text-text-secondary">{route.community || '—'}</td>
-                         <td className="px-4 py-3">
-                           <span className={clsx(
-                             "px-2 py-0.5 rounded text-[10px] font-bold uppercase border",
-                             type === 'blackhole' ? "bg-danger/10 text-danger border-danger/20" : 
-                             type === 'blacklist' ? "bg-red-600/10 text-[#dc2626] border-[#dc2626]/20" :
-                             type === 'external' ? "bg-warning/10 text-warning border-warning/20" :
-                             type === 'flowspec' ? "bg-purple-500/10 text-purple-500 border-purple-500/20" :
-                             "bg-primary/10 text-primary border-primary/20"
-                           )}>
-                             {type === 'blackhole' ? 'Blackhole' : 
-                              type === 'blacklist' ? 'Blacklist' :
-                              type === 'external' ? 'Ext. Mitigação' : 
-                              type === 'flowspec' ? 'FlowSpec' : (route.type || 'Standard')}
-                           </span>
-                         </td>
-                         <td className="px-4 py-3 text-xs text-text-primary">
-                           {source === 'mitigation' ? 'Mitigação automática' :
-                            source === 'blacklist' ? 'Blacklist manual' :
-                            source === 'manual' ? 'Manual' : (route.source || '—')}
-                         </td>
-                         <td className="px-4 py-3 text-xs text-text-primary flex items-center gap-2">
-                           <Clock size={12} className="text-text-secondary" />
-                           {route.age || '—'}
-                         </td>
-                         <td className="px-4 py-3 text-xs text-text-primary font-bold">
-                           {timeActive(route.age)}
-                         </td>
-                       </tr>
-                     );
-                   })
-                 )}
+                ) : routes.length === 0 ? (
+                  <tr>
+                    <td colSpan={8} className="px-4 py-10 text-center text-text-secondary font-medium">
+                      <div className="flex flex-col items-center gap-2">
+                        <p className="italic">Nenhuma mitigação BGP ativa no momento.</p>
+                        <p className="text-[10px] opacity-70">Rotas aparecem aqui quando IPs são colocados em blackhole ou bloqueados.</p>
+                      </div>
+                    </td>
+                  </tr>
+                ) : (
+                  routes.map((route: any, i: number) => {
+                    const type = (route.type || '').toLowerCase();
+                    const source = (route.source || '').toLowerCase();
+                    const action = (route.action || '').toLowerCase();
+                    
+                    return (
+                      <tr key={i} className="hover:bg-bg-primary/30 transition-colors group">
+                        <td className="px-4 py-3 font-mono text-sm text-text-primary font-bold group-hover:text-primary transition-colors">{route.prefix}</td>
+                        <td className="px-4 py-3 font-mono text-xs text-text-secondary">{route.nexthop || '—'}</td>
+                        
+                        {/* AJUSTE 3 — Coluna DETALHES */}
+                        <td className="px-4 py-3 font-mono text-xs text-text-secondary">
+                          {type === 'flowspec' ? (
+                            <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>
+                              {route.reason}
+                            </span>
+                          ) : (
+                            route.community || '—'
+                          )}
+                        </td>
+
+                        <td className="px-4 py-3">
+                          {/* AJUSTE 1 & 2 — Coluna TIPO */}
+                          <span className={clsx(
+                            "px-2 py-0.5 rounded text-[10px] font-bold uppercase border",
+                            type === 'blackhole' && "bg-danger/10 text-danger border-danger/20",
+                            type === 'blacklist' && "bg-red-900/10 text-[#991b1b] border-[#991b1b]/20",
+                            type === 'external' && "bg-warning/10 text-warning border-warning/20",
+                            "transition-all"
+                          )}
+                          style={type === 'flowspec' ? {
+                            background: '#7c3aed20',
+                            color: '#7c3aed',
+                            border: '1px solid #7c3aed40'
+                          } : undefined}
+                          >
+                            {type === 'blackhole' ? 'Blackhole' : 
+                             type === 'blacklist' ? 'Blacklist' :
+                             type === 'external' ? 'Ext. Mitigação' : 
+                             type === 'flowspec' ? 'FlowSpec' : (route.type || 'Standard')}
+                          </span>
+                        </td>
+
+                        {/* AJUSTE 4 — Coluna AÇÃO */}
+                        <td className="px-4 py-3 text-xs text-text-primary">
+                          {type === 'flowspec' ? (
+                            action === 'discard' ? 'Descartar' : 
+                            action === 'rate-limit' ? 'Rate Limit' : (route.action || '—')
+                          ) : '—'}
+                        </td>
+
+                        <td className="px-4 py-3 text-xs text-text-primary">
+                          {source === 'mitigation' ? 'Mitigação automática' :
+                           source === 'blacklist' ? 'Blacklist manual' :
+                           source === 'manual' ? 'Manual' : (route.source || '—')}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-text-primary flex items-center gap-2">
+                          <Clock size={12} className="text-text-secondary" />
+                          {route.age || '—'}
+                        </td>
+                        <td className="px-4 py-3 text-xs text-text-primary font-bold">
+                          {timeActive(route.age)}
+                        </td>
+                      </tr>
+                    );
+                  })
+                )}
               </tbody>
             </table>
           </div>
