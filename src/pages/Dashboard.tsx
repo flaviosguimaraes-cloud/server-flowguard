@@ -858,8 +858,8 @@ export default function Dashboard() {
       label: 'ANOMALIAS HOJE',
       value: anomaliasHoje.length,
       detail: anomaliasHoje[0] 
-        ? `Ontem: ${anomaliasOntem.length} anomalias · Último: ${anomaliasHoje[0].ip} às ${anomaliasHoje[0].started_at.slice(11, 16)}`
-        : `Ontem: ${anomaliasOntem.length} anomalias · Nenhuma anomalia hoje`,
+        ? `Último: ${anomaliasHoje[0].ip} às ${anomaliasHoje[0].started_at.substring(11, 16)}`
+        : "Nenhuma anomalia hoje",
       icon: <Shield className="text-danger" size={16} />
     },
     {
