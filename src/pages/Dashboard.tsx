@@ -815,11 +815,11 @@ export default function Dashboard() {
     .filter((c: any) => c.active || c.status === 'active' || c.status === 'Ativo');
 
   const anomaliasHoje = activeEventsToday?.items?.filter((i: any) => 
-    i.started_at && i.started_at.substring(0, 10) === today
+    typeof i?.started_at === 'string' && i.started_at.substring(0, 10) === today
   ) || [];
 
   const anomaliasOntem = activeEventsToday?.items?.filter((i: any) => 
-    i.started_at && i.started_at.substring(0, 10) === yesterday
+    typeof i?.started_at === 'string' && i.started_at.substring(0, 10) === yesterday
   ) || [];
 
   const cards = [
