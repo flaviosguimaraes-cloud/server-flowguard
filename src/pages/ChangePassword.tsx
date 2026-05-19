@@ -34,15 +34,16 @@ import { clsx } from 'clsx';
  
      setIsLoading(true);
      try {
-       await api.post('/api/auth/change-password', { 
-         old_password: mandatory ? null : oldPassword, 
-         new_password: newPassword 
-       });
-       toast.success(mandatory ? 'Senha definida com sucesso' : 'Senha alterada com sucesso');
+        const payload: any = { new_password: newPassword };
+        if (!mandatory) {
+          payload.current_password = oldPassword;
+        }
+
+        await api.post('/api/auth/change-password', payload);
+        toast.success(mandatory ? '✅ Senha definida com sucesso' : 'Senha alterada com sucesso');
        
        if (mandatory) {
-         // Se for obrigatória, redireciona para home (dashboard)
-         // e garante que o login é considerado concluído
+          localStorage.removeItem('must_change_password');
          navigate({ to: '/' });
        } else {
          navigate({ to: '/dashboard' });

@@ -73,10 +73,15 @@ function RootComponent() {
     const isChangePasswordPage = location.pathname === "/change-password";
     const isMandatoryChange = isChangePasswordPage && location.searchStr.includes("mandatory=true");
     const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    const mustChange = typeof window !== 'undefined' ? localStorage.getItem('must_change_password') === 'true' : false;
  
    if (!token && !isLoginPage) {
      return <Navigate to="/login" replace />;
    }
+
+    if (token && mustChange && !isChangePasswordPage) {
+      return <Navigate to="/change-password" search={{ mandatory: true }} replace />;
+    }
 
    if (isLoginPage || isMandatoryChange) {
     return (

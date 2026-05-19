@@ -7,7 +7,8 @@
    username: string;
    role: string;
   email?: string;
- }
+  must_change_password?: boolean;
+}
  
  interface AuthContextType {
    user: User | null;
@@ -27,8 +28,10 @@
       const role = localStorage.getItem('role');
       const email = localStorage.getItem('email');
   
+      const mustChange = localStorage.getItem('must_change_password') === 'true';
+
       if (token && username && role) {
-        return { token, username, role, email: email || undefined };
+        return { token, username, role, email: email || undefined, must_change_password: mustChange };
       }
      return null;
    });
@@ -42,11 +45,13 @@
       localStorage.setItem('username', data.username);
       localStorage.setItem('role', data.role);
       if (data.email) localStorage.setItem('email', data.email);
+      localStorage.setItem('must_change_password', data.must_change_password ? 'true' : 'false');
       setUser({ 
         token: data.access_token, 
         username: data.username, 
         role: data.role,
-        email: data.email
+        email: data.email,
+        must_change_password: !!data.must_change_password
       });
  
       if (data.must_change_password) {
@@ -65,7 +70,8 @@
        localStorage.removeItem('refresh_token');
        localStorage.removeItem('username');
        localStorage.removeItem('role');
-       localStorage.removeItem('email');
+        localStorage.removeItem('email');
+        localStorage.removeItem('must_change_password');
        
        // 2. Cancelar queries pendentes e limpar cache
        queryClient.cancelQueries();
