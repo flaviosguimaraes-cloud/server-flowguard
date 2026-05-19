@@ -171,17 +171,14 @@ export default function Dashboard() {
   const { data: sysStatus } = useQuery({
     queryKey: ['system-status'],
     queryFn: async () => {
-      try {
-        const r = await api.get('/api/system/status');
-        console.log('system status:', r.data);
-        return r.data;
-      } catch (err) {
-        console.error('System status error:', err);
-        return null;
-      }
+      const r = await api.get('/api/system/status');
+      return r.data;
     },
     refetchInterval: 10000,
     staleTime: 0,
+    gcTime: 0,
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
   });
 
   const { data: timeline } = useQuery({
