@@ -872,37 +872,37 @@ export default function Dashboard() {
                 key={card.id}
                 onMouseEnter={() => setHoveredCard(card.id)}
                 onMouseLeave={() => setHoveredCard(null)}
-                className="relative overflow-hidden flex flex-col justify-between min-h-[100px]"
-                style={{
-                  background: 'var(--color-background-secondary)',
-                  borderRadius: 'var(--border-radius-md)',
-                  padding: '10px 12px',
-                  cursor: 'default',
-                }}
+                className={clsx(
+                  "relative overflow-hidden flex flex-col justify-between p-5 rounded-2xl border transition-all duration-300 cursor-default min-h-[120px]",
+                  "bg-white dark:bg-bg-secondary border-border/40 shadow-[0_2px_10px_rgba(0,0,0,0.02)]",
+                  "hover:-translate-y-1.5 hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)] hover:border-primary/30"
+                )}
               >
-                <div className="flex justify-between items-start mb-2">
-                  <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider opacity-70 flex items-center">
-                    {card.label}
-                    {(card.id === 'download' || card.id === 'upload' || card.id === 'flows' || card.id === 'blackhole') && <FlowBadge />}
-                  </span>
-                  <div className="p-1.5 rounded-lg bg-bg-primary border border-border/40">
+                <div className="flex justify-between items-start">
+                  <div className="flex flex-col gap-1">
+                    <span className="text-[9px] font-bold text-text-secondary uppercase tracking-widest opacity-60 flex items-center">
+                      {card.label}
+                      {(card.id === 'download' || card.id === 'upload' || card.id === 'flows' || card.id === 'blackhole') && <FlowBadge />}
+                    </span>
+                    <div className="text-2xl font-bold text-text-primary tracking-tight mt-1">
+                      {card.value}
+                    </div>
+                  </div>
+                  <div className={clsx(
+                    "p-2.5 rounded-xl bg-bg-primary/50 border border-border/30 transition-all duration-300",
+                    isHovered && "scale-110 bg-bg-primary border-primary/20 shadow-sm"
+                  )}>
                     {card.icon}
                   </div>
                 </div>
                 
-                <div>
-                  <div className="text-xl font-bold text-text-primary tracking-tight">
-                    {card.value}
+                <div className={clsx(
+                  "overflow-hidden transition-all duration-300 ease-in-out",
+                  isHovered ? "max-h-12 opacity-100 mt-4" : "max-h-0 opacity-0 mt-0"
+                )}>
+                  <div className="text-[10px] text-text-secondary pt-3 border-t border-border/20 whitespace-nowrap overflow-hidden text-ellipsis italic">
+                    {card.detail}
                   </div>
-                  
-                  {isHovered && (
-                    <div 
-                      className="text-[10px] text-text-secondary mt-2 pt-2 border-t border-border/30 whitespace-nowrap overflow-hidden text-ellipsis"
-                      style={{ animation: 'fadeIn 0.15s ease' }}
-                    >
-                      {card.detail}
-                    </div>
-                  )}
                 </div>
               </div>
             );
