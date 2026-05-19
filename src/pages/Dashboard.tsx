@@ -845,11 +845,11 @@ export default function Dashboard() {
     },
     {
       id: 'attacks',
-      label: 'Ataques hoje',
-      value: attacksToday.length,
-      detail: attacksToday[0] 
-        ? `Último: ${attacksToday[0].ip} · ${timeAgo(attacksToday[0].started_at)}`
-        : 'Nenhum ataque hoje',
+      label: 'Anomalias hoje',
+      value: anomaliasHoje.length,
+      detail: anomaliasHoje[0] 
+        ? `Ontem: ${anomaliasOntem.length} anomalias · Último: ${anomaliasHoje[0].ip} ${anomaliasHoje[0].started_at.slice(11, 16)}`
+        : `Ontem: ${anomaliasOntem.length} anomalias · Nenhuma anomalia hoje`,
       icon: <Shield className="text-danger" size={16} />
     },
     {
