@@ -772,19 +772,25 @@ export default function Dashboard() {
     );
   }
 
+  const activeCollectors = (Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || []))
+    .filter((c: any) => c.active || c.status === 'active' || c.status === 'Ativo');
+
+  const todayStr = new Date().toISOString().slice(0,10);
+  const attacksToday = activeEventsToday?.items?.filter((i: any) => i.started_at?.startsWith(todayStr)) || [];
+
   const cards = [
     {
       id: 'download',
       label: 'Download',
-      value: flowsSummary?.in_bps ? formatBpsRaw(flowsSummary.in_bps) : '0 bps',
-      detail: `Pico: ${flowsSummary?.peak_in_bps ? formatBpsRaw(flowsSummary.peak_in_bps) : '—'} · Ontem: ${flowsSummary?.yesterday_avg_in_bps ? formatBpsRaw(flowsSummary.yesterday_avg_in_bps) : '—'}`,
+      value: detection?.incoming_mbps !== undefined ? formatBw(detection.incoming_mbps) : '0 Mbps',
+      detail: detection?.incoming_pps ? `PPS: ${detection.incoming_pps.toLocaleString()}` : 'PPS: 0',
       icon: <ArrowDown className="text-blue-500" size={16} />
     },
     {
       id: 'upload',
       label: 'Upload',
-      value: flowsSummary?.out_bps ? formatBpsRaw(flowsSummary.out_bps) : '0 bps',
-      detail: `Pico: ${flowsSummary?.peak_out_bps ? formatBpsRaw(flowsSummary.peak_out_bps) : '—'} · Ontem: ${flowsSummary?.yesterday_avg_out_bps ? formatBpsRaw(flowsSummary.yesterday_avg_out_bps) : '—'}`,
+      value: detection?.outgoing_mbps !== undefined ? formatBw(detection.outgoing_mbps) : '0 Mbps',
+      detail: detection?.outgoing_pps ? `PPS: ${detection.outgoing_pps.toLocaleString()}` : 'PPS: 0',
       icon: <ArrowUp className="text-green-500" size={16} />
     },
     {
@@ -797,24 +803,28 @@ export default function Dashboard() {
     {
       id: 'collectors',
       label: 'Coletores',
-      value: (Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || []))
-        .filter((c: any) => c.status === 'active' || c.status === 'Ativo').length,
-      detail: `${(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || []))
-        .find((c: any) => c.status === 'active' || c.status === 'Ativo')?.name || '—'} · ${collectorDetailedInfo?.length || 0} interfaces`,
+      value: activeCollectors.length,
+      detail: activeCollectors.length === 1 
+        ? `${activeCollectors[0].name} · ${activeCollectors[0].host} · ${collectorDetailedInfo?.length || 0} interfaces`
+        : `${activeCollectors.length} coletores ativos`,
       icon: <Zap className="text-primary" size={16} />
     },
     {
       id: 'attacks',
       label: 'Ataques hoje',
-      value: activeEventsToday?.items?.length || 0,
-      detail: `Ontem: ${activeEventsToday?.yesterday_count || 0} · Último: ${eventsHistory?.items?.[0] ? timeAgo(eventsHistory.items[0].started_at || eventsHistory.items[0].start_time) : '—'}`,
+      value: attacksToday.length,
+      detail: attacksToday[0] 
+        ? `Último: ${attacksToday[0].ip} · ${timeAgo(attacksToday[0].started_at)}`
+        : 'Nenhum ataque hoje',
       icon: <Shield className="text-danger" size={16} />
     },
     {
       id: 'blackhole',
       label: 'Blackhole',
       value: activeMitigations?.total || 0,
-      detail: `Blacklist: ${activeMitigations?.blacklist_count || 0} · BGP: OK`,
+      detail: activeMitigations?.total > 0
+        ? activeMitigations.items.slice(0, 3).map((i: any) => `${i.ip} · ${i.pps.toLocaleString()} pps`).join(' | ')
+        : 'Nenhum IP em blackhole',
       icon: <Activity className="text-accent" size={16} />
     }
   ];
