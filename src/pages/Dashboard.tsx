@@ -4,9 +4,31 @@ import api from '../services/api';
 import { useTranslation } from '../hooks/useTranslation';
 import { useTheme } from '../contexts/ThemeContext';
 import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-  BarChart, Bar, Cell, AreaChart, Area
-} from 'recharts';
+   ResponsiveContainer,
+ } from 'recharts';
+ import {
+   Chart as ChartJS,
+   CategoryScale,
+   LinearScale,
+   PointElement,
+   LineElement,
+   Title,
+   Tooltip as ChartTooltip,
+   Legend,
+   Filler,
+ } from 'chart.js';
+ import { Line as ChartLine } from 'react-chartjs-2';
+ 
+ ChartJS.register(
+   CategoryScale,
+   LinearScale,
+   PointElement,
+   LineElement,
+   Title,
+   ChartTooltip,
+   Legend,
+   Filler
+ );
 import { 
    Tooltip, TooltipTrigger, TooltipContent, TooltipProvider 
  } from '../components/ui/tooltip';
@@ -362,15 +384,15 @@ export default function Dashboard() {
         let totalTx = 0;
         metricsHistory.forEach(({ifName, data}) => {
           const found = data.find((p: any) => p.time_bucket === time);
-          const rxMbps = found ? Math.round(found.in_bps / 1e6) : 0;
-          const txMbps = found ? Math.round(found.out_bps / 1e6) : 0;
-          point[`${ifName}_rx`] = rxMbps;
-          point[`${ifName}_tx`] = txMbps;
-          totalRx += rxMbps;
-          totalTx += txMbps;
+           const rxGbps = found ? (found.in_bps / 1e9) : 0;
+           const txGbps = found ? (found.out_bps / 1e9) : 0;
+           point[`${ifName}_rx`] = rxGbps;
+           point[`${ifName}_tx`] = txGbps;
+           totalRx += rxGbps;
+           totalTx += txGbps;
         });
-        point['__total_rx'] = totalRx;
-        point['__total_tx'] = totalTx;
+         point['__total_rx'] = Number(totalRx.toFixed(4));
+         point['__total_tx'] = Number(totalTx.toFixed(4));
         return point;
       });
 
