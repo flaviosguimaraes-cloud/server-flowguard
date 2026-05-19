@@ -33,7 +33,7 @@ import {
    Tooltip, TooltipTrigger, TooltipContent, TooltipProvider 
  } from '../components/ui/tooltip';
  import { MitigationTooltip } from '../components/MitigationTooltip';
-import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon, Settings2, Info, ArrowRight, History, Zap, CheckCircle, Clock } from 'lucide-react';
+import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon, Settings2, Info, ArrowRight, History, Zap, CheckCircle, Clock, Globe, MapPin, Users } from 'lucide-react';
 import { Link } from '@tanstack/react-router';
 import { Skeleton } from '../components/Skeleton';
 import Flag from '../components/Flag';
@@ -48,7 +48,55 @@ const TX_IFACE_COLORS = ['#86efac', '#4ade80', '#bbf7d0', '#15803d', '#dcfce7'];
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
 const MAX_POINTS = 300;
 
+const CDN_COLORS: Record<string, string> = {
+  'Netflix': '#E50914',
+  'Google': '#4285F4',
+  'YouTube': '#FF0000',
+  'Cloudflare': '#F48120',
+  'Akamai': '#009BDE',
+  'Amazon': '#FF9900',
+  'Meta': '#1877F2',
+  'Microsoft': '#00BCF2',
+  'Apple': '#555555',
+  'Disney': '#113CCF',
+  'Fastly': '#FF282D',
+  'Steam': '#1b2838',
+  'Riot': '#C89B3C',
+  'TikTok': '#010101',
+};
+
+const CDN_CATEGORY = {
+  'Netflix': 'Streaming',
+  'Disney': 'Streaming',
+  'YouTube': 'Streaming',
+  'Google': 'Cloud/Apps',
+  'Amazon': 'Cloud/Apps',
+  'Microsoft': 'Cloud/Apps',
+  'Cloudflare': 'Segurança/CDN',
+  'Akamai': 'Segurança/CDN',
+  'Fastly': 'Segurança/CDN',
+  'Meta': 'Redes Sociais',
+  'TikTok': 'Redes Sociais',
+  'Steam': 'Gaming',
+  'Riot': 'Gaming',
+};
+
+const CATEGORY_COLORS: Record<string, string> = {
+  'Streaming': '#E50914',
+  'Cloud/Apps': '#378ADD',
+  'Segurança/CDN': '#F48120',
+  'Redes Sociais': '#1877F2',
+  'Gaming': '#1b2838',
+};
+
+const FlowBadge = () => (
+  <span className="text-[10px] font-bold text-text-secondary bg-bg-primary px-1.5 py-0.5 rounded border border-border ml-2 opacity-60">
+    IPv4
+  </span>
+);
+
 const sampleData = (data: any[]) => {
+
   if (data.length <= MAX_POINTS)
     return data;
   const step = Math.ceil(
@@ -57,39 +105,6 @@ const sampleData = (data: any[]) => {
     (_, i) => i % step === 0);
 };
 
-function StatCard({ title, value, unit, icon, trend, tooltip, subtitle }: any) {
-  return (
-    <div 
-      className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm flex flex-col justify-between min-h-[140px] transition-all duration-300 hover:border-primary/30 group relative overflow-hidden"
-      title={tooltip}
-    >
-      <div className="flex justify-between items-start relative z-10">
-        <div className="p-2.5 bg-bg-primary rounded-lg text-primary transition-all duration-200 border border-border/40 group-hover:bg-primary/5 group-hover:border-primary/20">
-          {icon}
-        </div>
-        {trend && typeof trend === 'string' && (
-          <span className={clsx(
-            "text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider",
-            trend.startsWith('+') ? "bg-success-bg text-success border-success/10" : 
-            trend.startsWith('-') ? "bg-danger-bg text-danger border-danger/10" : "bg-accent-bg text-accent border-accent/10"
-          )}>
-            {trend}
-          </span>
-        )}
-      </div>
-      <div className="mt-4 relative z-10">
-        <p className="text-text-secondary text-[11px] font-bold uppercase tracking-wider opacity-70 mb-1">{title}</p>
-        <div className="flex items-baseline gap-1.5">
-          <h3 className="text-3xl font-bold text-text-primary tracking-tight leading-none">{value}</h3>
-          {unit && <span className="text-[11px] font-bold text-text-secondary opacity-50 uppercase tracking-wider">{unit}</span>}
-        </div>
-         {subtitle && (
-            <div className="text-[10px] text-text-secondary font-medium mt-2.5 opacity-60 border-t border-border/40 pt-2 line-clamp-1">{subtitle}</div>
-         )}
-      </div>
-    </div>
-  );
-}
 
  const serviceNames: Record<string, string> = {
    flow_collector: 'Coletor de Flows',
@@ -110,7 +125,32 @@ export default function Dashboard() {
   const isAuthenticated = !!localStorage.getItem('access_token');
   const [countdown, setCountdown] = useState(30);
   const [hoveredIP, setHoveredIP] = useState<string | null>(null);
+  const [hoveredCard, setHoveredCard] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  const [selectedCollector, setSelectedCollector] = useState<number>(() => {
+    const saved = localStorage.getItem('fg_collector');
+    const parsed = saved ? parseInt(saved) : 1;
+    return isNaN(parsed) ? 1 : parsed;
+  });
+
+  const [selectedIfaces, setSelectedIfaces] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('fg_ifaces');
+      const parsed = saved ? JSON.parse(saved) : null;
+      return Array.isArray(parsed) ? parsed : [];
+    } catch { return []; }
+  });
+
+  const [source] = useState<'snmp'>('snmp');
+  const [selectedMinutes, setSelectedMinutes] = useState(() => {
+    const saved = localStorage.getItem('fg_collector_period');
+    return saved ? parseInt(saved) : 30;
+  });
+  const [showIfaceSelector, setShowIfaceSelector] = useState(false);
+
+  const [periodASN, setPeriodASN] = useState(60);
+  const [periodCDN, setPeriodCDN] = useState(60);
 
   // Timer visual
   useEffect(() => {
@@ -136,6 +176,13 @@ export default function Dashboard() {
     };
   }, [queryClient]);
 
+  const cleanOrg = (org: string) => {
+    let cleaned = org.replace(/^(AS\d+)\s+/, '$1 · ');
+    return cleaned.length > 28
+      ? cleaned.substring(0, 25) + '...'
+      : cleaned;
+  };
+
    const timeAgo = (dateStr: string) => {
      if (!dateStr) return '—';
      const d = new Date(dateStr.replace(' ', 'T'));
@@ -159,6 +206,31 @@ export default function Dashboard() {
     refetchOnWindowFocus: true,
   });
 
+  const { data: asnStats } = useQuery({
+    queryKey: ['asns', periodASN],
+    queryFn: () => api.get(`/api/flows/asns?minutes=${periodASN}&limit=5`).then(r => r.data),
+    enabled: isAuthenticated,
+  });
+
+  const { data: cdnStats } = useQuery({
+    queryKey: ['cdns-consumption', periodCDN],
+    queryFn: () => api.get(`/api/flows/cdns?minutes=${periodCDN}`).then(r => r.data),
+    enabled: isAuthenticated,
+  });
+
+  const { data: attackCountries } = useQuery({
+    queryKey: ['attack-countries'],
+    queryFn: () => api.get('/api/flows/attack-countries?minutes=1440&limit=5').then(r => r.data),
+    enabled: isAuthenticated,
+  });
+
+  const { data: flowsSummary } = useQuery({
+    queryKey: ['flows-summary'],
+    queryFn: () => api.get('/api/flows/summary').then(r => r.data),
+    enabled: isAuthenticated,
+    refetchInterval: 30000,
+  });
+
    const { data: eventsHistory, isLoading: loadingEvents, dataUpdatedAt: eventsUpdatedAt } = useQuery({
      queryKey: ['events-history-dashboard'],
      queryFn: async () => {
@@ -172,6 +244,21 @@ export default function Dashboard() {
     refetchOnMount: 'always',
     refetchOnWindowFocus: true,
   });
+
+  const { data: activeEventsToday } = useQuery({
+    queryKey: ['events-today'],
+    queryFn: () => api.get('/api/events/history?limit=1000&minutes=1440').then(r => r.data),
+    enabled: isAuthenticated,
+    refetchInterval: 60000,
+  });
+
+  const { data: collectorDetailedInfo } = useQuery({
+    queryKey: ['collector-detail', selectedCollector],
+    queryFn: () => api.get(`/api/collectors/${selectedCollector}/interfaces`).then(r => r.data),
+    enabled: isAuthenticated && !!selectedCollector,
+  });
+
+
 
   const dirLabel = (dir: string) => {
     if (dir === 'outgoing' || dir === 'outbound')
@@ -220,20 +307,6 @@ export default function Dashboard() {
   });
 
 
-  const [selectedCollector, setSelectedCollector] = useState<number>(() => {
-    const saved = localStorage.getItem('fg_collector');
-    const parsed = saved ? parseInt(saved) : 1;
-    return isNaN(parsed) ? 1 : parsed;
-  });
-  const [selectedIfaces, setSelectedIfaces] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('fg_ifaces');
-      const parsed = saved ? JSON.parse(saved) : null;
-      return Array.isArray(parsed) ? parsed : [];
-    } catch { return []; }
-  });
-
-   const [source] = useState<'snmp'>('snmp');
 
   const { data: collectors } = useQuery({
     queryKey: ['collectors'],
@@ -256,11 +329,6 @@ export default function Dashboard() {
 
    const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
    const [serviceFilter, setServiceFilter] = useState<string | null>(null);
-    const [selectedMinutes, setSelectedMinutes] = useState(() => {
-      const saved = localStorage.getItem('fg_collector_period');
-      return saved ? parseInt(saved) : 30;
-    });
-   const [showIfaceSelector, setShowIfaceSelector] = useState(false);
 
    useEffect(() => {
      localStorage.setItem('fg_collector_period', String(selectedMinutes));
@@ -688,75 +756,112 @@ export default function Dashboard() {
     );
   }
 
-    return (
-      <TooltipProvider>
-      <div className="space-y-6 animate-in fade-in duration-500">
-       <style>{`
-         @keyframes pulse {
-           0%, 100% { opacity: 1; }
-           50% { opacity: 0.3; }
-         }
-       `}</style>
-        {/* Top Stats Redesign */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <StatCard 
-            title="FLOW IPv4 ↓ DOWNLOAD" 
-            value={detection?.incoming_mbps >= 1000 ? (detection.incoming_mbps / 1000).toFixed(1) : (detection?.incoming_mbps || 0).toFixed(0)} 
-            unit={detection?.incoming_mbps >= 1000 ? "Gbps" : "Mbps"} 
-            icon={<ArrowDown className="text-blue-500" size={20} />} 
-          />
-          <StatCard 
-            title="FLOW IPv4 ↑ UPLOAD" 
-            value={detection?.outgoing_mbps >= 1000 ? (detection.outgoing_mbps / 1000).toFixed(1) : (detection?.outgoing_mbps || 0).toFixed(0)} 
-            unit={detection?.outgoing_mbps >= 1000 ? "Gbps" : "Mbps"} 
-            icon={<ArrowUp className="text-green-500" size={20} />} 
-          />
-          <StatCard 
-            title="FLOWS ATIVOS" 
-            value={detection?.incoming_pps > 1000 ? (detection.incoming_pps / 1000).toFixed(1) + 'k' : detection?.incoming_pps || '0'} 
-            icon={<Activity className="text-warning" size={20} />} 
-          />
-          
-          {/* Coletores Card with Tooltip */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="cursor-help">
-                <StatCard 
-                  title="COLETORES" 
-                  value={(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || []))
-                    .filter((c: any) => c.status === 'active' || c.status === 'Ativo').length} 
-                  icon={<Zap className="text-primary" size={20} />} 
-                />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="w-64 p-3">
-              <div className="space-y-2">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-text-secondary mb-2 border-b border-border/50 pb-1">Status dos Coletores</p>
-                {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).map((c: any) => (
-                  <div key={c.id} className="flex justify-between items-center text-[11px]">
-                    <div className="flex flex-col">
-                      <span className="font-bold text-text-primary">{c.name}</span>
-                      <span className="text-[9px] text-text-secondary">{c.host} · {c.snmp_version || 'v2c'}</span>
-                    </div>
-                    <span className={clsx(
-                      "px-1.5 py-0.5 rounded text-[9px] font-bold",
-                      (c.status === 'active' || c.status === 'Ativo') ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
-                    )}>
-                      {(c.status === 'active' || c.status === 'Ativo') ? 'Ativo' : 'Inativo'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </TooltipContent>
-          </Tooltip>
+  const cards = [
+    {
+      id: 'download',
+      label: 'Download',
+      value: flowsSummary?.in_bps ? formatBpsRaw(flowsSummary.in_bps) : '0 bps',
+      detail: `Pico: ${flowsSummary?.peak_in_bps ? formatBpsRaw(flowsSummary.peak_in_bps) : '—'} · Ontem: ${flowsSummary?.yesterday_avg_in_bps ? formatBpsRaw(flowsSummary.yesterday_avg_in_bps) : '—'}`,
+      icon: <ArrowDown className="text-blue-500" size={16} />
+    },
+    {
+      id: 'upload',
+      label: 'Upload',
+      value: flowsSummary?.out_bps ? formatBpsRaw(flowsSummary.out_bps) : '0 bps',
+      detail: `Pico: ${flowsSummary?.peak_out_bps ? formatBpsRaw(flowsSummary.peak_out_bps) : '—'} · Ontem: ${flowsSummary?.yesterday_avg_out_bps ? formatBpsRaw(flowsSummary.yesterday_avg_out_bps) : '—'}`,
+      icon: <ArrowUp className="text-green-500" size={16} />
+    },
+    {
+      id: 'flows',
+      label: 'Flows/min',
+      value: flowsSummary?.total_flows ? (flowsSummary.total_flows / 1000).toFixed(1) + 'M' : '0',
+      detail: 'Lag: 0s · Tailer: ativo',
+      icon: <Activity className="text-warning" size={16} />
+    },
+    {
+      id: 'collectors',
+      label: 'Coletores',
+      value: (Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || []))
+        .filter((c: any) => c.status === 'active' || c.status === 'Ativo').length,
+      detail: `${(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || []))
+        .find((c: any) => c.status === 'active' || c.status === 'Ativo')?.name || '—'} · ${collectorDetailedInfo?.length || 0} interfaces`,
+      icon: <Zap className="text-primary" size={16} />
+    },
+    {
+      id: 'attacks',
+      label: 'Ataques hoje',
+      value: activeEventsToday?.items?.length || 0,
+      detail: `Ontem: ${activeEventsToday?.yesterday_count || 0} · Último: ${eventsHistory?.items?.[0] ? timeAgo(eventsHistory.items[0].started_at || eventsHistory.items[0].start_time) : '—'}`,
+      icon: <Shield className="text-danger" size={16} />
+    },
+    {
+      id: 'blackhole',
+      label: 'Blackhole',
+      value: activeMitigations?.total || 0,
+      detail: `Blacklist: ${activeMitigations?.blacklist_count || 0} · BGP: OK`,
+      icon: <Activity className="text-accent" size={16} />
+    }
+  ];
 
-          <StatCard 
-            title="MITIGAÇÕES ATIVAS" 
-            value={detection?.active_mitigations || '0'} 
-            icon={<Shield className={clsx(Number(detection?.active_mitigations) > 0 ? "text-danger" : "text-text-secondary opacity-40")} size={20} />} 
-            trend={Number(detection?.active_mitigations) > 0 ? "ATIVO" : undefined}
-          />
+  return (
+    <TooltipProvider>
+      <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+        <style>{`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(2px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
+
+        {/* SEÇÃO 1 — Cards em linha única */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+          {cards.map((card) => {
+            const isHovered = hoveredCard === card.id;
+            return (
+              <div
+                key={card.id}
+                onMouseEnter={() => setHoveredCard(card.id)}
+                onMouseLeave={() => setHoveredCard(null)}
+                className="rounded-xl p-4 shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[100px]"
+                style={{
+                  transition: 'all 0.2s',
+                  transform: isHovered ? 'translateY(-2px)' : 'none',
+                  border: isHovered ? '0.5px solid var(--color-border-secondary)' : '0.5px solid transparent',
+                  background: isHovered ? 'var(--color-background-primary)' : 'var(--color-background-secondary)',
+                }}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider opacity-70 flex items-center">
+                    {card.label}
+                    {(card.id === 'download' || card.id === 'upload' || card.id === 'flows' || card.id === 'blackhole') && <FlowBadge />}
+                  </span>
+                  <div className={clsx(
+                    "p-1.5 rounded-lg bg-bg-primary border border-border/40",
+                    isHovered && "text-primary"
+                  )}>
+                    {card.icon}
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="text-xl font-bold text-text-primary tracking-tight">
+                    {card.value}
+                  </div>
+                  
+                  {isHovered && (
+                    <div 
+                      className="text-[10px] text-text-secondary mt-2 pt-2 border-t border-border/30 whitespace-nowrap overflow-hidden text-ellipsis"
+                      style={{ animation: 'fadeIn 0.15s ease' }}
+                    >
+                      {card.detail}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
+
 
 
       {/* Main Chart: Tráfego da Interface - Refined Light Theme Visuals */}
@@ -932,250 +1037,227 @@ export default function Dashboard() {
 
 
 
-        {/* Seção 3 — Eventos (Largura Total) */}
-        <div className="bg-white dark:bg-bg-secondary rounded-2xl border border-border shadow-sm flex flex-col overflow-hidden">
-          <div className="p-5 flex items-center justify-between border-b border-border/50 bg-bg-primary/30">
-            <div className="flex flex-col gap-1">
+        {/* SEÇÃO 3 — O que consome a rede */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* TOP ASNs */}
+          <div className="bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <History className="text-primary" size={18} />
-                <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Últimos Eventos de Mitigação</h2>
+                <Users className="text-primary" size={18} />
+                <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Top ASNs</h2>
+                <FlowBadge />
               </div>
-              {eventsUpdatedAt && (
-                <span className="text-[10px] text-text-secondary opacity-60 font-medium">
-                  Atualizado: {new Date(eventsUpdatedAt).toLocaleTimeString('pt-BR')}
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={() => queryClient.invalidateQueries({ queryKey: ['events-history-dashboard'] })}
-                className="text-[10px] font-bold text-text-secondary hover:text-primary transition-colors flex items-center gap-1 bg-bg-primary px-2 py-1 rounded border border-border"
-              >
-                ↻ Atualizar
-              </button>
-              <Link to="/events" className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1">
-                Ver completo <ArrowRight size={12} />
-              </Link>
-            </div>
-          </div>
-          
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-                  <th className="px-6 py-3 border-b border-border">IP</th>
-                  <th className="px-6 py-3 border-b border-border">Início</th>
-                  <th className="px-6 py-3 border-b border-border">Fim</th>
-                  <th className="px-6 py-3 border-b border-border text-center">Duração</th>
-                  <th className="px-6 py-3 border-b border-border">Pico (PPS/MBPS)</th>
-                  <th className="px-6 py-3 border-b border-border text-center">Direção</th>
-                  <th className="px-6 py-3 border-b border-border text-center">Status</th>
-                  <th className="px-6 py-3 border-b border-border">Tipo</th>
-                  <th className="px-6 py-3 border-b border-border">Origem</th>
-                </tr>
-              </thead>
-              <tbody className="text-sm divide-y divide-border/50">
-                {eventsHistory?.items?.slice(0, 5).map((event: any, i: number) => (
-                  <tr key={i} className="hover:bg-bg-primary/50 transition-colors group">
-                    <td className="px-6 py-3.5 font-mono font-bold text-text-primary text-xs">{event.ip}</td>
-                    <td className="px-6 py-3.5 text-text-secondary text-[11px] whitespace-nowrap">
-                      {formatDate(event.started_at || event.start_time)}
-                    </td>
-                    <td className="px-6 py-3.5 text-text-secondary text-[11px] whitespace-nowrap">
-                      {formatDate(event.ended_at || event.end_time)}
-                    </td>
-                    <td className="px-6 py-3.5 text-center text-text-primary text-[11px] font-medium">
-                      {fmtDuration(event.duration_seconds)}
-                    </td>
-                    <td className="px-6 py-3.5">
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        {(() => {
-                          const THRESH_PPS = 100000;
-                          const THRESH_MBPS = 1000;
-                          const byPps = event.peak_pps >= THRESH_PPS;
-                          const byMbps = event.peak_mbps >= THRESH_MBPS;
-                          const byPpsFallback = !byPps && !byMbps && event.triggered_by === 'detector';
-                          
-                          const ppsColor = byPps ? '#ef4444' : (byPpsFallback ? '#f97316' : '#8892a4');
-                          const ppsBg = byPps ? (isDark ? '#3b1212' : '#fee2e2') : (byPpsFallback ? (isDark ? '#331a0a' : '#ffedd5') : 'transparent');
-                          
-                          const ppsContent = (
-                            <span style={{
-                              fontWeight: (byPps || byPpsFallback) ? 700 : 400,
-                              color: ppsColor,
-                              background: ppsBg,
-                              padding: (byPps || byPpsFallback) ? '1px 6px' : '0',
-                              borderRadius: 3,
-                              fontSize: 12,
-                              cursor: byPpsFallback ? 'help' : 'default'
-                            }}>
-                              {(event.peak_pps / 1000).toFixed(1)}k pps
-                              {byPps ? ' ⚡' : ''}
-                              {byPpsFallback ? ' 🕒' : ''}
-                            </span>
-                          );
-
-                          if (byPpsFallback) {
-                            return (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  {ppsContent}
-                                </TooltipTrigger>
-                                <TooltipContent className="bg-bg-secondary text-text-primary border border-border shadow-xl">
-                                  <p className="text-[11px] font-bold">Valor capturado após o pico.</p>
-                                  <p className="text-[10px] opacity-80 mt-0.5">Gatilho provável: PPS</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            );
-                          }
-                          
-                          return ppsContent;
-                        })()}
-                        {event.peak_mbps > 0 && (() => {
-                          const byMbps = event.peak_mbps >= 1000;
-                          return (
-                            <span style={{
-                              fontWeight: byMbps ? 700 : 400,
-                              color: byMbps ? '#f59e0b' : '#8892a4',
-                              background: byMbps ? (isDark ? '#2d1f0a' : '#fef3c7') : 'transparent',
-                              padding: byMbps ? '1px 6px' : '0',
-                              borderRadius: 3,
-                              fontSize: 12,
-                            }}>
-                              {event.peak_mbps} Mbps
-                              {byMbps ? ' ⚡' : ''}
-                            </span>
-                          );
-                        })()}
-                      </div>
-                    </td>
-                    <td className="px-6 py-3.5 text-center">
-                      {(() => {
-                        const dir = dirLabel(event.direction || event.flow_direction);
-                        return (
-                          <span style={{
-                            color: dir.color,
-                            background: dir.bg,
-                            padding: '2px 8px',
-                            borderRadius: 4,
-                            fontSize: 10,
-                            fontWeight: 500
-                          }}>
-                            {dir.label}
-                          </span>
-                        );
-                      })()}
-                    </td>
-                    <td className="px-6 py-3.5 text-center">
-                      {event.status === 'active' ? (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-danger/10 text-danger text-[9px] font-black border border-danger/20 animate-pulse">
-                          ● ATIVO
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-bg-primary text-text-secondary text-[9px] font-bold border border-border">
-                          ✓ FINALIZADO
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-3.5 text-text-secondary text-[11px] font-medium uppercase tracking-wider">
-                      {event.type || 'Blackhole'}
-                    </td>
-                    <td className="px-6 py-3.5 text-text-secondary text-[11px] font-bold uppercase tracking-wider">
-                      {event.triggered_by === 'detector' ? 'Automático' : 'Manual'}
-                    </td>
-                  </tr>
+              <div className="flex bg-bg-primary p-0.5 rounded-lg border border-border">
+                {[30, 60, 360, 1440].map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setPeriodASN(m)}
+                    className={clsx(
+                      "px-2 py-1 text-[9px] font-bold rounded",
+                      periodASN === m ? "bg-white dark:bg-bg-secondary text-primary shadow-sm" : "text-text-secondary"
+                    )}
+                  >
+                    {m >= 60 ? `${m/60}h` : `${m}m`}
+                  </button>
                 ))}
-                {(!eventsHistory?.items || eventsHistory.items.length === 0) && (
-                  <tr>
-                    <td colSpan={9} className="px-6 py-12 text-center text-text-secondary italic text-xs">
-                      Nenhum histórico de anomalias encontrado
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Seção 4 — Saúde do Servidor (Largura Total) */}
-        <div className="bg-white dark:bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm">
-            <div className="flex flex-col gap-1 mb-5 border-b border-border/50 pb-3">
-              <div className="flex items-center gap-2">
-                <Activity className="text-success" size={18} />
-                <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Saúde do Sistema</h2>
               </div>
-              {sysStatus?.uptime && (
-                <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest opacity-60">
-                  Uptime: {sysStatus.uptime}
-                </p>
-              )}
             </div>
-
-            {!sysStatus ? (
-              <div className="py-10 text-center text-xs text-text-secondary italic">Dados indisponíveis</div>
-            ) : (
-              <div className="space-y-5">
-                {/* Métricas Principais */}
-                <div className="space-y-4">
-                  {[
-                    { 
-                      label: 'CPU', 
-                      value: sysStatus.cpu_percent || 0, 
-                      color: sysStatus.cpu_percent >= 90 ? 'bg-danger' : sysStatus.cpu_percent >= 70 ? 'bg-warning' : 'bg-success',
-                      detail: `${(sysStatus.cpu_percent || 0).toFixed(1)}%`
-                    },
-                    { 
-                      label: 'RAM', 
-                      value: sysStatus.ram_percent || 0, 
-                      color: sysStatus.ram_percent >= 85 ? 'bg-danger' : sysStatus.ram_percent >= 70 ? 'bg-warning' : 'bg-primary',
-                      detail: `${(sysStatus.ram_used_gb || 0).toFixed(1)}GB / ${(sysStatus.ram_total_gb || 0).toFixed(1)}GB`
-                    },
-                    { 
-                      label: 'Disco', 
-                      value: sysStatus.disk_percent || 0, 
-                      color: sysStatus.disk_percent >= 85 ? 'bg-danger' : sysStatus.disk_percent >= 70 ? 'bg-warning' : 'bg-accent',
-                      detail: `${(sysStatus.disk_used_gb || 0).toFixed(0)}GB / ${(sysStatus.disk_used_gb + (sysStatus.disk_free_gb || 0)).toFixed(0)}GB`
-                    }
-                  ].map(m => (
-                    <div key={m.label} className="space-y-1.5">
-                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
-                        <span className="text-text-secondary">{m.label} {m.value.toFixed(1)}%</span>
-                        <span className="text-text-primary">{m.detail}</span>
-                      </div>
-                      <div className="h-1.5 bg-bg-primary rounded-full overflow-hidden border border-border/10">
-                        <div 
-                          className={clsx("h-full transition-all duration-1000", m.color)}
-                          style={{ width: `${m.value}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="pt-4 border-t border-border/20">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
-                    {Object.entries(sysStatus.services || {}).map(([name, status]: [string, any]) => {
-                      const isActive = status === 'active';
-                      return (
-                        <div key={name} className="flex items-center gap-2">
-                          <span className={clsx(
-                            "w-1.5 h-1.5 rounded-full",
-                            isActive ? "bg-success shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-danger shadow-[0_0_8px_rgba(239,68,68,0.4)]"
-                          )} />
-                          <span className={clsx(
-                            "text-[10px] font-bold truncate",
-                            isActive ? "text-text-secondary" : "text-danger"
-                          )} title={name}>
-                            {serviceNames[name] || name}
-                          </span>
-                        </div>
-                      );
-                    })}
+            <div className="space-y-4">
+              {asnStats?.items?.slice(0, 5).map((item: any, i: number) => (
+                <div key={i} className="space-y-1.5">
+                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                    <span className="text-text-primary">{cleanOrg(item.org)}</span>
+                    <span className="text-text-secondary">{formatBpsRaw(item.bytes)} · {item.percent}%</span>
+                  </div>
+                  <div className="h-1.5 bg-bg-primary rounded-full overflow-hidden border border-border/10">
+                    <div 
+                      className="h-full bg-blue-500 rounded-full transition-all duration-1000"
+                      style={{ width: `${item.percent}%` }}
+                    />
                   </div>
                 </div>
+              ))}
+              {(!asnStats?.items || asnStats.items.length === 0) && (
+                <div className="py-4 text-center text-xs text-text-secondary italic">Nenhum dado disponível</div>
+              )}
+            </div>
+          </div>
+
+          {/* TOP CDNs */}
+          <div className="bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Globe className="text-accent" size={18} />
+                <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Top CDNs</h2>
+                <FlowBadge />
               </div>
-            )}
+              <div className="flex bg-bg-primary p-0.5 rounded-lg border border-border">
+                {[30, 60, 360, 1440].map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setPeriodCDN(m)}
+                    className={clsx(
+                      "px-2 py-1 text-[9px] font-bold rounded",
+                      periodCDN === m ? "bg-white dark:bg-bg-secondary text-accent shadow-sm" : "text-text-secondary"
+                    )}
+                  >
+                    {m >= 60 ? `${m/60}h` : `${m}m`}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-4">
+              {cdnStats?.items?.slice(0, 5).map((item: any, i: number) => (
+                <div key={i} className="space-y-1.5">
+                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                    <span className="text-text-primary">{item.cdn}</span>
+                    <span className="text-text-secondary">{formatBpsRaw(item.bytes)} · {item.percent}%</span>
+                  </div>
+                  <div className="h-1.5 bg-bg-primary rounded-full overflow-hidden border border-border/10">
+                    <div 
+                      className="h-full rounded-full transition-all duration-1000"
+                      style={{ 
+                        width: `${item.percent}%`,
+                        backgroundColor: CDN_COLORS[item.cdn] || '#8892a4'
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+               {(!cdnStats?.items || cdnStats.items.length === 0) && (
+                <div className="py-4 text-center text-xs text-text-secondary italic">Nenhum dado disponível</div>
+              )}
+            </div>
+          </div>
         </div>
+
+        {/* SEÇÃO 4 — Segurança */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* ÚLTIMAS ANOMALIAS */}
+          <div className="bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <Shield className="text-danger" size={18} />
+              <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Últimas Anomalias</h2>
+              <FlowBadge />
+            </div>
+            <div className="space-y-3">
+              {eventsHistory?.items?.slice(0, 5).map((event: any, i: number) => (
+                <div key={i} className="flex items-center justify-between p-3 bg-bg-primary/50 rounded-lg border border-border/50 hover:border-primary/30 transition-all group cursor-default">
+                  <div className="flex items-center gap-3">
+                    <div className={clsx(
+                      "w-2 h-2 rounded-full",
+                      event.status === 'active' ? "bg-danger animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" : "bg-text-secondary/30"
+                    )} />
+                    <div>
+                      <div className="text-xs font-mono font-bold text-text-primary">{event.ip}</div>
+                      <div className="text-[10px] text-text-secondary font-medium uppercase tracking-tighter opacity-70">
+                        {event.peak_pps ? `${(event.peak_pps/1000).toFixed(1)}k pps` : ''} 
+                        {event.peak_mbps ? ` · ${event.peak_mbps} Mbps` : ''}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                     <span className={clsx(
+                       "text-[9px] font-black px-1.5 py-0.5 rounded border",
+                       event.status === 'active' ? "bg-danger/10 text-danger border-danger/20" : "bg-bg-primary text-text-secondary border-border"
+                     )}>
+                       {event.status === 'active' ? 'ACTIVE' : 'REMOVED'}
+                     </span>
+                     <div className="hidden group-hover:block text-[9px] text-text-secondary animate-in fade-in slide-in-from-right-1">
+                       {fmtDuration(event.duration_seconds)} · {event.direction === 'incoming' ? 'Download' : 'Upload'} · {event.triggered_by === 'detector' ? 'Auto' : 'Manual'}
+                     </div>
+                  </div>
+                </div>
+              ))}
+               {(!eventsHistory?.items || eventsHistory.items.length === 0) && (
+                <div className="py-8 text-center text-xs text-text-secondary italic">Histórico limpo</div>
+              )}
+            </div>
+          </div>
+
+          {/* PAÍSES COM MAIOR TRÁFEGO */}
+          <div className="bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <MapPin className="text-primary" size={18} />
+              <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Países com maior tráfego</h2>
+              <FlowBadge />
+            </div>
+            <div className="space-y-4">
+              {attackCountries?.items?.slice(0, 5).map((item: any, i: number) => (
+                <div key={i} className="space-y-1.5">
+                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                    <div className="flex items-center gap-2">
+                      <Flag code={item.country} size={16} />
+                      <span className="text-text-primary">{item.country_name || item.country}</span>
+                    </div>
+                    <span className="text-text-secondary">{item.percent}%</span>
+                  </div>
+                  <div className="h-1.5 bg-bg-primary rounded-full overflow-hidden border border-border/10">
+                    <div 
+                      className="h-full bg-primary rounded-full transition-all duration-1000"
+                      style={{ width: `${item.percent}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+               {(!attackCountries?.items || attackCountries.items.length === 0) && (
+                <div className="py-4 text-center text-xs text-text-secondary italic">Nenhum dado disponível</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* SEÇÃO 5 — Saúde do sistema */}
+        <div className="bg-bg-secondary p-4 rounded-2xl border border-border shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-6 px-2">
+            <div className="flex items-center gap-8">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">CPU</span>
+                <span className={clsx("text-xs font-black", (sysStatus?.cpu_percent || 0) > 80 ? "text-danger" : "text-text-primary")}>
+                  {(sysStatus?.cpu_percent || 0).toFixed(1)}%
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">RAM</span>
+                <span className={clsx("text-xs font-black", (sysStatus?.ram_percent || 0) > 80 ? "text-danger" : "text-text-primary")}>
+                  {(sysStatus?.ram_percent || 0).toFixed(1)}%
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">Disco</span>
+                <span className={clsx("text-xs font-black", (sysStatus?.disk_percent || 0) > 80 ? "text-danger" : "text-text-primary")}>
+                  {(sysStatus?.disk_percent || 0).toFixed(0)}%
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">Uptime</span>
+                <span className="text-xs font-black text-text-primary">{sysStatus?.uptime || '—'}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-8 md:border-l border-border/50 md:pl-8">
+               <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">BGP</span>
+                <span className={clsx(
+                  "text-[9px] font-black px-1.5 py-0.5 rounded border",
+                  sysStatus?.services?.bgp_engine === 'active' ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"
+                )}>
+                  {sysStatus?.services?.bgp_engine === 'active' ? 'OK' : 'OFFLINE'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">Detector</span>
+                <span className={clsx(
+                  "text-[9px] font-black px-1.5 py-0.5 rounded border",
+                  sysStatus?.services?.detection_engine === 'active' ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"
+                )}>
+                  {sysStatus?.services?.detection_engine === 'active' ? 'OK' : 'OFFLINE'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
 
         {showIfaceSelector && (
          <div style={{
