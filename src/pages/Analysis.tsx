@@ -140,56 +140,50 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     const [page, setPage] = useState(1);
     const [searchTrigger, setSearchTrigger] = useState(0);
 
-    const [filterMode, setFilterMode] = useState<'relative' | 'custom'>('relative');
-    const [minutes, setMinutes] = useState(30);
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
-    const [maxEndDate, setMaxEndDate] = useState('');
-    const [intervalWarning, setIntervalWarning] = useState(false);
-
-    const MAX_MS = MAX_HOURS * 3600 * 1000;
-
-    const handleStartChange = (value: string) => {
-      setStartDate(value);
-      setIntervalWarning(false);
-
-      if (!value) {
-        setMaxEndDate('');
-        return;
-      }
-
-      const start = new Date(value);
-      const maxEnd = new Date(start.getTime() + MAX_MS);
-      
-      // Para datetime-local o formato esperado é YYYY-MM-DDTHH:mm
-      // Usamos ajuste de timezone para evitar o problema de UTC
-      const tzOffset = maxEnd.getTimezoneOffset() * 60000;
-      const maxEndStr = new Date(maxEnd.getTime() - tzOffset).toISOString().slice(0, 16);
-      
-      if (endDate && endDate > maxEndStr) {
-        setEndDate(maxEndStr);
-        setIntervalWarning(true);
-      }
-      setMaxEndDate(maxEndStr);
+    const formatLocal = (date: Date) => {
+      const d = String(date.getDate()).padStart(2, '0');
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const y = date.getFullYear();
+      const hh = String(date.getHours()).padStart(2, '0');
+      const mm = String(date.getMinutes()).padStart(2, '0');
+      return `${d}/${m}/${y} ${hh}:${mm}`;
     };
 
-    const handleEndChange = (value: string) => {
-      if (startDate && value) {
-        const start = new Date(startDate);
-        const end = new Date(value);
-        const diff = end.getTime() - start.getTime();
-
-        if (diff > MAX_MS) {
-          const maxEnd = new Date(start.getTime() + MAX_MS);
-          const tzOffset = maxEnd.getTimezoneOffset() * 60000;
-          const maxEndStr = new Date(maxEnd.getTime() - tzOffset).toISOString().slice(0, 16);
-          setEndDate(maxEndStr);
-          setIntervalWarning(true);
-          return;
-        }
+    const toISO = (str: string) => {
+      if (!str) return '';
+      try {
+        const [date, time] = str.split(' ');
+        if (!date || !time) return '';
+        const [d, m, y] = date.split('/');
+        return `${y}-${m}-${d}T${time}`;
+      } catch {
+        return '';
       }
-      setEndDate(value);
-      setIntervalWarning(false);
+    };
+
+    const [startDate, setStartDate] = useState(formatLocal(new Date(Date.now() - 5 * 60000)));
+    const [endDate, setEndDate] = useState(formatLocal(new Date()));
+    const [useCustomRange, setUseCustomRange] = useState(false);
+    const [intervalError, setIntervalError] = useState('');
+
+    const validateInterval = (start: string, end: string) => {
+      const s = new Date(toISO(start));
+      const e = new Date(toISO(end));
+      if (isNaN(s.getTime()) || isNaN(e.getTime())) return true;
+      
+      const diff = e.getTime() - s.getTime();
+      const MAX_MS = 2 * 3600 * 1000; // 2 hours
+      
+      if (diff > MAX_MS) {
+        setIntervalError('Intervalo máximo: 2 horas');
+        return false;
+      }
+      if (diff < 0) {
+        setIntervalError('Data final deve ser posterior à inicial');
+        return false;
+      }
+      setIntervalError('');
+      return true;
     };
 
     const [filters, setFilters] = useState({
@@ -212,15 +206,8 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     }, [pageSize, filters.src_ip, filters.dst_ip, filters.src_port, filters.dst_port, filters.proto, filters.country, filters.direction, sortCol, sortDir]);
 
     useEffect(() => {
-      if (filterMode === 'custom') {
-        setSortCol('when');
-        setSortDir('asc');
-      } else {
-        setSortCol('when');
-        setSortDir('desc');
-      }
       setPage(1);
-    }, [filterMode]);
+    }, [useCustomRange]);
 
     const SORT_MAP: Record<string, string> = {
       'when':      'recent',
