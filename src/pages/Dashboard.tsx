@@ -852,10 +852,10 @@ export default function Dashboard() {
     },
     {
       id: 'attacks',
-      label: 'Anomalias hoje',
+      label: 'ANOMALIAS HOJE',
       value: anomaliasHoje.length,
       detail: anomaliasHoje[0] 
-        ? `Ontem: ${anomaliasOntem.length} anomalias · Último: ${anomaliasHoje[0].ip} ${anomaliasHoje[0].started_at.slice(11, 16)}`
+        ? `Ontem: ${anomaliasOntem.length} anomalias · Último: ${anomaliasHoje[0].ip} às ${anomaliasHoje[0].started_at.slice(11, 16)}`
         : `Ontem: ${anomaliasOntem.length} anomalias · Nenhuma anomalia hoje`,
       icon: <Shield className="text-danger" size={16} />
     },
