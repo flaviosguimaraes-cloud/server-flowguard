@@ -872,13 +872,12 @@ export default function Dashboard() {
                 key={card.id}
                 onMouseEnter={() => setHoveredCard(card.id)}
                 onMouseLeave={() => setHoveredCard(null)}
-                className="rounded-xl p-4 shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[100px]"
+                className="relative overflow-hidden flex flex-col justify-between min-h-[100px]"
                 style={{
-                  transition: 'background 0.15s, border-color 0.15s, box-shadow 0.15s',
-                  transform: 'none',
-                  border: isHovered ? '0.5px solid var(--color-border-secondary)' : '0.5px solid transparent',
-                  background: isHovered ? 'var(--color-background-primary)' : 'var(--color-background-secondary)',
-                  boxShadow: isHovered ? '0 4px 6px -1px rgb(0 0 0 / 0.05)' : 'none',
+                  background: 'var(--color-background-secondary)',
+                  borderRadius: 'var(--border-radius-md)',
+                  padding: '10px 12px',
+                  cursor: 'default',
                 }}
               >
                 <div className="flex justify-between items-start mb-2">
@@ -886,10 +885,7 @@ export default function Dashboard() {
                     {card.label}
                     {(card.id === 'download' || card.id === 'upload' || card.id === 'flows' || card.id === 'blackhole') && <FlowBadge />}
                   </span>
-                  <div className={clsx(
-                    "p-1.5 rounded-lg bg-bg-primary border border-border/40",
-                    isHovered && "text-primary"
-                  )}>
+                  <div className="p-1.5 rounded-lg bg-bg-primary border border-border/40">
                     {card.icon}
                   </div>
                 </div>
