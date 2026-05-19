@@ -207,6 +207,7 @@ import { toast } from 'sonner';
                    <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Next-hop</th>
                    <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Community</th>
                    <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Tipo</th>
+                   <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Origem</th>
                    <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Anunciado em</th>
                    <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Tempo ativo</th>
                 </tr>
@@ -215,21 +216,22 @@ import { toast } from 'sonner';
                 {loadingRoutes ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      <td colSpan={5} className="px-4 py-4"><div className="h-4 bg-border/50 rounded w-full" /></td>
+                      <td colSpan={7} className="px-4 py-4"><div className="h-4 bg-border/50 rounded w-full" /></td>
                     </tr>
                   ))
                  ) : routes.length === 0 ? (
                    <tr>
-                     <td colSpan={6} className="px-4 py-10 text-center text-text-secondary font-medium">
+                     <td colSpan={7} className="px-4 py-10 text-center text-text-secondary font-medium">
                        <div className="flex flex-col items-center gap-2">
                          <p className="italic">Nenhuma mitigação BGP ativa no momento.</p>
-                         <p className="text-[10px] opacity-70">Rotas aparecem aqui quando IPs são colocados em blackhole.</p>
+                         <p className="text-[10px] opacity-70">Rotas aparecem aqui quando IPs são colocados em blackhole ou bloqueados.</p>
                        </div>
                      </td>
                    </tr>
                  ) : (
                    routes.map((route: any, i: number) => {
                      const type = (route.type || '').toLowerCase();
+                     const source = (route.source || '').toLowerCase();
                      return (
                        <tr key={i} className="hover:bg-bg-primary/30 transition-colors group">
                          <td className="px-4 py-3 font-mono text-sm text-text-primary font-bold group-hover:text-primary transition-colors">{route.prefix}</td>
@@ -239,14 +241,21 @@ import { toast } from 'sonner';
                            <span className={clsx(
                              "px-2 py-0.5 rounded text-[10px] font-bold uppercase border",
                              type === 'blackhole' ? "bg-danger/10 text-danger border-danger/20" : 
+                             type === 'blacklist' ? "bg-red-600/10 text-[#dc2626] border-[#dc2626]/20" :
                              type === 'external' ? "bg-warning/10 text-warning border-warning/20" :
                              type === 'flowspec' ? "bg-purple-500/10 text-purple-500 border-purple-500/20" :
                              "bg-primary/10 text-primary border-primary/20"
                            )}>
                              {type === 'blackhole' ? 'Blackhole' : 
+                              type === 'blacklist' ? 'Blacklist' :
                               type === 'external' ? 'Ext. Mitigação' : 
                               type === 'flowspec' ? 'FlowSpec' : (route.type || 'Standard')}
                            </span>
+                         </td>
+                         <td className="px-4 py-3 text-xs text-text-primary">
+                           {source === 'mitigation' ? 'Mitigação automática' :
+                            source === 'blacklist' ? 'Blacklist manual' :
+                            source === 'manual' ? 'Manual' : (route.source || '—')}
                          </td>
                          <td className="px-4 py-3 text-xs text-text-primary flex items-center gap-2">
                            <Clock size={12} className="text-text-secondary" />
