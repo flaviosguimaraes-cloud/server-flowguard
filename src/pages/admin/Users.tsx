@@ -238,7 +238,7 @@ export default function Users() {
                                   justifyContent: 'center'
                                 }}
                               >
-                                <Trash2 size={14} style={{ color: '#ef4444' }} />
+                                Excluir
                               </button>
                            </>
                          )}
