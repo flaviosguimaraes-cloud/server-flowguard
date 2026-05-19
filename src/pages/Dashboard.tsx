@@ -1176,30 +1176,45 @@ export default function Dashboard() {
                       event.status === 'active' ? "bg-danger animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" : "bg-text-secondary/30"
                     )} />
                     <div>
-                      <div className="text-xs font-mono font-bold text-text-primary">{event.ip}</div>
-                      <div className="text-[10px] text-text-secondary font-medium uppercase tracking-tighter opacity-70">
-                        {event.peak_pps ? `${(event.peak_pps/1000).toFixed(1)}k pps` : ''} 
-                        {event.peak_mbps ? ` · ${event.peak_mbps} Mbps` : ''}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="flex flex-col items-end gap-1">
-                     <span className={clsx(
-                       "text-[9px] font-black px-1.5 py-0.5 rounded border",
-                       event.status === 'active' ? "bg-danger/10 text-danger border-danger/20" : "bg-bg-primary text-text-secondary border-border"
-                     )}>
-                       {event.status === 'active' ? 'ACTIVE' : 'REMOVED'}
-                     </span>
-                     <div className="hidden group-hover:block text-[9px] text-text-secondary animate-in fade-in slide-in-from-right-1">
-                       {fmtDuration(event.duration_seconds)} · {event.direction === 'incoming' ? 'Download' : 'Upload'} · {event.triggered_by === 'detector' ? 'Auto' : 'Manual'}
+                       <div className="text-xs font-mono font-bold text-text-primary">{event.ip}</div>
+                       <div className="text-[10px] text-text-secondary font-medium uppercase tracking-tighter opacity-70">
+                         {formatEventTime(event.started_at)} · {event.peak_pps ? `${(event.peak_pps/1000).toFixed(1)}k pps` : ''} 
+                         {event.peak_mbps ? ` · ${event.peak_mbps} Mbps` : ''}
+                       </div>
                      </div>
-                  </div>
-                </div>
-              ))}
-               {(!eventsHistory?.items || eventsHistory.items.length === 0) && (
-                <div className="py-8 text-center text-xs text-text-secondary italic">Histórico limpo</div>
-              )}
-            </div>
+                   </div>
+                   <div className="flex flex-col items-end gap-1">
+                      <span className={clsx(
+                        "text-[9px] font-black px-1.5 py-0.5 rounded border",
+                        event.status === 'active' ? "bg-danger/10 text-danger border-danger/20" : "bg-bg-primary text-text-secondary border-border"
+                      )}>
+                        {event.status === 'active' ? 'ACTIVE' : 'REMOVED'}
+                      </span>
+                      <div className="hidden group-hover:block text-[9px] text-text-secondary animate-in fade-in slide-in-from-right-1">
+                        {fmtDuration(event.duration_seconds)} · {event.direction === 'incoming' ? 'Download' : 'Upload'}
+                      </div>
+                   </div>
+                 </div>
+               ))}
+                {(!eventsHistory?.items || eventsHistory.items.length === 0) && (
+                 <div className="py-8 text-center text-xs text-text-secondary italic">Histórico limpo</div>
+               )}
+               <button
+                 onClick={() => navigate({ to: '/mitigation/events' })}
+                 style={{
+                   width: '100%',
+                   marginTop: 12,
+                   padding: '6px',
+                   fontSize: 12,
+                   background: 'transparent',
+                   border: '0.5px solid var(--color-border-tertiary)',
+                   borderRadius: 'var(--border-radius-md)',
+                   cursor: 'pointer',
+                   color: 'var(--color-text-secondary)'
+                 }}>
+                 Ver todos os eventos →
+               </button>
+             </div>
           </div>
 
           {/* PAÍSES COM MAIOR TRÁFEGO */}
