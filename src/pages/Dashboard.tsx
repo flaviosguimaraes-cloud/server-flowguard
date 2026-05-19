@@ -831,8 +831,9 @@ export default function Dashboard() {
                 }}
               >
                 <div className="flex justify-between items-start mb-2">
-                  <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider opacity-70">
+                  <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider opacity-70 flex items-center">
                     {card.label}
+                    {(card.id === 'download' || card.id === 'upload' || card.id === 'flows' || card.id === 'blackhole') && <FlowBadge />}
                   </span>
                   <div className={clsx(
                     "p-1.5 rounded-lg bg-bg-primary border border-border/40",
