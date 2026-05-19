@@ -741,75 +741,111 @@ export default function Dashboard() {
     );
   }
 
-    return (
-      <TooltipProvider>
-      <div className="space-y-6 animate-in fade-in duration-500">
-       <style>{`
-         @keyframes pulse {
-           0%, 100% { opacity: 1; }
-           50% { opacity: 0.3; }
-         }
-       `}</style>
-        {/* Top Stats Redesign */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-          <StatCard 
-            title="FLOW IPv4 ↓ DOWNLOAD" 
-            value={detection?.incoming_mbps >= 1000 ? (detection.incoming_mbps / 1000).toFixed(1) : (detection?.incoming_mbps || 0).toFixed(0)} 
-            unit={detection?.incoming_mbps >= 1000 ? "Gbps" : "Mbps"} 
-            icon={<ArrowDown className="text-blue-500" size={20} />} 
-          />
-          <StatCard 
-            title="FLOW IPv4 ↑ UPLOAD" 
-            value={detection?.outgoing_mbps >= 1000 ? (detection.outgoing_mbps / 1000).toFixed(1) : (detection?.outgoing_mbps || 0).toFixed(0)} 
-            unit={detection?.outgoing_mbps >= 1000 ? "Gbps" : "Mbps"} 
-            icon={<ArrowUp className="text-green-500" size={20} />} 
-          />
-          <StatCard 
-            title="FLOWS ATIVOS" 
-            value={detection?.incoming_pps > 1000 ? (detection.incoming_pps / 1000).toFixed(1) + 'k' : detection?.incoming_pps || '0'} 
-            icon={<Activity className="text-warning" size={20} />} 
-          />
-          
-          {/* Coletores Card with Tooltip */}
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="cursor-help">
-                <StatCard 
-                  title="COLETORES" 
-                  value={(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || []))
-                    .filter((c: any) => c.status === 'active' || c.status === 'Ativo').length} 
-                  icon={<Zap className="text-primary" size={20} />} 
-                />
-              </div>
-            </TooltipTrigger>
-            <TooltipContent side="bottom" className="w-64 p-3">
-              <div className="space-y-2">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-text-secondary mb-2 border-b border-border/50 pb-1">Status dos Coletores</p>
-                {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).map((c: any) => (
-                  <div key={c.id} className="flex justify-between items-center text-[11px]">
-                    <div className="flex flex-col">
-                      <span className="font-bold text-text-primary">{c.name}</span>
-                      <span className="text-[9px] text-text-secondary">{c.host} · {c.snmp_version || 'v2c'}</span>
-                    </div>
-                    <span className={clsx(
-                      "px-1.5 py-0.5 rounded text-[9px] font-bold",
-                      (c.status === 'active' || c.status === 'Ativo') ? "bg-success/10 text-success" : "bg-danger/10 text-danger"
-                    )}>
-                      {(c.status === 'active' || c.status === 'Ativo') ? 'Ativo' : 'Inativo'}
-                    </span>
-                  </div>
-                ))}
-              </div>
-            </TooltipContent>
-          </Tooltip>
+  const cards = [
+    {
+      id: 'download',
+      label: 'Download',
+      value: flowsSummary?.in_bps ? formatBpsRaw(flowsSummary.in_bps) : '0 bps',
+      detail: `Pico: ${flowsSummary?.peak_in_bps ? formatBpsRaw(flowsSummary.peak_in_bps) : '—'} · Ontem: ${flowsSummary?.yesterday_avg_in_bps ? formatBpsRaw(flowsSummary.yesterday_avg_in_bps) : '—'}`,
+      icon: <ArrowDown className="text-blue-500" size={16} />
+    },
+    {
+      id: 'upload',
+      label: 'Upload',
+      value: flowsSummary?.out_bps ? formatBpsRaw(flowsSummary.out_bps) : '0 bps',
+      detail: `Pico: ${flowsSummary?.peak_out_bps ? formatBpsRaw(flowsSummary.peak_out_bps) : '—'} · Ontem: ${flowsSummary?.yesterday_avg_out_bps ? formatBpsRaw(flowsSummary.yesterday_avg_out_bps) : '—'}`,
+      icon: <ArrowUp className="text-green-500" size={16} />
+    },
+    {
+      id: 'flows',
+      label: 'Flows/min',
+      value: flowsSummary?.total_flows ? (flowsSummary.total_flows / 1000).toFixed(1) + 'M' : '0',
+      detail: 'Lag: 0s · Tailer: ativo',
+      icon: <Activity className="text-warning" size={16} />
+    },
+    {
+      id: 'collectors',
+      label: 'Coletores',
+      value: (Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || []))
+        .filter((c: any) => c.status === 'active' || c.status === 'Ativo').length,
+      detail: `${(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || []))
+        .find((c: any) => c.status === 'active' || c.status === 'Ativo')?.name || '—'} · ${collectorDetailedInfo?.length || 0} interfaces`,
+      icon: <Zap className="text-primary" size={16} />
+    },
+    {
+      id: 'attacks',
+      label: 'Ataques hoje',
+      value: activeEventsToday?.items?.length || 0,
+      detail: `Ontem: ${activeEventsToday?.yesterday_count || 0} · Último: ${eventsHistory?.items?.[0] ? timeAgo(eventsHistory.items[0].started_at || eventsHistory.items[0].start_time) : '—'}`,
+      icon: <Shield className="text-danger" size={16} />
+    },
+    {
+      id: 'blackhole',
+      label: 'Blackhole',
+      value: activeMitigations?.total || 0,
+      detail: `Blacklist: ${activeMitigations?.blacklist_count || 0} · BGP: OK`,
+      icon: <Activity className="text-accent" size={16} />
+    }
+  ];
 
-          <StatCard 
-            title="MITIGAÇÕES ATIVAS" 
-            value={detection?.active_mitigations || '0'} 
-            icon={<Shield className={clsx(Number(detection?.active_mitigations) > 0 ? "text-danger" : "text-text-secondary opacity-40")} size={20} />} 
-            trend={Number(detection?.active_mitigations) > 0 ? "ATIVO" : undefined}
-          />
+  return (
+    <TooltipProvider>
+      <div className="space-y-6 animate-in fade-in duration-500 pb-10">
+        <style>{`
+          @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(2px); }
+            to { opacity: 1; transform: translateY(0); }
+          }
+        `}</style>
+
+        {/* SEÇÃO 1 — Cards em linha única */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
+          {cards.map((card) => {
+            const isHovered = hoveredCard === card.id;
+            return (
+              <div
+                key={card.id}
+                onMouseEnter={() => setHoveredCard(card.id)}
+                onMouseLeave={() => setHoveredCard(null)}
+                className="rounded-xl p-4 shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[100px]"
+                style={{
+                  transition: 'all 0.2s',
+                  transform: isHovered ? 'translateY(-2px)' : 'none',
+                  border: isHovered ? '0.5px solid var(--color-border-secondary)' : '0.5px solid transparent',
+                  background: isHovered ? 'var(--color-background-primary)' : 'var(--color-background-secondary)',
+                }}
+              >
+                <div className="flex justify-between items-start mb-2">
+                  <span className="text-[10px] font-bold text-text-secondary uppercase tracking-wider opacity-70">
+                    {card.label}
+                  </span>
+                  <div className={clsx(
+                    "p-1.5 rounded-lg bg-bg-primary border border-border/40",
+                    isHovered && "text-primary"
+                  )}>
+                    {card.icon}
+                  </div>
+                </div>
+                
+                <div>
+                  <div className="text-xl font-bold text-text-primary tracking-tight">
+                    {card.value}
+                  </div>
+                  
+                  {isHovered && (
+                    <div 
+                      className="text-[10px] text-text-secondary mt-2 pt-2 border-t border-border/30 whitespace-nowrap overflow-hidden text-ellipsis"
+                      style={{ animation: 'fadeIn 0.15s ease' }}
+                    >
+                      {card.detail}
+                    </div>
+                  )}
+                </div>
+              </div>
+            );
+          })}
         </div>
+
 
 
       {/* Main Chart: Tráfego da Interface - Refined Light Theme Visuals */}
