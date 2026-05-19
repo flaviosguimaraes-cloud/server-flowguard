@@ -6,84 +6,42 @@
    timeout: 15000,
  });
  
- api.interceptors.request.use((config) => {
-   const isLoginEndpoint =
-     config.url?.includes('/auth/login') ||
-     config.url?.includes('/auth/refresh');
+ api.interceptors.request.use(config => {
+   const token = localStorage.getItem('access_token');
+   
+   // Check if it's a login or public endpoint
+   const isAuthEndpoint = config.url?.includes('/login');
  
-   if (!isLoginEndpoint) {
-     const token =
-       localStorage.getItem('access_token');
-     if (token) {
-       config.headers.Authorization =
-         `Bearer ${token}`;
-     }
+   if (!token && !isAuthEndpoint) {
+     // Cancelar request se não logado
+     throw new axios.Cancel('No token available');
    }
  
-   console.log('API Request:',
-     config.method?.toUpperCase(),
-     config.url,
-     'Token:',
-     config.headers.Authorization
-       ? 'presente' : 'AUSENTE');
+   if (token) {
+     config.headers.Authorization = `Bearer ${token}`;
+   }
+   
    return config;
  });
  
  api.interceptors.response.use(
-   (response) => response,
-   async (error) => {
-     const originalRequest = error.config;
- 
-     // Ignorar erros de login e refresh
-     const isAuthEndpoint =
-       originalRequest?.url?.includes('/auth/login')
-       || originalRequest?.url?.includes(
-         '/auth/refresh');
- 
-     if (error.response?.status === 401
-         && !isAuthEndpoint
-         && !originalRequest?._retry) {
- 
-       originalRequest._retry = true;
- 
-       // Tentar refresh token antes de deslogar
-       const refreshToken =
-         localStorage.getItem('refresh_token');
- 
-       if (refreshToken) {
-         try {
-           const response = await api.post(
-             '/api/auth/refresh',
-             { refresh_token: refreshToken },
-             { headers: {
-               'Content-Type': 'application/json'
-             }}
-           );
-           const newToken =
-             response.data.access_token;
-           localStorage.setItem(
-             'access_token', newToken);
-           originalRequest.headers.Authorization =
-             `Bearer ${newToken}`;
-           return api(originalRequest);
-          } catch (refreshError) {
-            // Refresh falhou — aí sim desloga
-            localStorage.removeItem('access_token');
-            localStorage.removeItem('refresh_token');
-            localStorage.removeItem('username');
-            localStorage.removeItem('role');
-            window.location.href = '/login';
-            return Promise.reject(refreshError);
-          }
-        } else {
-          localStorage.removeItem('access_token');
-          localStorage.removeItem('refresh_token');
-          localStorage.removeItem('username');
-          localStorage.removeItem('role');
-          window.location.href = '/login';
-        }
+   response => response,
+   error => {
+     if (axios.isCancel(error)) {
+       return Promise.reject(error);
      }
- 
+     
+     if (error.response?.status === 401) {
+       const isAuthEndpoint = error.config?.url?.includes('/login');
+       if (!isAuthEndpoint) {
+         localStorage.removeItem('access_token');
+         localStorage.removeItem('refresh_token');
+         localStorage.removeItem('username');
+         localStorage.removeItem('role');
+         window.location.href = '/login';
+       }
+     }
+     
      return Promise.reject(error);
    }
  );
