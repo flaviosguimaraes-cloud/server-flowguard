@@ -25,37 +25,9 @@ import { toast } from 'sonner';
      refetchInterval: 10000,
    });
  
+    const sessions = sessionsData?.sessions || [];
+    const routes = routesData?.routes || [];
     const activeFlowspecCount = routes.filter((r: any) => r.type === 'flowspec').length;
- 
-   const calcUptime = (logTail: string) => {
-     if (!logTail) return '—';
-     const lines = logTail.split('\n');
-     for (const line of lines.reverse()) {
-       const match = line.match(/(\w+\s+\d+\s+\d+:\d+:\d+)/);
-       if (match && line.includes('connected')) {
-         const connTime = new Date(match[1] + ' 2026');
-         const diff = Math.floor((Date.now() - connTime.getTime()) / 1000);
-         if (diff < 0) return '—';
-         if (diff < 60) return `${diff}s`;
-         if (diff < 3600) return `${Math.floor(diff/60)}m ${diff%60}s`;
-         return `${Math.floor(diff/3600)}h ${Math.floor((diff%3600)/60)}m`;
-       }
-     }
-     return '—';
-   };
- 
-   const timeActive = (age: string) => {
-     if (!age) return '—';
-     const d = new Date(age.replace(' ', 'T'));
-     const diff = Math.floor((Date.now() - d.getTime()) / 1000);
-     if (diff < 0) return '—';
-     if (diff < 60) return `${diff}s`;
-     if (diff < 3600) return `${Math.floor(diff/60)}m`;
-     return `${Math.floor(diff/3600)}h ${Math.floor((diff%3600)/60)}m`;
-   };
- 
-   const sessions = sessionsData?.sessions || [];
-   const routes = routesData?.routes || [];
  
    const refresh = () => {
      refetchSessions();
