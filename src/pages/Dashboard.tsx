@@ -874,10 +874,11 @@ export default function Dashboard() {
                 onMouseLeave={() => setHoveredCard(null)}
                 className="rounded-xl p-4 shadow-sm relative overflow-hidden flex flex-col justify-between min-h-[100px]"
                 style={{
-                  transition: 'all 0.2s',
-                  transform: isHovered ? 'translateY(-2px)' : 'none',
+                  transition: 'background 0.15s, border-color 0.15s, box-shadow 0.15s',
+                  transform: 'none',
                   border: isHovered ? '0.5px solid var(--color-border-secondary)' : '0.5px solid transparent',
                   background: isHovered ? 'var(--color-background-primary)' : 'var(--color-background-secondary)',
+                  boxShadow: isHovered ? '0 4px 6px -1px rgb(0 0 0 / 0.05)' : 'none',
                 }}
               >
                 <div className="flex justify-between items-start mb-2">
