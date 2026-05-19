@@ -188,11 +188,27 @@ export default function Dashboard() {
      const d = new Date(dateStr.replace(' ', 'T'));
      if (isNaN(d.getTime())) return '—';
      const diff = Date.now() - d.getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `há ${mins}min`;
-    const hrs = Math.floor(mins / 60);
-    return `há ${hrs}h`;
-  };
+     const mins = Math.floor(diff / 60000);
+     if (mins < 60) return `há ${mins}min`;
+     const hrs = Math.floor(mins / 60);
+     if (hrs < 24) return `há ${hrs}h`;
+     return d.toLocaleDateString('pt-BR');
+   };
+
+   const formatBw = (mbps: number) => {
+     if (mbps >= 1000)
+       return (mbps/1000).toFixed(1)+' Gbps';
+     return mbps + ' Mbps';
+   };
+
+   const formatEventTime = (str: string) => {
+     if (!str) return '—';
+     const parts = str.split(' ');
+     const date = parts[0];
+     const time = parts[1]?.slice(0,5);
+     const [y,m,d] = date.split('-');
+     return `${d}/${m} ${time}`;
+   };
 
   const { data: detection, isLoading: statsLoading } = useQuery({
     queryKey: ['detection-stats'],
