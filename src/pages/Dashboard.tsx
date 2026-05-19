@@ -256,32 +256,30 @@ export default function Dashboard() {
 
    const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
    const [serviceFilter, setServiceFilter] = useState<string | null>(null);
-   const [timePeriod, setTimePeriod] = useState<'30M' | '1H' | '6H' | '12H' | '24H' | '48H'>('30M');
+    const [selectedMinutes, setSelectedMinutes] = useState(() => {
+      const saved = localStorage.getItem('fg_collector_period');
+      return saved ? parseInt(saved) : 30;
+    });
    const [showIfaceSelector, setShowIfaceSelector] = useState(false);
 
-  useEffect(() => {
-    queryClient.invalidateQueries({
-      queryKey: ['iface-history']
-    });
-  }, [timePeriod, selectedIfaces, queryClient]);
-
-  const { data: metricsHistory, isLoading: metricsHistoryLoading } = useQuery({
-    queryKey: ['iface-history', selectedCollector, timePeriod, selectedIfaces],
-    queryFn: async () => {
-      if (selectedIfaces.length === 0 || !selectedCollector)
-        return null;
-
-       const minutes = timePeriod === '30M' ? 30 : 
-                       timePeriod === '1H' ? 60 : 
-                       timePeriod === '6H' ? 360 : 
-                       timePeriod === '12H' ? 720 : 
-                       timePeriod === '24H' ? 1440 : 2880;
-
-      console.log('Buscando histórico:', selectedCollector, selectedIfaces, minutes);
+   useEffect(() => {
+     localStorage.setItem('fg_collector_period', String(selectedMinutes));
+     queryClient.invalidateQueries({
+       queryKey: ['iface-history']
+     });
+   }, [selectedMinutes, selectedIfaces, queryClient]);
+ 
+   const { data: metricsHistory, isLoading: metricsHistoryLoading } = useQuery({
+     queryKey: ['iface-history', selectedCollector, selectedMinutes, selectedIfaces],
+     queryFn: async () => {
+       if (selectedIfaces.length === 0 || !selectedCollector)
+         return null;
+ 
+       console.log('Buscando histórico:', selectedCollector, selectedIfaces, selectedMinutes);
 
       const results = await Promise.all(
         selectedIfaces.map(async ifName => {
-          const url = `/api/collectors/${selectedCollector}/metrics/history?minutes=${minutes}&if_name=${encodeURIComponent(ifName)}`;
+          const url = `/api/collectors/${selectedCollector}/metrics/history?minutes=${selectedMinutes}&if_name=${encodeURIComponent(ifName)}`;
           console.log('URL:', url);
           const r = await api.get(url);
           console.log('Resultado:', ifName, r.data);
@@ -405,7 +403,7 @@ export default function Dashboard() {
 
    const formatTime = (timeStr: string) => {
      if (!timeStr || timeStr.length < 16) return timeStr;
-     if (timePeriod === '24H' || timePeriod === '48H') {
+     if (selectedMinutes >= 1440) {
        const d = new Date(timeStr.replace(' ', 'T'));
        if (isNaN(d.getTime())) return timeStr.substring(11, 16);
        return d.toLocaleDateString('pt-BR', {
@@ -435,10 +433,10 @@ export default function Dashboard() {
 
      if (!metricsHistory?.length) {
        return {
-         rx: getStats([]),
-         tx: getStats([]),
-         label: timePeriod
-       };
+          rx: getStats([]),
+          tx: getStats([]),
+          label: selectedMinutes + ' minutos'
+        };
      }
 
      const timeMap: Record<string, { rx: number, tx: number }> = {};
@@ -455,17 +453,17 @@ export default function Dashboard() {
      const rxValues = sorted.map(t => timeMap[t].rx);
      const txValues = sorted.map(t => timeMap[t].tx);
 
-      return {
-        rx: getStats(rxValues),
-        tx: getStats(txValues),
-        label: timePeriod === '30M' ? '30 minutos' :
-               timePeriod === '1H' ? '1 hora' :
-               timePeriod === '6H' ? '6 horas' : 
-               timePeriod === '12H' ? '12 horas' :
-               timePeriod === '24H' ? '24 horas' : 
-               timePeriod === '48H' ? '48 horas' : timePeriod
-      };
-   }, [timePeriod, metricsHistory, history, selectedIfaces]);
+       return {
+         rx: getStats(rxValues),
+         tx: getStats(txValues),
+         label: selectedMinutes === 30 ? '30 minutos' :
+                selectedMinutes === 60 ? '1 hora' :
+                selectedMinutes === 360 ? '6 horas' : 
+                selectedMinutes === 720 ? '12 horas' :
+                selectedMinutes === 1440 ? '24 horas' : 
+                selectedMinutes === 2880 ? '48 horas' : selectedMinutes + ' minutos'
+       };
+    }, [selectedMinutes, metricsHistory, history, selectedIfaces]);
 
 
 
@@ -799,20 +797,27 @@ export default function Dashboard() {
 
               {/* MELHORIA 4 — Seletor de período */}
                <div className="flex bg-bg-primary p-1 rounded-lg border border-border overflow-x-auto">
-               {(['30M', '1H', '6H', '12H', '24H', '48H'] as const).map((p) => (
-                   <button
-                     key={p}
-                     onClick={() => setTimePeriod(p as any)}
-                     className={clsx(
-                       "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all whitespace-nowrap",
-                       timePeriod === p 
-                         ? "bg-white dark:bg-[#2a2d3e] text-accent shadow-sm" 
-                         : "text-text-secondary hover:text-text-primary"
-                     )}
-                   >
-                     {p}
-                   </button>
-                 ))}
+               {[
+                 { label: '30M', mins: 30 },
+                 { label: '1H', mins: 60 },
+                 { label: '6H', mins: 360 },
+                 { label: '12H', mins: 720 },
+                 { label: '24H', mins: 1440 },
+                 { label: '48H', mins: 2880 }
+               ].map((p) => (
+                 <button
+                   key={p.label}
+                   onClick={() => setSelectedMinutes(p.mins)}
+                   className={clsx(
+                     "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all whitespace-nowrap",
+                     selectedMinutes === p.mins 
+                       ? "bg-white dark:bg-[#2a2d3e] text-accent shadow-sm" 
+                       : "text-text-secondary hover:text-text-primary"
+                   )}
+                 >
+                   {p.label}
+                 </button>
+               ))}
                </div>
  
              <button 
