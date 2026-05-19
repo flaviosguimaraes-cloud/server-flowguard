@@ -127,7 +127,22 @@ export default function Dashboard() {
   const [countdown, setCountdown] = useState(30);
   const [hoveredIP, setHoveredIP] = useState<string | null>(null);
   const [hoveredCard, setHoveredCard] = useState<string | null>(null);
+  const [today, setToday] = useState('');
+  const [yesterday, setYesterday] = useState('');
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
+  useEffect(() => {
+    const getLocalDateStr = (offset = 0) => {
+      const d = new Date();
+      if (offset !== 0) d.setDate(d.getDate() + offset);
+      const y = d.getFullYear();
+      const m = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${y}-${m}-${day}`;
+    };
+    setToday(getLocalDateStr());
+    setYesterday(getLocalDateStr(-1));
+  }, []);
 
   const [selectedCollector, setSelectedCollector] = useState<number>(() => {
     const saved = localStorage.getItem('fg_collector');
