@@ -1,103 +1,66 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
-import { Globe, Clock, BarChart3, TrendingUp, Activity, Award, Users } from 'lucide-react';
+import { Globe, Clock, BarChart3, TrendingUp, Activity, Award, Users, ChevronDown, ChevronUp, MapPin, Server } from 'lucide-react';
 import { clsx } from 'clsx';
 
-const CDN_INFO: Record<string, { color: string; abbr: string; desc: string }> = {
-  'Netflix': {
-    color: '#E50914',
-    abbr: 'NF',
-    desc: 'Streaming de vídeo'
-  },
-  'Google': {
-    color: '#4285F4',
-    abbr: 'GO',
-    desc: 'Busca e serviços'
-  },
-  'YouTube': {
-    color: '#FF0000',
-    abbr: 'YT',
-    desc: 'Streaming de vídeo'
-  },
-  'Cloudflare': {
-    color: '#F48120',
-    abbr: 'CF',
-    desc: 'CDN e segurança'
-  },
-  'Akamai': {
-    color: '#009BDE',
-    abbr: 'AK',
-    desc: 'CDN enterprise'
-  },
-  'Amazon': {
-    color: '#FF9900',
-    abbr: 'AZ',
-    desc: 'Cloud e streaming'
-  },
-  'Meta': {
-    color: '#1877F2',
-    abbr: 'FB',
-    desc: 'Redes sociais'
-  },
-  'Microsoft': {
-    color: '#00BCF2',
-    abbr: 'MS',
-    desc: 'Cloud e serviços'
-  },
-  'Disney': {
-    color: '#113CCF',
-    abbr: 'DI',
-    desc: 'Streaming de vídeo'
-  },
-  'Fastly': {
-    color: '#FF282D',
-    abbr: 'FA',
-    desc: 'CDN edge'
-  },
+const CDN_COLORS: Record<string, string> = {
+  'Netflix': '#E50914',
+  'Google': '#4285F4',
+  'YouTube': '#FF0000',
+  'Cloudflare': '#F48120',
+  'Akamai': '#009BDE',
+  'Amazon': '#FF9900',
+  'Meta': '#1877F2',
+  'Microsoft': '#00BCF2',
+  'Apple': '#555555',
+  'Disney': '#113CCF',
+  'Fastly': '#FF282D',
+  'Steam': '#1b2838',
+  'Riot': '#C89B3C',
+  'TikTok': '#010101',
 };
 
-const CDNs = () => {
-  const [minutes, setMinutes] = useState(60);
-  const isAuthenticated = !!localStorage.getItem('access_token');
+const CDN_ASN: Record<string, string> = {
+  'Netflix': 'AS2906',
+  'Google': 'AS15169',
+  'YouTube': 'AS15169',
+  'Cloudflare': 'AS13335',
+  'Akamai': 'AS20940',
+  'Amazon': 'AS16509',
+  'Meta': 'AS32934',
+  'Microsoft': 'AS8075',
+  'Apple': 'AS714',
+  'Disney': 'AS23286',
+  'Fastly': 'AS54113',
+  'Steam': 'AS32590',
+  'Riot': 'AS6507',
+  'TikTok': 'AS138699',
+};
 
-  const { data, isLoading } = useQuery({
-    queryKey: ['cdns-ranking', minutes],
-    enabled: isAuthenticated,
-    queryFn: () => api.get(`/api/flows/cdns?minutes=${minutes}`).then(r => r.data),
-    refetchInterval: 30000,
-  });
-
-  const items = data?.items || [];
-  const cdnTotalBytes = items.reduce((acc: number, item: any) => acc + (item.bytes || 0), 0);
-  const overallTotalBytes = data?.total_bytes || (cdnTotalBytes * 1.4); // Fallback estimate if total_bytes not present
-  const cdnPercentageOfTotal = overallTotalBytes > 0 ? (cdnTotalBytes / overallTotalBytes) * 100 : 0;
-
-  const formatBytes = (bytes: number) => {
-    if (bytes === 0) return '0 B';
-    const k = 1024;
-    const sizes = ['B', 'KB', 'MB', 'GB', 'TB', 'PB'];
-    const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+const getFavicon = (cdn: string) => {
+  const domains: Record<string, string> = {
+    'Netflix': 'netflix.com',
+    'Google': 'google.com',
+    'YouTube': 'youtube.com',
+    'Cloudflare': 'cloudflare.com',
+    'Akamai': 'akamai.com',
+    'Amazon': 'amazon.com',
+    'Meta': 'meta.com',
+    'Microsoft': 'microsoft.com',
+    'Apple': 'apple.com',
+    'Disney': 'disneyplus.com',
+    'Fastly': 'fastly.com',
+    'Steam': 'steampowered.com',
+    'Riot': 'riotgames.com',
+    'TikTok': 'tiktok.com',
   };
+  const d = domains[cdn];
+  return d
+    ? `https://www.google.com/s2/favicons?domain=${d}&sz=32`
+    : null;
+};
 
-  const periods = [
-    { label: '30min', value: 30 },
-    { label: '1h', value: 60 },
-    { label: '6h', value: 360 },
-    { label: '24h', value: 1440 },
-  ];
-
-  const getCdnInfo = (name: string) => {
-    for (const key in CDN_INFO) {
-      if (name.toLowerCase().includes(key.toLowerCase())) return CDN_INFO[key];
-    }
-    return {
-      color: '#8892a4',
-      abbr: name.substring(0, 2).toUpperCase(),
-      desc: 'Provedor de Conteúdo'
-    };
-  };
 
   const SummaryCard = ({ title, value, icon, color = 'primary' }: any) => {
     const colorClasses: Record<string, string> = {
