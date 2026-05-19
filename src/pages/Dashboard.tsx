@@ -118,7 +118,8 @@ const sampleData = (data: any[]) => {
  };
 
 export default function Dashboard() {
-  const { t } = useTranslation();
+   const { t } = useTranslation();
+   const navigate = useNavigate();
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const queryClient = useQueryClient();
