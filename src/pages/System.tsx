@@ -10,6 +10,7 @@ const System = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
   const queryClient = useQueryClient();
+  const isAuthenticated = !!localStorage.getItem('access_token');
   const [restarting, setRestarting] = useState<string | null>(null);
 
   const { data: status, dataUpdatedAt } = useQuery({
@@ -18,6 +19,7 @@ const System = () => {
       const r = await api.get('/api/system/status');
       return r.data;
     },
+    enabled: isAuthenticated,
     refetchInterval: 10000,
     staleTime: 0,
     gcTime: 0,
@@ -28,6 +30,7 @@ const System = () => {
   const { data: versionData } = useQuery({
     queryKey: ['system-version'],
     queryFn: () => api.get('/api/version').then(r => r.data),
+    enabled: isAuthenticated,
   });
 
   const restartMutation = useMutation({

@@ -7,9 +7,11 @@ import { Save, Settings as SettingsIcon, Sliders } from 'lucide-react';
 export default function Settings() {
   const isAdmin = localStorage.getItem('role') === 'admin';
   const qc = useQueryClient();
+  const isAuthenticated = !!localStorage.getItem('access_token');
 
   const { data: settings } = useQuery({
     queryKey: ['settings'],
+    enabled: isAuthenticated,
     queryFn: () => api.get('/api/settings').then(r => r.data).catch(() => ({})),
   });
   const [s, setS] = useState<any>({});
