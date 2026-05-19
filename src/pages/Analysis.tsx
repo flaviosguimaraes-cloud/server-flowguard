@@ -229,13 +229,14 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
         limit: String(pageSize),
         offset: String((page - 1) * pageSize),
         le: '1000',
+        order: sortDir === 'asc' ? (SORT_MAP[sortCol] || 'recent') + '_asc' : (SORT_MAP[sortCol] || 'recent'),
       });
 
-      if (filterMode === 'custom') {
-        if (startDate) params.append('start', startDate);
-        if (endDate) params.append('end', endDate);
+      if (useCustomRange && startDate && endDate) {
+        params.append('start', toISO(startDate));
+        params.append('end', toISO(endDate));
       } else {
-        params.append('minutes', String(minutes));
+        params.append('minutes', '5');
       }
 
       if (filters.src_ip) {
@@ -258,11 +259,8 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       if (filters.country) params.append('country', filters.country);
       if (filters.direction) params.append('direction', filters.direction);
       
-      const orderParam = SORT_MAP[sortCol] || 'recent';
-      params.set('order', sortDir === 'asc' ? orderParam + '_asc' : orderParam);
-      
       return params.toString();
-    }, [pageSize, page, filterMode, startDate, endDate, minutes, filters, sortCol, sortDir]);
+    }, [pageSize, page, useCustomRange, startDate, endDate, filters, sortCol, sortDir]);
 
     const handleSort = (col: string) => {
       if (sortCol === col) {
