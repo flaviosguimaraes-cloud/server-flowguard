@@ -1,64 +1,69 @@
 import React, { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
-import { Globe, Clock, BarChart3, TrendingUp, Activity, Award, Users } from 'lucide-react';
+import { Globe, Clock, BarChart3, TrendingUp, Activity, Award, Users, ChevronDown, ChevronUp, MapPin, Server } from 'lucide-react';
 import { clsx } from 'clsx';
 
-const CDN_INFO: Record<string, { color: string; abbr: string; desc: string }> = {
-  'Netflix': {
-    color: '#E50914',
-    abbr: 'NF',
-    desc: 'Streaming de vídeo'
-  },
-  'Google': {
-    color: '#4285F4',
-    abbr: 'GO',
-    desc: 'Busca e serviços'
-  },
-  'YouTube': {
-    color: '#FF0000',
-    abbr: 'YT',
-    desc: 'Streaming de vídeo'
-  },
-  'Cloudflare': {
-    color: '#F48120',
-    abbr: 'CF',
-    desc: 'CDN e segurança'
-  },
-  'Akamai': {
-    color: '#009BDE',
-    abbr: 'AK',
-    desc: 'CDN enterprise'
-  },
-  'Amazon': {
-    color: '#FF9900',
-    abbr: 'AZ',
-    desc: 'Cloud e streaming'
-  },
-  'Meta': {
-    color: '#1877F2',
-    abbr: 'FB',
-    desc: 'Redes sociais'
-  },
-  'Microsoft': {
-    color: '#00BCF2',
-    abbr: 'MS',
-    desc: 'Cloud e serviços'
-  },
-  'Disney': {
-    color: '#113CCF',
-    abbr: 'DI',
-    desc: 'Streaming de vídeo'
-  },
-  'Fastly': {
-    color: '#FF282D',
-    abbr: 'FA',
-    desc: 'CDN edge'
-  },
+const CDN_COLORS: Record<string, string> = {
+  'Netflix': '#E50914',
+  'Google': '#4285F4',
+  'YouTube': '#FF0000',
+  'Cloudflare': '#F48120',
+  'Akamai': '#009BDE',
+  'Amazon': '#FF9900',
+  'Meta': '#1877F2',
+  'Microsoft': '#00BCF2',
+  'Apple': '#555555',
+  'Disney': '#113CCF',
+  'Fastly': '#FF282D',
+  'Steam': '#1b2838',
+  'Riot': '#C89B3C',
+  'TikTok': '#010101',
+};
+
+const CDN_ASN: Record<string, string> = {
+  'Netflix': 'AS2906',
+  'Google': 'AS15169',
+  'YouTube': 'AS15169',
+  'Cloudflare': 'AS13335',
+  'Akamai': 'AS20940',
+  'Amazon': 'AS16509',
+  'Meta': 'AS32934',
+  'Microsoft': 'AS8075',
+  'Apple': 'AS714',
+  'Disney': 'AS23286',
+  'Fastly': 'AS54113',
+  'Steam': 'AS32590',
+  'Riot': 'AS6507',
+  'TikTok': 'AS138699',
+};
+
+const getFavicon = (cdn: string) => {
+  const domains: Record<string, string> = {
+    'Netflix': 'netflix.com',
+    'Google': 'google.com',
+    'YouTube': 'youtube.com',
+    'Cloudflare': 'cloudflare.com',
+    'Akamai': 'akamai.com',
+    'Amazon': 'amazon.com',
+    'Meta': 'meta.com',
+    'Microsoft': 'microsoft.com',
+    'Apple': 'apple.com',
+    'Disney': 'disneyplus.com',
+    'Fastly': 'fastly.com',
+    'Steam': 'steampowered.com',
+    'Riot': 'riotgames.com',
+    'TikTok': 'tiktok.com',
+  };
+  const d = domains[cdn];
+  return d
+    ? `https://www.google.com/s2/favicons?domain=${d}&sz=32`
+    : null;
 };
 
 const CDNs = () => {
   const [minutes, setMinutes] = useState(60);
+  const [expandedCdn, setExpandedCdn] = useState<string | null>(null);
   const isAuthenticated = !!localStorage.getItem('access_token');
 
   const { data, isLoading } = useQuery({
@@ -68,9 +73,19 @@ const CDNs = () => {
     refetchInterval: 30000,
   });
 
+  const { data: cdnDetails, isLoading: isLoadingDetails } = useQuery({
+    queryKey: ['cdn-details', expandedCdn, minutes],
+    enabled: !!expandedCdn && isAuthenticated,
+    queryFn: () => api.get(`/api/flows/cdns/${expandedCdn}/details?minutes=${minutes}`).then(r => r.data),
+  });
+
+  const toggleCdn = (cdn: string) => {
+    setExpandedCdn(prev => prev === cdn ? null : cdn);
+  };
+
   const items = data?.items || [];
   const cdnTotalBytes = items.reduce((acc: number, item: any) => acc + (item.bytes || 0), 0);
-  const overallTotalBytes = data?.total_bytes || (cdnTotalBytes * 1.4); // Fallback estimate if total_bytes not present
+  const overallTotalBytes = data?.total_bytes || (cdnTotalBytes * 1.4); 
   const cdnPercentageOfTotal = overallTotalBytes > 0 ? (cdnTotalBytes / overallTotalBytes) * 100 : 0;
 
   const formatBytes = (bytes: number) => {
@@ -87,17 +102,6 @@ const CDNs = () => {
     { label: '6h', value: 360 },
     { label: '24h', value: 1440 },
   ];
-
-  const getCdnInfo = (name: string) => {
-    for (const key in CDN_INFO) {
-      if (name.toLowerCase().includes(key.toLowerCase())) return CDN_INFO[key];
-    }
-    return {
-      color: '#8892a4',
-      abbr: name.substring(0, 2).toUpperCase(),
-      desc: 'Provedor de Conteúdo'
-    };
-  };
 
   const SummaryCard = ({ title, value, icon, color = 'primary' }: any) => {
     const colorClasses: Record<string, string> = {
@@ -124,7 +128,7 @@ const CDNs = () => {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 pb-10">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-lg text-primary">
@@ -181,95 +185,111 @@ const CDNs = () => {
         />
       </div>
 
-      <div className="bg-bg-secondary p-6 rounded-xl border border-border">
-          <div className="flex items-center gap-2 mb-6">
-            <BarChart3 size={18} className="text-primary" />
-            <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Top Provedores</h2>
-          </div>
+      <div className="space-y-4">
+        {isLoading ? (
+          Array.from({ length: 6 }).map((_, i) => (
+            <div key={i} className="bg-bg-secondary h-24 rounded-xl border border-border animate-pulse" />
+          ))
+        ) : items.length === 0 ? (
+          <div className="bg-bg-secondary p-10 rounded-xl border border-border text-center text-text-secondary italic">Dados não disponíveis para este período</div>
+        ) : (
+          items.map((item: any, idx: number) => {
+            const isExpanded = expandedCdn === item.cdn;
+            const color = CDN_COLORS[item.cdn] || '#8892a4';
+            const asn = CDN_ASN[item.cdn] || 'ASN Desconhecido';
+            const favicon = getFavicon(item.cdn);
+            
+            return (
+              <div key={idx} className="bg-bg-secondary rounded-xl border border-border overflow-hidden shadow-sm transition-all hover:border-primary/30">
+                <div 
+                  className="p-5 cursor-pointer select-none"
+                  onClick={() => toggleCdn(item.cdn)}
+                >
+                  <div className="flex items-start justify-between gap-4">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-lg bg-bg-primary flex items-center justify-center border border-border/50 overflow-hidden">
+                        {favicon ? (
+                          <img src={favicon} alt={item.cdn} className="w-6 h-6 object-contain" />
+                        ) : (
+                          <Globe size={20} className="text-text-secondary opacity-50" />
+                        )}
+                      </div>
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <h3 className="font-bold text-text-primary">{item.cdn}</h3>
+                          <span className="text-[10px] font-bold text-text-secondary bg-bg-primary px-1.5 py-0.5 rounded border border-border">
+                            {asn}
+                          </span>
+                          <span className="text-[10px] font-bold text-text-secondary opacity-40">
+                            #{idx + 1}
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                           <div className="text-[10px] font-bold" style={{ color }}>{item.percent?.toFixed(1) || ((item.bytes / cdnTotalBytes) * 100).toFixed(1)}%</div>
+                           <div className="w-48 h-1.5 bg-bg-primary rounded-full overflow-hidden border border-border/10">
+                             <div 
+                               className="h-full rounded-full transition-all duration-1000"
+                               style={{ 
+                                 width: `${item.percent || (item.bytes / cdnTotalBytes) * 100}%`,
+                                 backgroundColor: color
+                               }}
+                             />
+                           </div>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-4">
+                      <div className="text-right hidden sm:block">
+                        <div className="text-sm font-bold text-text-primary">{formatBytes(item.bytes)}</div>
+                        <div className="text-[10px] text-text-secondary font-medium tracking-tight">{item.flows.toLocaleString()} flows</div>
+                      </div>
+                      <div className="text-text-secondary">
+                        {isExpanded ? <ChevronUp size={20} /> : <ChevronDown size={20} />}
+                      </div>
+                    </div>
+                  </div>
 
-          <div className="divide-y divide-border/10">
-            {isLoading ? (
-              Array.from({ length: 6 }).map((_, i) => (
-                <div key={i} className="py-4 space-y-3">
-                  <div className="flex gap-3">
-                    <div className="w-10 h-10 bg-border/20 rounded-lg animate-pulse" />
-                    <div className="flex-1 space-y-2">
-                      <div className="h-4 bg-border/20 rounded w-1/4 animate-pulse" />
-                      <div className="h-2 bg-border/20 rounded w-full animate-pulse" />
+                  <div className="mt-1 px-1 flex flex-wrap items-center gap-3">
+                    <div className="flex items-center gap-1.5 text-[10px] font-bold text-text-secondary">
+                      <MapPin size={12} className="text-primary" />
+                      Países: {item.top_countries || '🇧🇷'}
                     </div>
                   </div>
                 </div>
-              ))
-            ) : items.length === 0 ? (
-              <div className="text-center py-10 text-text-secondary italic">Dados não disponíveis para este período</div>
-            ) : (
-              items.map((item: any, idx: number) => {
-                const info = getCdnInfo(item.cdn);
-                const pct = cdnTotalBytes > 0 ? (item.bytes / cdnTotalBytes) * 100 : 0;
-                return (
-                  <div key={idx} className="flex items-center gap-4 py-4 group">
-                    {/* Ícone/inicial */}
-                    <div 
-                      className="w-10 h-10 rounded-lg flex items-center justify-center text-xs font-bold flex-shrink-0 border-2 transition-transform group-hover:scale-105"
-                      style={{
-                        background: info.color + '15',
-                        borderColor: info.color,
-                        color: info.color
-                      }}
-                    >
-                      {info.abbr}
+
+                {isExpanded && (
+                  <div className="border-t border-border bg-bg-primary/30 p-5 animate-in slide-in-from-top-2 duration-200">
+                    <div className="flex items-center gap-2 mb-4">
+                      <Server size={14} className="text-primary" />
+                      <h4 className="text-xs font-bold text-text-primary uppercase tracking-wider">Top IPs</h4>
                     </div>
-
-                    <div className="flex-1 min-w-0">
-                      {/* Nome + descrição + ranking */}
-                      <div className="flex justify-between items-start mb-1.5">
-                        <div className="flex items-baseline gap-2 overflow-hidden">
-                          <span className="font-bold text-sm text-text-primary truncate">
-                            {item.cdn}
-                          </span>
-                          <span className="text-[10px] text-text-secondary font-medium truncate opacity-70">
-                            {info.desc}
-                          </span>
-                        </div>
-                        <span className="text-[10px] font-bold text-text-secondary opacity-40">
-                          #{idx + 1}
-                        </span>
+                    
+                    {isLoadingDetails ? (
+                      <div className="space-y-2">
+                        {[1, 2, 3].map(i => <div key={i} className="h-10 bg-bg-secondary rounded border border-border animate-pulse" />)}
                       </div>
-
-                      {/* Barra de progresso */}
-                      <div className="h-1.5 w-full bg-bg-primary rounded-full overflow-hidden mb-2 border border-border/5">
-                        <div 
-                          className="h-full rounded-full transition-all duration-1000 ease-out shadow-sm"
-                          style={{ 
-                            width: `${pct}%`,
-                            backgroundColor: info.color,
-                            boxShadow: `0 0 10px ${info.color}30`
-                          }}
-                        />
+                    ) : !cdnDetails?.top_ips?.length ? (
+                      <div className="text-center py-4 text-xs text-text-secondary italic">Nenhum detalhe disponível</div>
+                    ) : (
+                      <div className="space-y-1">
+                        {cdnDetails.top_ips.map((ip: any, i: number) => (
+                          <div key={i} className="grid grid-cols-4 items-center gap-4 p-3 bg-bg-secondary rounded-lg border border-border/50 text-xs hover:border-primary/20 transition-colors">
+                            <div className="font-mono font-bold text-text-primary">{ip.ip}</div>
+                            <div className="text-text-secondary font-medium font-mono">{formatBytes(ip.bytes)}</div>
+                            <div className="text-text-secondary opacity-70 font-mono">{ip.flows.toLocaleString()} flows</div>
+                            <div className="text-right text-text-secondary">Porta: <span className="text-text-primary font-bold">{ip.port || 443}</span></div>
+                          </div>
+                        ))}
                       </div>
-
-                      {/* Métricas */}
-                      <div className="flex items-center gap-4 text-[10px] font-bold tracking-tight">
-                        <span style={{ color: info.color }}>
-                          {pct.toFixed(1)}%
-                        </span>
-                        <span className="text-text-secondary opacity-60 flex items-center gap-1">
-                          <Activity size={10} />
-                          {formatBytes(item.bytes)}
-                        </span>
-                        <span className="text-text-secondary opacity-60 flex items-center gap-1">
-                          <Users size={10} />
-                          {item.flows.toLocaleString()} flows
-                        </span>
-                      </div>
-                    </div>
+                    )}
                   </div>
-                );
-              })
-            )}
-          </div>
-        </div>
+                )}
+              </div>
+            );
+          })
+        )}
       </div>
+    </div>
   );
 };
 
