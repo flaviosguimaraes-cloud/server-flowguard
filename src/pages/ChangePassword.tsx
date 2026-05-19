@@ -142,46 +142,40 @@ import { clsx } from 'clsx';
   );
 }
 
- function PasswordStrength({ password }: { password: string }) {
-   if (!password) return null;
-   
-   let label = 'Fraca';
-   let color = 'bg-destructive';
-   let score = 1; // Mínimo
-   
-   const hasSpecial = /[^A-Za-z0-9]/.test(password);
-   
-   if (password.length >= 12 && hasSpecial) {
-     label = 'Forte';
-     color = 'bg-success';
-     score = 3;
-   } else if (password.length >= 8) {
-     label = 'Média';
-     color = 'bg-amber-500';
-     score = 2;
-   } else {
-     label = 'Fraca';
-     color = 'bg-destructive';
-     score = 1;
-   }
- 
-   const percentage = (score / 3) * 100;
+function PasswordStrength({ password }: { password: string }) {
+  if (!password) return null;
+  
+  let label = 'Fraca';
+  let colorClass = 'text-destructive';
+  let score = 1; // 1, 2, or 3
+  
+  const hasSpecial = /[^A-Za-z0-9]/.test(password);
+  
+  if (password.length >= 12 && hasSpecial) {
+    label = 'Forte';
+    colorClass = 'text-success';
+    score = 3;
+  } else if (password.length >= 8) {
+    label = 'Média';
+    colorClass = 'text-amber-500';
+    score = 2;
+  } else {
+    label = 'Fraca';
+    colorClass = 'text-destructive';
+    score = 1;
+  }
+
+  const blocks = '█'.repeat(score * 2) + '░'.repeat((3 - score) * 2);
 
   return (
-    <div className="space-y-1">
-      <div className="flex justify-between items-center text-[10px] font-bold uppercase">
-        <span className="text-text-secondary">Força da senha</span>
-        <span className={clsx(
-          label === 'Forte' ? "text-success" : 
-          label === 'Média' ? "text-amber-500" : "text-destructive"
-        )}>{label}</span>
-      </div>
-      <div className="h-1 w-full bg-bg-primary rounded-full overflow-hidden">
-        <div 
-          className={clsx("h-full transition-all duration-300", color)} 
-           style={{ width: `${percentage}%` }}
-        />
-      </div>
-     </div>
-   );
- }
+    <div className="flex items-center gap-2 mt-1">
+      <span className="text-[10px] font-bold text-text-secondary uppercase">Força:</span>
+      <span className={clsx("text-xs font-mono", colorClass)}>
+        {blocks}
+      </span>
+      <span className={clsx("text-[10px] font-bold uppercase ml-auto", colorClass)}>
+        {label}
+      </span>
+    </div>
+  );
+}
