@@ -96,7 +96,7 @@ import { clsx } from 'clsx';
            )}
 
           <div className="space-y-2">
-            <Label htmlFor="newPassword">Nova Senha</Label>
+             <Label htmlFor="newPassword" title="Nova senha">Nova senha</Label>
             <div className="relative">
               <Input
                 id="newPassword"
@@ -113,19 +113,20 @@ import { clsx } from 'clsx';
                 {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </button>
             </div>
-            <PasswordStrength password={newPassword} />
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="confirmPassword">Confirmar Nova Senha</Label>
-            <Input
-              id="confirmPassword"
-              type={showPassword ? 'text' : 'password'}
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-            />
-          </div>
+           </div>
+ 
+           <div className="space-y-2">
+             <Label htmlFor="confirmPassword">Confirmar nova senha</Label>
+             <Input
+               id="confirmPassword"
+               type={showPassword ? 'text' : 'password'}
+               value={confirmPassword}
+               onChange={(e) => setConfirmPassword(e.target.value)}
+               required
+             />
+           </div>
+ 
+           <PasswordStrength password={newPassword} />
 
           <Button
             className="w-full mt-6 bg-primary hover:bg-primary/90 text-white font-bold py-2.5 rounded-lg transition-all shadow-md shadow-primary/10 active:scale-[0.98] flex items-center justify-center disabled:opacity-70 uppercase tracking-wider text-xs"
