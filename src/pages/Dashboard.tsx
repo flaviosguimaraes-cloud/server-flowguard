@@ -1219,7 +1219,7 @@ export default function Dashboard() {
                 <div key={i} className="space-y-1.5">
                   <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
                     <div className="flex items-center gap-2">
-                      <Flag code={item.country} className="w-4 h-3 rounded-sm object-cover" />
+                      <Flag code={item.country} size={16} />
                       <span className="text-text-primary">{item.country_name || item.country}</span>
                     </div>
                     <span className="text-text-secondary">{item.percent}%</span>
