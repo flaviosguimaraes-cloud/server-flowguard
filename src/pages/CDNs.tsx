@@ -59,9 +59,11 @@ const CDN_INFO: Record<string, { color: string; abbr: string; desc: string }> = 
 
 const CDNs = () => {
   const [minutes, setMinutes] = useState(60);
+  const isAuthenticated = !!localStorage.getItem('access_token');
 
   const { data, isLoading } = useQuery({
     queryKey: ['cdns-ranking', minutes],
+    enabled: isAuthenticated,
     queryFn: () => api.get(`/api/flows/cdns?minutes=${minutes}`).then(r => r.data),
     refetchInterval: 30000,
   });
