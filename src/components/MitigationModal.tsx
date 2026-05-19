@@ -17,7 +17,7 @@ export default function MitigationModal({ isOpen, onClose, targetIP, onSuccess, 
    const [type, setType] = useState<'blackhole' | 'flowspec'>('blackhole');
    const [loading, setLoading] = useState(false);
   const [step, setStep] = useState(1);
-  const [reason, setReason] = useState('Ataque detectado pelo FlowGuard');
+  const [reason, setReason] = useState('Anomalia detectada pelo FlowGuard');
   const [ipInput, setIpInput] = useState(targetIP);
   const queryClient = useQueryClient();
 
