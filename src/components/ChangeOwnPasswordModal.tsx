@@ -32,7 +32,7 @@ export function ChangeOwnPasswordModal({ isOpen, onClose }: { isOpen: boolean; o
     setIsLoading(true);
     try {
       await api.post('/api/auth/change-password', { 
-        old_password: oldPassword, 
+        current_password: oldPassword, 
         new_password: newPassword 
       });
       toast.success('Senha alterada com sucesso');
