@@ -507,7 +507,7 @@ function SectionDivider({ title }: { title: string }) {
                 <label className="text-[10px] font-bold uppercase text-text-secondary opacity-70">IP</label>
                 <input
                   type="text"
-                  placeholder="Ex: 45.175.50 ou IP completo"
+                  placeholder="Ex: 192.168.1 ou IP completo"
                   value={filters.ip}
                   onChange={e => setFilters(f => ({ ...f, ip: e.target.value }))}
                   className="w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-xs focus:ring-1 focus:ring-primary outline-none transition-all"

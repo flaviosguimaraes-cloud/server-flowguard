@@ -99,7 +99,7 @@ export default function MitigationModal({ isOpen, onClose, targetIP, onSuccess, 
                     value={ipInput}
                     onChange={(e) => setIpInput(e.target.value)}
                     className="w-full bg-gray-50 dark:bg-bg-secondary/50 border border-gray-100 dark:border-[#2a2d3e] rounded-xl px-4 py-3 font-mono font-bold text-gray-900 dark:text-gray-100 focus:ring-2 focus:ring-accent outline-none transition-all"
-                    placeholder="Ex: 45.175.50.10"
+                    placeholder="Ex: 192.168.1.1"
                   />
                 </div>
 

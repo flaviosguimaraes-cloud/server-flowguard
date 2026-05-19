@@ -74,7 +74,7 @@ export default function FlowSpecModal({ isOpen, onClose, onSuccess }: FlowSpecMo
                 <input
                   type="text"
                   required
-                  placeholder="192.0.2.0/24"
+                  placeholder="Ex: 192.168.1.1 ou 192.168.1.0/24"
                   className="w-full bg-gray-50 dark:bg-bg-secondary border border-gray-200 dark:border-[#2a2d3e] rounded-lg py-2 px-3 outline-none focus:ring-2 focus:ring-accent/50 transition-all text-sm text-text-primary"
                   value={formData.dst_prefix}
                   onChange={(e) => setFormData({ ...formData, dst_prefix: e.target.value })}
