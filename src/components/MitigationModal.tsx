@@ -78,7 +78,7 @@ export default function MitigationModal({ isOpen, onClose, targetIP, onSuccess, 
                <Shield size={20} />
              </div>
             <h2 className="text-xl font-bold text-gray-900 dark:text-gray-100">
-              {step === 1 ? 'Mitigar Ataque' : 'Confirmar Mitigação'}
+              {step === 1 ? 'Mitigar Anomalia' : 'Confirmar Mitigação'}
             </h2>
            </div>
            <button onClick={onClose} className="text-text-secondary hover:text-text-primary transition-colors">
