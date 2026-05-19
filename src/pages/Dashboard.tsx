@@ -1069,250 +1069,227 @@ export default function Dashboard() {
 
 
 
-        {/* Seção 3 — Eventos (Largura Total) */}
-        <div className="bg-white dark:bg-bg-secondary rounded-2xl border border-border shadow-sm flex flex-col overflow-hidden">
-          <div className="p-5 flex items-center justify-between border-b border-border/50 bg-bg-primary/30">
-            <div className="flex flex-col gap-1">
+        {/* SEÇÃO 3 — O que consome a rede */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* TOP ASNs */}
+          <div className="bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm">
+            <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-2">
-                <History className="text-primary" size={18} />
-                <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Últimos Eventos de Mitigação</h2>
+                <Users className="text-primary" size={18} />
+                <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Top ASNs</h2>
+                <FlowBadge />
               </div>
-              {eventsUpdatedAt && (
-                <span className="text-[10px] text-text-secondary opacity-60 font-medium">
-                  Atualizado: {new Date(eventsUpdatedAt).toLocaleTimeString('pt-BR')}
-                </span>
-              )}
-            </div>
-            <div className="flex items-center gap-3">
-              <button 
-                onClick={() => queryClient.invalidateQueries({ queryKey: ['events-history-dashboard'] })}
-                className="text-[10px] font-bold text-text-secondary hover:text-primary transition-colors flex items-center gap-1 bg-bg-primary px-2 py-1 rounded border border-border"
-              >
-                ↻ Atualizar
-              </button>
-              <Link to="/events" className="text-[10px] font-bold text-primary hover:underline flex items-center gap-1">
-                Ver completo <ArrowRight size={12} />
-              </Link>
-            </div>
-          </div>
-          
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-                  <th className="px-6 py-3 border-b border-border">IP</th>
-                  <th className="px-6 py-3 border-b border-border">Início</th>
-                  <th className="px-6 py-3 border-b border-border">Fim</th>
-                  <th className="px-6 py-3 border-b border-border text-center">Duração</th>
-                  <th className="px-6 py-3 border-b border-border">Pico (PPS/MBPS)</th>
-                  <th className="px-6 py-3 border-b border-border text-center">Direção</th>
-                  <th className="px-6 py-3 border-b border-border text-center">Status</th>
-                  <th className="px-6 py-3 border-b border-border">Tipo</th>
-                  <th className="px-6 py-3 border-b border-border">Origem</th>
-                </tr>
-              </thead>
-              <tbody className="text-sm divide-y divide-border/50">
-                {eventsHistory?.items?.slice(0, 5).map((event: any, i: number) => (
-                  <tr key={i} className="hover:bg-bg-primary/50 transition-colors group">
-                    <td className="px-6 py-3.5 font-mono font-bold text-text-primary text-xs">{event.ip}</td>
-                    <td className="px-6 py-3.5 text-text-secondary text-[11px] whitespace-nowrap">
-                      {formatDate(event.started_at || event.start_time)}
-                    </td>
-                    <td className="px-6 py-3.5 text-text-secondary text-[11px] whitespace-nowrap">
-                      {formatDate(event.ended_at || event.end_time)}
-                    </td>
-                    <td className="px-6 py-3.5 text-center text-text-primary text-[11px] font-medium">
-                      {fmtDuration(event.duration_seconds)}
-                    </td>
-                    <td className="px-6 py-3.5">
-                      <div style={{ display: 'flex', gap: 6 }}>
-                        {(() => {
-                          const THRESH_PPS = 100000;
-                          const THRESH_MBPS = 1000;
-                          const byPps = event.peak_pps >= THRESH_PPS;
-                          const byMbps = event.peak_mbps >= THRESH_MBPS;
-                          const byPpsFallback = !byPps && !byMbps && event.triggered_by === 'detector';
-                          
-                          const ppsColor = byPps ? '#ef4444' : (byPpsFallback ? '#f97316' : '#8892a4');
-                          const ppsBg = byPps ? (isDark ? '#3b1212' : '#fee2e2') : (byPpsFallback ? (isDark ? '#331a0a' : '#ffedd5') : 'transparent');
-                          
-                          const ppsContent = (
-                            <span style={{
-                              fontWeight: (byPps || byPpsFallback) ? 700 : 400,
-                              color: ppsColor,
-                              background: ppsBg,
-                              padding: (byPps || byPpsFallback) ? '1px 6px' : '0',
-                              borderRadius: 3,
-                              fontSize: 12,
-                              cursor: byPpsFallback ? 'help' : 'default'
-                            }}>
-                              {(event.peak_pps / 1000).toFixed(1)}k pps
-                              {byPps ? ' ⚡' : ''}
-                              {byPpsFallback ? ' 🕒' : ''}
-                            </span>
-                          );
-
-                          if (byPpsFallback) {
-                            return (
-                              <Tooltip>
-                                <TooltipTrigger asChild>
-                                  {ppsContent}
-                                </TooltipTrigger>
-                                <TooltipContent className="bg-bg-secondary text-text-primary border border-border shadow-xl">
-                                  <p className="text-[11px] font-bold">Valor capturado após o pico.</p>
-                                  <p className="text-[10px] opacity-80 mt-0.5">Gatilho provável: PPS</p>
-                                </TooltipContent>
-                              </Tooltip>
-                            );
-                          }
-                          
-                          return ppsContent;
-                        })()}
-                        {event.peak_mbps > 0 && (() => {
-                          const byMbps = event.peak_mbps >= 1000;
-                          return (
-                            <span style={{
-                              fontWeight: byMbps ? 700 : 400,
-                              color: byMbps ? '#f59e0b' : '#8892a4',
-                              background: byMbps ? (isDark ? '#2d1f0a' : '#fef3c7') : 'transparent',
-                              padding: byMbps ? '1px 6px' : '0',
-                              borderRadius: 3,
-                              fontSize: 12,
-                            }}>
-                              {event.peak_mbps} Mbps
-                              {byMbps ? ' ⚡' : ''}
-                            </span>
-                          );
-                        })()}
-                      </div>
-                    </td>
-                    <td className="px-6 py-3.5 text-center">
-                      {(() => {
-                        const dir = dirLabel(event.direction || event.flow_direction);
-                        return (
-                          <span style={{
-                            color: dir.color,
-                            background: dir.bg,
-                            padding: '2px 8px',
-                            borderRadius: 4,
-                            fontSize: 10,
-                            fontWeight: 500
-                          }}>
-                            {dir.label}
-                          </span>
-                        );
-                      })()}
-                    </td>
-                    <td className="px-6 py-3.5 text-center">
-                      {event.status === 'active' ? (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-danger/10 text-danger text-[9px] font-black border border-danger/20 animate-pulse">
-                          ● ATIVO
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-bg-primary text-text-secondary text-[9px] font-bold border border-border">
-                          ✓ FINALIZADO
-                        </span>
-                      )}
-                    </td>
-                    <td className="px-6 py-3.5 text-text-secondary text-[11px] font-medium uppercase tracking-wider">
-                      {event.type || 'Blackhole'}
-                    </td>
-                    <td className="px-6 py-3.5 text-text-secondary text-[11px] font-bold uppercase tracking-wider">
-                      {event.triggered_by === 'detector' ? 'Automático' : 'Manual'}
-                    </td>
-                  </tr>
+              <div className="flex bg-bg-primary p-0.5 rounded-lg border border-border">
+                {[30, 60, 360, 1440].map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setPeriodASN(m)}
+                    className={clsx(
+                      "px-2 py-1 text-[9px] font-bold rounded",
+                      periodASN === m ? "bg-white dark:bg-bg-secondary text-primary shadow-sm" : "text-text-secondary"
+                    )}
+                  >
+                    {m >= 60 ? `${m/60}h` : `${m}m`}
+                  </button>
                 ))}
-                {(!eventsHistory?.items || eventsHistory.items.length === 0) && (
-                  <tr>
-                    <td colSpan={9} className="px-6 py-12 text-center text-text-secondary italic text-xs">
-                      Nenhum histórico de anomalias encontrado
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
-        </div>
-
-        {/* Seção 4 — Saúde do Servidor (Largura Total) */}
-        <div className="bg-white dark:bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm">
-            <div className="flex flex-col gap-1 mb-5 border-b border-border/50 pb-3">
-              <div className="flex items-center gap-2">
-                <Activity className="text-success" size={18} />
-                <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Saúde do Sistema</h2>
               </div>
-              {sysStatus?.uptime && (
-                <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest opacity-60">
-                  Uptime: {sysStatus.uptime}
-                </p>
-              )}
             </div>
-
-            {!sysStatus ? (
-              <div className="py-10 text-center text-xs text-text-secondary italic">Dados indisponíveis</div>
-            ) : (
-              <div className="space-y-5">
-                {/* Métricas Principais */}
-                <div className="space-y-4">
-                  {[
-                    { 
-                      label: 'CPU', 
-                      value: sysStatus.cpu_percent || 0, 
-                      color: sysStatus.cpu_percent >= 90 ? 'bg-danger' : sysStatus.cpu_percent >= 70 ? 'bg-warning' : 'bg-success',
-                      detail: `${(sysStatus.cpu_percent || 0).toFixed(1)}%`
-                    },
-                    { 
-                      label: 'RAM', 
-                      value: sysStatus.ram_percent || 0, 
-                      color: sysStatus.ram_percent >= 85 ? 'bg-danger' : sysStatus.ram_percent >= 70 ? 'bg-warning' : 'bg-primary',
-                      detail: `${(sysStatus.ram_used_gb || 0).toFixed(1)}GB / ${(sysStatus.ram_total_gb || 0).toFixed(1)}GB`
-                    },
-                    { 
-                      label: 'Disco', 
-                      value: sysStatus.disk_percent || 0, 
-                      color: sysStatus.disk_percent >= 85 ? 'bg-danger' : sysStatus.disk_percent >= 70 ? 'bg-warning' : 'bg-accent',
-                      detail: `${(sysStatus.disk_used_gb || 0).toFixed(0)}GB / ${(sysStatus.disk_used_gb + (sysStatus.disk_free_gb || 0)).toFixed(0)}GB`
-                    }
-                  ].map(m => (
-                    <div key={m.label} className="space-y-1.5">
-                      <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
-                        <span className="text-text-secondary">{m.label} {m.value.toFixed(1)}%</span>
-                        <span className="text-text-primary">{m.detail}</span>
-                      </div>
-                      <div className="h-1.5 bg-bg-primary rounded-full overflow-hidden border border-border/10">
-                        <div 
-                          className={clsx("h-full transition-all duration-1000", m.color)}
-                          style={{ width: `${m.value}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))}
-                </div>
-
-                <div className="pt-4 border-t border-border/20">
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-4 gap-y-2">
-                    {Object.entries(sysStatus.services || {}).map(([name, status]: [string, any]) => {
-                      const isActive = status === 'active';
-                      return (
-                        <div key={name} className="flex items-center gap-2">
-                          <span className={clsx(
-                            "w-1.5 h-1.5 rounded-full",
-                            isActive ? "bg-success shadow-[0_0_8px_rgba(34,197,94,0.4)]" : "bg-danger shadow-[0_0_8px_rgba(239,68,68,0.4)]"
-                          )} />
-                          <span className={clsx(
-                            "text-[10px] font-bold truncate",
-                            isActive ? "text-text-secondary" : "text-danger"
-                          )} title={name}>
-                            {serviceNames[name] || name}
-                          </span>
-                        </div>
-                      );
-                    })}
+            <div className="space-y-4">
+              {asnStats?.items?.slice(0, 5).map((item: any, i: number) => (
+                <div key={i} className="space-y-1.5">
+                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                    <span className="text-text-primary">{cleanOrg(item.org)}</span>
+                    <span className="text-text-secondary">{formatBpsRaw(item.bytes)} · {item.percent}%</span>
+                  </div>
+                  <div className="h-1.5 bg-bg-primary rounded-full overflow-hidden border border-border/10">
+                    <div 
+                      className="h-full bg-blue-500 rounded-full transition-all duration-1000"
+                      style={{ width: `${item.percent}%` }}
+                    />
                   </div>
                 </div>
+              ))}
+              {(!asnStats?.items || asnStats.items.length === 0) && (
+                <div className="py-4 text-center text-xs text-text-secondary italic">Nenhum dado disponível</div>
+              )}
+            </div>
+          </div>
+
+          {/* TOP CDNs */}
+          <div className="bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-2">
+                <Globe className="text-accent" size={18} />
+                <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Top CDNs</h2>
+                <FlowBadge />
               </div>
-            )}
+              <div className="flex bg-bg-primary p-0.5 rounded-lg border border-border">
+                {[30, 60, 360, 1440].map((m) => (
+                  <button
+                    key={m}
+                    onClick={() => setPeriodCDN(m)}
+                    className={clsx(
+                      "px-2 py-1 text-[9px] font-bold rounded",
+                      periodCDN === m ? "bg-white dark:bg-bg-secondary text-accent shadow-sm" : "text-text-secondary"
+                    )}
+                  >
+                    {m >= 60 ? `${m/60}h` : `${m}m`}
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-4">
+              {cdnStats?.items?.slice(0, 5).map((item: any, i: number) => (
+                <div key={i} className="space-y-1.5">
+                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                    <span className="text-text-primary">{item.cdn}</span>
+                    <span className="text-text-secondary">{formatBpsRaw(item.bytes)} · {item.percent}%</span>
+                  </div>
+                  <div className="h-1.5 bg-bg-primary rounded-full overflow-hidden border border-border/10">
+                    <div 
+                      className="h-full rounded-full transition-all duration-1000"
+                      style={{ 
+                        width: `${item.percent}%`,
+                        backgroundColor: CDN_COLORS[item.cdn] || '#8892a4'
+                      }}
+                    />
+                  </div>
+                </div>
+              ))}
+               {(!cdnStats?.items || cdnStats.items.length === 0) && (
+                <div className="py-4 text-center text-xs text-text-secondary italic">Nenhum dado disponível</div>
+              )}
+            </div>
+          </div>
         </div>
+
+        {/* SEÇÃO 4 — Segurança */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          {/* ÚLTIMAS ANOMALIAS */}
+          <div className="bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <Shield className="text-danger" size={18} />
+              <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Últimas Anomalias</h2>
+              <FlowBadge />
+            </div>
+            <div className="space-y-3">
+              {eventsHistory?.items?.slice(0, 5).map((event: any, i: number) => (
+                <div key={i} className="flex items-center justify-between p-3 bg-bg-primary/50 rounded-lg border border-border/50 hover:border-primary/30 transition-all group cursor-default">
+                  <div className="flex items-center gap-3">
+                    <div className={clsx(
+                      "w-2 h-2 rounded-full",
+                      event.status === 'active' ? "bg-danger animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" : "bg-text-secondary/30"
+                    )} />
+                    <div>
+                      <div className="text-xs font-mono font-bold text-text-primary">{event.ip}</div>
+                      <div className="text-[10px] text-text-secondary font-medium uppercase tracking-tighter opacity-70">
+                        {event.peak_pps ? `${(event.peak_pps/1000).toFixed(1)}k pps` : ''} 
+                        {event.peak_mbps ? ` · ${event.peak_mbps} Mbps` : ''}
+                      </div>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-end gap-1">
+                     <span className={clsx(
+                       "text-[9px] font-black px-1.5 py-0.5 rounded border",
+                       event.status === 'active' ? "bg-danger/10 text-danger border-danger/20" : "bg-bg-primary text-text-secondary border-border"
+                     )}>
+                       {event.status === 'active' ? 'ACTIVE' : 'REMOVED'}
+                     </span>
+                     <div className="hidden group-hover:block text-[9px] text-text-secondary animate-in fade-in slide-in-from-right-1">
+                       {fmtDuration(event.duration_seconds)} · {event.direction === 'incoming' ? 'Download' : 'Upload'} · {event.triggered_by === 'detector' ? 'Auto' : 'Manual'}
+                     </div>
+                  </div>
+                </div>
+              ))}
+               {(!eventsHistory?.items || eventsHistory.items.length === 0) && (
+                <div className="py-8 text-center text-xs text-text-secondary italic">Histórico limpo</div>
+              )}
+            </div>
+          </div>
+
+          {/* PAÍSES COM MAIOR TRÁFEGO */}
+          <div className="bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm">
+            <div className="flex items-center gap-2 mb-4">
+              <MapPin className="text-primary" size={18} />
+              <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Países com maior tráfego</h2>
+              <FlowBadge />
+            </div>
+            <div className="space-y-4">
+              {attackCountries?.items?.slice(0, 5).map((item: any, i: number) => (
+                <div key={i} className="space-y-1.5">
+                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                    <div className="flex items-center gap-2">
+                      <Flag code={item.country} className="w-4 h-3 rounded-sm object-cover" />
+                      <span className="text-text-primary">{item.country_name || item.country}</span>
+                    </div>
+                    <span className="text-text-secondary">{item.percent}%</span>
+                  </div>
+                  <div className="h-1.5 bg-bg-primary rounded-full overflow-hidden border border-border/10">
+                    <div 
+                      className="h-full bg-primary rounded-full transition-all duration-1000"
+                      style={{ width: `${item.percent}%` }}
+                    />
+                  </div>
+                </div>
+              ))}
+               {(!attackCountries?.items || attackCountries.items.length === 0) && (
+                <div className="py-4 text-center text-xs text-text-secondary italic">Nenhum dado disponível</div>
+              )}
+            </div>
+          </div>
+        </div>
+
+        {/* SEÇÃO 5 — Saúde do sistema */}
+        <div className="bg-bg-secondary p-4 rounded-2xl border border-border shadow-sm">
+          <div className="flex flex-wrap items-center justify-between gap-6 px-2">
+            <div className="flex items-center gap-8">
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">CPU</span>
+                <span className={clsx("text-xs font-black", (sysStatus?.cpu_percent || 0) > 80 ? "text-danger" : "text-text-primary")}>
+                  {(sysStatus?.cpu_percent || 0).toFixed(1)}%
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">RAM</span>
+                <span className={clsx("text-xs font-black", (sysStatus?.ram_percent || 0) > 80 ? "text-danger" : "text-text-primary")}>
+                  {(sysStatus?.ram_percent || 0).toFixed(1)}%
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">Disco</span>
+                <span className={clsx("text-xs font-black", (sysStatus?.disk_percent || 0) > 80 ? "text-danger" : "text-text-primary")}>
+                  {(sysStatus?.disk_percent || 0).toFixed(0)}%
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">Uptime</span>
+                <span className="text-xs font-black text-text-primary">{sysStatus?.uptime || '—'}</span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-8 md:border-l border-border/50 md:pl-8">
+               <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">BGP</span>
+                <span className={clsx(
+                  "text-[9px] font-black px-1.5 py-0.5 rounded border",
+                  sysStatus?.services?.bgp_engine === 'active' ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"
+                )}>
+                  {sysStatus?.services?.bgp_engine === 'active' ? 'OK' : 'OFFLINE'}
+                </span>
+              </div>
+              <div className="flex items-center gap-2">
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60">Detector</span>
+                <span className={clsx(
+                  "text-[9px] font-black px-1.5 py-0.5 rounded border",
+                  sysStatus?.services?.detection_engine === 'active' ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"
+                )}>
+                  {sysStatus?.services?.detection_engine === 'active' ? 'OK' : 'OFFLINE'}
+                </span>
+              </div>
+            </div>
+          </div>
+        </div>
+
 
         {showIfaceSelector && (
          <div style={{
