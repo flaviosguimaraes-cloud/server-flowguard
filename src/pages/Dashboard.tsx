@@ -264,7 +264,7 @@ export default function Dashboard() {
 
   const { data: activeEventsToday } = useQuery({
     queryKey: ['events-today'],
-    queryFn: () => api.get('/api/events/history?limit=1000&minutes=1440').then(r => r.data),
+    queryFn: () => api.get('/api/events/history?limit=1000&minutes=2880').then(r => r.data),
     enabled: isAuthenticated,
     refetchInterval: 60000,
   });
@@ -799,8 +799,18 @@ export default function Dashboard() {
   const activeCollectors = (Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || []))
     .filter((c: any) => c.active || c.status === 'active' || c.status === 'Ativo');
 
-  const todayStr = new Date().toISOString().slice(0,10);
-  const attacksToday = activeEventsToday?.items?.filter((i: any) => i.started_at?.startsWith(todayStr)) || [];
+  const todayStr = new Date().toISOString().slice(0, 10);
+  const yesterdayDate = new Date();
+  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+  const yesterdayStr = yesterdayDate.toISOString().slice(0, 10);
+
+  const anomaliasHoje = activeEventsToday?.items?.filter((i: any) => 
+    i.started_at && i.started_at.slice(0, 10) === todayStr
+  ) || [];
+
+  const anomaliasOntem = activeEventsToday?.items?.filter((i: any) => 
+    i.started_at && i.started_at.slice(0, 10) === yesterdayStr
+  ) || [];
 
   const cards = [
     {
@@ -835,11 +845,11 @@ export default function Dashboard() {
     },
     {
       id: 'attacks',
-      label: 'Ataques hoje',
-      value: attacksToday.length,
-      detail: attacksToday[0] 
-        ? `Último: ${attacksToday[0].ip} · ${timeAgo(attacksToday[0].started_at)}`
-        : 'Nenhum ataque hoje',
+      label: 'Anomalias hoje',
+      value: anomaliasHoje.length,
+      detail: anomaliasHoje[0] 
+        ? `Ontem: ${anomaliasOntem.length} anomalias · Último: ${anomaliasHoje[0].ip} ${anomaliasHoje[0].started_at.slice(11, 16)}`
+        : `Ontem: ${anomaliasOntem.length} anomalias · Nenhuma anomalia hoje`,
       icon: <Shield className="text-danger" size={16} />
     },
     {

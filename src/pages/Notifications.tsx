@@ -50,7 +50,7 @@ export default function Notifications() {
   const ruleItems = rules?.items || rules?.data || (Array.isArray(rules) ? rules : []);
 
   const eventLabels: Record<string, string> = {
-    attack_detected: "⚡ Ataque detectado",
+    attack_detected: "⚡ Anomalia detectada",
     mitigation_started: "🛡 Mitigação iniciada",
     mitigation_removed: "✅ Mitigação removida",
     bgp_session_down: "🔴 BGP offline",
@@ -536,7 +536,7 @@ function RuleModalComponent({ isOpen, onClose, mode, data, onSubmit, isLoading, 
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="rule-name">Nome da Regra</Label>
-            <Input id="rule-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Alerta grande ataque" required />
+            <Input id="rule-name" value={name} onChange={(e) => setName(e.target.value)} placeholder="Ex: Alerta grande anomalia" required />
           </div>
           <div className="space-y-2">
             <Label htmlFor="event">Evento</Label>
