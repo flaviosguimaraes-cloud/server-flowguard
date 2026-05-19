@@ -535,25 +535,39 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
         <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm space-y-6">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {/* Row 1 */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Início (dd/mm/aaaa HH:mm)</label>
-              <input
-                type="text"
-                placeholder="Ex: 19/05/2026 14:30"
-                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+            <div className="space-y-1 col-span-1 md:col-span-2">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">De</label>
+              <div className="flex gap-2">
+                <input
+                  type="date"
+                  className="flex-1 bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                  value={startDate}
+                  onChange={(e) => handleStartChange(e.target.value, undefined)}
+                />
+                <input
+                  type="time"
+                  className="w-32 bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                  value={startTime}
+                  onChange={(e) => handleStartChange(undefined, e.target.value)}
+                />
+              </div>
             </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Fim (dd/mm/aaaa HH:mm)</label>
-              <input
-                type="text"
-                placeholder="Ex: 19/05/2026 14:35"
-                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
+            <div className="space-y-1 col-span-1 md:col-span-2">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Até</label>
+              <div className="flex gap-2">
+                <input
+                  type="date"
+                  className="flex-1 bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                  value={endDate}
+                  onChange={(e) => handleEndChange(e.target.value, undefined)}
+                />
+                <input
+                  type="time"
+                  className="w-32 bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                  value={endTime}
+                  onChange={(e) => handleEndChange(undefined, e.target.value)}
+                />
+              </div>
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">IP Origem</label>
