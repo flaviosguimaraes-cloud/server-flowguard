@@ -216,7 +216,7 @@ import { toast } from 'sonner';
                 {loadingRoutes ? (
                   Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                      <td colSpan={5} className="px-4 py-4"><div className="h-4 bg-border/50 rounded w-full" /></td>
+                      <td colSpan={7} className="px-4 py-4"><div className="h-4 bg-border/50 rounded w-full" /></td>
                     </tr>
                   ))
                  ) : routes.length === 0 ? (
