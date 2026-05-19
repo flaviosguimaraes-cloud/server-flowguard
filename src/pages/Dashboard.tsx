@@ -815,11 +815,11 @@ export default function Dashboard() {
     .filter((c: any) => c.active || c.status === 'active' || c.status === 'Ativo');
 
   const anomaliasHoje = activeEventsToday?.items?.filter((i: any) => 
-    i.started_at && i.started_at.substring(0, 10) === today
+    typeof i?.started_at === 'string' && i.started_at.substring(0, 10) === today
   ) || [];
 
   const anomaliasOntem = activeEventsToday?.items?.filter((i: any) => 
-    i.started_at && i.started_at.substring(0, 10) === yesterday
+    typeof i?.started_at === 'string' && i.started_at.substring(0, 10) === yesterday
   ) || [];
 
   const cards = [
@@ -858,8 +858,8 @@ export default function Dashboard() {
       label: 'ANOMALIAS HOJE',
       value: anomaliasHoje.length,
       detail: anomaliasHoje[0] 
-        ? `Ontem: ${anomaliasOntem.length} anomalias · Último: ${anomaliasHoje[0].ip} às ${anomaliasHoje[0].started_at.slice(11, 16)}`
-        : `Ontem: ${anomaliasOntem.length} anomalias · Nenhuma anomalia hoje`,
+        ? `Último: ${anomaliasHoje[0].ip} às ${anomaliasHoje[0].started_at.substring(11, 16)}`
+        : "Nenhuma anomalia hoje",
       icon: <Shield className="text-danger" size={16} />
     },
     {
