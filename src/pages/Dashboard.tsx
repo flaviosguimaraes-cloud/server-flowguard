@@ -4,9 +4,31 @@ import api from '../services/api';
 import { useTranslation } from '../hooks/useTranslation';
 import { useTheme } from '../contexts/ThemeContext';
 import { 
-  LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer,
-  BarChart, Bar, Cell, AreaChart, Area
-} from 'recharts';
+   ResponsiveContainer,
+ } from 'recharts';
+ import {
+   Chart as ChartJS,
+   CategoryScale,
+   LinearScale,
+   PointElement,
+   LineElement,
+   Title,
+   Tooltip as ChartTooltip,
+   Legend,
+   Filler,
+ } from 'chart.js';
+ import { Line as ChartLine } from 'react-chartjs-2';
+ 
+ ChartJS.register(
+   CategoryScale,
+   LinearScale,
+   PointElement,
+   LineElement,
+   Title,
+   ChartTooltip,
+   Legend,
+   Filler
+ );
 import { 
    Tooltip, TooltipTrigger, TooltipContent, TooltipProvider 
  } from '../components/ui/tooltip';
@@ -362,15 +384,15 @@ export default function Dashboard() {
         let totalTx = 0;
         metricsHistory.forEach(({ifName, data}) => {
           const found = data.find((p: any) => p.time_bucket === time);
-          const rxMbps = found ? Math.round(found.in_bps / 1e6) : 0;
-          const txMbps = found ? Math.round(found.out_bps / 1e6) : 0;
-          point[`${ifName}_rx`] = rxMbps;
-          point[`${ifName}_tx`] = txMbps;
-          totalRx += rxMbps;
-          totalTx += txMbps;
+           const rxGbps = found ? (found.in_bps / 1e9) : 0;
+           const txGbps = found ? (found.out_bps / 1e9) : 0;
+           point[`${ifName}_rx`] = rxGbps;
+           point[`${ifName}_tx`] = txGbps;
+           totalRx += rxGbps;
+           totalTx += txGbps;
         });
-        point['__total_rx'] = totalRx;
-        point['__total_tx'] = totalTx;
+         point['__total_rx'] = Number(totalRx.toFixed(4));
+         point['__total_tx'] = Number(totalTx.toFixed(4));
         return point;
       });
 
@@ -392,12 +414,6 @@ export default function Dashboard() {
      }
      return timeStr.substring(11, 16);
    };
-   const formatBps = (mbps: number) => {
-     if (mbps >= 1000)
-       return (mbps / 1000).toFixed(1) + ' G';
-     return mbps.toFixed(0) + ' M';
-   };
-
    const formatBpsRaw = (bps: number) => {
      if (bps >= 1e9)
        return (bps / 1e9).toFixed(1) + ' Gbps';
@@ -506,6 +522,163 @@ export default function Dashboard() {
      return bps+' bps';
    };
 
+   const blueShades = ['#60a5fa', '#93c5fd', '#bfdbfe', '#3b82f6', '#1d4ed8'];
+   const greenShades = ['#4ade80', '#86efac', '#bbf7d0', '#22c55e', '#15803d'];
+ 
+   const datasets = useMemo(() => [
+     {
+       label: '__total_down',
+       data: chartData.map(d => d.__total_rx),
+       borderColor: '#1d6fda',
+       borderWidth: 2.5,
+       fill: true,
+       backgroundColor: 'rgba(29,111,218,0.10)',
+       pointRadius: 0,
+       pointHoverRadius: 0,
+       tension: 0.4,
+     },
+     ...selectedIfaces.map((ifName, idx) => ({
+       label: '__iface_down__' + ifName,
+       data: chartData.map(d => d[`${ifName}_rx`]),
+       borderColor: blueShades[idx % 5],
+       borderWidth: 1,
+       fill: false,
+       pointRadius: 0,
+       pointHoverRadius: 0,
+       tension: 0.4,
+     })),
+     {
+       label: '__total_up',
+       data: chartData.map(d => d.__total_tx),
+       borderColor: '#16a34a',
+       borderWidth: 2.5,
+       fill: true,
+       backgroundColor: 'rgba(22,163,74,0.08)',
+       pointRadius: 0,
+       pointHoverRadius: 0,
+       tension: 0.4,
+     },
+     ...selectedIfaces.map((ifName, idx) => ({
+       label: '__iface_up__' + ifName,
+       data: chartData.map(d => d[`${ifName}_tx`]),
+       borderColor: greenShades[idx % 5],
+       borderWidth: 1,
+       fill: false,
+       pointRadius: 0,
+       pointHoverRadius: 0,
+       tension: 0.4,
+     }))
+   ], [chartData, selectedIfaces]);
+ 
+   const chartOptions = useMemo(() => ({
+     responsive: true,
+     maintainAspectRatio: false,
+     interaction: {
+       mode: 'nearest' as const,
+       intersect: false,
+       axis: 'xy' as const
+     },
+     plugins: {
+       legend: { display: false },
+       tooltip: {
+         enabled: false,
+         external: function(context: any) {
+           const tip = document.getElementById('collector-tooltip');
+           if (!tip) return;
+           const t = context.tooltip;
+ 
+           if (!t || t.opacity === 0 || !t.dataPoints?.length) {
+             tip.style.display = 'none';
+             return;
+           }
+ 
+           const dp = t.dataPoints[0];
+           const ds = dp.dataset;
+           const label = ds.label || '';
+ 
+           let name = '';
+           let direction = '';
+           let color = ds.borderColor;
+ 
+           if (label === '__total_down') {
+             name = 'Total Download';
+             direction = '▼';
+             color = '#1d6fda';
+           } else if (label === '__total_up') {
+             name = 'Total Upload';
+             direction = '▲';
+             color = '#16a34a';
+           } else if (label.startsWith('__iface_down__')) {
+             name = label.replace('__iface_down__', '');
+             direction = '▼';
+           } else if (label.startsWith('__iface_up__')) {
+             name = label.replace('__iface_up__', '');
+             direction = '▲';
+           }
+ 
+           const numVal = dp.parsed.y;
+           let formatted = '';
+           if (numVal >= 1) {
+             formatted = numVal.toFixed(2) + ' Gbps';
+           } else {
+             formatted = (numVal * 1000).toFixed(0) + ' Mbps';
+           }
+ 
+           tip.innerHTML = `
+             <div style="font-size:10px; color:var(--color-text-secondary); margin-bottom:4px;">
+               ${t.title?.[0] || ''}
+             </div>
+             <div style="color:${color}; font-weight:500;">
+               ${name}
+             </div>
+             <div style="color:${color}; font-size:14px; font-weight:500;">
+               ${direction} ${formatted}
+             </div>
+           `;
+ 
+           tip.style.display = 'block';
+ 
+           const canvas = context.chart.canvas;
+           let left = t.caretX + 14;
+           if (left + 170 > canvas.offsetWidth)
+             left = t.caretX - 180;
+           let top = t.caretY - 30;
+           if (top < 0) top = 4;
+           tip.style.left = left + 'px';
+           tip.style.top = top + 'px';
+         }
+       }
+     },
+     scales: {
+       x: {
+         grid: { display: false },
+         ticks: {
+           maxRotation: 0,
+           autoSkip: true,
+           maxTicksLimit: 8,
+           color: isDark ? '#94A3B8' : '#64748B',
+           font: { size: 10, weight: '600' }
+         }
+       },
+       y: {
+         grid: {
+           color: isDark ? 'rgba(51, 65, 85, 0.3)' : 'rgba(226, 232, 240, 0.6)',
+           drawTicks: false
+         },
+         ticks: {
+           color: isDark ? '#94A3B8' : '#64748B',
+           font: { size: 10, weight: '600' },
+           callback: (val: any) => {
+             if (val >= 1) return val.toFixed(1) + ' G';
+             return (val * 1000).toFixed(0) + ' M';
+           }
+         }
+       }
+     }
+   }), [isDark]);
+ 
+   const chartLabels = useMemo(() => chartData.map(d => formatTime(d.time)), [chartData]);
+ 
   if (statsLoading) {
     return (
       <div className="space-y-6">
@@ -678,7 +851,7 @@ export default function Dashboard() {
           </span>
         </div>
 
-         <div className="space-y-4 bg-[#F8FAFC] dark:bg-[#0f172a]/40 p-4 rounded-xl border border-border/50 relative flex flex-col items-center justify-center">
+         <div className="space-y-4 bg-[#F8FAFC] dark:bg-[#0f172a]/40 p-4 rounded-xl border border-border/50 relative flex flex-col items-center justify-center min-h-[400px]">
           {metricsHistoryLoading ? (
             <div className="flex flex-col items-center gap-3">
               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
@@ -690,184 +863,27 @@ export default function Dashboard() {
               <span className="text-xs font-bold uppercase tracking-wider">Sem dados para o período selecionado</span>
             </div>
           ) : (
-            <div className="w-full space-y-4 mt-4">
-              {/* Chart RX */}
-              <div className="relative w-full h-[200px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="grad_total_rx" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={RX_TOTAL_COLOR} stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor={RX_TOTAL_COLOR} stopOpacity={0.02}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#334155" : "#E2E8F0"} vertical={false} opacity={isDark ? 0.3 : 0.6} />
-                    <XAxis 
-                      dataKey="time" 
-                      tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
-                      tickLine={false} 
-                      axisLine={false}
-                      tickFormatter={formatTime}
-                      minTickGap={30}
-                    />
-                    <YAxis 
-                      tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
-                      tickLine={false} 
-                      axisLine={false} 
-                      tickFormatter={v => formatBps(v)} 
-                    />
-                    <RechartsTooltip
-                      cursor={{ stroke: isDark ? '#2a2d3e' : '#e2e8f0', strokeWidth: 1 }}
-                      content={({ active, payload, label }) => {
-                        if (!active || !payload?.length) return null;
-                        const top = payload.reduce((a, b) => (b.value || 0) > (a.value || 0) ? b : a);
-                        const isTotal = top.dataKey === '__total_rx';
-                        const ifName = isTotal ? `Total (${selectedIfaces.length} interfaces)` : top.name;
-                        const rxKey = isTotal ? '__total_rx' : `${top.name}_rx`;
-                        const txKey = isTotal ? '__total_tx' : `${top.name}_tx`;
-                        const rxPoint = payload.find(p => p.dataKey === rxKey) as any;
-                        const txPoint = (payload.find(p => p.dataKey === txKey) || { value: chartData.find(d => d.time === (top.payload as any).time)?.[`${top.name}_tx`] }) as any;
-
-                        return (
-                          <div style={{
-                            background: isDark ? '#1e2130' : '#ffffff',
-                            border: `1px solid ${top.color}`,
-                            borderRadius: 6,
-                            padding: '8px 12px',
-                            fontSize: 12,
-                            minWidth: 180,
-                            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                          }}>
-                            <div style={{ color: '#8892a4', fontSize: 10, marginBottom: 6 }}>{formatTime(label)}</div>
-                            <div style={{ color: top.color, fontWeight: 700, marginBottom: 4 }}>{ifName}</div>
-                            {!isTotal && rxPoint && rxPoint.value !== undefined && (
-                              <div style={{color:'#93c5fd'}}>↓ RX: {formatBpsRaw((Number(rxPoint.value)||0) * 1e6)}</div>
-                            )}
-                            {!isTotal && txPoint && txPoint.value !== undefined && (
-                              <div style={{color:'#86efac'}}>↑ TX: {formatBpsRaw((Number(txPoint.value)||0) * 1e6)}</div>
-                            )}
-                            {isTotal && top.value !== undefined && (
-                              <div style={{color: isDark ? '#e2e8f0' : '#1e293b'}}>↓ RX: {formatBpsRaw((Number(top.value)||0) * 1e6)}</div>
-                            )}
-                          </div>
-                        );
-                      }}
-                    />
-                    {selectedIfaces.map((name, idx) => (
-                      <Line
-                        key={`${name}_rx`}
-                        type="monotone"
-                        dataKey={`${name}_rx`}
-                        stroke={RX_IFACE_COLORS[idx % RX_IFACE_COLORS.length]}
-                        strokeWidth={1}
-                        dot={false}
-                        opacity={0.6}
-                        name={name}
-                        isAnimationActive={false}
-                      />
-                    ))}
-                    <Area
-                      type="monotone"
-                      dataKey="__total_rx"
-                      stroke={RX_TOTAL_COLOR}
-                      strokeWidth={2.5}
-                      fill="url(#grad_total_rx)"
-                      dot={false}
-                      name="Total RX"
-                      isAnimationActive={false}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
-
-              {/* Chart TX */}
-              <div className="relative w-full h-[200px]">
-                <ResponsiveContainer width="100%" height="100%">
-                  <AreaChart data={chartData} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
-                    <defs>
-                      <linearGradient id="grad_total_tx" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor={TX_TOTAL_COLOR} stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor={TX_TOTAL_COLOR} stopOpacity={0.02}/>
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke={isDark ? "#334155" : "#E2E8F0"} vertical={false} opacity={isDark ? 0.3 : 0.6} />
-                    <XAxis 
-                      dataKey="time" 
-                      tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
-                      tickLine={false} 
-                      axisLine={false}
-                      tickFormatter={formatTime}
-                      minTickGap={30}
-                    />
-                    <YAxis 
-                      tick={{fontSize:9, fill: isDark ? '#94A3B8' : '#64748B', fontWeight: 600}} 
-                      tickLine={false} 
-                      axisLine={false} 
-                      tickFormatter={v => formatBps(v)} 
-                    />
-                    <RechartsTooltip
-                      cursor={{ stroke: isDark ? '#2a2d3e' : '#e2e8f0', strokeWidth: 1 }}
-                      content={({ active, payload, label }) => {
-                        if (!active || !payload?.length) return null;
-                        const top = payload.reduce((a, b) => (b.value || 0) > (a.value || 0) ? b : a);
-                        const isTotal = top.dataKey === '__total_tx';
-                        const ifName = isTotal ? `Total (${selectedIfaces.length} interfaces)` : top.name;
-                        const rxKey = isTotal ? '__total_rx' : `${top.name}_rx`;
-                        const txKey = isTotal ? '__total_tx' : `${top.name}_tx`;
-                        const txPoint = payload.find(p => p.dataKey === txKey) as any;
-                        const rxPoint = (payload.find(p => p.dataKey === rxKey) || { value: chartData.find(d => d.time === (top.payload as any).time)?.[`${top.name}_rx`] }) as any;
-
-                        return (
-                          <div style={{
-                            background: isDark ? '#1e2130' : '#ffffff',
-                            border: `1px solid ${top.color}`,
-                            borderRadius: 6,
-                            padding: '8px 12px',
-                            fontSize: 12,
-                            minWidth: 180,
-                            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-                          }}>
-                            <div style={{ color: '#8892a4', fontSize: 10, marginBottom: 6 }}>{formatTime(label)}</div>
-                            <div style={{ color: top.color, fontWeight: 700, marginBottom: 4 }}>{ifName}</div>
-                            {!isTotal && rxPoint && rxPoint.value !== undefined && (
-                              <div style={{color:'#93c5fd'}}>↓ RX: {formatBpsRaw((Number(rxPoint.value)||0) * 1e6)}</div>
-                            )}
-                            {!isTotal && txPoint && txPoint.value !== undefined && (
-                              <div style={{color:'#86efac'}}>↑ TX: {formatBpsRaw((Number(txPoint.value)||0) * 1e6)}</div>
-                            )}
-                            {isTotal && top.value !== undefined && (
-                              <div style={{color: isDark ? '#e2e8f0' : '#1e293b'}}>↑ TX: {formatBpsRaw((Number(top.value)||0) * 1e6)}</div>
-                            )}
-                          </div>
-                        );
-                      }}
-                    />
-                    {selectedIfaces.map((name, idx) => (
-                      <Line
-                        key={`${name}_tx`}
-                        type="monotone"
-                        dataKey={`${name}_tx`}
-                        stroke={TX_IFACE_COLORS[idx % TX_IFACE_COLORS.length]}
-                        strokeWidth={1}
-                        dot={false}
-                        opacity={0.6}
-                        name={name}
-                        isAnimationActive={false}
-                      />
-                    ))}
-                    <Area
-                      type="monotone"
-                      dataKey="__total_tx"
-                      stroke={TX_TOTAL_COLOR}
-                      strokeWidth={2.5}
-                      fill="url(#grad_total_tx)"
-                      dot={false}
-                      name="Total TX"
-                      isAnimationActive={false}
-                    />
-                  </AreaChart>
-                </ResponsiveContainer>
-              </div>
+            <div className="w-full h-[400px] relative">
+              <div id="collector-tooltip" style={{
+                display: 'none',
+                position: 'absolute',
+                background: 'var(--color-background-primary)',
+                border: '0.5px solid var(--color-border-secondary)',
+                borderRadius: '8px',
+                padding: '8px 12px',
+                fontSize: '12px',
+                pointerEvents: 'none',
+                zIndex: 10,
+                minWidth: '140px',
+                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
+              }}></div>
+              <ChartLine
+                data={{
+                  labels: chartLabels,
+                  datasets: datasets
+                }}
+                options={chartOptions as any}
+              />
             </div>
           )}
         </div>
