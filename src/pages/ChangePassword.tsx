@@ -68,10 +68,13 @@ import { clsx } from 'clsx';
               <Lock className="text-primary" size={40} />
             )}
           </div>
-          <h1 className="text-2xl font-bold text-text-primary tracking-tight">
+          <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-1">FlowGuard</h1>
+          <p className="text-text-secondary font-bold text-[10px] uppercase tracking-widest opacity-60 mb-8">Network Intelligence & DDoS Mitigation</p>
+
+          <h2 className="text-xl font-bold text-text-primary tracking-tight">
             {mandatory ? 'Defina sua senha' : 'Alterar senha'}
-          </h1>
-          <p className="text-text-secondary text-sm mt-2">
+          </h2>
+          <p className="text-text-secondary text-xs mt-2">
             {mandatory
               ? 'Por segurança, defina uma senha pessoal antes de continuar.'
               : 'Preencha os campos abaixo para atualizar sua senha.'}
