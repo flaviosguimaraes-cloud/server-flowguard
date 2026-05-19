@@ -314,11 +314,6 @@ export default function Dashboard() {
 
    const [history, setHistory] = useState<Record<string, {time: string, in_bps: number, out_bps: number}[]>>({});
    const [serviceFilter, setServiceFilter] = useState<string | null>(null);
-    const [selectedMinutes, setSelectedMinutes] = useState(() => {
-      const saved = localStorage.getItem('fg_collector_period');
-      return saved ? parseInt(saved) : 30;
-    });
-   const [showIfaceSelector, setShowIfaceSelector] = useState(false);
 
    useEffect(() => {
      localStorage.setItem('fg_collector_period', String(selectedMinutes));
