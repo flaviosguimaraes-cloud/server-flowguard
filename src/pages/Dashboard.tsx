@@ -885,10 +885,7 @@ export default function Dashboard() {
                     {card.label}
                     {(card.id === 'download' || card.id === 'upload' || card.id === 'flows' || card.id === 'blackhole') && <FlowBadge />}
                   </span>
-                  <div className={clsx(
-                    "p-1.5 rounded-lg bg-bg-primary border border-border/40",
-                    isHovered && "text-primary"
-                  )}>
+                  <div className="p-1.5 rounded-lg bg-bg-primary border border-border/40">
                     {card.icon}
                   </div>
                 </div>
