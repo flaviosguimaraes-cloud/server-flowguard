@@ -799,10 +799,17 @@ export default function Dashboard() {
   const activeCollectors = (Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || []))
     .filter((c: any) => c.active || c.status === 'active' || c.status === 'Ativo');
 
-  const todayStr = new Date().toISOString().slice(0, 10);
-  const yesterdayDate = new Date();
-  yesterdayDate.setDate(yesterdayDate.getDate() - 1);
-  const yesterdayStr = yesterdayDate.toISOString().slice(0, 10);
+  const getLocalDateStr = (offset = 0) => {
+    const d = new Date();
+    if (offset !== 0) d.setDate(d.getDate() + offset);
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  const todayStr = getLocalDateStr();
+  const yesterdayStr = getLocalDateStr(-1);
 
   const anomaliasHoje = activeEventsToday?.items?.filter((i: any) => 
     i.started_at && i.started_at.slice(0, 10) === todayStr
@@ -845,10 +852,10 @@ export default function Dashboard() {
     },
     {
       id: 'attacks',
-      label: 'Anomalias hoje',
+      label: 'ANOMALIAS HOJE',
       value: anomaliasHoje.length,
       detail: anomaliasHoje[0] 
-        ? `Ontem: ${anomaliasOntem.length} anomalias · Último: ${anomaliasHoje[0].ip} ${anomaliasHoje[0].started_at.slice(11, 16)}`
+        ? `Ontem: ${anomaliasOntem.length} anomalias · Último: ${anomaliasHoje[0].ip} às ${anomaliasHoje[0].started_at.slice(11, 16)}`
         : `Ontem: ${anomaliasOntem.length} anomalias · Nenhuma anomalia hoje`,
       icon: <Shield className="text-danger" size={16} />
     },
