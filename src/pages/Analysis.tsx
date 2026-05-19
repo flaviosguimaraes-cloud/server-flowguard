@@ -782,7 +782,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                         </td>
                         <td className="px-6 py-4 text-right font-bold text-text-primary text-xs">{fmtBytes(item.bytes)}</td>
                         <td className="px-6 py-4 text-right text-text-secondary">
-                         <PPSIntensity pps={calcPPS(item.packets, String(minutes))} />
+                         <PPSIntensity pps={calcPPS(item.packets, String(currentIntervalMinutes))} />
                         </td>
                         <td className="px-6 py-4 text-right">
                           {(() => {
