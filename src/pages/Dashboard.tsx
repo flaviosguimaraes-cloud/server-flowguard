@@ -671,14 +671,19 @@ export default function Dashboard() {
      }))
    ], [chartData, selectedIfaces]);
  
-   const chartOptions = useMemo(() => ({
-     responsive: true,
-     maintainAspectRatio: false,
-     interaction: {
-       mode: 'nearest' as const,
-       intersect: false,
-       axis: 'xy' as const
-     },
+    const chartOptions = useMemo(() => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 0 },
+      animations: { colors: false },
+      transitions: {
+        active: { animation: { duration: 0 } }
+      },
+      interaction: {
+        mode: 'nearest' as const,
+        intersect: false,
+        axis: 'xy' as const
+      },
      plugins: {
        legend: { display: false },
        tooltip: {
