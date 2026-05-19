@@ -256,11 +256,11 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
 
     const currentIntervalMinutes = useMemo(() => {
       if (!useCustomRange) return 5;
-      const s = new Date(toISO(startDate));
-      const e = new Date(toISO(endDate));
+      const s = new Date(`${startDate}T${startTime}`);
+      const e = new Date(`${endDate}T${endTime}`);
       if (isNaN(s.getTime()) || isNaN(e.getTime())) return 5;
       return Math.max(1, Math.round((e.getTime() - s.getTime()) / 60000));
-    }, [useCustomRange, startDate, endDate]);
+    }, [useCustomRange, startDate, startTime, endDate, endTime]);
 
     const SORT_MAP: Record<string, string> = {
       'when':      'recent',
@@ -278,16 +278,33 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     };
 
     const buildQuery = useCallback(() => {
+      let defaultOrder = 'recent';
+      if (useCustomRange) {
+        defaultOrder = 'recent_asc';
+      }
+
+      const order = sortDir === 'asc' 
+        ? (SORT_MAP[sortCol] || defaultOrder) + (SORT_MAP[sortCol] ? '_asc' : '')
+        : (SORT_MAP[sortCol] || defaultOrder) + (SORT_MAP[sortCol] === 'recent' && defaultOrder === 'recent_asc' ? '_asc' : '');
+
+      // Simplified order logic for common case
+      let finalOrder = sortDir === 'asc' ? (SORT_MAP[sortCol] || 'recent') + '_asc' : (SORT_MAP[sortCol] || 'recent');
+      
+      // Override if it's the default sort and we have a custom range
+      if (sortCol === 'when' && sortDir === 'desc' && useCustomRange) {
+        finalOrder = 'recent_asc';
+      }
+
       const params = new URLSearchParams({
         limit: String(pageSize),
         offset: String((page - 1) * pageSize),
         le: '1000',
-        order: sortDir === 'asc' ? (SORT_MAP[sortCol] || 'recent') + '_asc' : (SORT_MAP[sortCol] || 'recent'),
+        order: finalOrder,
       });
 
       if (useCustomRange && startDate && endDate) {
-        params.append('start', toISO(startDate));
-        params.append('end', toISO(endDate));
+        params.append('start', toISO(startDate, startTime));
+        params.append('end', toISO(endDate, endTime));
       } else {
         params.append('minutes', '5');
       }
