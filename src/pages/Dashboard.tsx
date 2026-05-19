@@ -177,7 +177,14 @@ export default function Dashboard() {
     enabled: isAuthenticated,
   });
 
-   const { data: eventsHistory, isLoading: loadingEvents } = useQuery({
+   const { data: flowsSummary } = useQuery({
+     queryKey: ['flows-summary'],
+     queryFn: () => api.get('/api/flows/summary').then(r => r.data),
+     enabled: isAuthenticated,
+     refetchInterval: 30000,
+   });
+
+   const { data: eventsHistory, isLoading: loadingEvents, dataUpdatedAt: eventsUpdatedAt } = useQuery({
      queryKey: ['events-history-dashboard'],
      queryFn: async () => {
        const r = await api.get('/api/events/history?limit=5');
@@ -190,6 +197,20 @@ export default function Dashboard() {
     refetchOnMount: 'always',
     refetchOnWindowFocus: true,
   });
+
+  const { data: activeEventsToday } = useQuery({
+    queryKey: ['events-today'],
+    queryFn: () => api.get('/api/events/history?limit=1000&minutes=1440').then(r => r.data),
+    enabled: isAuthenticated,
+    refetchInterval: 60000,
+  });
+
+  const { data: collectorDetailedInfo } = useQuery({
+    queryKey: ['collector-detail', selectedCollector],
+    queryFn: () => api.get(`/api/collectors/${selectedCollector}/interfaces`).then(r => r.data),
+    enabled: isAuthenticated && !!selectedCollector,
+  });
+
 
   const dirLabel = (dir: string) => {
     if (dir === 'outgoing' || dir === 'outbound')
