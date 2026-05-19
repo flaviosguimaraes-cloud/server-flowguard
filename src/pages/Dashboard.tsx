@@ -814,24 +814,12 @@ export default function Dashboard() {
   const activeCollectors = (Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || []))
     .filter((c: any) => c.active || c.status === 'active' || c.status === 'Ativo');
 
-  const getLocalDateStr = (offset = 0) => {
-    const d = new Date();
-    if (offset !== 0) d.setDate(d.getDate() + offset);
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  };
-
-  const todayStr = getLocalDateStr();
-  const yesterdayStr = getLocalDateStr(-1);
-
   const anomaliasHoje = activeEventsToday?.items?.filter((i: any) => 
-    i.started_at && i.started_at.slice(0, 10) === todayStr
+    i.started_at && i.started_at.substring(0, 10) === today
   ) || [];
 
   const anomaliasOntem = activeEventsToday?.items?.filter((i: any) => 
-    i.started_at && i.started_at.slice(0, 10) === yesterdayStr
+    i.started_at && i.started_at.substring(0, 10) === yesterday
   ) || [];
 
   const cards = [
