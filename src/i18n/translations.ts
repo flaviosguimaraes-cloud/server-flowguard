@@ -61,6 +61,7 @@
       top_interfaces: 'Top Interfaces SNMP',
       cdns: 'Ranking de CDNs',
       administration: 'Administração',
+      threats: 'Ameaças',
     },
     'en': {
      dashboard: 'Dashboard',
@@ -122,6 +123,7 @@
       top_interfaces: 'Top SNMP Interfaces',
       cdns: 'CDN Ranking',
       administration: 'Administration',
+      threats: 'Threats',
     },
     'es': {
      dashboard: 'Tablero',
@@ -183,6 +185,7 @@
       top_interfaces: 'Top Interfaces SNMP',
       cdns: 'Ranking de CDNs',
       administration: 'Administración',
+      threats: 'Amenazas',
     }
   };
  
