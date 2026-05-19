@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect, useRef, Fragment } from 'react';
-import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import api from '../services/api';
 import { useTranslation } from '../hooks/useTranslation';
 import { useTheme } from '../contexts/ThemeContext';
@@ -378,6 +378,7 @@ export default function Dashboard() {
     },
     enabled: isAuthenticated && selectedIfaces.length > 0 && !!selectedCollector,
     refetchInterval: 60000,
+    placeholderData: keepPreviousData,
   });
  
   useEffect(() => {
@@ -479,7 +480,24 @@ export default function Dashboard() {
         return point;
       });
 
-    return fullData;
+    // Sanitize points to avoid artificial drops to zero
+    return fullData.map((p, i, arr) => {
+      const sanitized = { ...p };
+      Object.keys(p).forEach(key => {
+        if (key === 'time' || key === 'display_time') return;
+        
+        const val = p[key];
+        const prev = arr[i-1]?.[key] || 0;
+        const next = arr[i+1]?.[key] || 0;
+        const avg = (prev + next) / 2;
+        
+        // Use threshold adapted to Gbps (0.0001 Gbps = 100 Kbps)
+        if (val === 0 && avg > 0.0001) {
+          sanitized[key] = Number(avg.toFixed(4));
+        }
+      });
+      return sanitized;
+    });
   }, [metricsHistory]);
 
   const chartData = useMemo(() => sampleData(historicalChartData), [historicalChartData]);
@@ -653,14 +671,19 @@ export default function Dashboard() {
      }))
    ], [chartData, selectedIfaces]);
  
-   const chartOptions = useMemo(() => ({
-     responsive: true,
-     maintainAspectRatio: false,
-     interaction: {
-       mode: 'nearest' as const,
-       intersect: false,
-       axis: 'xy' as const
-     },
+    const chartOptions = useMemo(() => ({
+      responsive: true,
+      maintainAspectRatio: false,
+      animation: { duration: 0 },
+      animations: { colors: false },
+      transitions: {
+        active: { animation: { duration: 0 } }
+      },
+      interaction: {
+        mode: 'nearest' as const,
+        intersect: false,
+        axis: 'xy' as const
+      },
      plugins: {
        legend: { display: false },
        tooltip: {
