@@ -22,37 +22,47 @@
     if (error) setError('');
   }, [username, password]);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    setError('');
-    setLoading(true);
-
-    try {
-      const params = new URLSearchParams();
-      params.append('username', username);
-      params.append('password', password);
-
-      const response = await api.post(
-        '/api/auth/login',
-        params,
-        {
-          headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-          },
-        }
-      );
-
-       const data = response.data;
-       login(data);
-    } catch (error: any) {
-      setError(
-        error.response?.data?.detail || 
-        'Usuário ou senha incorretos'
-      );
-    } finally {
-      setLoading(false);
-    }
-  };
+   const handleSubmit = async (e: FormEvent) => {
+     e.preventDefault();
+     setError('');
+     setLoading(true);
+ 
+     try {
+       const params = new URLSearchParams();
+       params.append('username', username);
+       params.append('password', password);
+ 
+       const response = await api.post(
+         '/api/auth/login',
+         params,
+         {
+           headers: {
+             'Content-Type': 'application/x-www-form-urlencoded',
+           },
+         }
+       );
+ 
+       const { access_token, username: resUsername, role, must_change_password } = response.data;
+ 
+       // Salvar token PRIMEIRO
+       localStorage.setItem('access_token', access_token);
+       localStorage.setItem('username', resUsername);
+       localStorage.setItem('role', role);
+       
+       // Atualizar o contexto (isso também fará o navigate interno)
+       login(response.data);
+ 
+       // Redirecionar IMEDIATAMENTE (redundante mas garante velocidade)
+       if (must_change_password) {
+         navigate({ to: '/change-password', replace: true });
+       } else {
+         navigate({ to: '/dashboard', replace: true });
+       }
+     } catch (error: any) {
+       setError('Usuário ou senha inválidos');
+       setLoading(false);
+     }
+   };
  
   return (
     <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4 transition-colors">
