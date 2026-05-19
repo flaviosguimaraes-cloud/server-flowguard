@@ -480,7 +480,24 @@ export default function Dashboard() {
         return point;
       });
 
-    return fullData;
+    // Sanitize points to avoid artificial drops to zero
+    return fullData.map((p, i, arr) => {
+      const sanitized = { ...p };
+      Object.keys(p).forEach(key => {
+        if (key === 'time' || key === 'display_time') return;
+        
+        const val = p[key];
+        const prev = arr[i-1]?.[key] || 0;
+        const next = arr[i+1]?.[key] || 0;
+        const avg = (prev + next) / 2;
+        
+        // Use threshold adapted to Gbps (0.0001 Gbps = 100 Kbps)
+        if (val === 0 && avg > 0.0001) {
+          sanitized[key] = Number(avg.toFixed(4));
+        }
+      });
+      return sanitized;
+    });
   }, [metricsHistory]);
 
   const chartData = useMemo(() => sampleData(historicalChartData), [historicalChartData]);
