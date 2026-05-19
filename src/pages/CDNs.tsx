@@ -57,7 +57,7 @@ const getFavicon = (cdn: string) => {
   };
   const d = domains[cdn];
   return d
-    ? \`https://www.google.com/s2/favicons?domain=\${d}&sz=32\`
+    ? `https://www.google.com/s2/favicons?domain=${d}&sz=32`
     : null;
 };
 
@@ -69,14 +69,14 @@ const CDNs = () => {
   const { data, isLoading } = useQuery({
     queryKey: ['cdns-ranking', minutes],
     enabled: isAuthenticated,
-    queryFn: () => api.get(\`/api/flows/cdns?minutes=\${minutes}\`).then(r => r.data),
+    queryFn: () => api.get(`/api/flows/cdns?minutes=${minutes}`).then(r => r.data),
     refetchInterval: 30000,
   });
 
   const { data: cdnDetails, isLoading: isLoadingDetails } = useQuery({
     queryKey: ['cdn-details', expandedCdn, minutes],
     enabled: !!expandedCdn && isAuthenticated,
-    queryFn: () => api.get(\`/api/flows/cdns/\${expandedCdn}/details?minutes=\${minutes}\`).then(r => r.data),
+    queryFn: () => api.get(`/api/flows/cdns/${expandedCdn}/details?minutes=${minutes}`).then(r => r.data),
   });
 
   const toggleCdn = (cdn: string) => {
@@ -173,7 +173,7 @@ const CDNs = () => {
         />
         <SummaryCard 
           title="% do Tráfego CDN" 
-          value={isLoading ? '...' : \`\${cdnPercentageOfTotal.toFixed(1)}%\`} 
+          value={isLoading ? '...' : `${cdnPercentageOfTotal.toFixed(1)}%`} 
           icon={<BarChart3 size={20} />} 
           color="success"
         />
@@ -230,7 +230,7 @@ const CDNs = () => {
                              <div 
                                className="h-full rounded-full transition-all duration-1000"
                                style={{ 
-                                 width: \`\${item.percent || (item.bytes / cdnTotalBytes) * 100}%\`,
+                                 width: `${item.percent || (item.bytes / cdnTotalBytes) * 100}%`,
                                  backgroundColor: color
                                }}
                              />
