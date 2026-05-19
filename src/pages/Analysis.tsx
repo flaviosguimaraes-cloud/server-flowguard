@@ -146,38 +146,74 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     const [page, setPage] = useState(1);
     const [searchTrigger, setSearchTrigger] = useState(0);
 
-    const formatLocal = (date: Date) => {
-      const d = String(date.getDate()).padStart(2, '0');
-      const m = String(date.getMonth() + 1).padStart(2, '0');
+    const formatToDateInput = (date: Date) => {
       const y = date.getFullYear();
-      const hh = String(date.getHours()).padStart(2, '0');
-      const mm = String(date.getMinutes()).padStart(2, '0');
-      return `${d}/${m}/${y} ${hh}:${mm}`;
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const d = String(date.getDate()).padStart(2, '0');
+      return `${y}-${m}-${d}`;
     };
 
-    const toISO = (str: string) => {
-      if (!str) return '';
-      try {
-        const parts = str.trim().split(' ');
-        if (parts.length !== 2) return '';
-        const [date, time] = parts;
-        const dateParts = date.split('/');
-        if (dateParts.length !== 3) return '';
-        const [d, m, y] = dateParts;
-        return `${y}-${m}-${d}T${time}`;
-      } catch {
-        return '';
+    const formatToTimeInput = (date: Date) => {
+      const h = String(date.getHours()).padStart(2, '0');
+      const mm = String(date.getMinutes()).padStart(2, '0');
+      return `${h}:${mm}`;
+    };
+
+    const toISO = (dateStr: string, timeStr: string) => {
+      if (!dateStr || !timeStr) return '';
+      return `${dateStr}T${timeStr}`;
+    };
+
+    const [startDate, setStartDate] = useState(formatToDateInput(new Date(Date.now() - 5 * 60000)));
+    const [startTime, setStartTime] = useState(formatToTimeInput(new Date(Date.now() - 5 * 60000)));
+    const [endDate, setEndDate] = useState(formatToDateInput(new Date()));
+    const [endTime, setEndTime] = useState(formatToTimeInput(new Date()));
+    
+    const [useCustomRange, setUseCustomRange] = useState(false);
+    const [intervalError, setIntervalError] = useState('');
+    const [selectedConnection, setSelectedConnection] = useState<any>(null);
+
+    const handleStartChange = (newDate?: string, newTime?: string) => {
+      const d = newDate || startDate;
+      const t = newTime || startTime;
+      if (newDate) setStartDate(d);
+      if (newTime) setStartTime(t);
+
+      const s = new Date(`${d}T${t}`);
+      const e = new Date(`${endDate}T${endTime}`);
+      
+      const diffHours = (e.getTime() - s.getTime()) / 3600000;
+      if (diffHours > 2 || diffHours < 0) {
+        // Ajustar fim para início + 2h
+        const maxEnd = new Date(s.getTime() + 2 * 3600000);
+        setEndDate(formatToDateInput(maxEnd));
+        setEndTime(formatToTimeInput(maxEnd));
       }
     };
 
-    const [startDate, setStartDate] = useState(formatLocal(new Date(Date.now() - 5 * 60000)));
-    const [endDate, setEndDate] = useState(formatLocal(new Date()));
-    const [useCustomRange, setUseCustomRange] = useState(false);
-    const [intervalError, setIntervalError] = useState('');
+    const handleEndChange = (newDate?: string, newTime?: string) => {
+      const d = newDate || endDate;
+      const t = newTime || endTime;
+      if (newDate) setEndDate(d);
+      if (newTime) setEndTime(t);
 
-    const validateInterval = (start: string, end: string) => {
-      const s = new Date(toISO(start));
-      const e = new Date(toISO(end));
+      const s = new Date(`${startDate}T${startTime}`);
+      const e = new Date(`${d}T${t}`);
+      const diffHours = (e.getTime() - s.getTime()) / 3600000;
+      
+      if (diffHours > 2) {
+        const maxEnd = new Date(s.getTime() + 2 * 3600000);
+        setEndDate(formatToDateInput(maxEnd));
+        setEndTime(formatToTimeInput(maxEnd));
+      } else if (diffHours < 0) {
+        setEndDate(startDate);
+        setEndTime(startTime);
+      }
+    };
+
+    const validateInterval = () => {
+      const s = new Date(`${startDate}T${startTime}`);
+      const e = new Date(`${endDate}T${endTime}`);
       if (isNaN(s.getTime()) || isNaN(e.getTime())) return true;
       
       const diff = e.getTime() - s.getTime();
