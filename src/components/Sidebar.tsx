@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+ import { useState, useEffect, useMemo } from 'react';
 import { 
   LayoutDashboard, Search, Bell, Shield, Zap, List, Activity,
   Network, CheckCircle, XCircle, BarChart3, Settings2, Server, 
@@ -6,14 +6,35 @@ import {
   Settings, LogOut, ChevronDown, ChevronRight, Lock, 
   ChevronLeft, Users as UsersIcon
 } from 'lucide-react';
-import { Link, useLocation, useNavigate } from '@tanstack/react-router';
+ import { Link, useLocation, useNavigate } from '@tanstack/react-router';
+ import { useQuery } from '@tanstack/react-query';
+ import api from '../services/api';
 import { useTranslation } from '../hooks/useTranslation';
 import { useUI } from '../contexts/UIContext';
  import { useAuth } from '../contexts/AuthContext';
  import { clsx } from 'clsx';
  
-export const Sidebar = () => {
-  const { sidebarCollapsed: collapsed, setSidebarCollapsed: setCollapsed } = useUI();
+ export const Sidebar = () => {
+   const { sidebarCollapsed: collapsed, setSidebarCollapsed: setCollapsed } = useUI();
+ 
+   const { data: sysStatus } = useQuery({
+     queryKey: ['system-status'],
+     queryFn: () => api.get('/api/system/status').then(r => r.data),
+     refetchInterval: 30000,
+     staleTime: 30000,
+     enabled: !!localStorage.getItem('access_token'),
+   });
+ 
+   const downServices = useMemo(() => {
+     const services = sysStatus?.services || {};
+     return Object.entries(services).filter(([_, status]) => status !== 'active');
+   }, [sysStatus?.services]);
+ 
+   const hasCriticalDown = useMemo(() => {
+     const criticals = ['flow_collector', 'detection_engine', 'api', 'flow_database', 'config_database', 'bgp_engine'];
+     return downServices.some(([key]) => criticals.includes(key));
+   }, [downServices]);
+ 
   const [openGroups, setOpenGroups] = useState<string[]>(() => {
     const saved = localStorage.getItem('sidebar_open_groups');
     return saved ? JSON.parse(saved) : ['mitigation', 'operation'];
@@ -162,7 +183,25 @@ export const Sidebar = () => {
               )}
             >
               <item.icon size={18} className={clsx("transition-transform duration-200", active ? "text-primary" : "")} />
-              {!collapsed && <span className={clsx("text-sm font-medium", active ? "font-semibold" : "")}>{item.label}</span>}
+               {!collapsed && (
+                 <div className="flex items-center justify-between flex-1">
+                   <span className={clsx("text-sm font-medium", active ? "font-semibold" : "")}>{item.label}</span>
+                   {item.path === '/system' && downServices.length > 0 && (
+                     <span 
+                       className="flex items-center justify-center text-[10px] font-bold text-white rounded-full min-w-[18px] h-[18px] px-1 animate-pulse"
+                       style={{ background: hasCriticalDown ? '#ef4444' : '#f59e0b' }}
+                     >
+                       {downServices.length}
+                     </span>
+                   )}
+                 </div>
+               )}
+               {collapsed && item.path === '/system' && downServices.length > 0 && (
+                 <div 
+                   className="absolute top-2 right-2 w-2 h-2 rounded-full animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]"
+                   style={{ background: hasCriticalDown ? '#ef4444' : '#f59e0b' }}
+                 />
+               )}
               {active && !collapsed && <div className="absolute right-2 w-1 h-1 bg-primary rounded-full" />}
             </Link>
           );
