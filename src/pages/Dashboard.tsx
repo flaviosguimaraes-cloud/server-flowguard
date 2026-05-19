@@ -159,7 +159,25 @@ export default function Dashboard() {
     refetchOnWindowFocus: true,
   });
 
-   const { data: eventsHistory, isLoading: loadingEvents, dataUpdatedAt: eventsUpdatedAt } = useQuery({
+  const { data: asnStats } = useQuery({
+    queryKey: ['asns'],
+    queryFn: () => api.get('/api/flows/asns?minutes=60&limit=5').then(r => r.data),
+    enabled: isAuthenticated,
+  });
+
+  const { data: cdnStats } = useQuery({
+    queryKey: ['cdns-consumption'],
+    queryFn: () => api.get('/api/flows/cdns?minutes=60').then(r => r.data),
+    enabled: isAuthenticated,
+  });
+
+  const { data: attackCountries } = useQuery({
+    queryKey: ['attack-countries'],
+    queryFn: () => api.get('/api/flows/attack-countries?minutes=1440&limit=5').then(r => r.data),
+    enabled: isAuthenticated,
+  });
+
+   const { data: eventsHistory, isLoading: loadingEvents } = useQuery({
      queryKey: ['events-history-dashboard'],
      queryFn: async () => {
        const r = await api.get('/api/events/history?limit=5');
