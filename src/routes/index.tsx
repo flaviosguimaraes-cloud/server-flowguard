@@ -1,6 +1,8 @@
-import { createFileRoute } from '@tanstack/react-router'
-import Dashboard from '../pages/Dashboard'
- 
- export const Route = createFileRoute('/')({
-  component: Dashboard,
- })
+import { createFileRoute, Navigate } from '@tanstack/react-router'
+
+export const Route = createFileRoute('/')({
+  component: () => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('access_token') : null;
+    return <Navigate to={token ? "/dashboard" : "/login"} replace />;
+  },
+})

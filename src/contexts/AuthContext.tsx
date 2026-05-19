@@ -1,5 +1,6 @@
- import React, { createContext, useContext, useState, useEffect } from 'react';
+ import React, { createContext, useContext, useState } from 'react';
  import { useNavigate } from '@tanstack/react-router';
+ import { useQueryClient } from '@tanstack/react-query';
  
  interface User {
    token: string;
@@ -33,6 +34,7 @@
    });
    const [loading, setLoading] = useState(false);
    const navigate = useNavigate();
+   const queryClient = useQueryClient();
  
    const login = (data: any) => {
      localStorage.setItem('access_token', data.access_token);
@@ -57,20 +59,22 @@
       }
    };
  
-    const logout = () => {
-      // Apagar só dados de sessão
-      localStorage.removeItem('access_token');
-      localStorage.removeItem('refresh_token');
+     const logout = () => {
+       // 1. Limpar storage primeiro (dados de sessão)
+       localStorage.removeItem('access_token');
+       localStorage.removeItem('refresh_token');
        localStorage.removeItem('username');
        localStorage.removeItem('role');
        localStorage.removeItem('email');
-      
-      // NÃO apagar preferências do usuário como:
-      // theme, language, fg_collector, fg_ifaces, fg_traffic_source
-      
-      setUser(null);
-      navigate({ to: '/login' });
-    };
+       
+       // 2. Cancelar queries pendentes e limpar cache
+       queryClient.cancelQueries();
+       queryClient.clear();
+       
+       // 3. Atualizar estado e redirecionar imediatamente
+       setUser(null);
+       navigate({ to: '/login', replace: true });
+     };
  
    const isAdmin = () => user?.role === 'admin';
  
