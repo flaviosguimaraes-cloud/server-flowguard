@@ -52,7 +52,7 @@ export default function Policy() {
     if (data) {
       setMode((data.mode as Mode) || 'blackhole');
       setFlowspec(!!data.flowspec_enabled);
-      setExternalBlock(data.external_block || '45.175.50.0/24');
+      setExternalBlock(data.external_block || '192.168.1.0/24');
       setBlackholeCommunity(data.blackhole_community || '65000:666');
       setExternalCommunity(data.external_community || '65000:999');
     }
@@ -215,7 +215,7 @@ export default function Policy() {
           title="Modo B — Mitigação Externa"
           community={externalCommunity}
           onChangeCommunity={setExternalCommunity}
-          description={`Anuncia bloco ${externalBlock || '45.175.50.0/24'} para scrubbing externo.`}
+          description={`Anuncia bloco ${externalBlock || '192.168.1.0/24'} para scrubbing externo.`}
         />
       </div>
 
