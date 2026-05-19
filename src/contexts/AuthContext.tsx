@@ -70,7 +70,8 @@
        localStorage.removeItem('refresh_token');
        localStorage.removeItem('username');
        localStorage.removeItem('role');
-       localStorage.removeItem('email');
+        localStorage.removeItem('email');
+        localStorage.removeItem('must_change_password');
        
        // 2. Cancelar queries pendentes e limpar cache
        queryClient.cancelQueries();
