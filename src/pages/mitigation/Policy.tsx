@@ -251,16 +251,16 @@ export default function Policy() {
               <ThresholdCard id="threshold_mbps" label="Banda Global" banKey="ban_for_bandwidth" unit="Mbps" placeholder="1000" description="gatilho principal" />
               <ThresholdCard id="threshold_flows" label="Flows Global" banKey="ban_for_flows" unit="flows" placeholder="3500" description="gatilho de volume" />
               
-              <ThresholdCard id="threshold_tcp_pps" label="TCP PPS" banKey="ban_for_tcp_pps" unit="pps" placeholder="50000" description="ataques TCP flood" />
-              <ThresholdCard id="threshold_tcp_mbps" label="TCP Banda" banKey="ban_for_tcp_bandwidth" unit="Mbps" placeholder="500" description="ataques TCP flood" />
+              <ThresholdCard id="threshold_tcp_pps" label="TCP PPS" banKey="ban_for_tcp_pps" unit="pps" placeholder="50000" description="anomalias TCP flood" />
+              <ThresholdCard id="threshold_tcp_mbps" label="TCP Banda" banKey="ban_for_tcp_bandwidth" unit="Mbps" placeholder="500" description="anomalias TCP flood" />
               <div className="hidden lg:block" />
 
-              <ThresholdCard id="threshold_udp_pps" label="UDP PPS" banKey="ban_for_udp_pps" unit="pps" placeholder="50000" description="ataques UDP flood" />
-              <ThresholdCard id="threshold_udp_mbps" label="UDP Banda" banKey="ban_for_udp_bandwidth" unit="Mbps" placeholder="500" description="ataques UDP flood" />
+              <ThresholdCard id="threshold_udp_pps" label="UDP PPS" banKey="ban_for_udp_pps" unit="pps" placeholder="50000" description="anomalias UDP flood" />
+              <ThresholdCard id="threshold_udp_mbps" label="UDP Banda" banKey="ban_for_udp_bandwidth" unit="Mbps" placeholder="500" description="anomalias UDP flood" />
               <div className="hidden lg:block" />
 
-              <ThresholdCard id="threshold_icmp_pps" label="ICMP PPS" banKey="ban_for_icmp_pps" unit="pps" placeholder="5000" description="ataques ICMP flood" />
-              <ThresholdCard id="threshold_icmp_mbps" label="ICMP Banda" banKey="ban_for_icmp_bandwidth" unit="Mbps" placeholder="50" description="ataques ICMP flood" />
+              <ThresholdCard id="threshold_icmp_pps" label="ICMP PPS" banKey="ban_for_icmp_pps" unit="pps" placeholder="5000" description="anomalias ICMP flood" />
+              <ThresholdCard id="threshold_icmp_mbps" label="ICMP Banda" banKey="ban_for_icmp_bandwidth" unit="Mbps" placeholder="50" description="anomalias ICMP flood" />
               
               <div className="p-4 rounded-xl border border-border bg-bg-secondary/30 space-y-3">
                 <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Tempo de bloqueio</label>
