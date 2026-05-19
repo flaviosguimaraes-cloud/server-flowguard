@@ -177,6 +177,7 @@ export default function Dashboard() {
       const r = await api.get('/api/system/status');
       return r.data;
     },
+    enabled: isAuthenticated,
     refetchInterval: 10000,
     staleTime: 0,
     gcTime: 0,
@@ -190,6 +191,7 @@ export default function Dashboard() {
       const r = await api.get('/api/flows/timeline?minutes=30');
       return r.data;
     },
+    enabled: isAuthenticated,
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true,
@@ -214,10 +216,12 @@ export default function Dashboard() {
   const { data: collectors } = useQuery({
     queryKey: ['collectors'],
     queryFn: () => api.get('/api/collectors').then(r => r.data),
+    enabled: isAuthenticated,
   });
 
   const { data: interfaces } = useQuery({
     queryKey: ['interfaces', selectedCollector],
+    enabled: isAuthenticated,
     queryFn: async () => {
       if (!selectedCollector) return null;
       const r = await api.get(`/api/collectors/${selectedCollector}/interfaces/summary`);
@@ -268,7 +272,7 @@ export default function Dashboard() {
       );
       return results;
     },
-    enabled: selectedIfaces.length > 0 && !!selectedCollector,
+    enabled: isAuthenticated && selectedIfaces.length > 0 && !!selectedCollector,
     refetchInterval: 60000,
   });
  
@@ -289,6 +293,7 @@ export default function Dashboard() {
     const { data: activeMitigations, dataUpdatedAt: mitigationsUpdatedAt } = useQuery({
      queryKey: ['mitigation-active-dashboard'],
      queryFn: () => api.get('/api/mitigation/active').then(r => r.data),
+      enabled: isAuthenticated,
       staleTime: 0,
       gcTime: 0,
       refetchInterval: 10000,
@@ -301,6 +306,7 @@ export default function Dashboard() {
      queryFn: () =>
        api.get('/api/flows/connections?limit=10&minutes=2')
          .then(r => r.data),
+     enabled: isAuthenticated,
      staleTime: 0,
      gcTime: 0,
      refetchOnMount: true,
