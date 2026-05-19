@@ -184,7 +184,7 @@ import { toast } from 'sonner';
 
                       <div className="pt-2 flex items-center gap-1.5 text-text-secondary font-medium">
                         <Clock size={12} />
-                        <span>Uptime: {uptime} (mesma sessão)</span>
+                        <span>Uptime: {uptime}</span>
                       </div>
                     </div>
                   </div>
