@@ -140,56 +140,53 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     const [page, setPage] = useState(1);
     const [searchTrigger, setSearchTrigger] = useState(0);
 
-    const [filterMode, setFilterMode] = useState<'relative' | 'custom'>('relative');
-    const [minutes, setMinutes] = useState(30);
-    const [startDate, setStartDate] = useState('');
-    const [endDate, setEndDate] = useState('');
-    const [maxEndDate, setMaxEndDate] = useState('');
-    const [intervalWarning, setIntervalWarning] = useState(false);
-
-    const MAX_MS = MAX_HOURS * 3600 * 1000;
-
-    const handleStartChange = (value: string) => {
-      setStartDate(value);
-      setIntervalWarning(false);
-
-      if (!value) {
-        setMaxEndDate('');
-        return;
-      }
-
-      const start = new Date(value);
-      const maxEnd = new Date(start.getTime() + MAX_MS);
-      
-      // Para datetime-local o formato esperado é YYYY-MM-DDTHH:mm
-      // Usamos ajuste de timezone para evitar o problema de UTC
-      const tzOffset = maxEnd.getTimezoneOffset() * 60000;
-      const maxEndStr = new Date(maxEnd.getTime() - tzOffset).toISOString().slice(0, 16);
-      
-      if (endDate && endDate > maxEndStr) {
-        setEndDate(maxEndStr);
-        setIntervalWarning(true);
-      }
-      setMaxEndDate(maxEndStr);
+    const formatLocal = (date: Date) => {
+      const d = String(date.getDate()).padStart(2, '0');
+      const m = String(date.getMonth() + 1).padStart(2, '0');
+      const y = date.getFullYear();
+      const hh = String(date.getHours()).padStart(2, '0');
+      const mm = String(date.getMinutes()).padStart(2, '0');
+      return `${d}/${m}/${y} ${hh}:${mm}`;
     };
 
-    const handleEndChange = (value: string) => {
-      if (startDate && value) {
-        const start = new Date(startDate);
-        const end = new Date(value);
-        const diff = end.getTime() - start.getTime();
-
-        if (diff > MAX_MS) {
-          const maxEnd = new Date(start.getTime() + MAX_MS);
-          const tzOffset = maxEnd.getTimezoneOffset() * 60000;
-          const maxEndStr = new Date(maxEnd.getTime() - tzOffset).toISOString().slice(0, 16);
-          setEndDate(maxEndStr);
-          setIntervalWarning(true);
-          return;
-        }
+    const toISO = (str: string) => {
+      if (!str) return '';
+      try {
+        const parts = str.trim().split(' ');
+        if (parts.length !== 2) return '';
+        const [date, time] = parts;
+        const dateParts = date.split('/');
+        if (dateParts.length !== 3) return '';
+        const [d, m, y] = dateParts;
+        return `${y}-${m}-${d}T${time}`;
+      } catch {
+        return '';
       }
-      setEndDate(value);
-      setIntervalWarning(false);
+    };
+
+    const [startDate, setStartDate] = useState(formatLocal(new Date(Date.now() - 5 * 60000)));
+    const [endDate, setEndDate] = useState(formatLocal(new Date()));
+    const [useCustomRange, setUseCustomRange] = useState(false);
+    const [intervalError, setIntervalError] = useState('');
+
+    const validateInterval = (start: string, end: string) => {
+      const s = new Date(toISO(start));
+      const e = new Date(toISO(end));
+      if (isNaN(s.getTime()) || isNaN(e.getTime())) return true;
+      
+      const diff = e.getTime() - s.getTime();
+      const MAX_MS = 2 * 3600 * 1000; // 2 hours
+      
+      if (diff > MAX_MS) {
+        setIntervalError('Intervalo máximo: 2 horas');
+        return false;
+      }
+      if (diff < 0) {
+        setIntervalError('Data final deve ser posterior à inicial');
+        return false;
+      }
+      setIntervalError('');
+      return true;
     };
 
     const [filters, setFilters] = useState({
@@ -212,15 +209,16 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
     }, [pageSize, filters.src_ip, filters.dst_ip, filters.src_port, filters.dst_port, filters.proto, filters.country, filters.direction, sortCol, sortDir]);
 
     useEffect(() => {
-      if (filterMode === 'custom') {
-        setSortCol('when');
-        setSortDir('asc');
-      } else {
-        setSortCol('when');
-        setSortDir('desc');
-      }
       setPage(1);
-    }, [filterMode]);
+    }, [useCustomRange]);
+
+    const currentIntervalMinutes = useMemo(() => {
+      if (!useCustomRange) return 5;
+      const s = new Date(toISO(startDate));
+      const e = new Date(toISO(endDate));
+      if (isNaN(s.getTime()) || isNaN(e.getTime())) return 5;
+      return Math.max(1, Math.round((e.getTime() - s.getTime()) / 60000));
+    }, [useCustomRange, startDate, endDate]);
 
     const SORT_MAP: Record<string, string> = {
       'when':      'recent',
@@ -242,13 +240,14 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
         limit: String(pageSize),
         offset: String((page - 1) * pageSize),
         le: '1000',
+        order: sortDir === 'asc' ? (SORT_MAP[sortCol] || 'recent') + '_asc' : (SORT_MAP[sortCol] || 'recent'),
       });
 
-      if (filterMode === 'custom') {
-        if (startDate) params.append('start', startDate);
-        if (endDate) params.append('end', endDate);
+      if (useCustomRange && startDate && endDate) {
+        params.append('start', toISO(startDate));
+        params.append('end', toISO(endDate));
       } else {
-        params.append('minutes', String(minutes));
+        params.append('minutes', '5');
       }
 
       if (filters.src_ip) {
@@ -271,11 +270,8 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       if (filters.country) params.append('country', filters.country);
       if (filters.direction) params.append('direction', filters.direction);
       
-      const orderParam = SORT_MAP[sortCol] || 'recent';
-      params.set('order', sortDir === 'asc' ? orderParam + '_asc' : orderParam);
-      
       return params.toString();
-    }, [pageSize, page, filterMode, startDate, endDate, minutes, filters, sortCol, sortDir]);
+    }, [pageSize, page, useCustomRange, startDate, endDate, filters, sortCol, sortDir]);
 
     const handleSort = (col: string) => {
       if (sortCol === col) {
@@ -346,8 +342,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
         filters, 
         page, 
         pageSize, 
-        filterMode, 
-        minutes, 
+        useCustomRange,
         startDate, 
         endDate,
         sortCol,
@@ -361,13 +356,13 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
           return r.data;
         } catch (error: any) {
           if (error.response?.status === 400) {
-            toast.error(error.response?.data?.detail || "Intervalo muito grande. Máximo: 6 horas.");
+            toast.error(error.response?.data?.detail || "Erro na consulta.");
           }
           throw error;
         }
       },
       staleTime: 0,
-      refetchInterval: filterMode === 'custom' ? false : 30000,
+      refetchInterval: useCustomRange ? false : 30000,
     });
 
     const connectionItems = useMemo(() => {
@@ -479,49 +474,33 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
        </div>
  
         <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm space-y-6">
-          {/* Toggle Modo de Filtro */}
-          <div className="flex items-center justify-between">
-            <div className="flex gap-1 bg-bg-primary/50 p-1 rounded-lg border border-border/50">
-              <button
-                onClick={() => setFilterMode('relative')}
-                className={clsx(
-                  "flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-bold transition-all",
-                  filterMode === 'relative' 
-                    ? "bg-primary text-white shadow-sm" 
-                    : "text-text-secondary hover:text-text-primary"
-                )}
-              >
-                <Clock size={14} />
-                Relativo
-              </button>
-              <button
-                onClick={() => setFilterMode('custom')}
-                className={clsx(
-                  "flex items-center gap-2 px-4 py-1.5 rounded-md text-xs font-bold transition-all",
-                  filterMode === 'custom' 
-                    ? "bg-primary text-white shadow-sm" 
-                    : "text-text-secondary hover:text-text-primary"
-                )}
-              >
-                <Filter size={14} />
-                Personalizado
-              </button>
-            </div>
-            {filterMode === 'relative' && (
-              <div className="flex items-center gap-2 text-[10px] text-text-secondary font-bold uppercase tracking-widest">
-                <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
-                Atualização automática (30s)
-              </div>
-            )}
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
             {/* Row 1 */}
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Início (dd/mm/aaaa HH:mm)</label>
+              <input
+                type="text"
+                placeholder="Ex: 19/05/2026 14:30"
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Fim (dd/mm/aaaa HH:mm)</label>
+              <input
+                type="text"
+                placeholder="Ex: 19/05/2026 14:35"
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">IP Origem</label>
               <input
                 type="text"
-                placeholder="Ex: 192.168.1.1 ou 192.168.1.0/24"
+                placeholder="Ex: 192.168.1.1 ou /24"
                 className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
                 value={filters.src_ip}
                 onChange={(e) => setFilters(prev => ({ ...prev, src_ip: e.target.value }))}
@@ -531,12 +510,27 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">IP Destino</label>
               <input
                 type="text"
-                placeholder="Ex: 192.168.1.1 ou 192.168.1.0/24"
+                placeholder="Ex: 192.168.1.1 ou /24"
                 className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
                 value={filters.dst_ip}
                 onChange={(e) => setFilters(prev => ({ ...prev, dst_ip: e.target.value }))}
               />
             </div>
+            <div className="space-y-1">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Protocolo</label>
+              <select
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 appearance-none text-sm text-text-primary"
+                value={filters.proto}
+                onChange={(e) => setFilters(prev => ({ ...prev, proto: e.target.value }))}
+              >
+                <option value="">Todos</option>
+                <option value="6">TCP (6)</option>
+                <option value="17">UDP (17)</option>
+                <option value="1">ICMP (1)</option>
+              </select>
+            </div>
+
+            {/* Row 2 */}
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Porta Origem</label>
               <input
@@ -556,21 +550,6 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                 value={filters.dst_port}
                 onChange={(e) => setFilters(prev => ({ ...prev, dst_port: e.target.value }))}
               />
-            </div>
-
-            {/* Row 2 */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Protocolo</label>
-              <select
-                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 appearance-none text-sm text-text-primary"
-                value={filters.proto}
-                onChange={(e) => setFilters(prev => ({ ...prev, proto: e.target.value }))}
-              >
-                <option value="">Todos</option>
-                <option value="6">TCP (6)</option>
-                <option value="17">UDP (17)</option>
-                <option value="1">ICMP (1)</option>
-              </select>
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">País</label>
@@ -597,84 +576,29 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                 <option value="incoming">↓ Download</option>
               </select>
             </div>
-            {filterMode === 'relative' ? (
-              <div className="lg:col-span-3 space-y-1">
-                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Período Relativo</label>
-                <div className="flex gap-2">
-                  {[30, 60, 360, 1440, 2880].map(m => (
-                    <button
-                      key={m}
-                      onClick={() => setMinutes(m)}
-                      className={clsx(
-                        "px-4 py-1.5 rounded-lg text-xs font-bold transition-all border",
-                        minutes === m
-                          ? "bg-primary border-primary text-white"
-                          : "bg-bg-primary/50 border-border text-text-secondary hover:text-text-primary"
-                      )}
-                    >
-                      {m === 30 ? '30min' : m === 60 ? '1h' : m === 360 ? '6h' : m === 1440 ? '24h' : '48h'}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            ) : (
-              <>
-                <div className="lg:col-span-3 grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">De</label>
-                    <input
-                      type="datetime-local"
-                      className="w-full bg-bg-primary/50 border border-border rounded-lg py-1 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
-                      value={startDate}
-                      onChange={(e) => handleStartChange(e.target.value)}
-                    />
-                  </div>
-                  <div className="space-y-1">
-                    <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Até</label>
-                    <input
-                      type="datetime-local"
-                      className="w-full bg-bg-primary/50 border border-border rounded-lg py-1 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
-                      value={endDate}
-                      max={maxEndDate}
-                      onChange={(e) => handleEndChange(e.target.value)}
-                    />
-                    {intervalWarning ? (
-                      <div style={{
-                        fontSize: 11,
-                        color: '#f59e0b',
-                        marginTop: 4,
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 4,
-                      }}>
-                        ⚠ Intervalo ajustado para 6 horas (limite máximo permitido)
-                      </div>
-                    ) : (
-                      <div className="text-[11px] text-text-secondary mt-1 flex items-center gap-1">
-                        <span>⚡ Intervalo máximo: 6 horas. Para análises maiores use o Histórico de Anomalias.</span>
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </>
-            )}
 
             <div className="flex items-end gap-2">
               <button 
-                onClick={handleSearch}
+                onClick={() => {
+                  if (validateInterval(startDate, endDate)) {
+                    setUseCustomRange(true);
+                    handleSearch();
+                  }
+                }}
                 className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold py-1.5 rounded-lg transition-all shadow-sm text-sm uppercase tracking-wider h-[38px]"
               >
-                {filterMode === 'custom' ? 'Buscar' : 'Aplicar'}
+                Aplicar
               </button>
               <button 
                 onClick={() => {
                   setFilters({ src_ip: '', dst_ip: '', src_port: '', dst_port: '', proto: '', country: '', direction: '' });
                   setSortCol('when');
                   setSortDir('desc');
-                  setFilterMode('relative');
-                  setMinutes(30);
-                  setStartDate('');
-                  setEndDate('');
+                  setUseCustomRange(false);
+                  setStartDate(formatLocal(new Date(Date.now() - 5 * 60000)));
+                  setEndDate(formatLocal(new Date()));
+                  setIntervalError('');
+                  handleSearch();
                 }}
                 className="p-2 bg-bg-primary border border-border rounded-lg text-text-secondary hover:text-text-primary transition-all h-[38px] flex items-center justify-center"
                 title="Limpar filtros"
@@ -683,6 +607,20 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
               </button>
             </div>
           </div>
+
+          {intervalError && (
+            <div className="text-[11px] text-danger font-bold flex items-center gap-1 mt-2">
+              <AlertCircle size={14} />
+              {intervalError}
+            </div>
+          )}
+
+          {!intervalError && !useCustomRange && (
+            <div className="flex items-center gap-2 text-[10px] text-text-secondary font-bold uppercase tracking-widest mt-2">
+              <span className="w-2 h-2 rounded-full bg-success animate-pulse" />
+              Exibindo últimos 5 minutos · Atualização automática (30s)
+            </div>
+          )}
 
           <div className="flex justify-between items-center pt-3 border-t border-border/50">
              <div className="flex items-center gap-4">
@@ -702,7 +640,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
              <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest flex items-center gap-2">
                {metrics.total} conexões · 
                {filters.direction === 'outgoing' ? '↑ Upload' : filters.direction === 'incoming' ? '↓ Download' : 'Todas Direções'} · 
-               período: {filterMode === 'custom' ? 'Customizado' : minutes < 60 ? `${minutes} min` : `${minutes/60}h`}
+               {useCustomRange ? 'Intervalo personalizado' : 'Últimos 5 minutos'}
              </div>
           </div>
        </div>
@@ -847,7 +785,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                         </td>
                         <td className="px-6 py-4 text-right font-bold text-text-primary text-xs">{fmtBytes(item.bytes)}</td>
                         <td className="px-6 py-4 text-right text-text-secondary">
-                         <PPSIntensity pps={calcPPS(item.packets, String(minutes))} />
+                         <PPSIntensity pps={calcPPS(item.packets, String(currentIntervalMinutes))} />
                         </td>
                         <td className="px-6 py-4 text-right">
                           {(() => {
