@@ -264,7 +264,7 @@ export default function Dashboard() {
 
   const { data: activeEventsToday } = useQuery({
     queryKey: ['events-today'],
-    queryFn: () => api.get('/api/events/history?limit=1000&minutes=1440').then(r => r.data),
+    queryFn: () => api.get('/api/events/history?limit=1000&minutes=2880').then(r => r.data),
     enabled: isAuthenticated,
     refetchInterval: 60000,
   });
