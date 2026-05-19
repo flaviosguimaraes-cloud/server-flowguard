@@ -11,9 +11,15 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
  import { Skeleton } from '../components/Skeleton';
  import { clsx } from 'clsx';
 import { toast } from 'sonner';
-  import { 
-    Tooltip, TooltipTrigger, TooltipContent, TooltipProvider 
-  } from '../components/ui/tooltip';
+import { 
+  Tooltip, TooltipTrigger, TooltipContent, TooltipProvider 
+} from '../components/ui/tooltip';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from '../components/ui/sheet';
 import MitigationModal from '../components/MitigationModal';
 
 function MetricCard({ title, value, icon }: any) {
