@@ -85,6 +85,7 @@ export default function Dashboard() {
   const { theme } = useTheme();
   const isDark = theme === 'dark';
   const queryClient = useQueryClient();
+  const isAuthenticated = !!localStorage.getItem('access_token');
   const [countdown, setCountdown] = useState(30);
   const [hoveredIP, setHoveredIP] = useState<string | null>(null);
   const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -130,6 +131,7 @@ export default function Dashboard() {
       const r = await api.get('/api/detection/stats');
       return r.data;
     },
+    enabled: isAuthenticated,
     staleTime: 0,
     gcTime: 0,
     refetchOnWindowFocus: true,
@@ -141,6 +143,7 @@ export default function Dashboard() {
        const r = await api.get('/api/events/history?limit=5');
        return r.data;
      },
+    enabled: isAuthenticated,
     staleTime: 0,
     gcTime: 0,
     refetchInterval: 10000,
