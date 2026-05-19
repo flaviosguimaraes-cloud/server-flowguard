@@ -209,6 +209,14 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       setPage(1);
     }, [useCustomRange]);
 
+    const currentIntervalMinutes = useMemo(() => {
+      if (!useCustomRange) return 5;
+      const s = new Date(toISO(startDate));
+      const e = new Date(toISO(endDate));
+      if (isNaN(s.getTime()) || isNaN(e.getTime())) return 5;
+      return Math.max(1, Math.round((e.getTime() - s.getTime()) / 60000));
+    }, [useCustomRange, startDate, endDate]);
+
     const SORT_MAP: Record<string, string> = {
       'when':      'recent',
       'bytes':     'bytes',
