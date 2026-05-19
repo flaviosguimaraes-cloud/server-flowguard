@@ -414,12 +414,6 @@ export default function Dashboard() {
      }
      return timeStr.substring(11, 16);
    };
-   const formatBps = (mbps: number) => {
-     if (mbps >= 1000)
-       return (mbps / 1000).toFixed(1) + ' G';
-     return mbps.toFixed(0) + ' M';
-   };
-
    const formatBpsRaw = (bps: number) => {
      if (bps >= 1e9)
        return (bps / 1e9).toFixed(1) + ' Gbps';
@@ -528,6 +522,163 @@ export default function Dashboard() {
      return bps+' bps';
    };
 
+   const blueShades = ['#60a5fa', '#93c5fd', '#bfdbfe', '#3b82f6', '#1d4ed8'];
+   const greenShades = ['#4ade80', '#86efac', '#bbf7d0', '#22c55e', '#15803d'];
+ 
+   const datasets = useMemo(() => [
+     {
+       label: '__total_down',
+       data: chartData.map(d => d.__total_rx),
+       borderColor: '#1d6fda',
+       borderWidth: 2.5,
+       fill: true,
+       backgroundColor: 'rgba(29,111,218,0.10)',
+       pointRadius: 0,
+       pointHoverRadius: 0,
+       tension: 0.4,
+     },
+     ...selectedIfaces.map((ifName, idx) => ({
+       label: '__iface_down__' + ifName,
+       data: chartData.map(d => d[`${ifName}_rx`]),
+       borderColor: blueShades[idx % 5],
+       borderWidth: 1,
+       fill: false,
+       pointRadius: 0,
+       pointHoverRadius: 0,
+       tension: 0.4,
+     })),
+     {
+       label: '__total_up',
+       data: chartData.map(d => d.__total_tx),
+       borderColor: '#16a34a',
+       borderWidth: 2.5,
+       fill: true,
+       backgroundColor: 'rgba(22,163,74,0.08)',
+       pointRadius: 0,
+       pointHoverRadius: 0,
+       tension: 0.4,
+     },
+     ...selectedIfaces.map((ifName, idx) => ({
+       label: '__iface_up__' + ifName,
+       data: chartData.map(d => d[`${ifName}_tx`]),
+       borderColor: greenShades[idx % 5],
+       borderWidth: 1,
+       fill: false,
+       pointRadius: 0,
+       pointHoverRadius: 0,
+       tension: 0.4,
+     }))
+   ], [chartData, selectedIfaces]);
+ 
+   const chartOptions = useMemo(() => ({
+     responsive: true,
+     maintainAspectRatio: false,
+     interaction: {
+       mode: 'nearest' as const,
+       intersect: false,
+       axis: 'xy' as const
+     },
+     plugins: {
+       legend: { display: false },
+       tooltip: {
+         enabled: false,
+         external: function(context: any) {
+           const tip = document.getElementById('collector-tooltip');
+           if (!tip) return;
+           const t = context.tooltip;
+ 
+           if (!t || t.opacity === 0 || !t.dataPoints?.length) {
+             tip.style.display = 'none';
+             return;
+           }
+ 
+           const dp = t.dataPoints[0];
+           const ds = dp.dataset;
+           const label = ds.label || '';
+ 
+           let name = '';
+           let direction = '';
+           let color = ds.borderColor;
+ 
+           if (label === '__total_down') {
+             name = 'Total Download';
+             direction = '▼';
+             color = '#1d6fda';
+           } else if (label === '__total_up') {
+             name = 'Total Upload';
+             direction = '▲';
+             color = '#16a34a';
+           } else if (label.startsWith('__iface_down__')) {
+             name = label.replace('__iface_down__', '');
+             direction = '▼';
+           } else if (label.startsWith('__iface_up__')) {
+             name = label.replace('__iface_up__', '');
+             direction = '▲';
+           }
+ 
+           const numVal = dp.parsed.y;
+           let formatted = '';
+           if (numVal >= 1) {
+             formatted = numVal.toFixed(2) + ' Gbps';
+           } else {
+             formatted = (numVal * 1000).toFixed(0) + ' Mbps';
+           }
+ 
+           tip.innerHTML = `
+             <div style="font-size:10px; color:var(--color-text-secondary); margin-bottom:4px;">
+               ${t.title?.[0] || ''}
+             </div>
+             <div style="color:${color}; font-weight:500;">
+               ${name}
+             </div>
+             <div style="color:${color}; font-size:14px; font-weight:500;">
+               ${direction} ${formatted}
+             </div>
+           `;
+ 
+           tip.style.display = 'block';
+ 
+           const canvas = context.chart.canvas;
+           let left = t.caretX + 14;
+           if (left + 170 > canvas.offsetWidth)
+             left = t.caretX - 180;
+           let top = t.caretY - 30;
+           if (top < 0) top = 4;
+           tip.style.left = left + 'px';
+           tip.style.top = top + 'px';
+         }
+       }
+     },
+     scales: {
+       x: {
+         grid: { display: false },
+         ticks: {
+           maxRotation: 0,
+           autoSkip: true,
+           maxTicksLimit: 8,
+           color: isDark ? '#94A3B8' : '#64748B',
+           font: { size: 10, weight: '600' }
+         }
+       },
+       y: {
+         grid: {
+           color: isDark ? 'rgba(51, 65, 85, 0.3)' : 'rgba(226, 232, 240, 0.6)',
+           drawTicks: false
+         },
+         ticks: {
+           color: isDark ? '#94A3B8' : '#64748B',
+           font: { size: 10, weight: '600' },
+           callback: (val: any) => {
+             if (val >= 1) return val.toFixed(1) + ' G';
+             return (val * 1000).toFixed(0) + ' M';
+           }
+         }
+       }
+     }
+   }), [isDark]);
+ 
+   const chartLabels = useMemo(() => chartData.map(d => formatTime(d.time)), [chartData]);
+ 
   if (statsLoading) {
     return (
       <div className="space-y-6">
