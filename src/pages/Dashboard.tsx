@@ -292,20 +292,6 @@ export default function Dashboard() {
   });
 
 
-  const [selectedCollector, setSelectedCollector] = useState<number>(() => {
-    const saved = localStorage.getItem('fg_collector');
-    const parsed = saved ? parseInt(saved) : 1;
-    return isNaN(parsed) ? 1 : parsed;
-  });
-  const [selectedIfaces, setSelectedIfaces] = useState<string[]>(() => {
-    try {
-      const saved = localStorage.getItem('fg_ifaces');
-      const parsed = saved ? JSON.parse(saved) : null;
-      return Array.isArray(parsed) ? parsed : [];
-    } catch { return []; }
-  });
-
-   const [source] = useState<'snmp'>('snmp');
 
   const { data: collectors } = useQuery({
     queryKey: ['collectors'],
