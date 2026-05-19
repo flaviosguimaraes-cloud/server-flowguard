@@ -48,7 +48,55 @@ const TX_IFACE_COLORS = ['#86efac', '#4ade80', '#bbf7d0', '#15803d', '#dcfce7'];
 const COLORS = ['#3b82f6', '#22c55e', '#f59e0b', '#ef4444', '#8b5cf6', '#06b6d4', '#f97316', '#ec4899'];
 const MAX_POINTS = 300;
 
+const CDN_COLORS: Record<string, string> = {
+  'Netflix': '#E50914',
+  'Google': '#4285F4',
+  'YouTube': '#FF0000',
+  'Cloudflare': '#F48120',
+  'Akamai': '#009BDE',
+  'Amazon': '#FF9900',
+  'Meta': '#1877F2',
+  'Microsoft': '#00BCF2',
+  'Apple': '#555555',
+  'Disney': '#113CCF',
+  'Fastly': '#FF282D',
+  'Steam': '#1b2838',
+  'Riot': '#C89B3C',
+  'TikTok': '#010101',
+};
+
+const CDN_CATEGORY = {
+  'Netflix': 'Streaming',
+  'Disney': 'Streaming',
+  'YouTube': 'Streaming',
+  'Google': 'Cloud/Apps',
+  'Amazon': 'Cloud/Apps',
+  'Microsoft': 'Cloud/Apps',
+  'Cloudflare': 'Segurança/CDN',
+  'Akamai': 'Segurança/CDN',
+  'Fastly': 'Segurança/CDN',
+  'Meta': 'Redes Sociais',
+  'TikTok': 'Redes Sociais',
+  'Steam': 'Gaming',
+  'Riot': 'Gaming',
+};
+
+const CATEGORY_COLORS: Record<string, string> = {
+  'Streaming': '#E50914',
+  'Cloud/Apps': '#378ADD',
+  'Segurança/CDN': '#F48120',
+  'Redes Sociais': '#1877F2',
+  'Gaming': '#1b2838',
+};
+
+const FlowBadge = () => (
+  <span className="text-[10px] font-bold text-text-secondary bg-bg-primary px-1.5 py-0.5 rounded border border-border ml-2 opacity-60">
+    IPv4
+  </span>
+);
+
 const sampleData = (data: any[]) => {
+
   if (data.length <= MAX_POINTS)
     return data;
   const step = Math.ceil(
