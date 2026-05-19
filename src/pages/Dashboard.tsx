@@ -105,39 +105,6 @@ const sampleData = (data: any[]) => {
     (_, i) => i % step === 0);
 };
 
-function StatCard({ title, value, unit, icon, trend, tooltip, subtitle }: any) {
-  return (
-    <div 
-      className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm flex flex-col justify-between min-h-[140px] transition-all duration-300 hover:border-primary/30 group relative overflow-hidden"
-      title={tooltip}
-    >
-      <div className="flex justify-between items-start relative z-10">
-        <div className="p-2.5 bg-bg-primary rounded-lg text-primary transition-all duration-200 border border-border/40 group-hover:bg-primary/5 group-hover:border-primary/20">
-          {icon}
-        </div>
-        {trend && typeof trend === 'string' && (
-          <span className={clsx(
-            "text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase tracking-wider",
-            trend.startsWith('+') ? "bg-success-bg text-success border-success/10" : 
-            trend.startsWith('-') ? "bg-danger-bg text-danger border-danger/10" : "bg-accent-bg text-accent border-accent/10"
-          )}>
-            {trend}
-          </span>
-        )}
-      </div>
-      <div className="mt-4 relative z-10">
-        <p className="text-text-secondary text-[11px] font-bold uppercase tracking-wider opacity-70 mb-1">{title}</p>
-        <div className="flex items-baseline gap-1.5">
-          <h3 className="text-3xl font-bold text-text-primary tracking-tight leading-none">{value}</h3>
-          {unit && <span className="text-[11px] font-bold text-text-secondary opacity-50 uppercase tracking-wider">{unit}</span>}
-        </div>
-         {subtitle && (
-            <div className="text-[10px] text-text-secondary font-medium mt-2.5 opacity-60 border-t border-border/40 pt-2 line-clamp-1">{subtitle}</div>
-         )}
-      </div>
-    </div>
-  );
-}
 
  const serviceNames: Record<string, string> = {
    flow_collector: 'Coletor de Flows',
