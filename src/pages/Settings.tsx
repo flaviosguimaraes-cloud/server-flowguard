@@ -24,9 +24,9 @@ export default function Settings() {
   useEffect(() => {
     if (settings) {
       setS({
-        org_name: settings.org_name || '',
-        org_logo_url: settings.org_logo_url || '',
-        data_retention_days: String(settings.data_retention_days || '30')
+        org_name: settings.org_name?.value ?? settings.org_name ?? '',
+        org_logo_url: settings.org_logo_url?.value ?? settings.org_logo_url ?? '',
+        data_retention_days: String(settings.data_retention_days?.value ?? settings.data_retention_days ?? '30')
       });
     }
   }, [settings]);
