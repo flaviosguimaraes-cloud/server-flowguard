@@ -437,7 +437,7 @@ export default function Threats() {
                             size="sm" 
                             variant="outline" 
                             className="text-xs h-8 border-purple-500/30 text-purple-500 hover:bg-purple-500/5"
-                            onClick={() => navigate({ to: '/operation/bgp' })}
+                            onClick={() => navigate({ to: '/mitigation/bgp' })}
                           >
                             <ExternalLink size={14} className="mr-1" />
                             Ver no BGP
