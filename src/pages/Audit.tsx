@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
-import { ClipboardList, X } from 'lucide-react';
+import { ClipboardList, X, Calendar, User, Activity, Globe, Info } from 'lucide-react';
 
 const ACTION_LABELS: Record<string, { label: string, color: string, icon: string }> = {
   login_success: { label: 'Login realizado', color: '#22c55e', icon: '🔐' },
@@ -28,6 +28,7 @@ export default function Audit() {
   const [filters, setFilters] = useState({ user: '', action: '', start: '', end: '' });
   const [pageSize, setPageSize] = useState(50);
   const [page, setPage] = useState(1);
+  const [selectedLog, setSelectedLog] = useState<any | null>(null);
   const isAuthenticated = !!localStorage.getItem('access_token');
 
   const { data, isLoading, refetch } = useQuery({
@@ -60,6 +61,17 @@ export default function Audit() {
   const fmt = (s?: string) => {
     if (!s) return '—';
     try { return new Date(s.replace(' ', 'T')).toLocaleString('pt-BR'); } catch { return s; }
+  };
+
+  const fmtFull = (s?: string) => {
+    if (!s) return '—';
+    try {
+      const d = new Date(s.replace(' ', 'T'));
+      return new Intl.DateTimeFormat('pt-BR', {
+        dateStyle: 'full',
+        timeStyle: 'medium'
+      }).format(d);
+    } catch { return s; }
   };
 
   const handleFilter = () => {
@@ -129,8 +141,12 @@ export default function Audit() {
               ) : items.map((it: any, i: number) => {
                 const config = ACTION_LABELS[it.action] || { label: it.action, color: '#8892a4', icon: '📝' };
                 return (
-                  <tr key={it.id || i} className="hover:bg-accent/5 transition-colors">
-                    <td className="px-6 py-4 text-xs text-text-secondary font-mono whitespace-nowrap">{fmt(it.timestamp || it.created_at)}</td>
+                  <tr 
+                    key={it.id || i} 
+                    className="hover:bg-accent/5 transition-colors cursor-pointer group"
+                    onClick={() => setSelectedLog(it)}
+                  >
+                    <td className="px-6 py-4 text-xs text-text-secondary font-mono whitespace-nowrap group-hover:text-primary transition-colors">{fmt(it.timestamp || it.created_at)}</td>
                     <td className="px-6 py-4 text-xs font-bold text-text-primary">{it.user || it.username || '—'}</td>
                     <td className="px-6 py-4 text-xs whitespace-nowrap">
                       <div className="flex items-center gap-2">
@@ -142,7 +158,7 @@ export default function Audit() {
                       </div>
                     </td>
                     <td className="px-6 py-4 text-xs text-text-secondary max-w-md" title={typeof it.details === 'string' ? it.details : JSON.stringify(it.details || {})}>
-                      <div className="truncate">
+                      <div className="truncate group-hover:text-text-primary transition-colors">
                         {typeof it.details === 'string' ? it.details : it.details?.info || JSON.stringify(it.details) || (it.message || '—')}
                       </div>
                     </td>
@@ -154,7 +170,100 @@ export default function Audit() {
           </table>
         </div>
 
+        {/* Modal de Detalhes */}
+        {selectedLog && (
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
+            <div className="bg-bg-secondary w-full max-w-2xl rounded-2xl shadow-2xl border border-border overflow-hidden">
+              <div className="p-6 border-b border-border flex justify-between items-center bg-bg-primary/30">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-primary/10 rounded-lg text-primary">
+                    <Info size={20} />
+                  </div>
+                  <h2 className="text-xl font-bold text-text-primary">Detalhes do Evento</h2>
+                </div>
+                <button 
+                  onClick={() => setSelectedLog(null)} 
+                  className="p-2 text-text-secondary hover:text-text-primary hover:bg-bg-primary rounded-lg transition-all"
+                >
+                  <X size={24} />
+                </button>
+              </div>
+
+              <div className="p-6 space-y-6 max-h-[70vh] overflow-y-auto custom-scrollbar">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest flex items-center gap-1.5">
+                      <Calendar size={12} className="text-primary" /> Data/Hora Completa
+                    </label>
+                    <p className="text-sm text-text-primary font-medium bg-bg-primary/50 p-2.5 rounded-lg border border-border/50">
+                      {fmtFull(selectedLog.timestamp || selectedLog.created_at)}
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest flex items-center gap-1.5">
+                      <User size={12} className="text-primary" /> Usuário
+                    </label>
+                    <p className="text-sm text-text-primary font-bold bg-bg-primary/50 p-2.5 rounded-lg border border-border/50">
+                      {selectedLog.user || selectedLog.username || '—'}
+                    </p>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest flex items-center gap-1.5">
+                      <Activity size={12} className="text-primary" /> Ação
+                    </label>
+                    <div className="bg-bg-primary/50 p-2.5 rounded-lg border border-border/50 flex items-center gap-2">
+                      <span className="text-base">{(ACTION_LABELS[selectedLog.action] || { icon: '📝' }).icon}</span>
+                      <span 
+                        className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wide border"
+                        style={{ 
+                          color: (ACTION_LABELS[selectedLog.action] || { color: '#8892a4' }).color, 
+                          borderColor: `${(ACTION_LABELS[selectedLog.action] || { color: '#8892a4' }).color}30`, 
+                          backgroundColor: `${(ACTION_LABELS[selectedLog.action] || { color: '#8892a4' }).color}10` 
+                        }}
+                      >
+                        {(ACTION_LABELS[selectedLog.action] || { label: selectedLog.action }).label}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="space-y-1">
+                    <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest flex items-center gap-1.5">
+                      <Globe size={12} className="text-primary" /> Endereço IP
+                    </label>
+                    <p className="text-sm text-text-primary font-mono bg-bg-primary/50 p-2.5 rounded-lg border border-border/50">
+                      {selectedLog.ip || selectedLog.ip_address || selectedLog.client_ip || '—'}
+                    </p>
+                  </div>
+                </div>
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest flex items-center gap-1.5">
+                    <ClipboardList size={12} className="text-primary" /> Detalhes Completos
+                  </label>
+                  <pre className="text-xs text-text-primary bg-bg-primary p-4 rounded-xl border border-border font-mono overflow-x-auto whitespace-pre-wrap leading-relaxed shadow-inner">
+                    {typeof selectedLog.details === 'object' 
+                      ? JSON.stringify(selectedLog.details, null, 2)
+                      : (selectedLog.details || selectedLog.message || 'Sem detalhes adicionais')}
+                  </pre>
+                </div>
+              </div>
+
+              <div className="p-6 border-t border-border bg-bg-primary/30 flex justify-end">
+                <button
+                  onClick={() => setSelectedLog(null)}
+                  className="px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg font-bold transition-all shadow-lg shadow-primary/20"
+                >
+                  Fechar
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="p-4 border-t border-border bg-bg-primary/30 flex items-center justify-between">
+
           <div className="flex items-center gap-4">
             <span className="text-xs text-text-secondary font-bold uppercase tracking-widest">Linhas por página:</span>
             <select 
