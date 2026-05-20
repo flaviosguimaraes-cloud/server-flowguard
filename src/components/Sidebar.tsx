@@ -25,15 +25,22 @@ import { useUI } from '../contexts/UIContext';
      enabled: !!localStorage.getItem('access_token'),
    });
  
-   const downServices = useMemo(() => {
-     const services = sysStatus?.services || {};
-     return Object.entries(services).filter(([_, status]) => status !== 'active');
-   }, [sysStatus?.services]);
- 
-   const hasCriticalDown = useMemo(() => {
-     const criticals = ['flow_collector', 'detection_engine', 'api', 'flow_database', 'config_database', 'bgp_engine'];
-     return downServices.some(([key]) => criticals.includes(key));
-   }, [downServices]);
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => api.get('/api/settings').then(r => r.data),
+    staleTime: 60000,
+    enabled: !!localStorage.getItem('access_token'),
+  });
+
+  const downServices = useMemo(() => {
+    const services = sysStatus?.services || {};
+    return Object.entries(services).filter(([_, status]) => status !== 'active');
+  }, [sysStatus?.services]);
+
+  const hasCriticalDown = useMemo(() => {
+    const criticals = ['flow_collector', 'detection_engine', 'api', 'flow_database', 'config_database', 'bgp_engine'];
+    return downServices.some(([key]) => criticals.includes(key));
+  }, [downServices]);
  
   const [openGroups, setOpenGroups] = useState<string[]>(() => {
     const saved = localStorage.getItem('sidebar_open_groups');
@@ -117,12 +124,23 @@ import { useUI } from '../contexts/UIContext';
         "h-[72px] flex items-center gap-3 border-b border-border transition-all duration-200", 
         collapsed ? "justify-center" : "px-6"
       )}>
-        <div className="bg-primary/10 p-2 rounded-xl border border-primary/10">
-          <Shield className="text-primary" size={24} />
-        </div>
+        {settings?.org_logo_url ? (
+          <img 
+            src={settings.org_logo_url} 
+            alt="Logo" 
+            className={clsx("rounded-lg object-contain", collapsed ? "w-8 h-8" : "w-8 h-8")} 
+            onError={(e) => {
+              (e.target as HTMLImageElement).style.display = 'none';
+            }}
+          />
+        ) : (
+          <div className="bg-primary/10 p-2 rounded-xl border border-primary/10">
+            <Shield className="text-primary" size={24} />
+          </div>
+        )}
         {!collapsed && (
-          <span className="font-bold text-lg tracking-tight text-text-primary">
-            FlowGuard
+          <span className="font-bold text-lg tracking-tight text-text-primary truncate">
+            {settings?.org_name || 'FlowGuard'}
           </span>
         )}
       </div>
