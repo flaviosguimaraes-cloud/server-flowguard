@@ -48,6 +48,7 @@ export default function Policy() {
   const [autoConfig, setAutoConfig] = useState({
     enabled: false,
     operation_mode: 'disabled',
+    flowspec_src_mode: 'any',
     default_action: 'discard',
     default_rate_limit_kbps: 1000,
     default_ttl_minutes: 120,
@@ -465,6 +466,38 @@ export default function Policy() {
                   <span className="text-xs font-bold text-text-primary group-hover:text-primary transition-colors">{type.label}</span>
                 </label>
               ))}
+            </div>
+          </div>
+
+          <div className="pt-6 border-t border-border">
+            <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block mb-4">Origem do Bloqueio FlowSpec</label>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              {[
+                { id: 'any', label: 'Qualquer origem (recomendado)', desc: 'Bloqueia todo tráfego do protocolo/porta atacada, independente da origem. Mais eficaz contra botnets e ataques com IPs spoofados.' },
+                { id: 'attacker', label: 'Só IP atacante', desc: 'Bloqueia apenas o IP de origem identificado no ataque. Mais cirúrgico mas menos eficaz se o atacante mudar de IP.' },
+              ].map((opt) => {
+                const isSelected = (autoConfig.flowspec_src_mode || 'any') === opt.id;
+                return (
+                  <button
+                    key={opt.id}
+                    type="button"
+                    disabled={!isAdmin}
+                    onClick={() => setAutoConfig({ ...autoConfig, flowspec_src_mode: opt.id })}
+                    className={clsx(
+                      "text-left p-4 rounded-xl border transition-all",
+                      isSelected ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-bg-primary/50 hover:border-border-hover"
+                    )}
+                  >
+                    <div className="flex items-center justify-between mb-2">
+                      <span className={clsx("text-sm font-bold", isSelected ? "text-primary" : "text-text-primary")}>{opt.label}</span>
+                      <div className={clsx("w-4 h-4 rounded-full border flex items-center justify-center", isSelected ? "border-primary" : "border-border")}>
+                        {isSelected && <div className="w-2 h-2 rounded-full bg-primary" />}
+                      </div>
+                    </div>
+                    <p className="text-[10px] text-text-secondary leading-tight">{opt.desc}</p>
+                  </button>
+                );
+              })}
             </div>
           </div>
         </div>
