@@ -60,7 +60,7 @@ import { useUI } from '../contexts/UIContext';
       children: [
         { path: '/mitigation/events', label: t('events'), icon: Activity },
         { path: '/mitigation/threats', label: t('threats'), icon: Radar },
-        { path: '/operation/bgp', label: 'BGP', icon: LinkIcon },
+        { path: '/mitigation/bgp', label: 'BGP', icon: LinkIcon },
         { path: '/mitigation/flowspec', label: 'FlowSpec', icon: Zap },
         { path: '/mitigation/policy', label: 'Política', icon: Sliders },
         { path: '/mitigation/whitelist', label: t('whitelist'), icon: CheckCircle },
