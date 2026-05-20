@@ -1165,12 +1165,12 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                     <div className="flex items-center gap-2">
                       <div className={clsx(
                         "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
-                        (selectedConnection.flow_direction || (shouldFlip(selectedConnection) ? 'incoming' : 'outgoing')) === 'outgoing' 
+                        (selectedConnection.flow_direction || 'incoming') === 'outgoing' 
                           ? "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:text-green-400" 
                           : "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400"
                       )}>
-                        {(selectedConnection.flow_direction || (shouldFlip(selectedConnection) ? 'incoming' : 'outgoing')) === 'outgoing' ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
-                        {(selectedConnection.flow_direction || (shouldFlip(selectedConnection) ? 'incoming' : 'outgoing')) === 'outgoing' ? 'Upload' : 'Download'}
+                        {(selectedConnection.flow_direction || 'incoming') === 'outgoing' ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+                        {(selectedConnection.flow_direction || 'incoming') === 'outgoing' ? 'Upload' : 'Download'}
                       </div>
                       <span className="text-sm font-bold text-text-primary">· {protoName(selectedConnection.proto)} · {getService(selectedConnection.dst_port)}</span>
                     </div>
