@@ -783,6 +783,24 @@ export default function Threats() {
                         <span className="font-bold">{selectedThreat.unique_ports}</span>
                       </p>
                     )}
+                    {selectedThreat.type === 'port_scan' && selectedThreat.syn_flows && (
+                      <p className="text-sm text-text-primary flex justify-between">
+                        <span className="text-text-secondary">SYN packets:</span>
+                        <span className="font-bold">{selectedThreat.syn_flows}</span>
+                      </p>
+                    )}
+                    {selectedThreat.type === 'port_scan' && selectedThreat.port_range_min && (
+                      <p className="text-sm text-text-primary flex justify-between">
+                        <span className="text-text-secondary">Faixa de portas:</span>
+                        <span className="font-bold">{selectedThreat.port_range_min} – {selectedThreat.port_range_max}</span>
+                      </p>
+                    )}
+                    {selectedThreat.type === 'port_scan' && (
+                      <p className="text-sm text-text-primary flex justify-between">
+                        <span className="text-text-secondary">Tipo de scan:</span>
+                        <span className="font-bold">Vertical</span>
+                      </p>
+                    )}
                     <p className="text-sm text-text-primary flex justify-between">
                       <span className="text-text-secondary">Flows:</span>
                       <span className="font-bold">{selectedThreat.flows?.toLocaleString()}</span>
@@ -805,7 +823,7 @@ export default function Threats() {
                   </h4>
                   <div className="bg-bg-primary/50 p-4 rounded-lg border border-border/50">
                     <p className="text-sm text-text-primary leading-relaxed">
-                      {getInterpretation(selectedThreat.type)}
+                      {getInterpretation(selectedThreat)}
                     </p>
                   </div>
                 </div>
