@@ -98,6 +98,7 @@ export default function Threats() {
       let payload: any = {
         dst_prefix: `${threat.dst_ip}/32`,
         action: 'discard',
+        reason: `threat:${threat.type},label:${threat.label},severity:${threat.severity}`
       };
 
       if (threat.src_ip) {
@@ -136,8 +137,11 @@ export default function Threats() {
   });
 
   const filteredThreats = useMemo(() => {
-    if (!data?.threats) return [];
-    return data.threats
+    const threatsFromApi = data?.threats || [];
+    const rules = flowspecData?.items || [];
+
+    // 1. Process current threats from API
+    const activeThreats = threatsFromApi
       .filter(threat => {
         const threatKey = `${threat.src_ip || ''}-${threat.dst_ip}-${threat.type}`;
         return !ignoredThreats.includes(threatKey);
@@ -149,6 +153,52 @@ export default function Threats() {
         }
         return threat;
       });
+
+    // 2. Identify rules that were threats but are no longer in activeThreats
+    const historicalThreats: Threat[] = rules
+      .filter((rule: any) => {
+        // Only consider discard rules
+        if (rule.action !== 'discard') return false;
+        
+        // Skip if already matched with an active threat
+        if (activeThreats.some(t => t.flowspec_id === rule.id)) return false;
+
+        // Only include if it has threat metadata in reason
+        return rule.reason?.includes('threat:');
+      })
+      .map((rule: any) => {
+        // Parse reason to reconstruct the Threat object: "threat:port_scan,label:Port Scan,severity:high"
+        const parts: any = {};
+        rule.reason.split(',').forEach((p: string) => {
+          const [k, v] = p.split(':');
+          if (k && v) parts[k.trim()] = v.trim();
+        });
+
+        return {
+          type: parts.threat || 'unknown',
+          label: parts.label || 'Ameaça Mitigada',
+          severity: (parts.severity as any) || 'medium',
+          src_ip: rule.src_prefix?.replace('/32', ''),
+          dst_ip: rule.dst_prefix?.replace('/32', ''),
+          mitigated: true,
+          flowspec_id: rule.id,
+          flows: 0,
+          packets: 0,
+          bytes: 0,
+          unique_ports: 0,
+        };
+      });
+
+    // 3. Combine and sort: mitigated at top, then by severity
+    return [...activeThreats, ...historicalThreats].sort((a, b) => {
+      // Mitigated always on top
+      if (a.mitigated && !b.mitigated) return -1;
+      if (!a.mitigated && b.mitigated) return 1;
+      
+      // Then by severity
+      const severityOrder: Record<string, number> = { high: 3, medium: 2, low: 1 };
+      return (severityOrder[b.severity] || 0) - (severityOrder[a.severity] || 0);
+    });
   }, [data, ignoredThreats, flowspecData]);
 
   const stats = useMemo(() => {
