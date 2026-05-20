@@ -35,12 +35,12 @@ const System = () => {
 
   const restartMutation = useMutation({
     mutationFn: (service: string) => api.post(`/api/system/restart/${service}`),
-    onSuccess: (_, service) => {
-      toast.success(`Serviço ${service} reiniciado com sucesso`);
+    onSuccess: () => {
+      toast.success('✅ Serviço reiniciado com sucesso');
       queryClient.invalidateQueries({ queryKey: ['system-status'] });
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Erro ao reiniciar serviço');
+    onError: () => {
+      toast.error('❌ Erro ao reiniciar serviço');
     },
     onSettled: () => setRestarting(null)
   });
