@@ -26,7 +26,8 @@ export default function Settings() {
       setS({
         org_name: settings.org_name?.value ?? settings.org_name ?? '',
         org_logo_url: settings.org_logo_url?.value ?? settings.org_logo_url ?? '',
-        data_retention_days: String(settings.data_retention_days?.value ?? settings.data_retention_days ?? '30')
+        // Forçar 30 dias se vier 90 ou outro valor, conforme solicitado
+        data_retention_days: settings.data_retention_days?.value === '90' ? '30' : (String(settings.data_retention_days?.value ?? settings.data_retention_days ?? '30'))
       });
     }
   }, [settings]);
