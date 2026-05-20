@@ -507,10 +507,9 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
    }, [connectionItems]);
  
  
-   const handleMitigate = (item: any) => {
-     const flipped = shouldFlip(item);
-     const targetIP = flipped ? item.src_addr : item.dst_addr;
-     const targetPort = flipped ? item.src_port : item.dst_port;
+    const handleMitigate = (item: any) => {
+      const targetIP = item.dst_addr;
+      const targetPort = item.dst_port;
      setMitigationData({
        ip: targetIP,
        proto: protoName(item.proto),
