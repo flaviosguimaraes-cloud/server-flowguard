@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import { useTranslation } from '../../hooks/useTranslation';
@@ -28,6 +28,16 @@ import {
   SheetTitle,
 } from "../../components/ui/sheet";
 import { Separator } from "../../components/ui/separator";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../components/ui/alert-dialog";
 
 interface Threat {
   type: string;
@@ -56,6 +66,8 @@ export default function Threats() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
   const [selectedThreat, setSelectedThreat] = useState<Threat | null>(null);
+  const [threatToBlock, setThreatToBlock] = useState<{ threat: Threat, index: number } | null>(null);
+  const [ttlMinutes, setTtlMinutes] = useState(360);
   const [minutes, setMinutes] = useState(60);
   const [ignoredThreats, setIgnoredThreats] = useState<string[]>(() => {
     const saved = localStorage.getItem('ignored_threats');
@@ -78,7 +90,7 @@ export default function Threats() {
   });
 
   const isAlreadyMitigated = (threat: Threat) => {
-    const rules = flowspecData?.items || [];
+    const rules = flowspecData?.rules || flowspecData?.items || [];
     return rules.find((r: any) => 
       (r.src_prefix?.startsWith(threat.src_ip || '') || (!r.src_prefix && !threat.src_ip)) &&
       r.dst_prefix?.startsWith(threat.dst_ip)
@@ -94,11 +106,12 @@ export default function Threats() {
   };
 
   const blockMutation = useMutation({
-    mutationFn: async ({ threat, index }: { threat: Threat, index: number }) => {
+    mutationFn: async ({ threat, index, ttl_minutes }: { threat: Threat, index: number, ttl_minutes: number }) => {
       let payload: any = {
         dst_prefix: `${threat.dst_ip}/32`,
         action: 'discard',
-        reason: `threat:${threat.type},label:${threat.label},severity:${threat.severity}`
+        reason: `threat:${threat.type},label:${threat.label},severity:${threat.severity}`,
+        ttl_minutes
       };
 
       if (threat.src_ip) {
@@ -122,6 +135,7 @@ export default function Threats() {
     },
     onSuccess: (data) => {
       toast.success('Regra FlowSpec aplicada');
+      setThreatToBlock(null);
       // Update local data state to show "MITIGADO"
       queryClient.setQueryData(['threats', minutes], (old: ThreatsResponse | undefined) => {
         if (!old) return old;
@@ -138,7 +152,7 @@ export default function Threats() {
 
   const filteredThreats = useMemo(() => {
     const threatsFromApi = data?.threats || [];
-    const rules = flowspecData?.items || [];
+    const rules = flowspecData?.rules || flowspecData?.items || [];
 
     // 1. Process current threats from API
     const activeThreats = threatsFromApi
@@ -271,6 +285,23 @@ export default function Threats() {
       case 'medium': return <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 uppercase text-[10px] font-bold">MEDIUM</Badge>;
       default: return <Badge variant="secondary" className="uppercase text-[10px] font-bold">LOW</Badge>;
     }
+  };
+
+  const getSuggestedTtl = (type: string) => {
+    switch (type) {
+      case 'port_scan': return 360; // 6h
+      case 'syn_flood': return 60;  // 1h
+      case 'dns_amplification': return 120; // 2h
+      case 'ntp_amplification': return 120; // 2h
+      case 'ssdp_amplification': return 60;  // 1h
+      case 'udp_flood': return 60;   // 1h
+      default: return 60;
+    }
+  };
+
+  const handleBlockClick = (threat: Threat, index: number) => {
+    setTtlMinutes(getSuggestedTtl(threat.type));
+    setThreatToBlock({ threat, index });
   };
 
   if (isLoading && !data) {
@@ -478,7 +509,7 @@ export default function Threats() {
                           size="sm" 
                           variant="outline" 
                           className="text-xs h-8 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary"
-                          onClick={() => blockMutation.mutate({ threat, index })}
+                          onClick={() => handleBlockClick(threat, index)}
                           disabled={blockMutation.isPending}
                         >
                           {blockMutation.isPending ? 'Processando...' : 'Bloquear via FlowSpec'}
@@ -642,7 +673,7 @@ export default function Threats() {
                   <>
                     <Button 
                       className="w-full font-bold gap-2 bg-primary hover:bg-primary/90"
-                      onClick={() => blockMutation.mutate({ threat: selectedThreat, index: filteredThreats.indexOf(selectedThreat) })}
+                      onClick={() => handleBlockClick(selectedThreat, filteredThreats.indexOf(selectedThreat))}
                       disabled={blockMutation.isPending}
                     >
                       <Zap size={16} />
@@ -695,6 +726,68 @@ export default function Threats() {
           )}
         </SheetContent>
       </Sheet>
+
+      {/* Block Confirmation Modal */}
+      <AlertDialog open={!!threatToBlock} onOpenChange={(open: boolean) => !open && setThreatToBlock(null)}>
+        <AlertDialogContent className="bg-bg-secondary border-border max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2">
+              <Zap className="text-primary" size={20} />
+              Bloquear via FlowSpec
+            </AlertDialogTitle>
+            <div className="py-4 space-y-4">
+              <div className="p-3 bg-red-500/5 border border-red-500/10 rounded-lg">
+                <div className="flex items-center gap-2 mb-2">
+                  <div className="p-1.5 bg-red-500/10 rounded text-red-500">
+                    {threatToBlock && React.createElement(getIcon(threatToBlock.threat.type), { size: 16 })}
+                  </div>
+                  <span className="font-bold text-sm text-text-primary">{threatToBlock?.threat.label}</span>
+                </div>
+                <div className="font-mono text-xs text-text-secondary flex items-center gap-2">
+                  <span>{threatToBlock?.threat.src_ip}</span>
+                  <ArrowRight size={12} />
+                  <span>{threatToBlock?.threat.dst_ip}</span>
+                </div>
+                {threatToBlock?.threat.type === 'port_scan' && (
+                  <p className="text-[10px] text-text-secondary mt-1">{threatToBlock.threat.unique_ports} portas únicas</p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Duração do bloqueio</label>
+                <select
+                  className="w-full bg-bg-primary border border-border rounded-lg py-2 px-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all text-sm text-text-primary"
+                  value={ttlMinutes}
+                  onChange={(e) => setTtlMinutes(parseInt(e.target.value))}
+                >
+                  <option value="5">5 minutos</option>
+                  <option value="10">10 minutos</option>
+                  <option value="30">30 minutos</option>
+                  <option value="60">1 hora</option>
+                  <option value="120">2 horas</option>
+                  <option value="360">6 horas</option>
+                  <option value="720">12 horas</option>
+                  <option value="1440">24 horas</option>
+                  <option value="0">Permanente</option>
+                </select>
+                <p className="text-[10px] text-text-secondary italic ml-1">
+                  TTL sugerido para {threatToBlock?.threat.label}: {getSuggestedTtl(threatToBlock?.threat.type || '') >= 60 ? `${getSuggestedTtl(threatToBlock?.threat.type || '') / 60}h` : `${getSuggestedTtl(threatToBlock?.threat.type || '')}min`}
+                </p>
+              </div>
+            </div>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-transparent border-border hover:bg-bg-primary">Cancelar</AlertDialogCancel>
+            <AlertDialogAction
+              className="bg-primary hover:bg-primary/90 text-white font-bold"
+              disabled={blockMutation.isPending}
+              onClick={() => threatToBlock && blockMutation.mutate({ ...threatToBlock, ttl_minutes: ttlMinutes })}
+            >
+              {blockMutation.isPending ? 'Aplicando...' : '✅ Confirmar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

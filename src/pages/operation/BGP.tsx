@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import { Link as LinkIcon, Activity, Clock, Network, RefreshCw, Trash2, Shield, AlertCircle, Info, User, Calendar } from 'lucide-react';
@@ -41,6 +41,41 @@ export default function BGP() {
     queryFn: () => api.get('/api/bgp/routes').then(r => r.data).catch(() => ({ routes: [] })),
     refetchInterval: 10000,
   });
+
+  const { data: flowspecData } = useQuery({
+    queryKey: ['flowspec-rules'],
+    queryFn: () => api.get('/api/mitigation/flowspec').then(r => r.data).catch(() => ({ items: [] })),
+    refetchInterval: 30000,
+  });
+
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const getCountdown = (expires_at: string) => {
+    if (!expires_at) return null;
+    const diff = new Date(expires_at).getTime() - now.getTime();
+    if (diff <= 0) return "Expirado";
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  };
+
+  const getCountdownColor = (expires_at: string) => {
+    if (!expires_at) return '';
+    const diff = new Date(expires_at).getTime() - now.getTime();
+    if (diff <= 0) return 'text-danger';
+    if (diff < 300000) return 'text-danger animate-pulse'; // < 5min
+    if (diff < 1800000) return 'text-[#ef4444]'; // < 30min
+    if (diff < 3600000) return 'text-[#f59e0b]'; // < 1h
+    return 'text-text-secondary';
+  };
 
   const calcUptime = (logTail: string) => {
     if (!logTail) return '—';
@@ -114,7 +149,7 @@ export default function BGP() {
       if (type === 'flowspec') {
         // Para flowspec, precisamos buscar o ID real da regra
         const fsResponse = await api.get('/api/mitigation/flowspec');
-        const flowspecRules = fsResponse.data?.items || [];
+        const flowspecRules = fsResponse.data?.rules || fsResponse.data?.items || [];
         const matchRule = flowspecRules.find((r: any) => r.dst_prefix === route.prefix);
         
         if (matchRule?.id) {
@@ -288,6 +323,7 @@ export default function BGP() {
                   {/* AJUSTE 4 — Coluna AÇÃO */}
                   <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Ação</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Origem</th>
+                  <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Expira em</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Anunciado em</th>
                   <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Tempo ativo</th>
                 </tr>
@@ -369,6 +405,26 @@ export default function BGP() {
                           {source === 'mitigation' ? 'Mitigação automática' :
                            source === 'blacklist' ? 'Blacklist manual' :
                            source === 'manual' ? 'Manual' : (route.source || '—')}
+                        </td>
+                        <td className="px-4 py-3 text-xs">
+                          {type === 'flowspec' ? (
+                            (() => {
+                              const rules = flowspecData?.rules || flowspecData?.items || [];
+                              const rule = rules.find((r: any) => r.dst_prefix === route.prefix);
+                              const expiresAt = rule?.expires_at;
+                              return expiresAt ? (
+                                <span className={clsx("font-mono font-bold", getCountdownColor(expiresAt))}>
+                                  {getCountdown(expiresAt)}
+                                </span>
+                              ) : (
+                                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-500/10 text-gray-500 border border-gray-500/20">
+                                  Permanente
+                                </span>
+                              );
+                            })()
+                          ) : (
+                            <span className="text-text-secondary">—</span>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-xs text-text-primary">
                           <div className="flex items-center gap-2">

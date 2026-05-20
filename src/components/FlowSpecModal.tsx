@@ -19,7 +19,8 @@ export default function FlowSpecModal({ isOpen, onClose, onSuccess }: FlowSpecMo
     src_port: '',
     action: 'discard',
     rate_limit_kbps: '',
-    reason: ''
+    reason: '',
+    ttl_minutes: 60
   });
 
   if (!isOpen) return null;
@@ -37,6 +38,7 @@ export default function FlowSpecModal({ isOpen, onClose, onSuccess }: FlowSpecMo
       dst_port: formData.dst_port ? parseInt(formData.dst_port) : null,
       src_port: formData.src_port ? parseInt(formData.src_port) : null,
       rate_limit_kbps: formData.rate_limit_kbps ? parseInt(formData.rate_limit_kbps) : null,
+      ttl_minutes: parseInt(formData.ttl_minutes as any),
       src_prefix: formData.src_prefix || null,
     };
 
@@ -152,6 +154,27 @@ export default function FlowSpecModal({ isOpen, onClose, onSuccess }: FlowSpecMo
                   />
                 </div>
               )}
+            </div>
+ 
+            <div className="grid grid-cols-1 gap-4">
+              <div className="space-y-1">
+                <label className="text-xs font-bold text-text-secondary uppercase tracking-widest ml-1">Expiração automática</label>
+                <select
+                  className="w-full bg-gray-50 dark:bg-bg-secondary border border-gray-200 dark:border-[#2a2d3e] rounded-lg py-2 px-3 outline-none focus:ring-2 focus:ring-accent/50 transition-all text-sm text-text-primary appearance-none"
+                  value={formData.ttl_minutes}
+                  onChange={(e) => setFormData({ ...formData, ttl_minutes: parseInt(e.target.value) })}
+                >
+                  <option value="5">5 minutos</option>
+                  <option value="10">10 minutos</option>
+                  <option value="30">30 minutos</option>
+                  <option value="60">1 hora</option>
+                  <option value="120">2 horas</option>
+                  <option value="360">6 horas</option>
+                  <option value="720">12 horas</option>
+                  <option value="1440">24 horas</option>
+                  <option value="0">Permanente</option>
+                </select>
+              </div>
             </div>
 
             <div className="space-y-1">
