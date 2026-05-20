@@ -1,7 +1,8 @@
 import { Moon, Sun, Globe, LogOut, Menu, User, RefreshCw, Key, ChevronDown } from 'lucide-react';
  import { clsx } from 'clsx';
 import { useState, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
+import api from '../services/api';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
