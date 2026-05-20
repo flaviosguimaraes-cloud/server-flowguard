@@ -98,7 +98,6 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
   const MAX_HOURS = 4;
    
     const isLocalIP = (ip: string) => ip?.startsWith('45.175.50.');
-    const shouldFlip = (item: any) => !isLocalIP(item.src_addr) && isLocalIP(item.dst_addr);
     const getService = (port: number) => {
       const s: Record<number, string> = {
         80:'HTTP', 443:'HTTPS', 53:'DNS', 22:'SSH', 25:'SMTP', 110:'POP3',
@@ -474,7 +473,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       if (groupByIP) {
         const groups: Record<string, any> = {};
         items.forEach((item: any) => {
-          const ip = shouldFlip(item) ? item.dst_addr : item.src_addr;
+          const ip = item.src_addr;
           if (!groups[ip]) {
             groups[ip] = {
               ...item,
@@ -508,10 +507,9 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
    }, [connectionItems]);
  
  
-   const handleMitigate = (item: any) => {
-     const flipped = shouldFlip(item);
-     const targetIP = flipped ? item.src_addr : item.dst_addr;
-     const targetPort = flipped ? item.src_port : item.dst_port;
+    const handleMitigate = (item: any) => {
+      const targetIP = item.dst_addr;
+      const targetPort = item.dst_port;
      setMitigationData({
        ip: targetIP,
        proto: protoName(item.proto),
@@ -890,18 +888,17 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                   </tr>
                 ) : (
                   connectionItems.map((item: any, i: number) => {
-                    const flipped = shouldFlip(item);
-                    const direction = item.flow_direction || (flipped ? 'incoming' : 'outgoing');
+                    const direction = item.flow_direction || 'incoming';
                     
-                    const src = flipped ? item.dst_addr : item.src_addr;
-                    const srcPort = flipped ? item.dst_port : item.src_port;
-                    const srcCountry = flipped ? item.dst_country : item.src_country;
+                    const src = item.src_addr;
+                    const srcPort = item.src_port;
+                    const srcCountry = item.src_country;
                     
-                    const dst = flipped ? item.src_addr : item.dst_addr;
-                    const dstPort = flipped ? item.src_port : item.dst_port;
-                    const dstCountry = flipped ? item.src_country : item.dst_country;
+                    const dst = item.dst_addr;
+                    const dstPort = item.dst_port;
+                    const dstCountry = item.dst_country;
                     
-                    const dstOrg = flipped ? item.src_org : item.dst_org;
+                    const dstOrg = item.dst_org;
                     
                     const isSuspicious = item.bytes > 1e9;
   
@@ -1168,12 +1165,12 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                     <div className="flex items-center gap-2">
                       <div className={clsx(
                         "inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider border",
-                        (selectedConnection.flow_direction || (shouldFlip(selectedConnection) ? 'incoming' : 'outgoing')) === 'outgoing' 
+                        (selectedConnection.flow_direction || 'incoming') === 'outgoing' 
                           ? "bg-green-50 text-green-600 border-green-100 dark:bg-green-900/20 dark:text-green-400" 
                           : "bg-blue-50 text-blue-600 border-blue-100 dark:bg-blue-900/20 dark:text-blue-400"
                       )}>
-                        {(selectedConnection.flow_direction || (shouldFlip(selectedConnection) ? 'incoming' : 'outgoing')) === 'outgoing' ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
-                        {(selectedConnection.flow_direction || (shouldFlip(selectedConnection) ? 'incoming' : 'outgoing')) === 'outgoing' ? 'Upload' : 'Download'}
+                        {(selectedConnection.flow_direction || 'incoming') === 'outgoing' ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
+                        {(selectedConnection.flow_direction || 'incoming') === 'outgoing' ? 'Upload' : 'Download'}
                       </div>
                       <span className="text-sm font-bold text-text-primary">· {protoName(selectedConnection.proto)} · {getService(selectedConnection.dst_port)}</span>
                     </div>
