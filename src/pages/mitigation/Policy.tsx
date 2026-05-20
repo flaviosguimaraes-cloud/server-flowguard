@@ -37,7 +37,7 @@ export default function Policy() {
   // Seção 3: Limiares
   const { data: thresholdData } = useQuery({
     queryKey: ['thresholds-policy'],
-    queryFn: () => api.get('/api/detection/thresholds').then(r => r.data).catch(() => ({})),
+    queryFn: () => api.get('/api/thresholds').then(r => r.data).catch(() => ({})),
   });
 
   const [mode, setMode] = useState<Mode>('blackhole');
@@ -166,7 +166,7 @@ export default function Policy() {
              default_rate_limit_kbps: Number(autoConfig.default_rate_limit_kbps) || 1000,
              default_ttl_minutes: Number(autoConfig.default_ttl_minutes) || 120,
           }),
-          api.put('/api/detection/thresholds', {
+          api.put('/api/thresholds', {
              ...thresholds,
              threshold_pps: Number(thresholds.threshold_pps) || 0,
              threshold_mbps: Number(thresholds.threshold_mbps) || 0,
@@ -201,7 +201,7 @@ export default function Policy() {
         setInitialThresholds({...thresholds});
         
       } catch (e: any) {
-        toast.error(e.response?.data?.detail || 'Erro ao salvar política');
+        toast.error('❌ Erro: ' + (e.response?.data?.detail || e.message));
       } finally {
         setSaving(false);
       }
