@@ -25,15 +25,22 @@ import { useUI } from '../contexts/UIContext';
      enabled: !!localStorage.getItem('access_token'),
    });
  
-   const downServices = useMemo(() => {
-     const services = sysStatus?.services || {};
-     return Object.entries(services).filter(([_, status]) => status !== 'active');
-   }, [sysStatus?.services]);
- 
-   const hasCriticalDown = useMemo(() => {
-     const criticals = ['flow_collector', 'detection_engine', 'api', 'flow_database', 'config_database', 'bgp_engine'];
-     return downServices.some(([key]) => criticals.includes(key));
-   }, [downServices]);
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => api.get('/api/settings').then(r => r.data),
+    staleTime: 60000,
+    enabled: !!localStorage.getItem('access_token'),
+  });
+
+  const downServices = useMemo(() => {
+    const services = sysStatus?.services || {};
+    return Object.entries(services).filter(([_, status]) => status !== 'active');
+  }, [sysStatus?.services]);
+
+  const hasCriticalDown = useMemo(() => {
+    const criticals = ['flow_collector', 'detection_engine', 'api', 'flow_database', 'config_database', 'bgp_engine'];
+    return downServices.some(([key]) => criticals.includes(key));
+  }, [downServices]);
  
   const [openGroups, setOpenGroups] = useState<string[]>(() => {
     const saved = localStorage.getItem('sidebar_open_groups');
