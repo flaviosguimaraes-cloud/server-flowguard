@@ -22,6 +22,39 @@ import {
 } from '../components/ui/sheet';
 import MitigationModal from '../components/MitigationModal';
 
+const COUNTRIES = [
+  { code: 'BR', name: 'Brasil' },
+  { code: 'US', name: 'Estados Unidos' },
+  { code: 'CN', name: 'China' },
+  { code: 'DE', name: 'Alemanha' },
+  { code: 'RU', name: 'Rússia' },
+  { code: 'NL', name: 'Holanda' },
+  { code: 'FR', name: 'França' },
+  { code: 'GB', name: 'Reino Unido' },
+  { code: 'JP', name: 'Japão' },
+  { code: 'KR', name: 'Coreia do Sul' },
+  { code: 'IN', name: 'Índia' },
+  { code: 'CA', name: 'Canadá' },
+  { code: 'AU', name: 'Austrália' },
+  { code: 'SG', name: 'Singapura' },
+  { code: 'HK', name: 'Hong Kong' },
+  { code: 'TR', name: 'Turquia' },
+  { code: 'AR', name: 'Argentina' },
+  { code: 'ZA', name: 'África do Sul' },
+  { code: 'UA', name: 'Ucrânia' },
+  { code: 'IT', name: 'Itália' },
+  { code: 'ES', name: 'Espanha' },
+  { code: 'MX', name: 'México' },
+  { code: 'PL', name: 'Polônia' },
+  { code: 'VN', name: 'Vietnã' },
+  { code: 'ID', name: 'Indonésia' },
+  { code: 'TH', name: 'Tailândia' },
+  { code: 'PT', name: 'Portugal' },
+  { code: 'AE', name: 'Emirados Árabes' },
+  { code: 'QA', name: 'Qatar' },
+  { code: 'OM', name: 'Omã' },
+];
+
 function MetricCard({ title, value, icon }: any) {
   return (
     <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm flex flex-col justify-between min-h-[120px] transition-all duration-300 hover:border-primary/30 group relative">
