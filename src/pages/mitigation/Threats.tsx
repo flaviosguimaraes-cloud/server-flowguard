@@ -458,13 +458,37 @@ export default function Threats() {
 
       {filteredThreats.length === 0 ? (
         <Card className="bg-bg-secondary border-border border-dashed py-16 flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 bg-success/10 text-success rounded-full flex items-center justify-center mb-4">
+          <div className="w-16 h-16 bg-success/10 text-success rounded-full flex items-center justify-center mb-6 shadow-sm border border-success/20">
             <CheckCircle size={32} />
           </div>
-          <CardTitle className="mb-2">Nenhuma ameaça detectada</CardTitle>
-          <CardDescription className="max-w-md mx-auto px-6">
-            O sistema analisa padrões de port scan, SYN flood, amplificação DNS/NTP/SSDP e UDP flood no período de {minutes >= 60 ? `${minutes/60}h` : `${minutes}min`}.
+          <CardTitle className="mb-2 text-xl">Nenhuma ameaça detectada</CardTitle>
+          <CardDescription className="max-w-md mx-auto px-6 mb-8">
+            Não foram identificados comportamentos anômalos no tráfego das últimas {minutes >= 60 ? `${minutes/60}h` : `${minutes}min`}.
           </CardDescription>
+          
+          <div className="bg-bg-primary/50 border border-border rounded-xl p-6 text-left max-w-sm w-full">
+            <h4 className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-4 flex items-center gap-2">
+              <Shield size={14} className="text-primary" />
+              Monitorando Ativamente
+            </h4>
+            <ul className="space-y-3">
+              {[
+                'Port Scan (TCP Recon)',
+                'SYN Flood (DoS)',
+                'DNS/NTP/SSDP Amplification',
+                'UDP Flood'
+              ].map((item, i) => (
+                <li key={i} className="flex items-center gap-2 text-sm text-text-primary">
+                  <div className="w-1.5 h-1.5 rounded-full bg-success" />
+                  {item}
+                </li>
+              ))}
+            </ul>
+            <div className="mt-6 pt-4 border-t border-border flex items-center justify-between text-[10px] text-text-tertiary uppercase font-bold tracking-tighter">
+              <span>Auto-refresh: 60s</span>
+              <span>Status: Ativo</span>
+            </div>
+          </div>
         </Card>
       ) : (
         <div className="grid grid-cols-1 gap-4">
