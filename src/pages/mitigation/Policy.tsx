@@ -91,12 +91,13 @@ export default function Policy() {
   }, [policyData]);
 
   useEffect(() => {
-    if (autoConfigData) {
-      setAutoConfig({
-        ...autoConfig,
+    if (autoConfigData && Object.keys(autoConfigData).length > 0) {
+      setAutoConfig(prev => ({
+        ...prev,
         ...autoConfigData,
+        flowspec_src_mode: autoConfigData.flowspec_src_mode || 'any',
         operation_mode: !autoConfigData.enabled ? 'disabled' : (autoConfigData.operation_mode || 'blackhole_flowspec')
-      });
+      }));
     }
   }, [autoConfigData]);
 
