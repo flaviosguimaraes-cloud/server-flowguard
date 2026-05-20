@@ -124,25 +124,34 @@ import { useUI } from '../contexts/UIContext';
         "h-[72px] flex items-center gap-3 border-b border-border transition-all duration-200", 
         collapsed ? "justify-center" : "px-6"
       )}>
-        {settings?.org_logo_url?.value || settings?.org_logo_url ? (
-          <img 
-            src={settings.org_logo_url?.value ?? settings.org_logo_url} 
-            alt="Logo" 
-            className={clsx("rounded-lg object-contain", collapsed ? "w-8 h-8" : "w-8 h-8")} 
-            onError={(e) => {
-              (e.target as HTMLImageElement).style.display = 'none';
-            }}
-          />
-        ) : (
-          <div className="bg-primary/10 p-2 rounded-xl border border-primary/10">
-            <Shield className="text-primary" size={24} />
-          </div>
-        )}
-        {!collapsed && (
-          <span className="font-bold text-lg tracking-tight text-text-primary truncate">
-            {settings?.org_name?.value || settings?.org_name || 'FlowGuard'}
-          </span>
-        )}
+        <div className="flex items-center gap-3 overflow-hidden">
+          {settings?.org_logo_url?.value?.startsWith('http') ? (
+            <div className="bg-white p-1 rounded-lg border border-border shrink-0">
+              <img 
+                src={settings.org_logo_url.value} 
+                alt="Logo" 
+                className="w-6 h-6 object-contain" 
+                onError={(e) => {
+                  (e.target as HTMLImageElement).style.display = 'none';
+                }}
+              />
+            </div>
+          ) : (
+            <div className="bg-primary/10 p-2 rounded-xl border border-primary/10 shrink-0">
+              <Shield className="text-primary" size={24} />
+            </div>
+          )}
+          {!collapsed && (
+            <div className="flex flex-col min-w-0">
+              <span className="font-bold text-lg tracking-tight text-text-primary leading-tight">
+                FlowGuard
+              </span>
+              <span className="text-[10px] font-bold text-text-secondary truncate uppercase tracking-widest opacity-70">
+                {settings?.org_name?.value || 'Intelligence'}
+              </span>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Navigation */}
