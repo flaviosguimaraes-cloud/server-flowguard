@@ -301,9 +301,15 @@ export default function Threats() {
     }
   };
 
-  const getInterpretation = (type: string) => {
-    switch (type) {
+  const getInterpretation = (threat: Threat) => {
+    switch (threat.type) {
       case 'port_scan':
+        if (threat.port_range_min !== undefined && threat.port_range_min < 1024) {
+          return `IP externo varrendo portas de serviço (${threat.port_range_min}–${threat.port_range_max}) do cliente. Indica reconhecimento de serviços expostos ou busca por vulnerabilidades.`;
+        }
+        if (threat.port_range_min !== undefined && threat.port_range_min >= 1024) {
+          return `IP externo varrendo portas altas (${threat.port_range_min}–${threat.port_range_max}) do cliente. Pode indicar scan de serviços não-padrão ou aplicações.`;
+        }
         return "IP externo varrendo múltiplas portas do cliente. Indica reconhecimento de rede ou busca por serviços expostos.";
       case 'syn_flood':
         return "Alto volume de pacotes TCP SYN sem conclusão do handshake. Indica tentativa de esgotamento de recursos do servidor alvo.";
