@@ -28,6 +28,13 @@ export const Header = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
 
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => api.get('/api/settings').then(r => r.data),
+    staleTime: 60000,
+    enabled: !!localStorage.getItem('access_token'),
+  });
+
   const handleRefresh = async () => {
     setIsRefreshing(true);
     await queryClient.invalidateQueries();
