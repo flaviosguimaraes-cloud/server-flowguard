@@ -35,32 +35,31 @@ const System = () => {
 
   const restartMutation = useMutation({
     mutationFn: (service: string) => api.post(`/api/system/restart/${service}`),
-    onSuccess: (_, service) => {
-      toast.success(`Serviço ${service} reiniciado com sucesso`);
+    onSuccess: () => {
+      toast.success('✅ Serviço reiniciado com sucesso');
       queryClient.invalidateQueries({ queryKey: ['system-status'] });
     },
-    onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Erro ao reiniciar serviço');
+    onError: () => {
+      toast.error('❌ Erro ao reiniciar serviço');
     },
     onSettled: () => setRestarting(null)
   });
 
-  const handleRestart = (service: string) => {
-    if (window.confirm(`Tem certeza que deseja reiniciar o serviço ${service}? O sistema poderá ficar indisponível por alguns segundos.`)) {
-      setRestarting(service);
-      restartMutation.mutate(service);
+  const handleRestart = (serviceId: string, serviceName: string) => {
+    if (window.confirm(`Tem certeza que deseja reiniciar o serviço ${serviceName}? O sistema poderá ficar indisponível por alguns segundos.`)) {
+      setRestarting(serviceId);
+      restartMutation.mutate(serviceId);
     }
   };
 
   const services = [
-    { id: 'flow_collector', name: 'Coletor de Fluxos' },
     { id: 'detection_engine', name: 'Motor de Detecção' },
     { id: 'api', name: 'FlowGuard API' },
+    { id: 'bgp_engine', name: 'BGP Speaker' },
     { id: 'flow_database', name: 'Banco de Flows' },
-    { id: 'config_database', name: 'Configurações' },
-    { id: 'cache', name: 'Cache do Sistema' },
-    { id: 'bgp_engine', name: 'Motor BGP' },
-    { id: 'web', name: 'Interface Web' },
+    { id: 'web', name: 'Proxy Web' },
+    { id: 'flow_collector', name: 'Coletor de Flows' },
+    { id: 'cache', name: 'Cache' },
   ];
 
   const systemInfo = [
@@ -188,7 +187,7 @@ const System = () => {
                 
                 {isAdmin && (
                   <button
-                    onClick={() => handleRestart(service.id)}
+                    onClick={() => handleRestart(service.id, service.name)}
                     disabled={restarting === service.id}
                     className="p-2 text-text-secondary hover:text-primary hover:bg-primary/5 rounded-lg transition-all"
                     title="Reiniciar serviço"
