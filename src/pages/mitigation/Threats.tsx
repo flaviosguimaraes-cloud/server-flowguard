@@ -554,11 +554,24 @@ export default function Threats() {
 
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-text-secondary">
                         {threat.type === 'port_scan' && (
-                          <>
-                            <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.unique_ports}</span> portas únicas</span>
-                            <span className="w-1.5 h-1.5 rounded-full bg-border" />
-                            <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.flows}</span> flows</span>
-                          </>
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-x-4 gap-y-2">
+                              <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.unique_ports}</span> portas únicas</span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-border" />
+                              <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.flows}</span> flows</span>
+                            </div>
+                            <div className="flex items-center gap-x-4 gap-y-2 text-xs opacity-80">
+                              {threat.port_range_min && threat.port_range_max && (
+                                <span className="flex items-center gap-1.5">Faixa: <span className="font-bold">{threat.port_range_min}–{threat.port_range_max}</span></span>
+                              )}
+                              {threat.syn_flows && (
+                                <>
+                                  <span className="w-1 h-1 rounded-full bg-border" />
+                                  <span className="flex items-center gap-1.5"><span className="font-bold">{threat.syn_flows}</span> SYNs</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
                         )}
                         {threat.type === 'syn_flood' && (
                           <>
