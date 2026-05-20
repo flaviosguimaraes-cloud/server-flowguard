@@ -528,6 +528,11 @@ export default function BGP() {
 
               {selectedRoute.type === 'flowspec' ? (() => {
                 const info = parseReason(selectedRoute.reason);
+                const rules = flowspecData?.rules || flowspecData?.items || [];
+                const rule = rules.find((r: any) => 
+                  r.dst_prefix === selectedRoute.prefix || r.src_prefix === selectedRoute.prefix
+                );
+
                 return (
                   <>
                     {/* FlowSpec Details */}
@@ -540,10 +545,29 @@ export default function BGP() {
                       <Separator className="bg-border/50" />
 
                       <div>
-                        <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Origem Bloqueada</h4>
+                        <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Ação Aplicada</h4>
+                        <div className="flex items-center gap-2 font-bold text-text-primary">
+                          {rule?.action === 'rate-limit' ? (
+                            <>
+                              <span className="text-primary">⚡</span>
+                              <span>Rate-Limit: {(rule.rate_limit_kbps / 1000).toFixed(1)} Mbps</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-danger">🚫</span>
+                              <span>Descartar todo tráfego</span>
+                            </>
+                          )}
+                        </div>
+                      </div>
+
+                      <Separator className="bg-border/50" />
+
+                      <div>
+                        <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Filtros (Match)</h4>
                         <div className="space-y-2">
                           <p className="font-mono text-sm text-text-primary flex justify-between">
-                            <span className="text-text-secondary">Prefixo:</span>
+                            <span className="text-text-secondary">Origem:</span>
                             <span className="font-bold">{info.src !== '—' ? info.src : 'Qualquer (0.0.0.0/0)'}</span>
                           </p>
                           <p className="font-mono text-sm text-text-primary flex justify-between">
