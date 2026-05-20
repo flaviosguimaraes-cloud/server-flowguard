@@ -69,6 +69,32 @@ export default function BGP() {
     return `${Math.floor(diff/3600)}h ${Math.floor((diff%3600)/60)}m`;
   };
 
+  const parseReason = (reason: string) => {
+    const parts = (reason || '')
+      .split(',')
+      .map(p => p.trim());
+
+    const result = {
+      src: '—',
+      proto: '—',
+      sport: '—',
+      dport: '—',
+    };
+
+    parts.forEach(p => {
+      if (p.startsWith('src:'))
+        result.src = p.replace('src:','');
+      if (p.startsWith('proto:'))
+        result.proto = p.replace('proto:','');
+      if (p.startsWith('sport:'))
+        result.sport = p.replace('sport:','');
+      if (p.startsWith('dport:'))
+        result.dport = p.replace('dport:','');
+    });
+
+    return result;
+  };
+
   const sessions = sessionsData?.sessions || [];
   const routes = routesData?.routes || [];
   
@@ -86,7 +112,16 @@ export default function BGP() {
     try {
       const type = (route.type || '').toLowerCase();
       if (type === 'flowspec') {
-        await api.delete(`/api/mitigation/flowspec/${route.id}`);
+        // Para flowspec, precisamos buscar o ID real da regra
+        const fsResponse = await api.get('/api/mitigation/flowspec');
+        const flowspecRules = fsResponse.data?.items || [];
+        const matchRule = flowspecRules.find((r: any) => r.dst_prefix === route.prefix);
+        
+        if (matchRule?.id) {
+          await api.delete(`/api/mitigation/flowspec/${matchRule.id}`);
+        } else {
+          throw new Error('Não foi possível encontrar o ID da regra FlowSpec');
+        }
       } else {
         await api.post('/api/mitigation/remove', {
           ip: route.prefix.split('/')[0],
@@ -98,7 +133,8 @@ export default function BGP() {
       setSelectedRoute(null);
       setRouteToDelete(null);
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Erro ao remover rota');
+      const msg = error.response?.data?.detail || error.message || 'Erro ao remover rota';
+      toast.error(String(msg));
     } finally {
       setIsDeleting(false);
     }
@@ -395,40 +431,42 @@ export default function BGP() {
                 </div>
               </div>
 
-              {selectedRoute.type === 'flowspec' ? (
-                <>
-                  {/* FlowSpec Details */}
-                  <div className="space-y-4">
-                    <div>
-                      <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Destino</h4>
-                      <p className="font-mono text-lg font-bold text-text-primary">Prefixo: {selectedRoute.prefix}</p>
-                    </div>
-
-                    <Separator className="bg-border/50" />
-
-                    <div>
-                      <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Origem Bloqueada</h4>
-                      <div className="space-y-2">
-                        <p className="font-mono text-sm text-text-primary flex justify-between">
-                          <span className="text-text-secondary">Prefixo:</span>
-                          <span className="font-bold">{selectedRoute.src_prefix || 'Qualquer (0.0.0.0/0)'}</span>
-                        </p>
-                        <p className="font-mono text-sm text-text-primary flex justify-between">
-                          <span className="text-text-secondary">Protocolo:</span>
-                          <span className="font-bold uppercase">{selectedRoute.protocol || '—'}</span>
-                        </p>
-                        <p className="font-mono text-sm text-text-primary flex justify-between">
-                          <span className="text-text-secondary">Porta origem:</span>
-                          <span className="font-bold">{selectedRoute.src_port || '—'}</span>
-                        </p>
-                        <p className="font-mono text-sm text-text-primary flex justify-between">
-                          <span className="text-text-secondary">Porta destino:</span>
-                          <span className="font-bold">{selectedRoute.dst_port || '—'}</span>
-                        </p>
+              {selectedRoute.type === 'flowspec' ? (() => {
+                const info = parseReason(selectedRoute.reason);
+                return (
+                  <>
+                    {/* FlowSpec Details */}
+                    <div className="space-y-4">
+                      <div>
+                        <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Destino</h4>
+                        <p className="font-mono text-lg font-bold text-text-primary">Prefixo: {selectedRoute.prefix}</p>
                       </div>
-                    </div>
 
-                    <Separator className="bg-border/50" />
+                      <Separator className="bg-border/50" />
+
+                      <div>
+                        <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Origem Bloqueada</h4>
+                        <div className="space-y-2">
+                          <p className="font-mono text-sm text-text-primary flex justify-between">
+                            <span className="text-text-secondary">Prefixo:</span>
+                            <span className="font-bold">{info.src !== '—' ? info.src : 'Qualquer (0.0.0.0/0)'}</span>
+                          </p>
+                          <p className="font-mono text-sm text-text-primary flex justify-between">
+                            <span className="text-text-secondary">Protocolo:</span>
+                            <span className="font-bold uppercase">{info.proto}</span>
+                          </p>
+                          <p className="font-mono text-sm text-text-primary flex justify-between">
+                            <span className="text-text-secondary">Porta origem:</span>
+                            <span className="font-bold">{info.sport}</span>
+                          </p>
+                          <p className="font-mono text-sm text-text-primary flex justify-between">
+                            <span className="text-text-secondary">Porta destino:</span>
+                            <span className="font-bold">{info.dport}</span>
+                          </p>
+                        </div>
+                      </div>
+
+                      <Separator className="bg-border/50" />
 
                     <div>
                       <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Informações</h4>
@@ -463,8 +501,9 @@ export default function BGP() {
                       Remover regra
                     </Button>
                   </div>
-                </>
-              ) : (
+                  </>
+                );
+              })() : (
                 <>
                   {/* Blackhole Details */}
                   <div className="space-y-4">

@@ -42,7 +42,7 @@ interface Threat {
   bytes?: number;
   bpp?: number;
   mitigated?: boolean;
-  flowspec_id?: string;
+  flowspec_id?: number;
 }
 
 interface ThreatsResponse {
@@ -130,7 +130,8 @@ export default function Threats() {
       });
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Erro ao aplicar FlowSpec');
+      const msg = error.response?.data?.detail || error.message || 'Erro ao aplicar FlowSpec';
+      toast.error(String(msg));
     }
   });
 
@@ -185,14 +186,15 @@ export default function Threats() {
     }
   };
 
-  const removeMitigation = async (flowspecId: string) => {
+  const removeMitigation = async (flowspecId: number) => {
     try {
       await api.delete(`/api/mitigation/flowspec/${flowspecId}`);
       toast.success('Mitigação removida');
       queryClient.invalidateQueries({ queryKey: ['flowspec-rules'] });
       queryClient.invalidateQueries({ queryKey: ['threats'] });
     } catch (error: any) {
-      toast.error('Erro ao remover mitigação');
+      const msg = error.response?.data?.detail || error.message || 'Erro ao remover mitigação';
+      toast.error(String(msg));
     }
   };
 
@@ -384,7 +386,7 @@ export default function Threats() {
                       {threat.mitigated && (
                         <p className="text-xs text-text-secondary flex items-center gap-2">
                           <Zap size={12} className="text-purple-500" />
-                          FlowSpec #{threat.flowspec_id?.substring(0, 8)} ativo · detectado em tempo real
+                          FlowSpec #{threat.flowspec_id} ativo · detectado em tempo real
                         </p>
                       )}
                     </div>
