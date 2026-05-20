@@ -48,6 +48,7 @@ export default function Policy() {
   const [autoConfig, setAutoConfig] = useState({
     enabled: false,
     operation_mode: 'disabled',
+    flowspec_src_mode: 'any',
     default_action: 'discard',
     default_rate_limit_kbps: 1000,
     default_ttl_minutes: 120,
