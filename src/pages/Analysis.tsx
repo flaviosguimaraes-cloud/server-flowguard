@@ -62,7 +62,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
   const queryClient = useQueryClient();
   const isAuthenticated = !!localStorage.getItem('access_token');
 
-  const MAX_HOURS = 6;
+  const MAX_HOURS = 4;
    
     const isLocalIP = (ip: string) => ip?.startsWith('45.175.50.');
     const shouldFlip = (item: any) => !isLocalIP(item.src_addr) && isLocalIP(item.dst_addr);
@@ -183,9 +183,9 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       const e = new Date(`${endDate}T${endTime}`);
       
       const diffHours = (e.getTime() - s.getTime()) / 3600000;
-      if (diffHours > 2 || diffHours < 0) {
-        // Ajustar fim para início + 2h
-        const maxEnd = new Date(s.getTime() + 2 * 3600000);
+      if (diffHours > MAX_HOURS || diffHours < 0) {
+        // Ajustar fim para início + MAX_HOURS
+        const maxEnd = new Date(s.getTime() + MAX_HOURS * 3600000);
         setEndDate(formatToDateInput(maxEnd));
         setEndTime(formatToTimeInput(maxEnd));
       }
@@ -201,8 +201,8 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       const e = new Date(`${d}T${t}`);
       const diffHours = (e.getTime() - s.getTime()) / 3600000;
       
-      if (diffHours > 2) {
-        const maxEnd = new Date(s.getTime() + 2 * 3600000);
+      if (diffHours > MAX_HOURS) {
+        const maxEnd = new Date(s.getTime() + MAX_HOURS * 3600000);
         setEndDate(formatToDateInput(maxEnd));
         setEndTime(formatToTimeInput(maxEnd));
       } else if (diffHours < 0) {
@@ -217,10 +217,10 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       if (isNaN(s.getTime()) || isNaN(e.getTime())) return true;
       
       const diff = e.getTime() - s.getTime();
-      const MAX_MS = 2 * 3600 * 1000; // 2 hours
+      const MAX_MS = MAX_HOURS * 3600 * 1000; 
       
       if (diff > MAX_MS) {
-        setIntervalError('Intervalo máximo: 2 horas');
+        setIntervalError(`Intervalo máximo: ${MAX_HOURS} horas`);
         return false;
       }
       if (diff < 0) {
@@ -532,64 +532,30 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
          <MetricCard title="Altíssimo Volume" value={metrics.suspicious} icon={<AlertCircle className="text-danger" size={20} />} />
        </div>
  
-        <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm space-y-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-5 gap-4">
-            {/* Row 1 */}
-            <div className="space-y-1 col-span-1 md:col-span-2">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">De</label>
-              <div className="flex gap-2">
-                <input
-                  type="date"
-                  className="flex-1 bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
-                  value={startDate}
-                  onChange={(e) => handleStartChange(e.target.value, undefined)}
-                />
-                <input
-                  type="time"
-                  className="w-32 bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
-                  value={startTime}
-                  onChange={(e) => handleStartChange(undefined, e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="space-y-1 col-span-1 md:col-span-2">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Até</label>
-              <div className="flex gap-2">
-                <input
-                  type="date"
-                  className="flex-1 bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
-                  value={endDate}
-                  onChange={(e) => handleEndChange(e.target.value, undefined)}
-                />
-                <input
-                  type="time"
-                  className="w-32 bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
-                  value={endTime}
-                  onChange={(e) => handleEndChange(undefined, e.target.value)}
-                />
-              </div>
-            </div>
-            <div className="space-y-1">
+        <div className="bg-bg-secondary p-4 rounded-xl border border-border shadow-sm space-y-4">
+          {/* Linha 1: Filtros de dados */}
+          <div className="flex flex-wrap items-end gap-3">
+            <div className="flex-1 min-w-[200px] space-y-1">
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">IP Origem</label>
               <input
                 type="text"
-                placeholder="Ex: 192.168.1.1 ou /24"
+                placeholder="Ex: 192.168.1.1 ou 192.168.1.0/24"
                 className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
                 value={filters.src_ip}
                 onChange={(e) => setFilters(prev => ({ ...prev, src_ip: e.target.value }))}
               />
             </div>
-            <div className="space-y-1">
+            <div className="flex-1 min-w-[200px] space-y-1">
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">IP Destino</label>
               <input
                 type="text"
-                placeholder="Ex: 192.168.1.1 ou /24"
+                placeholder="Ex: 192.168.1.1 ou 192.168.1.0/24"
                 className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
                 value={filters.dst_ip}
                 onChange={(e) => setFilters(prev => ({ ...prev, dst_ip: e.target.value }))}
               />
             </div>
-            <div className="space-y-1">
+            <div className="w-32 space-y-1">
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Protocolo</label>
               <select
                 className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 appearance-none text-sm text-text-primary"
@@ -597,47 +563,46 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                 onChange={(e) => setFilters(prev => ({ ...prev, proto: e.target.value }))}
               >
                 <option value="">Todos</option>
-                <option value="6">TCP (6)</option>
-                <option value="17">UDP (17)</option>
-                <option value="1">ICMP (1)</option>
+                <option value="6">TCP</option>
+                <option value="17">UDP</option>
+                <option value="1">ICMP</option>
               </select>
             </div>
-
-            {/* Row 2 */}
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Porta Origem</label>
+            <div className="w-24 space-y-1">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Porta Orig</label>
               <input
                 type="number"
+                min="1"
+                max="65535"
                 placeholder="1-65535"
                 className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
                 value={filters.src_port}
                 onChange={(e) => setFilters(prev => ({ ...prev, src_port: e.target.value }))}
               />
             </div>
-            <div className="space-y-1">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Porta Destino</label>
+            <div className="w-24 space-y-1">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Porta Dest</label>
               <input
                 type="number"
+                min="1"
+                max="65535"
                 placeholder="1-65535"
                 className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
                 value={filters.dst_port}
                 onChange={(e) => setFilters(prev => ({ ...prev, dst_port: e.target.value }))}
               />
             </div>
-            <div className="space-y-1">
+            <div className="w-28 space-y-1">
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">País</label>
-              <select
-                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 appearance-none text-sm text-text-primary"
+              <input
+                type="text"
+                placeholder="Ex: BR, US"
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary uppercase"
                 value={filters.country}
                 onChange={(e) => setFilters(prev => ({ ...prev, country: e.target.value }))}
-              >
-                <option value="">Todos</option>
-                {countryList.map((c: string) => (
-                  <option key={c} value={c}>{c}</option>
-                ))}
-              </select>
+              />
             </div>
-            <div className="space-y-1">
+            <div className="w-32 space-y-1">
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Direção</label>
               <select
                 className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 appearance-none text-sm text-text-primary"
@@ -645,23 +610,52 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                 onChange={(e) => setFilters(prev => ({ ...prev, direction: e.target.value }))}
               >
                 <option value="">Todos</option>
-                <option value="outgoing">↑ Upload</option>
-                <option value="incoming">↓ Download</option>
+                <option value="incoming">Download</option>
+                <option value="outgoing">Upload</option>
               </select>
             </div>
+          </div>
 
-            <div className="flex items-end gap-2">
-              <button 
-                onClick={() => {
-                  if (validateInterval()) {
-                    setUseCustomRange(true);
-                    handleSearch();
-                  }
-                }}
-                className="flex-1 bg-primary hover:bg-primary/90 text-white font-bold py-1.5 rounded-lg transition-all shadow-sm text-sm uppercase tracking-wider h-[38px]"
-              >
-                Aplicar
-              </button>
+          {/* Linha 2: Período e Ações */}
+          <div className="flex flex-wrap items-end gap-4 pt-2 border-t border-border/50">
+            <div className="flex items-center gap-3">
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">De</label>
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    className="bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                    value={startDate}
+                    onChange={(e) => handleStartChange(e.target.value, undefined)}
+                  />
+                  <input
+                    type="time"
+                    className="w-28 bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                    value={startTime}
+                    onChange={(e) => handleStartChange(undefined, e.target.value)}
+                  />
+                </div>
+              </div>
+              <div className="space-y-1">
+                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Até</label>
+                <div className="flex gap-2">
+                  <input
+                    type="date"
+                    className="bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                    value={endDate}
+                    onChange={(e) => handleEndChange(e.target.value, undefined)}
+                  />
+                  <input
+                    type="time"
+                    className="w-28 bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                    value={endTime}
+                    onChange={(e) => handleEndChange(undefined, e.target.value)}
+                  />
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3 ml-auto">
               <button 
                 onClick={() => {
                   setFilters({ src_ip: '', dst_ip: '', src_port: '', dst_port: '', proto: '', country: '', direction: '' });
@@ -677,10 +671,20 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                   setIntervalError('');
                   handleSearch();
                 }}
-                className="p-2 bg-bg-primary border border-border rounded-lg text-text-secondary hover:text-text-primary transition-all h-[38px] flex items-center justify-center"
-                title="Limpar filtros"
+                className="text-xs font-bold text-text-secondary hover:text-text-primary transition-all px-2 py-2"
               >
-                <X size={18} />
+                LIMPAR
+              </button>
+              <button 
+                onClick={() => {
+                  if (validateInterval()) {
+                    setUseCustomRange(true);
+                    handleSearch();
+                  }
+                }}
+                className="bg-primary hover:bg-primary/90 text-white font-bold px-6 py-2 rounded-lg transition-all shadow-sm text-sm uppercase tracking-wider"
+              >
+                Aplicar
               </button>
             </div>
           </div>
