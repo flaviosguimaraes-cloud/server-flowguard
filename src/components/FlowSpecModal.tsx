@@ -129,7 +129,7 @@ export default function FlowSpecModal({ isOpen, onClose, onSuccess }: FlowSpecMo
               </div>
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 gap-4">
               <div className="space-y-1">
                 <label className="text-xs font-bold text-text-secondary uppercase tracking-widest ml-1">Ação</label>
                 <select
@@ -137,21 +137,33 @@ export default function FlowSpecModal({ isOpen, onClose, onSuccess }: FlowSpecMo
                   value={formData.action}
                   onChange={(e) => setFormData({ ...formData, action: e.target.value })}
                 >
-                  <option value="discard">Descartar</option>
-                  <option value="rate-limit">Rate Limit</option>
+                  <option value="discard">Descartar (bloquear tudo)</option>
+                  <option value="rate-limit">Rate-Limit (limitar banda)</option>
                 </select>
               </div>
+
               {formData.action === 'rate-limit' && (
-                <div className="space-y-1">
-                  <label className="text-xs font-bold text-text-secondary uppercase tracking-widest ml-1">Rate Limit (kbps)</label>
-                  <input
-                    type="number"
-                    required
-                    placeholder="1000"
-                    className="w-full bg-gray-50 dark:bg-bg-secondary border border-gray-200 dark:border-[#2a2d3e] rounded-lg py-2 px-3 outline-none focus:ring-2 focus:ring-accent/50 transition-all text-sm text-text-primary"
-                    value={formData.rate_limit_kbps}
-                    onChange={(e) => setFormData({ ...formData, rate_limit_kbps: e.target.value })}
-                  />
+                <div className="space-y-1 animate-in slide-in-from-top-2 duration-200">
+                  <label className="text-xs font-bold text-text-secondary uppercase tracking-widest ml-1">Limite de banda</label>
+                  <div className="flex items-center gap-2">
+                    <input
+                      type="number"
+                      required
+                      min={1}
+                      placeholder="Ex: 1000"
+                      className="flex-1 bg-gray-50 dark:bg-bg-secondary border border-gray-200 dark:border-[#2a2d3e] rounded-lg py-2 px-3 outline-none focus:ring-2 focus:ring-accent/50 transition-all text-sm text-text-primary"
+                      value={formData.rate_limit_kbps}
+                      onChange={(e) => setFormData({ ...formData, rate_limit_kbps: e.target.value })}
+                    />
+                    <span className="text-sm font-bold text-text-secondary">Kbps</span>
+                  </div>
+                  <p className="text-[10px] text-text-secondary mt-1">
+                    Sugestões: 
+                    <button type="button" onClick={() => setFormData({...formData, rate_limit_kbps: '512'})} className="hover:text-accent underline ml-1">512 Kbps</button> · 
+                    <button type="button" onClick={() => setFormData({...formData, rate_limit_kbps: '1000'})} className="hover:text-accent underline ml-1">1 Mbps (1000)</button> · 
+                    <button type="button" onClick={() => setFormData({...formData, rate_limit_kbps: '10000'})} className="hover:text-accent underline ml-1">10 Mbps (10000)</button> · 
+                    <button type="button" onClick={() => setFormData({...formData, rate_limit_kbps: '100000'})} className="hover:text-accent underline ml-1">100 Mbps (100000)</button>
+                  </p>
                 </div>
               )}
             </div>
