@@ -201,7 +201,7 @@ export default function Policy() {
         setInitialThresholds({...thresholds});
         
       } catch (e: any) {
-        toast.error(e.response?.data?.detail || 'Erro ao salvar política');
+        toast.error('❌ Erro: ' + (e.response?.data?.detail || e.message));
       } finally {
         setSaving(false);
       }
