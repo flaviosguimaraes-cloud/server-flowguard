@@ -366,12 +366,21 @@ export default function Threats() {
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
+        <div className="flex flex-col gap-1">
           <div className="flex items-center gap-2 mb-1">
             <h1 className="text-2xl font-bold tracking-tight">{t('threats')} Detectadas</h1>
             <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-bold">IPv4</Badge>
           </div>
-          <p className="text-text-secondary">Análise comportamental de flows em tempo real</p>
+          <div className="flex items-center gap-2 text-text-secondary text-sm">
+            <span>Análise comportamental de flows em tempo real</span>
+            <span className="text-border">|</span>
+            <div className="flex items-center gap-1.5 text-xs bg-bg-secondary px-2 py-0.5 rounded border border-border">
+              <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
+              <span>Atualizado às {lastUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+              <span className="text-text-tertiary">·</span>
+              <span>Próxima em {countdown}s</span>
+            </div>
+          </div>
         </div>
 
         <div className="flex items-center bg-bg-secondary rounded-lg border border-border p-1 gap-1">
