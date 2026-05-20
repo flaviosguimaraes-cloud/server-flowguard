@@ -63,6 +63,17 @@ export default function Audit() {
     try { return new Date(s.replace(' ', 'T')).toLocaleString('pt-BR'); } catch { return s; }
   };
 
+  const fmtFull = (s?: string) => {
+    if (!s) return '—';
+    try {
+      const d = new Date(s.replace(' ', 'T'));
+      return new Intl.DateTimeFormat('pt-BR', {
+        dateStyle: 'full',
+        timeStyle: 'medium'
+      }).format(d);
+    } catch { return s; }
+  };
+
   const handleFilter = () => {
     setPage(1);
     refetch();
