@@ -513,7 +513,7 @@ export default function Policy() {
       {isAdmin && (
         <div className="flex justify-end pt-6">
           <button 
-            onClick={submit} 
+            onClick={handleSaveClick} 
             disabled={saving}
             className="flex items-center gap-2 px-8 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
           >
@@ -526,6 +526,45 @@ export default function Policy() {
           </button>
         </div>
       )}
+
+      <AlertDialog open={showRestartModal} onOpenChange={setShowRestartModal}>
+        <AlertDialogContent className="bg-bg-secondary border-border max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-warning">
+              <AlertTriangle size={20} />
+              Reiniciar detector?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-text-secondary space-y-4 pt-2">
+              <p>Os limiares de detecção foram alterados.</p>
+              <p>
+                O motor de detecção (FastNetMon) precisa ser reiniciado para aplicar as novas configurações.
+              </p>
+              <p className="font-semibold text-text-primary">
+                Durante o restart (~5s) a detecção ficará pausada.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel 
+              disabled={saving}
+              className="bg-transparent border-border hover:bg-bg-primary text-text-primary"
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                submit(true);
+              }}
+              disabled={saving}
+              className="bg-primary hover:bg-primary/90 text-white border-none"
+            >
+              {saving ? 'Salvando...' : 'Salvar e reiniciar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }
