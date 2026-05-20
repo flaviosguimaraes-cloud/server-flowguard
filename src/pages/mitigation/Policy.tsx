@@ -542,25 +542,26 @@ export default function Policy() {
             <p className="text-[10px] text-text-secondary italic">120s = 2min · 1800s = 30min</p>
           </div>
         </div>
+
+        {/* BOTÃO SALVAR */}
+        {isAdmin && (
+          <div className="flex justify-end pt-6 border-t border-border/50">
+            <button 
+              onClick={handleSaveClick} 
+              disabled={saving}
+              className="flex items-center gap-2 px-8 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
+            >
+              {saving ? (
+                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+              ) : (
+                <Save size={18} />
+              )}
+              Salvar e aplicar
+            </button>
+          </div>
+        )}
       </div>
 
-      {/* BOTÃO SALVAR */}
-      {isAdmin && (
-        <div className="flex justify-end pt-6">
-          <button 
-            onClick={handleSaveClick} 
-            disabled={saving}
-            className="flex items-center gap-2 px-8 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
-          >
-            {saving ? (
-              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-            ) : (
-              <Save size={18} />
-            )}
-            Salvar e aplicar
-          </button>
-        </div>
-      )}
 
       <AlertDialog open={showRestartModal} onOpenChange={setShowRestartModal}>
         <AlertDialogContent className="bg-bg-secondary border-border max-w-md">
