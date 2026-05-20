@@ -531,9 +531,9 @@ export default function Threats() {
                   </div>
                 </CardHeader>
                 <CardContent className="p-4 pt-2">
-                  <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mt-2">
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 font-mono text-sm mb-2">
+                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mt-2">
+                    <div className="flex-1 space-y-3">
+                      <div className="flex items-center gap-3 font-mono text-sm">
                         {threat.src_ip ? (
                           <>
                             <span className="bg-bg-primary px-2 py-1 rounded border border-border">{threat.src_ip}</span>
@@ -541,6 +541,42 @@ export default function Threats() {
                           </>
                         ) : null}
                         <span className="bg-bg-primary px-2 py-1 rounded border border-border">{threat.dst_ip}</span>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-text-secondary">
+                        {threat.type === 'port_scan' && (
+                          <>
+                            <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.unique_ports}</span> portas únicas</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-border" />
+                            <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.flows}</span> flows</span>
+                          </>
+                        )}
+                        {threat.type === 'syn_flood' && (
+                          <>
+                            <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.flows}</span> flows SYN</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-border" />
+                            <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.packets?.toLocaleString()}</span> pacotes</span>
+                          </>
+                        )}
+                        {(threat.type === 'dns_amplification' || threat.type === 'ntp_amplification') && (
+                          <>
+                            <span className="flex items-center gap-1.5">BPP: <span className="font-bold text-text-primary">{threat.bpp}</span> bytes</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-border" />
+                            <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.flows}</span> flows</span>
+                          </>
+                        )}
+                        {threat.type === 'udp_flood' && (
+                          <>
+                            <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.flows}</span> flows</span>
+                            <span className="w-1.5 h-1.5 rounded-full bg-border" />
+                            <span className="flex items-center gap-1.5">BPP: <span className="font-bold text-text-primary">{threat.bpp}</span></span>
+                          </>
+                        )}
+                      </div>
+
+                      <div className="flex items-center gap-2 text-xs text-text-secondary">
+                        <Clock size={12} className="text-primary" />
+                        <span className="font-medium">{formatRange(threat.first_seen, threat.last_seen)}</span>
                       </div>
 
                       {threat.mitigated && (
@@ -551,38 +587,7 @@ export default function Threats() {
                       )}
                     </div>
 
-                    <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-text-secondary">
-                      {threat.type === 'port_scan' && (
-                        <>
-                          <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.unique_ports}</span> portas únicas</span>
-                          <span className="w-1.5 h-1.5 rounded-full bg-border" />
-                          <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.flows}</span> flows</span>
-                        </>
-                      )}
-                      {threat.type === 'syn_flood' && (
-                        <>
-                          <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.flows}</span> flows SYN</span>
-                          <span className="w-1.5 h-1.5 rounded-full bg-border" />
-                          <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.packets?.toLocaleString()}</span> pacotes</span>
-                        </>
-                      )}
-                      {(threat.type === 'dns_amplification' || threat.type === 'ntp_amplification') && (
-                        <>
-                          <span className="flex items-center gap-1.5">BPP: <span className="font-bold text-text-primary">{threat.bpp}</span> bytes</span>
-                          <span className="w-1.5 h-1.5 rounded-full bg-border" />
-                          <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.flows}</span> flows</span>
-                        </>
-                      )}
-                      {threat.type === 'udp_flood' && (
-                        <>
-                          <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.flows}</span> flows</span>
-                          <span className="w-1.5 h-1.5 rounded-full bg-border" />
-                          <span className="flex items-center gap-1.5">BPP: <span className="font-bold text-text-primary">{threat.bpp}</span></span>
-                        </>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2 ml-auto" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex items-center gap-2 md:self-center" onClick={(e) => e.stopPropagation()}>
                       {!threat.mitigated ? (
                         <Button 
                           size="sm" 
