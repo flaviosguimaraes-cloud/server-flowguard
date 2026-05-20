@@ -473,7 +473,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       if (groupByIP) {
         const groups: Record<string, any> = {};
         items.forEach((item: any) => {
-          const ip = shouldFlip(item) ? item.dst_addr : item.src_addr;
+          const ip = item.src_addr;
           if (!groups[ip]) {
             groups[ip] = {
               ...item,
