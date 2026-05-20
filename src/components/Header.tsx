@@ -1,7 +1,8 @@
 import { Moon, Sun, Globe, LogOut, Menu, User, RefreshCw, Key, ChevronDown } from 'lucide-react';
  import { clsx } from 'clsx';
 import { useState, useEffect } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
+import { useQueryClient, useQuery } from '@tanstack/react-query';
+import api from '../services/api';
 import { useTranslation } from '../hooks/useTranslation';
 import { useAuth } from '../contexts/AuthContext';
 import { useTheme } from '../contexts/ThemeContext';
@@ -26,6 +27,13 @@ export const Header = () => {
   const [countdown, setCountdown] = useState(30);
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false);
+
+  const { data: settings } = useQuery({
+    queryKey: ['settings'],
+    queryFn: () => api.get('/api/settings').then(r => r.data),
+    staleTime: 60000,
+    enabled: !!localStorage.getItem('access_token'),
+  });
 
   const handleRefresh = async () => {
     setIsRefreshing(true);
@@ -107,7 +115,10 @@ export const Header = () => {
             <div className="flex items-center gap-3 pl-4 border-l border-border ml-2 group cursor-pointer outline-none">
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-semibold text-text-primary leading-tight group-hover:text-primary transition-colors">{user?.username}</p>
-                <p className="text-[10px] text-primary uppercase tracking-wider font-bold opacity-80">{user?.role}</p>
+                <div className="flex flex-col items-end">
+                  <p className="text-[10px] text-primary uppercase tracking-wider font-bold opacity-80 leading-none">{user?.role}</p>
+                  <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest mt-0.5">{settings?.org_name?.value || settings?.org_name || ''}</p>
+                </div>
               </div>
               <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm shadow-md shadow-primary/20 transition-all group-hover:scale-105 border border-white/10 relative">
                 {userInitial}
