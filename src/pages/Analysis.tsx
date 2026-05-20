@@ -888,18 +888,17 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                   </tr>
                 ) : (
                   connectionItems.map((item: any, i: number) => {
-                    const flipped = shouldFlip(item);
-                    const direction = item.flow_direction || (flipped ? 'incoming' : 'outgoing');
+                    const direction = item.flow_direction || 'incoming';
                     
-                    const src = flipped ? item.dst_addr : item.src_addr;
-                    const srcPort = flipped ? item.dst_port : item.src_port;
-                    const srcCountry = flipped ? item.dst_country : item.src_country;
+                    const src = item.src_addr;
+                    const srcPort = item.src_port;
+                    const srcCountry = item.src_country;
                     
-                    const dst = flipped ? item.src_addr : item.dst_addr;
-                    const dstPort = flipped ? item.src_port : item.dst_port;
-                    const dstCountry = flipped ? item.src_country : item.dst_country;
+                    const dst = item.dst_addr;
+                    const dstPort = item.dst_port;
+                    const dstCountry = item.dst_country;
                     
-                    const dstOrg = flipped ? item.src_org : item.dst_org;
+                    const dstOrg = item.dst_org;
                     
                     const isSuspicious = item.bytes > 1e9;
   
