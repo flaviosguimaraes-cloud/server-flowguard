@@ -51,6 +51,9 @@ interface Threat {
   packets?: number;
   bytes?: number;
   bpp?: number;
+  port_range_min?: number;
+  port_range_max?: number;
+  syn_flows?: number;
   mitigated?: boolean;
   flowspec_id?: number;
   first_seen?: string;
