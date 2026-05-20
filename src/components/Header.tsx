@@ -115,7 +115,10 @@ export const Header = () => {
             <div className="flex items-center gap-3 pl-4 border-l border-border ml-2 group cursor-pointer outline-none">
               <div className="text-right hidden sm:block">
                 <p className="text-sm font-semibold text-text-primary leading-tight group-hover:text-primary transition-colors">{user?.username}</p>
-                <p className="text-[10px] text-primary uppercase tracking-wider font-bold opacity-80">{user?.role}</p>
+                <div className="flex flex-col items-end">
+                  <p className="text-[10px] text-primary uppercase tracking-wider font-bold opacity-80 leading-none">{user?.role}</p>
+                  <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest mt-0.5">{settings?.org_name?.value || settings?.org_name || ''}</p>
+                </div>
               </div>
               <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm shadow-md shadow-primary/20 transition-all group-hover:scale-105 border border-white/10 relative">
                 {userInitial}
