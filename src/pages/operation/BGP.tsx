@@ -1,11 +1,34 @@
+import { useState } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
-import { Link as LinkIcon, Activity, Clock, Network, RefreshCw } from 'lucide-react';
+import { Link as LinkIcon, Activity, Clock, Network, RefreshCw, Trash2, Shield, AlertCircle, Info, User, Calendar } from 'lucide-react';
 import { clsx } from 'clsx';
 import { toast } from 'sonner';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "../../components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../components/ui/alert-dialog";
+import { Badge } from "../../components/ui/badge";
+import { Button } from "../../components/ui/button";
+import { Separator } from "../../components/ui/separator";
 
 export default function BGP() {
   const queryClient = useQueryClient();
+  const [selectedRoute, setSelectedRoute] = useState<any>(null);
+  const [routeToDelete, setRouteToDelete] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   
   const { data: sessionsData, isLoading: loadingSessions, isRefetching: refetchingSessions, refetch: refetchSessions } = useQuery({
     queryKey: ['bgp-sessions'],
@@ -56,6 +79,29 @@ export default function BGP() {
     refetchSessions();
     refetchRoutes();
     toast.info('Dados BGP atualizados');
+  };
+
+  const handleDelete = async (route: any) => {
+    setIsDeleting(true);
+    try {
+      const type = (route.type || '').toLowerCase();
+      if (type === 'flowspec') {
+        await api.delete(`/api/mitigation/flowspec/${route.id}`);
+      } else {
+        await api.post('/api/mitigation/remove', {
+          ip: route.prefix.split('/')[0],
+          reason: 'manual'
+        });
+      }
+      toast.success('Rota removida com sucesso');
+      queryClient.invalidateQueries({ queryKey: ['bgp-routes'] });
+      setSelectedRoute(null);
+      setRouteToDelete(null);
+    } catch (error: any) {
+      toast.error(error.response?.data?.detail || 'Erro ao remover rota');
+    } finally {
+      setIsDeleting(false);
+    }
   };
 
   return (
@@ -233,11 +279,18 @@ export default function BGP() {
                     const action = (route.action || '').toLowerCase();
                     
                     return (
-                      <tr key={i} className="hover:bg-bg-primary/30 transition-colors group">
-                        <td className="px-4 py-3 font-mono text-sm text-text-primary font-bold group-hover:text-primary transition-colors">{route.prefix}</td>
+                      <tr 
+                        key={i} 
+                        className="hover:bg-bg-primary/30 transition-colors group cursor-pointer"
+                        onClick={() => setSelectedRoute(route)}
+                      >
+                        <td className="px-4 py-3 font-mono text-sm text-text-primary font-bold group-hover:text-primary transition-colors">
+                          <div className="flex items-center gap-2">
+                            {route.prefix}
+                          </div>
+                        </td>
                         <td className="px-4 py-3 font-mono text-xs text-text-secondary">{route.nexthop || '—'}</td>
                         
-                        {/* AJUSTE 3 — Coluna DETALHES */}
                         <td className="px-4 py-3 font-mono text-xs text-text-secondary">
                           {type === 'flowspec' ? (
                             <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>
@@ -249,7 +302,6 @@ export default function BGP() {
                         </td>
 
                         <td className="px-4 py-3">
-                          {/* AJUSTE 1 & 2 — Coluna TIPO */}
                           <span className={clsx(
                             "px-2 py-0.5 rounded text-[10px] font-bold uppercase border",
                             type === 'blackhole' && "bg-danger/10 text-danger border-danger/20",
@@ -270,7 +322,6 @@ export default function BGP() {
                           </span>
                         </td>
 
-                        {/* AJUSTE 4 — Coluna AÇÃO */}
                         <td className="px-4 py-3 text-xs text-text-primary">
                           {type === 'flowspec' ? (
                             action === 'discard' ? 'Descartar' : 
@@ -283,12 +334,25 @@ export default function BGP() {
                            source === 'blacklist' ? 'Blacklist manual' :
                            source === 'manual' ? 'Manual' : (route.source || '—')}
                         </td>
-                        <td className="px-4 py-3 text-xs text-text-primary flex items-center gap-2">
-                          <Clock size={12} className="text-text-secondary" />
-                          {route.age || '—'}
+                        <td className="px-4 py-3 text-xs text-text-primary">
+                          <div className="flex items-center gap-2">
+                            <Clock size={12} className="text-text-secondary" />
+                            {route.age || '—'}
+                          </div>
                         </td>
-                        <td className="px-4 py-3 text-xs text-text-primary font-bold">
-                          {timeActive(route.age)}
+                        <td className="px-4 py-3 text-xs text-text-primary font-bold relative">
+                          <div className="flex items-center justify-between gap-2">
+                            {timeActive(route.age)}
+                            <button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setRouteToDelete(route);
+                              }}
+                              className="opacity-0 group-hover:opacity-100 transition-opacity p-1.5 hover:bg-danger/10 rounded-lg text-danger"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
                         </td>
                       </tr>
                     );
@@ -299,6 +363,194 @@ export default function BGP() {
           </div>
         </div>
       </div>
+
+      {/* Route Details Modal */}
+      <Sheet open={!!selectedRoute} onOpenChange={(open) => !open && setSelectedRoute(null)}>
+        <SheetContent className="sm:max-w-md bg-bg-secondary border-l border-border">
+          <SheetHeader className="text-left pb-4">
+            <SheetTitle className="flex items-center gap-2 text-xl font-bold">
+              {selectedRoute?.type === 'flowspec' ? 'Regra FlowSpec' : 'Rota Blackhole'}
+            </SheetTitle>
+          </SheetHeader>
+          
+          {selectedRoute && (
+            <div className="space-y-6 animate-in slide-in-from-right duration-300">
+              {/* Status Header */}
+              <div className={clsx(
+                "p-4 rounded-xl border flex items-center gap-3",
+                selectedRoute.type === 'flowspec' ? "bg-primary/5 border-primary/20 text-primary" : "bg-danger/5 border-danger/20 text-danger"
+              )}>
+                <div className={clsx("p-2 rounded-lg", selectedRoute.type === 'flowspec' ? "bg-primary/10" : "bg-danger/10")}>
+                  {selectedRoute.type === 'flowspec' ? <Shield size={24} /> : <AlertCircle size={24} />}
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-black uppercase tracking-wider text-xs">
+                      {selectedRoute.type === 'flowspec' ? '🟣 FLOWSPEC' : '🔴 BLACKHOLE'}
+                    </span>
+                    {selectedRoute.type === 'flowspec' && (
+                      <span className="font-bold">· {selectedRoute.action === 'discard' ? 'Descartar' : 'Rate Limit'}</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+
+              {selectedRoute.type === 'flowspec' ? (
+                <>
+                  {/* FlowSpec Details */}
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Destino</h4>
+                      <p className="font-mono text-lg font-bold text-text-primary">Prefixo: {selectedRoute.prefix}</p>
+                    </div>
+
+                    <Separator className="bg-border/50" />
+
+                    <div>
+                      <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Origem Bloqueada</h4>
+                      <div className="space-y-2">
+                        <p className="font-mono text-sm text-text-primary flex justify-between">
+                          <span className="text-text-secondary">Prefixo:</span>
+                          <span className="font-bold">{selectedRoute.src_prefix || 'Qualquer (0.0.0.0/0)'}</span>
+                        </p>
+                        <p className="font-mono text-sm text-text-primary flex justify-between">
+                          <span className="text-text-secondary">Protocolo:</span>
+                          <span className="font-bold uppercase">{selectedRoute.protocol || '—'}</span>
+                        </p>
+                        <p className="font-mono text-sm text-text-primary flex justify-between">
+                          <span className="text-text-secondary">Porta origem:</span>
+                          <span className="font-bold">{selectedRoute.src_port || '—'}</span>
+                        </p>
+                        <p className="font-mono text-sm text-text-primary flex justify-between">
+                          <span className="text-text-secondary">Porta destino:</span>
+                          <span className="font-bold">{selectedRoute.dst_port || '—'}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <Separator className="bg-border/50" />
+
+                    <div>
+                      <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Informações</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-text-secondary flex items-center gap-1.5"><Calendar size={14} /> Criado em:</span>
+                          <span className="text-text-primary font-bold">{selectedRoute.age?.substring(5, 16).replace('-', '/') || '—'}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-text-secondary flex items-center gap-1.5"><User size={14} /> Criado por:</span>
+                          <span className="text-text-primary font-bold">{selectedRoute.created_by || 'sistema'}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-text-secondary flex items-center gap-1.5"><Clock size={14} /> Tempo ativo:</span>
+                          <span className="text-text-primary font-bold">{timeActive(selectedRoute.age)}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-text-secondary flex items-center gap-1.5"><Info size={14} /> Status:</span>
+                          <Badge className="bg-success/10 text-success border-success/20 font-bold text-[10px]">ATIVA</Badge>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-6">
+                    <Button 
+                      variant="destructive" 
+                      className="w-full font-bold gap-2 bg-danger hover:bg-danger/90"
+                      onClick={() => setRouteToDelete(selectedRoute)}
+                    >
+                      <Trash2 size={16} />
+                      Remover regra
+                    </Button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Blackhole Details */}
+                  <div className="space-y-4">
+                    <div>
+                      <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">IP Bloqueado</h4>
+                      <p className="font-mono text-lg font-bold text-text-primary">Prefixo: {selectedRoute.prefix}</p>
+                    </div>
+
+                    <Separator className="bg-border/50" />
+
+                    <div>
+                      <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">BGP</h4>
+                      <div className="space-y-2">
+                        <p className="font-mono text-sm text-text-primary flex justify-between">
+                          <span className="text-text-secondary">Next-hop:</span>
+                          <span className="font-bold">{selectedRoute.nexthop || '—'}</span>
+                        </p>
+                        <p className="font-mono text-sm text-text-primary flex justify-between">
+                          <span className="text-text-secondary">Community:</span>
+                          <span className="font-bold">{selectedRoute.community || '—'}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    <Separator className="bg-border/50" />
+
+                    <div>
+                      <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2">Informações</h4>
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-text-secondary flex items-center gap-1.5"><Calendar size={14} /> Anunciado em:</span>
+                          <span className="text-text-primary font-bold">{selectedRoute.age?.substring(5, 16).replace('-', '/') || '—'}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-text-secondary flex items-center gap-1.5"><Clock size={14} /> Tempo ativo:</span>
+                          <span className="text-text-primary font-bold">{timeActive(selectedRoute.age)}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-sm">
+                          <span className="text-text-secondary flex items-center gap-1.5"><Info size={14} /> Origem:</span>
+                          <span className="text-text-primary font-bold">
+                            {selectedRoute.source === 'mitigation' ? 'Mitigação automática' :
+                             selectedRoute.source === 'blacklist' ? 'Blacklist manual' : 'Manual'}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="pt-6">
+                    <Button 
+                      variant="destructive" 
+                      className="w-full font-bold gap-2 bg-danger hover:bg-danger/90"
+                      onClick={() => setRouteToDelete(selectedRoute)}
+                    >
+                      <Trash2 size={16} />
+                      Remover blackhole
+                    </Button>
+                  </div>
+                </>
+              )}
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
+
+      {/* Confirmation Dialog */}
+      <AlertDialog open={!!routeToDelete} onOpenChange={(open) => !open && setRouteToDelete(null)}>
+        <AlertDialogContent className="bg-bg-secondary border border-border">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-text-primary">Remover esta rota?</AlertDialogTitle>
+            <AlertDialogDescription className="text-text-secondary">
+              Esta ação retirará o anúncio BGP para <strong>{routeToDelete?.prefix}</strong>. O tráfego voltará a fluir normalmente.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="bg-bg-primary text-text-primary hover:bg-bg-primary/80 border-border">Cancelar</AlertDialogCancel>
+            <AlertDialogAction 
+              onClick={() => handleDelete(routeToDelete)}
+              className="bg-danger text-white hover:bg-danger/90"
+              disabled={isDeleting}
+            >
+              {isDeleting ? 'Removendo...' : 'Remover'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }
