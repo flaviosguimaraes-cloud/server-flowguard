@@ -1,8 +1,19 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
-import { Shield, Save, Zap, Sliders } from 'lucide-react';
+import { Shield, Save, Zap, Sliders, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../components/ui/alert-dialog";
+
 import { clsx } from 'clsx';
 
 type Mode = 'blackhole' | 'external';
@@ -91,56 +102,111 @@ export default function Policy() {
   useEffect(() => {
      if (thresholdData) {
        setThresholds(thresholdData);
+       setInitialThresholds(thresholdData);
      }
    }, [thresholdData]);
 
-   const [saving, setSaving] = useState(false);
-  
-   const submit = async () => {
-     setSaving(true);
-     try {
-       const isAutoConfigEnabled = autoConfig.operation_mode !== 'disabled';
+    const [saving, setSaving] = useState(false);
+    const [initialThresholds, setInitialThresholds] = useState<any>(null);
+    const [showRestartModal, setShowRestartModal] = useState(false);
 
-       await Promise.all([
-         api.put('/api/mitigation/policy', {
-            mode,
-            blackhole_community: blackholeCommunity,
-            external_community: externalCommunity,
-            external_block: externalBlock,
-            flowspec_enabled: isAutoConfigEnabled,
-         }),
-         api.put('/api/mitigation/auto-config', {
-            ...autoConfig,
-            enabled: isAutoConfigEnabled,
-            operation_mode: isAutoConfigEnabled ? autoConfig.operation_mode : 'blackhole_flowspec',
-            default_rate_limit_kbps: Number(autoConfig.default_rate_limit_kbps) || 1000,
-            default_ttl_minutes: Number(autoConfig.default_ttl_minutes) || 120,
-         }),
-         api.put('/api/detection/thresholds', {
-            ...thresholds,
-            threshold_pps: Number(thresholds.threshold_pps) || 0,
-            threshold_mbps: Number(thresholds.threshold_mbps) || 0,
-            threshold_flows: Number(thresholds.threshold_flows) || 0,
-            threshold_tcp_pps: Number(thresholds.threshold_tcp_pps) || 0,
-            threshold_tcp_mbps: Number(thresholds.threshold_tcp_mbps) || 0,
-            threshold_udp_pps: Number(thresholds.threshold_udp_pps) || 0,
-            threshold_udp_mbps: Number(thresholds.threshold_udp_mbps) || 0,
-            threshold_icmp_pps: Number(thresholds.threshold_icmp_pps) || 0,
-            threshold_icmp_mbps: Number(thresholds.threshold_icmp_mbps) || 0,
-            ban_time: Number(thresholds.ban_time) || 0,
-         })
-       ]);
-       
-       toast.success('✅ Política salva');
-       qc.invalidateQueries({ queryKey: ['mitigation-policy'] });
-       qc.invalidateQueries({ queryKey: ['mitigation-auto-config'] });
-       qc.invalidateQueries({ queryKey: ['thresholds-policy'] });
-     } catch (e: any) {
-       toast.error(e.response?.data?.detail || 'Erro ao salvar política');
-     } finally {
-       setSaving(false);
-     }
-   };
+    const hasThresholdsChanged = () => {
+      if (!initialThresholds) return false;
+      
+      const keys = [
+        'threshold_pps', 'threshold_mbps', 'threshold_flows',
+        'threshold_tcp_pps', 'threshold_tcp_mbps',
+        'threshold_udp_pps', 'threshold_udp_mbps',
+        'threshold_icmp_pps', 'threshold_icmp_mbps',
+        'ban_for_pps', 'ban_for_bandwidth', 'ban_for_flows',
+        'ban_for_tcp_pps', 'ban_for_tcp_bandwidth',
+        'ban_for_udp_pps', 'ban_for_udp_bandwidth',
+        'ban_for_icmp_pps', 'ban_for_icmp_bandwidth',
+        'ban_time'
+      ];
+
+      return keys.some(key => {
+        const current = thresholds[key];
+        const initial = initialThresholds[key];
+        
+        if (key.startsWith('threshold_') || key === 'ban_time') {
+          return (Number(current) || 0) !== (Number(initial) || 0);
+        }
+        
+        return !!current !== !!initial;
+      });
+    };
+
+    const handleSaveClick = () => {
+      if (hasThresholdsChanged()) {
+        setShowRestartModal(true);
+      } else {
+        submit(false);
+      }
+    };
+  
+    const submit = async (shouldRestart: boolean = false) => {
+      setSaving(true);
+      setShowRestartModal(false);
+      try {
+        const isAutoConfigEnabled = autoConfig.operation_mode !== 'disabled';
+
+        const promises: Promise<any>[] = [
+          api.put('/api/mitigation/policy', {
+             mode,
+             blackhole_community: blackholeCommunity,
+             external_community: externalCommunity,
+             external_block: externalBlock,
+             flowspec_enabled: isAutoConfigEnabled,
+          }),
+          api.put('/api/mitigation/auto-config', {
+             ...autoConfig,
+             enabled: isAutoConfigEnabled,
+             operation_mode: isAutoConfigEnabled ? autoConfig.operation_mode : 'blackhole_flowspec',
+             default_rate_limit_kbps: Number(autoConfig.default_rate_limit_kbps) || 1000,
+             default_ttl_minutes: Number(autoConfig.default_ttl_minutes) || 120,
+          }),
+          api.put('/api/detection/thresholds', {
+             ...thresholds,
+             threshold_pps: Number(thresholds.threshold_pps) || 0,
+             threshold_mbps: Number(thresholds.threshold_mbps) || 0,
+             threshold_flows: Number(thresholds.threshold_flows) || 0,
+             threshold_tcp_pps: Number(thresholds.threshold_tcp_pps) || 0,
+             threshold_tcp_mbps: Number(thresholds.threshold_tcp_mbps) || 0,
+             threshold_udp_pps: Number(thresholds.threshold_udp_pps) || 0,
+             threshold_udp_mbps: Number(thresholds.threshold_udp_mbps) || 0,
+             threshold_icmp_pps: Number(thresholds.threshold_icmp_pps) || 0,
+             threshold_icmp_mbps: Number(thresholds.threshold_icmp_mbps) || 0,
+             ban_time: Number(thresholds.ban_time) || 0,
+          })
+        ];
+
+        if (shouldRestart) {
+          promises.push(api.post('/api/system/restart/detection_engine'));
+        }
+
+        await Promise.all(promises);
+        
+        if (shouldRestart) {
+          toast.success('✅ Política salva · Motor de detecção reiniciado');
+        } else {
+          toast.success('✅ Política salva');
+        }
+
+        qc.invalidateQueries({ queryKey: ['mitigation-policy'] });
+        qc.invalidateQueries({ queryKey: ['mitigation-auto-config'] });
+        qc.invalidateQueries({ queryKey: ['thresholds-policy'] });
+        
+        // Atualiza os limiares iniciais após salvar com sucesso
+        setInitialThresholds({...thresholds});
+        
+      } catch (e: any) {
+        toast.error(e.response?.data?.detail || 'Erro ao salvar política');
+      } finally {
+        setSaving(false);
+      }
+    };
+
 
   const ModeCard = ({ value, title, community, onChangeCommunity, description }: any) => {
     const selected = mode === value;
@@ -447,7 +513,7 @@ export default function Policy() {
       {isAdmin && (
         <div className="flex justify-end pt-6">
           <button 
-            onClick={submit} 
+            onClick={handleSaveClick} 
             disabled={saving}
             className="flex items-center gap-2 px-8 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
           >
@@ -460,6 +526,45 @@ export default function Policy() {
           </button>
         </div>
       )}
+
+      <AlertDialog open={showRestartModal} onOpenChange={setShowRestartModal}>
+        <AlertDialogContent className="bg-bg-secondary border-border max-w-md">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="flex items-center gap-2 text-warning">
+              <AlertTriangle size={20} />
+              Reiniciar detector?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-text-secondary space-y-4 pt-2">
+              <p>Os limiares de detecção foram alterados.</p>
+              <p>
+                O motor de detecção (FastNetMon) precisa ser reiniciado para aplicar as novas configurações.
+              </p>
+              <p className="font-semibold text-text-primary">
+                Durante o restart (~5s) a detecção ficará pausada.
+              </p>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter className="gap-2 sm:gap-0">
+            <AlertDialogCancel 
+              disabled={saving}
+              className="bg-transparent border-border hover:bg-bg-primary text-text-primary"
+            >
+              Cancelar
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={(e) => {
+                e.preventDefault();
+                submit(true);
+              }}
+              disabled={saving}
+              className="bg-primary hover:bg-primary/90 text-white border-none"
+            >
+              {saving ? 'Salvando...' : 'Salvar e reiniciar'}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
+
     </div>
   );
 }
