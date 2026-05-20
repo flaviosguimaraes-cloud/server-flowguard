@@ -98,7 +98,6 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
   const MAX_HOURS = 4;
    
     const isLocalIP = (ip: string) => ip?.startsWith('45.175.50.');
-    const shouldFlip = (item: any) => !isLocalIP(item.src_addr) && isLocalIP(item.dst_addr);
     const getService = (port: number) => {
       const s: Record<number, string> = {
         80:'HTTP', 443:'HTTPS', 53:'DNS', 22:'SSH', 25:'SMTP', 110:'POP3',
