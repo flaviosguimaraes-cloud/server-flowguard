@@ -53,6 +53,8 @@ interface Threat {
   bpp?: number;
   mitigated?: boolean;
   flowspec_id?: number;
+  first_seen?: string;
+  last_seen?: string;
 }
 
 interface ThreatsResponse {
