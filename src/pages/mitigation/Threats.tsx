@@ -68,6 +68,8 @@ export default function Threats() {
   const [selectedThreat, setSelectedThreat] = useState<Threat | null>(null);
   const [threatToBlock, setThreatToBlock] = useState<{ threat: Threat, index: number } | null>(null);
   const [ttlMinutes, setTtlMinutes] = useState(360);
+  const [blockAction, setBlockAction] = useState<'discard' | 'rate-limit'>('discard');
+  const [blockRateLimit, setBlockRateLimit] = useState(1000);
   const [minutes, setMinutes] = useState(60);
   const [ignoredThreats, setIgnoredThreats] = useState<string[]>(() => {
     const saved = localStorage.getItem('ignored_threats');
