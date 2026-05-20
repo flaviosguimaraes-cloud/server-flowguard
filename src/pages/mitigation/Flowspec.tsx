@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import { List, Plus, Trash2, Shield, Info, AlertTriangle, Clock } from 'lucide-react';
@@ -64,6 +64,35 @@ const Flowspec = () => {
       </span>
     );
   };
+  
+  const [now, setNow] = useState(new Date());
+
+  useEffect(() => {
+    const timer = setInterval(() => setNow(new Date()), 1000);
+    return () => clearInterval(timer);
+  }, []);
+
+  const getCountdown = (expires_at: string) => {
+    if (!expires_at) return null;
+    const diff = new Date(expires_at).getTime() - now.getTime();
+    if (diff <= 0) return "Expirado";
+    const h = Math.floor(diff / 3600000);
+    const m = Math.floor((diff % 3600000) / 60000);
+    const s = Math.floor((diff % 60000) / 1000);
+    if (h > 0) return `${h}h ${m}m`;
+    if (m > 0) return `${m}m ${s}s`;
+    return `${s}s`;
+  };
+
+  const getCountdownColor = (expires_at: string) => {
+    if (!expires_at) return '';
+    const diff = new Date(expires_at).getTime() - now.getTime();
+    if (diff <= 0) return 'text-danger';
+    if (diff < 300000) return 'text-danger animate-pulse'; // < 5min
+    if (diff < 1800000) return 'text-[#ef4444]'; // < 30min
+    if (diff < 3600000) return 'text-[#f59e0b]'; // < 1h
+    return 'text-text-secondary';
+  };
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -100,6 +129,7 @@ const Flowspec = () => {
                 <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Portas</th>
                 <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Ação</th>
                 <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">BGP Status</th>
+                <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Expira em</th>
                 <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Operador</th>
                 <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Criado</th>
                 {isAdmin && <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Ações</th>}
@@ -136,6 +166,17 @@ const Flowspec = () => {
                       </div>
                     </td>
                     <td className="px-4 py-3">{getBgpStatusBadge(rule.bgp_status)}</td>
+                    <td className="px-4 py-3">
+                      {rule.expires_at ? (
+                        <span className={clsx("font-mono text-xs font-bold", getCountdownColor(rule.expires_at))}>
+                          {getCountdown(rule.expires_at)}
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-500/10 text-gray-500 border border-gray-500/20">
+                          Permanente
+                        </span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 text-xs text-text-primary">{rule.operator || 'system'}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col">
