@@ -52,15 +52,34 @@ const Flowspec = () => {
     );
   };
 
-  const getActionBadge = (action: string) => {
-    const config: any = {
-      discard: { color: 'bg-danger/10 text-danger border-danger/20', label: 'Descartar' },
-      'rate-limit': { color: 'bg-warning/10 text-warning border-warning/20', label: 'Rate Limit' },
-    };
-    const c = config[action] || { color: 'bg-gray-500/10 text-gray-500 border-gray-500/20', label: action };
+  const getActionBadge = (action: string, rate_limit_kbps?: number) => {
+    if (action === 'discard') {
+      return (
+        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase border bg-danger/10 text-danger border-danger/20">
+          Descartar
+        </span>
+      );
+    }
+    
+    if (action === 'rate-limit') {
+      const mbps = rate_limit_kbps ? (rate_limit_kbps / 1000) : 0;
+      return (
+        <div className="flex flex-col gap-0.5">
+          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase border bg-warning/10 text-warning border-warning/20">
+            Rate-Limit
+          </span>
+          {rate_limit_kbps && (
+            <span className="text-[9px] text-text-secondary font-bold text-center">
+              {mbps >= 1 ? `${mbps} Mbps` : `${rate_limit_kbps} Kbps`}
+            </span>
+          )}
+        </div>
+      );
+    }
+
     return (
-      <span className={clsx("px-2 py-0.5 rounded text-[10px] font-bold uppercase border", c.color)}>
-        {c.label}
+      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase border bg-gray-500/10 text-gray-500 border-gray-500/20">
+        {action}
       </span>
     );
   };
