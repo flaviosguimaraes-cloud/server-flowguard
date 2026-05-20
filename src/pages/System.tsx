@@ -187,7 +187,7 @@ const System = () => {
                 
                 {isAdmin && (
                   <button
-                    onClick={() => handleRestart(service.id)}
+                    onClick={() => handleRestart(service.id, service.name)}
                     disabled={restarting === service.id}
                     className="p-2 text-text-secondary hover:text-primary hover:bg-primary/5 rounded-lg transition-all"
                     title="Reiniciar serviço"
