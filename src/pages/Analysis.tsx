@@ -195,7 +195,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       const d = newDate || endDate;
       const t = newTime || endTime;
       if (newDate) setEndDate(d);
-      if (newTime) setStartTime(t);
+      if (newTime) setEndTime(t);
 
       const s = new Date(`${startDate}T${startTime}`);
       const e = new Date(`${d}T${t}`);
