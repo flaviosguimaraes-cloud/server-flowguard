@@ -63,6 +63,26 @@ interface ThreatsResponse {
   threats: Threat[];
 }
 
+const formatRange = (first?: string, last?: string) => {
+  if (!first) return '';
+  const f = first.slice(11, 16); // HH:MM
+  const l = last?.slice(11, 16);
+
+  // Calcular duração
+  const startDate = new Date(first.replace(' ', 'T'));
+  const endDate = last ? new Date(last.replace(' ', 'T')) : new Date();
+  const diff = endDate.getTime() - startDate.getTime();
+  const mins = Math.floor(diff / 60000);
+  const hours = Math.floor(mins / 60);
+  const remMins = mins % 60;
+
+  const duration = hours > 0
+    ? `${hours}h ${remMins}m`
+    : `${mins}m`;
+
+  return `${f} – ${l || 'agora'} (${duration} ativo)`;
+};
+
 export default function Threats() {
   const { t } = useTranslation();
   const navigate = useNavigate();
@@ -73,6 +93,8 @@ export default function Threats() {
   const [blockAction, setBlockAction] = useState<'discard' | 'rate-limit'>('discard');
   const [blockRateLimit, setBlockRateLimit] = useState(1000);
   const [minutes, setMinutes] = useState(60);
+  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
+  const [countdown, setCountdown] = useState(60);
   const [ignoredThreats, setIgnoredThreats] = useState<string[]>(() => {
     const saved = localStorage.getItem('ignored_threats');
     return saved ? JSON.parse(saved) : [];
@@ -82,10 +104,19 @@ export default function Threats() {
     queryKey: ['threats', minutes],
     queryFn: async () => {
       const response = await api.get(`/api/flows/threats?minutes=${minutes}`);
+      setLastUpdate(new Date());
+      setCountdown(60);
       return response.data;
     },
     refetchInterval: 60000,
   });
+
+  useEffect(() => {
+    const timer = setInterval(() => {
+      setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
+    }, 1000);
+    return () => clearInterval(timer);
+  }, []);
 
   const { data: flowspecData } = useQuery({
     queryKey: ['flowspec-rules'],
