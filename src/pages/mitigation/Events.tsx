@@ -415,13 +415,13 @@ function SectionDivider({ title }: { title: string }) {
         {/* SEÇÃO 2 — Blackholes Ativos (condicional) */}
         {(activeMitigations?.items || []).length > 0 ? (
           <>
-            <SectionDivider title="Bloqueios Ativos Agora" />
+            <SectionDivider title="Mitigações Ativas Agora" />
             <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden mb-6">
               <div className="overflow-x-auto">
                 <table className="w-full text-left border-collapse">
                   <thead>
                     <tr className="bg-bg-primary/50 text-[10px] uppercase tracking-widest text-text-secondary font-bold">
-                      <th className="px-6 py-4 border-b border-border">IP em Blackhole</th>
+                      <th className="px-6 py-4 border-b border-border">IP Atacado</th>
                       <th className="px-6 py-4 border-b border-border">Início</th>
                       <th className="px-6 py-4 border-b border-border">Volume</th>
                       <th className="px-6 py-4 border-b border-border text-center">Direção</th>
