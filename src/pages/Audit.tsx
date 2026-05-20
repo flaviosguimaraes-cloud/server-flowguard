@@ -1,7 +1,7 @@
 import { useMemo, useState, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import api from '../services/api';
-import { ClipboardList, X } from 'lucide-react';
+import { ClipboardList, X, Calendar, User, Activity, Globe, Info } from 'lucide-react';
 
 const ACTION_LABELS: Record<string, { label: string, color: string, icon: string }> = {
   login_success: { label: 'Login realizado', color: '#22c55e', icon: '🔐' },
