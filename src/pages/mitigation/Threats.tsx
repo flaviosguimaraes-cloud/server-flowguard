@@ -361,8 +361,8 @@ export default function Threats() {
                       </div>
                     </div>
                     {threat.mitigated && (
-                      <Badge className="bg-success/10 text-success border-success/20 font-bold flex items-center gap-1 px-3 py-1">
-                        <CheckCircle size={14} />
+                      <Badge className="bg-purple-500/10 text-purple-500 border-purple-500/30 font-bold flex items-center gap-1 px-3 py-1">
+                        <ShieldCheck size={14} />
                         MITIGADO
                       </Badge>
                     )}
@@ -370,14 +370,23 @@ export default function Threats() {
                 </CardHeader>
                 <CardContent className="p-4 pt-2">
                   <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mt-2">
-                    <div className="flex items-center gap-3 font-mono text-sm">
-                      {threat.src_ip ? (
-                        <>
-                          <span className="bg-bg-primary px-2 py-1 rounded border border-border">{threat.src_ip}</span>
-                          <ArrowRight size={16} className="text-text-secondary" />
-                        </>
-                      ) : null}
-                      <span className="bg-bg-primary px-2 py-1 rounded border border-border">{threat.dst_ip}</span>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 font-mono text-sm mb-2">
+                        {threat.src_ip ? (
+                          <>
+                            <span className="bg-bg-primary px-2 py-1 rounded border border-border">{threat.src_ip}</span>
+                            <ArrowRight size={16} className="text-text-secondary" />
+                          </>
+                        ) : null}
+                        <span className="bg-bg-primary px-2 py-1 rounded border border-border">{threat.dst_ip}</span>
+                      </div>
+
+                      {threat.mitigated && (
+                        <p className="text-xs text-text-secondary flex items-center gap-2">
+                          <Zap size={12} className="text-purple-500" />
+                          FlowSpec #{threat.flowspec_id?.substring(0, 8)} ativo · detectado em tempo real
+                        </p>
+                      )}
                     </div>
 
                     <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-text-secondary">
