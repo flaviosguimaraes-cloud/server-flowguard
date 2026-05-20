@@ -37,7 +37,7 @@ export default function FlowSpecModal({ isOpen, onClose, onSuccess }: FlowSpecMo
       ...formData,
       dst_port: formData.dst_port ? parseInt(formData.dst_port) : null,
       src_port: formData.src_port ? parseInt(formData.src_port) : null,
-      rate_limit_kbps: formData.rate_limit_kbps ? parseInt(formData.rate_limit_kbps) : null,
+      rate_limit_kbps: formData.action === 'rate-limit' ? (formData.rate_limit_kbps ? parseInt(formData.rate_limit_kbps) : 0) : 0,
       ttl_minutes: parseInt(formData.ttl_minutes as any),
       src_prefix: formData.src_prefix || null,
     };
