@@ -166,7 +166,7 @@ export default function Policy() {
              default_rate_limit_kbps: Number(autoConfig.default_rate_limit_kbps) || 1000,
              default_ttl_minutes: Number(autoConfig.default_ttl_minutes) || 120,
           }),
-          api.put('/api/detection/thresholds', {
+          api.put('/api/thresholds', {
              ...thresholds,
              threshold_pps: Number(thresholds.threshold_pps) || 0,
              threshold_mbps: Number(thresholds.threshold_mbps) || 0,
