@@ -303,6 +303,16 @@ export default function Threats() {
 
   const handleBlockClick = (threat: Threat, index: number) => {
     setTtlMinutes(getSuggestedTtl(threat.type));
+    
+    // Set default action and rate limit based on threat type
+    if (['dns_amplification', 'ntp_amplification', 'ssdp_amplification'].includes(threat.type)) {
+      setBlockAction('rate-limit');
+      setBlockRateLimit(512);
+    } else {
+      setBlockAction('discard');
+      setBlockRateLimit(1000);
+    }
+    
     setThreatToBlock({ threat, index });
   };
 
