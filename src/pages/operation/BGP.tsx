@@ -350,6 +350,45 @@ export default function BGP() {
                     const source = (route.source || '').toLowerCase();
                     const action = (route.action || '').toLowerCase();
                     
+                    // Cross-reference with FlowSpec rules to get full action details
+                    const rules = flowspecData?.rules || flowspecData?.items || [];
+                    const rule = rules.find((r: any) => 
+                      r.dst_prefix === route.prefix || r.src_prefix === route.prefix
+                    );
+
+                    const getFormattedAction = () => {
+                      if (type !== 'flowspec') return '—';
+                      if (rule?.action === 'rate-limit') {
+                        const mbps = rule.rate_limit_kbps 
+                          ? (rule.rate_limit_kbps / 1000).toFixed(1)
+                          : '?';
+                        return (
+                          <div className="flex items-center gap-1 text-primary font-bold">
+                            <span>⚡</span>
+                            <span>Rate-Limit: {mbps} Mbps</span>
+                          </div>
+                        );
+                      }
+                      return (
+                        <div className="flex items-center gap-1 text-danger font-bold">
+                          <span>🚫</span>
+                          <span>Descartar</span>
+                        </div>
+                      );
+                    };
+
+                    const getFormattedMatch = () => {
+                      if (type !== 'flowspec') return route.community || '—';
+                      // Transform "src:34.18.209.206/32, proto:tcp" into "src:34.18.209.206/32 · proto:TCP"
+                      return (route.reason || '')
+                        .split(',')
+                        .map((p: string) => p.trim())
+                        .join(' · ')
+                        .replace('proto:tcp', 'proto:TCP')
+                        .replace('proto:udp', 'proto:UDP')
+                        .replace('proto:icmp', 'proto:ICMP');
+                    };
+
                     return (
                       <tr 
                         key={i} 
@@ -363,14 +402,17 @@ export default function BGP() {
                         </td>
                         <td className="px-4 py-3 font-mono text-xs text-text-secondary">{route.nexthop || '—'}</td>
                         
-                        <td className="px-4 py-3 font-mono text-xs text-text-secondary">
-                          {type === 'flowspec' ? (
-                            <span style={{ fontSize: 11, color: 'var(--color-text-secondary)' }}>
-                              {route.reason}
+                        <td className="px-4 py-3 font-mono text-xs">
+                          <div className="flex flex-col gap-0.5">
+                            <span className="text-text-secondary">
+                              {getFormattedMatch()}
                             </span>
-                          ) : (
-                            route.community || '—'
-                          )}
+                            {type === 'flowspec' && (
+                              <span className="text-[10px]">
+                                {getFormattedAction()}
+                              </span>
+                            )}
+                          </div>
                         </td>
 
                         <td className="px-4 py-3">
@@ -395,10 +437,7 @@ export default function BGP() {
                         </td>
 
                         <td className="px-4 py-3 text-xs text-text-primary">
-                          {type === 'flowspec' ? (
-                            action === 'discard' ? 'Descartar' : 
-                            action === 'rate-limit' ? 'Rate Limit' : (route.action || '—')
-                          ) : '—'}
+                          {getFormattedAction()}
                         </td>
 
                         <td className="px-4 py-3 text-xs text-text-primary">
