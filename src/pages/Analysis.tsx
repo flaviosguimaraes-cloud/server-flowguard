@@ -62,7 +62,7 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
   const queryClient = useQueryClient();
   const isAuthenticated = !!localStorage.getItem('access_token');
 
-  const MAX_HOURS = 6;
+  const MAX_HOURS = 4;
    
     const isLocalIP = (ip: string) => ip?.startsWith('45.175.50.');
     const shouldFlip = (item: any) => !isLocalIP(item.src_addr) && isLocalIP(item.dst_addr);
