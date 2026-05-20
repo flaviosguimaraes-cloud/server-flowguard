@@ -98,6 +98,7 @@ export default function Threats() {
       let payload: any = {
         dst_prefix: `${threat.dst_ip}/32`,
         action: 'discard',
+        reason: `threat:${threat.type},label:${threat.label},severity:${threat.severity}`
       };
 
       if (threat.src_ip) {
