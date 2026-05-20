@@ -51,6 +51,9 @@ interface Threat {
   packets?: number;
   bytes?: number;
   bpp?: number;
+  port_range_min?: number;
+  port_range_max?: number;
+  syn_flows?: number;
   mitigated?: boolean;
   flowspec_id?: number;
   first_seen?: string;
@@ -298,9 +301,15 @@ export default function Threats() {
     }
   };
 
-  const getInterpretation = (type: string) => {
-    switch (type) {
+  const getInterpretation = (threat: Threat) => {
+    switch (threat.type) {
       case 'port_scan':
+        if (threat.port_range_min !== undefined && threat.port_range_min < 1024) {
+          return `IP externo varrendo portas de serviço (${threat.port_range_min}–${threat.port_range_max}) do cliente. Indica reconhecimento de serviços expostos ou busca por vulnerabilidades.`;
+        }
+        if (threat.port_range_min !== undefined && threat.port_range_min >= 1024) {
+          return `IP externo varrendo portas altas (${threat.port_range_min}–${threat.port_range_max}) do cliente. Pode indicar scan de serviços não-padrão ou aplicações.`;
+        }
         return "IP externo varrendo múltiplas portas do cliente. Indica reconhecimento de rede ou busca por serviços expostos.";
       case 'syn_flood':
         return "Alto volume de pacotes TCP SYN sem conclusão do handshake. Indica tentativa de esgotamento de recursos do servidor alvo.";
@@ -545,11 +554,24 @@ export default function Threats() {
 
                       <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-text-secondary">
                         {threat.type === 'port_scan' && (
-                          <>
-                            <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.unique_ports}</span> portas únicas</span>
-                            <span className="w-1.5 h-1.5 rounded-full bg-border" />
-                            <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.flows}</span> flows</span>
-                          </>
+                          <div className="flex flex-col gap-1">
+                            <div className="flex items-center gap-x-4 gap-y-2">
+                              <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.unique_ports}</span> portas únicas</span>
+                              <span className="w-1.5 h-1.5 rounded-full bg-border" />
+                              <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.flows}</span> flows</span>
+                            </div>
+                            <div className="flex items-center gap-x-4 gap-y-2 text-xs opacity-80">
+                              {threat.port_range_min && threat.port_range_max && (
+                                <span className="flex items-center gap-1.5">Faixa: <span className="font-bold">{threat.port_range_min}–{threat.port_range_max}</span></span>
+                              )}
+                              {threat.syn_flows && (
+                                <>
+                                  <span className="w-1 h-1 rounded-full bg-border" />
+                                  <span className="flex items-center gap-1.5"><span className="font-bold">{threat.syn_flows}</span> SYNs</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
                         )}
                         {threat.type === 'syn_flood' && (
                           <>
@@ -761,6 +783,24 @@ export default function Threats() {
                         <span className="font-bold">{selectedThreat.unique_ports}</span>
                       </p>
                     )}
+                    {selectedThreat.type === 'port_scan' && selectedThreat.syn_flows && (
+                      <p className="text-sm text-text-primary flex justify-between">
+                        <span className="text-text-secondary">SYN packets:</span>
+                        <span className="font-bold">{selectedThreat.syn_flows}</span>
+                      </p>
+                    )}
+                    {selectedThreat.type === 'port_scan' && selectedThreat.port_range_min && (
+                      <p className="text-sm text-text-primary flex justify-between">
+                        <span className="text-text-secondary">Faixa de portas:</span>
+                        <span className="font-bold">{selectedThreat.port_range_min} – {selectedThreat.port_range_max}</span>
+                      </p>
+                    )}
+                    {selectedThreat.type === 'port_scan' && (
+                      <p className="text-sm text-text-primary flex justify-between">
+                        <span className="text-text-secondary">Tipo de scan:</span>
+                        <span className="font-bold">Vertical</span>
+                      </p>
+                    )}
                     <p className="text-sm text-text-primary flex justify-between">
                       <span className="text-text-secondary">Flows:</span>
                       <span className="font-bold">{selectedThreat.flows?.toLocaleString()}</span>
@@ -783,7 +823,7 @@ export default function Threats() {
                   </h4>
                   <div className="bg-bg-primary/50 p-4 rounded-lg border border-border/50">
                     <p className="text-sm text-text-primary leading-relaxed">
-                      {getInterpretation(selectedThreat.type)}
+                      {getInterpretation(selectedThreat)}
                     </p>
                   </div>
                 </div>
