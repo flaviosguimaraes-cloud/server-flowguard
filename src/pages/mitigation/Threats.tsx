@@ -766,26 +766,73 @@ export default function Threats() {
                 )}
               </div>
 
-              <div className="space-y-2">
-                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Duração do bloqueio</label>
-                <select
-                  className="w-full bg-bg-primary border border-border rounded-lg py-2 px-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all text-sm text-text-primary"
-                  value={ttlMinutes}
-                  onChange={(e) => setTtlMinutes(parseInt(e.target.value))}
-                >
-                  <option value="5">5 minutos</option>
-                  <option value="10">10 minutos</option>
-                  <option value="30">30 minutos</option>
-                  <option value="60">1 hora</option>
-                  <option value="120">2 horas</option>
-                  <option value="360">6 horas</option>
-                  <option value="720">12 horas</option>
-                  <option value="1440">24 horas</option>
-                  <option value="0">Permanente</option>
-                </select>
-                <p className="text-[10px] text-text-secondary italic ml-1">
-                  TTL sugerido para {threatToBlock?.threat.label}: {getSuggestedTtl(threatToBlock?.threat.type || '') >= 60 ? `${getSuggestedTtl(threatToBlock?.threat.type || '') / 60}h` : `${getSuggestedTtl(threatToBlock?.threat.type || '')}min`}
-                </p>
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Ação</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => setBlockAction('discard')}
+                      className={clsx(
+                        "flex flex-col items-center gap-1 p-2 rounded-lg border text-[10px] font-bold transition-all",
+                        blockAction === 'discard' 
+                          ? "bg-danger/10 border-danger/50 text-danger" 
+                          : "bg-bg-primary border-border text-text-secondary hover:border-border-hover"
+                      )}
+                    >
+                      <XCircle size={14} />
+                      Descartar
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setBlockAction('rate-limit')}
+                      className={clsx(
+                        "flex flex-col items-center gap-1 p-2 rounded-lg border text-[10px] font-bold transition-all",
+                        blockAction === 'rate-limit' 
+                          ? "bg-warning/10 border-warning/50 text-warning" 
+                          : "bg-bg-primary border-border text-text-secondary hover:border-border-hover"
+                      )}
+                    >
+                      <Activity size={14} />
+                      Rate-Limit
+                    </button>
+                  </div>
+                </div>
+
+                {blockAction === 'rate-limit' && (
+                  <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
+                    <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Limite de banda (Kbps)</label>
+                    <div className="flex items-center gap-2">
+                      <input
+                        type="number"
+                        min={1}
+                        className="flex-1 bg-bg-primary border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all text-sm text-text-primary"
+                        value={blockRateLimit}
+                        onChange={(e) => setBlockRateLimit(Number(e.target.value))}
+                      />
+                      <span className="text-xs font-bold text-text-secondary">Kbps</span>
+                    </div>
+                  </div>
+                )}
+
+                <div className="space-y-2">
+                  <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Duração do bloqueio</label>
+                  <select
+                    className="w-full bg-bg-primary border border-border rounded-lg py-2 px-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all text-sm text-text-primary appearance-none"
+                    value={ttlMinutes}
+                    onChange={(e) => setTtlMinutes(parseInt(e.target.value))}
+                  >
+                    <option value="5">5 minutos</option>
+                    <option value="10">10 minutos</option>
+                    <option value="30">30 minutos</option>
+                    <option value="60">1 hora</option>
+                    <option value="120">2 horas</option>
+                    <option value="360">6 horas</option>
+                    <option value="720">12 horas</option>
+                    <option value="1440">24 horas</option>
+                    <option value="0">Permanente</option>
+                  </select>
+                </div>
               </div>
             </div>
           </AlertDialogHeader>
@@ -794,7 +841,12 @@ export default function Threats() {
             <AlertDialogAction
               className="bg-primary hover:bg-primary/90 text-white font-bold"
               disabled={blockMutation.isPending}
-              onClick={() => threatToBlock && blockMutation.mutate({ ...threatToBlock, ttl_minutes: ttlMinutes })}
+              onClick={() => threatToBlock && blockMutation.mutate({ 
+                ...threatToBlock, 
+                ttl_minutes: ttlMinutes,
+                action: blockAction,
+                rate_limit_kbps: blockRateLimit
+              })}
             >
               {blockMutation.isPending ? 'Aplicando...' : '✅ Confirmar'}
             </AlertDialogAction>
