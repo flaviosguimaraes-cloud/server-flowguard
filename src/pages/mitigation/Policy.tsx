@@ -37,7 +37,7 @@ export default function Policy() {
   // Seção 3: Limiares
   const { data: thresholdData } = useQuery({
     queryKey: ['thresholds-policy'],
-    queryFn: () => api.get('/api/detection/thresholds').then(r => r.data).catch(() => ({})),
+    queryFn: () => api.get('/api/thresholds').then(r => r.data).catch(() => ({})),
   });
 
   const [mode, setMode] = useState<Mode>('blackhole');
