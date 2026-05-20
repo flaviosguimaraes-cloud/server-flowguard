@@ -278,6 +278,16 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
 
     const [groupByIP, setGroupByIP] = useState(false);
     const [hoveredMitIP, setHoveredMitIP] = useState<string | null>(null);
+    const [countryOpen, setCountryOpen] = useState(false);
+    const [countrySearch, setCountrySearch] = useState('');
+
+    const filteredCountries = useMemo(() => {
+      if (!countrySearch) return COUNTRIES;
+      return COUNTRIES.filter(c => 
+        c.name.toLowerCase().includes(countrySearch.toLowerCase()) || 
+        c.code.toLowerCase().includes(countrySearch.toLowerCase())
+      );
+    }, [countrySearch]);
 
     useEffect(() => {
       setPage(1);
