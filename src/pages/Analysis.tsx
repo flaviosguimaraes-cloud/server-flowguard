@@ -22,6 +22,39 @@ import {
 } from '../components/ui/sheet';
 import MitigationModal from '../components/MitigationModal';
 
+const COUNTRIES = [
+  { code: 'BR', name: 'Brasil' },
+  { code: 'US', name: 'Estados Unidos' },
+  { code: 'CN', name: 'China' },
+  { code: 'DE', name: 'Alemanha' },
+  { code: 'RU', name: 'Rússia' },
+  { code: 'NL', name: 'Holanda' },
+  { code: 'FR', name: 'França' },
+  { code: 'GB', name: 'Reino Unido' },
+  { code: 'JP', name: 'Japão' },
+  { code: 'KR', name: 'Coreia do Sul' },
+  { code: 'IN', name: 'Índia' },
+  { code: 'CA', name: 'Canadá' },
+  { code: 'AU', name: 'Austrália' },
+  { code: 'SG', name: 'Singapura' },
+  { code: 'HK', name: 'Hong Kong' },
+  { code: 'TR', name: 'Turquia' },
+  { code: 'AR', name: 'Argentina' },
+  { code: 'ZA', name: 'África do Sul' },
+  { code: 'UA', name: 'Ucrânia' },
+  { code: 'IT', name: 'Itália' },
+  { code: 'ES', name: 'Espanha' },
+  { code: 'MX', name: 'México' },
+  { code: 'PL', name: 'Polônia' },
+  { code: 'VN', name: 'Vietnã' },
+  { code: 'ID', name: 'Indonésia' },
+  { code: 'TH', name: 'Tailândia' },
+  { code: 'PT', name: 'Portugal' },
+  { code: 'AE', name: 'Emirados Árabes' },
+  { code: 'QA', name: 'Qatar' },
+  { code: 'OM', name: 'Omã' },
+];
+
 function MetricCard({ title, value, icon }: any) {
   return (
     <div className="bg-bg-secondary p-5 rounded-xl border border-border shadow-sm flex flex-col justify-between min-h-[120px] transition-all duration-300 hover:border-primary/30 group relative">
@@ -245,6 +278,16 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
 
     const [groupByIP, setGroupByIP] = useState(false);
     const [hoveredMitIP, setHoveredMitIP] = useState<string | null>(null);
+    const [countryOpen, setCountryOpen] = useState(false);
+    const [countrySearch, setCountrySearch] = useState('');
+
+    const filteredCountries = useMemo(() => {
+      if (!countrySearch) return COUNTRIES;
+      return COUNTRIES.filter(c => 
+        c.name.toLowerCase().includes(countrySearch.toLowerCase()) || 
+        c.code.toLowerCase().includes(countrySearch.toLowerCase())
+      );
+    }, [countrySearch]);
 
     useEffect(() => {
       setPage(1);
@@ -535,39 +578,19 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
         <div className="bg-bg-secondary p-4 rounded-xl border border-border shadow-sm space-y-4">
           {/* Linha 1: Filtros de dados */}
           <div className="flex flex-wrap items-end gap-3">
-            <div className="flex-1 min-w-[200px] space-y-1">
+            {/* 1. IP Origem */}
+            <div className="flex-1 min-w-[180px] space-y-1">
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">IP Origem</label>
               <input
                 type="text"
-                placeholder="Ex: 192.168.1.1 ou 192.168.1.0/24"
+                placeholder="Ex: 192.168.1.1 ou /24"
                 className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
                 value={filters.src_ip}
                 onChange={(e) => setFilters(prev => ({ ...prev, src_ip: e.target.value }))}
               />
             </div>
-            <div className="flex-1 min-w-[200px] space-y-1">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">IP Destino</label>
-              <input
-                type="text"
-                placeholder="Ex: 192.168.1.1 ou 192.168.1.0/24"
-                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
-                value={filters.dst_ip}
-                onChange={(e) => setFilters(prev => ({ ...prev, dst_ip: e.target.value }))}
-              />
-            </div>
-            <div className="w-32 space-y-1">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Protocolo</label>
-              <select
-                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 appearance-none text-sm text-text-primary"
-                value={filters.proto}
-                onChange={(e) => setFilters(prev => ({ ...prev, proto: e.target.value }))}
-              >
-                <option value="">Todos</option>
-                <option value="6">TCP</option>
-                <option value="17">UDP</option>
-                <option value="1">ICMP</option>
-              </select>
-            </div>
+
+            {/* 2. Porta Origem */}
             <div className="w-24 space-y-1">
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Porta Orig</label>
               <input
@@ -580,6 +603,20 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                 onChange={(e) => setFilters(prev => ({ ...prev, src_port: e.target.value }))}
               />
             </div>
+
+            {/* 3. IP Destino */}
+            <div className="flex-1 min-w-[180px] space-y-1">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">IP Destino</label>
+              <input
+                type="text"
+                placeholder="Ex: 192.168.1.1 ou /24"
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                value={filters.dst_ip}
+                onChange={(e) => setFilters(prev => ({ ...prev, dst_ip: e.target.value }))}
+              />
+            </div>
+
+            {/* 4. Porta Destino */}
             <div className="w-24 space-y-1">
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Porta Dest</label>
               <input
@@ -592,17 +629,24 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                 onChange={(e) => setFilters(prev => ({ ...prev, dst_port: e.target.value }))}
               />
             </div>
+
+            {/* 5. Protocolo */}
             <div className="w-28 space-y-1">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">País</label>
-              <input
-                type="text"
-                placeholder="Ex: BR, US"
-                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary uppercase"
-                value={filters.country}
-                onChange={(e) => setFilters(prev => ({ ...prev, country: e.target.value }))}
-              />
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Protocolo</label>
+              <select
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 appearance-none text-sm text-text-primary"
+                value={filters.proto}
+                onChange={(e) => setFilters(prev => ({ ...prev, proto: e.target.value }))}
+              >
+                <option value="">Todos</option>
+                <option value="6">TCP</option>
+                <option value="17">UDP</option>
+                <option value="1">ICMP</option>
+              </select>
             </div>
-            <div className="w-32 space-y-1">
+
+            {/* 6. Direção */}
+            <div className="w-28 space-y-1">
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Direção</label>
               <select
                 className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 appearance-none text-sm text-text-primary"
@@ -613,6 +657,89 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
                 <option value="incoming">Download</option>
                 <option value="outgoing">Upload</option>
               </select>
+            </div>
+
+            {/* 7. País (Custom Select Option B) */}
+            <div className="w-48 space-y-1 relative">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">País</label>
+              <div className="relative">
+                <button
+                  type="button"
+                  onClick={() => setCountryOpen(!countryOpen)}
+                  className="w-full flex items-center justify-between bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 text-sm text-text-primary hover:border-primary/50 transition-all"
+                >
+                  <div className="flex items-center gap-2 overflow-hidden">
+                    {filters.country ? (
+                      <>
+                        <span className={`fi fi-${filters.country.toLowerCase()} flex-shrink-0`} />
+                        <span className="truncate">{COUNTRIES.find(c => c.code === filters.country)?.name || filters.country}</span>
+                      </>
+                    ) : (
+                      <span className="text-text-secondary/60">Todos os países</span>
+                    )}
+                  </div>
+                  <ArrowDown size={14} className={clsx("transition-transform duration-200", countryOpen && "rotate-180")} />
+                </button>
+
+                {countryOpen && (
+                  <div className="absolute top-full left-0 right-0 mt-1 bg-bg-secondary border border-border rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
+                    <div className="p-2 border-b border-border bg-bg-primary/30">
+                      <div className="relative">
+                        <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-secondary" />
+                        <input
+                          autoFocus
+                          placeholder="Buscar país..."
+                          className="w-full bg-bg-secondary border border-border rounded-md py-1 px-8 text-xs outline-none focus:ring-1 focus:ring-primary/30 transition-all"
+                          value={countrySearch}
+                          onChange={(e) => setCountrySearch(e.target.value)}
+                        />
+                        {countrySearch && (
+                          <button 
+                            onClick={() => setCountrySearch('')}
+                            className="absolute right-2 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
+                          >
+                            <X size={12} />
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                    <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                      <button
+                        onClick={() => {
+                          setFilters(prev => ({ ...prev, country: '' }));
+                          setCountryOpen(false);
+                          setCountrySearch('');
+                        }}
+                        className="w-full text-left px-3 py-2 text-xs hover:bg-primary/5 transition-colors flex items-center gap-2 border-b border-border/30 italic text-text-secondary"
+                      >
+                        🌐 Todos os países
+                      </button>
+                      {filteredCountries.map(c => (
+                        <button
+                          key={c.code}
+                          onClick={() => {
+                            setFilters(prev => ({ ...prev, country: c.code }));
+                            setCountryOpen(false);
+                            setCountrySearch('');
+                          }}
+                          className={clsx(
+                            "w-full text-left px-3 py-2 text-xs hover:bg-primary/5 transition-colors flex items-center gap-2",
+                            filters.country === c.code && "bg-primary/10 text-primary font-bold"
+                          )}
+                        >
+                          <span className={`fi fi-${c.code.toLowerCase()}`} />
+                          {c.name}
+                        </button>
+                      ))}
+                      {filteredCountries.length === 0 && (
+                        <div className="px-3 py-4 text-center text-xs text-text-secondary italic">
+                          Nenhum país encontrado
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 
