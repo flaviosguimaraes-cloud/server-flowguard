@@ -183,9 +183,9 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       const e = new Date(`${endDate}T${endTime}`);
       
       const diffHours = (e.getTime() - s.getTime()) / 3600000;
-      if (diffHours > 2 || diffHours < 0) {
-        // Ajustar fim para início + 2h
-        const maxEnd = new Date(s.getTime() + 2 * 3600000);
+      if (diffHours > MAX_HOURS || diffHours < 0) {
+        // Ajustar fim para início + MAX_HOURS
+        const maxEnd = new Date(s.getTime() + MAX_HOURS * 3600000);
         setEndDate(formatToDateInput(maxEnd));
         setEndTime(formatToTimeInput(maxEnd));
       }
@@ -195,14 +195,14 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       const d = newDate || endDate;
       const t = newTime || endTime;
       if (newDate) setEndDate(d);
-      if (newTime) setEndTime(t);
+      if (newTime) setStartTime(t);
 
       const s = new Date(`${startDate}T${startTime}`);
       const e = new Date(`${d}T${t}`);
       const diffHours = (e.getTime() - s.getTime()) / 3600000;
       
-      if (diffHours > 2) {
-        const maxEnd = new Date(s.getTime() + 2 * 3600000);
+      if (diffHours > MAX_HOURS) {
+        const maxEnd = new Date(s.getTime() + MAX_HOURS * 3600000);
         setEndDate(formatToDateInput(maxEnd));
         setEndTime(formatToTimeInput(maxEnd));
       } else if (diffHours < 0) {
@@ -217,10 +217,10 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
       if (isNaN(s.getTime()) || isNaN(e.getTime())) return true;
       
       const diff = e.getTime() - s.getTime();
-      const MAX_MS = 2 * 3600 * 1000; // 2 hours
+      const MAX_MS = MAX_HOURS * 3600 * 1000; 
       
       if (diff > MAX_MS) {
-        setIntervalError('Intervalo máximo: 2 horas');
+        setIntervalError(`Intervalo máximo: ${MAX_HOURS} horas`);
         return false;
       }
       if (diff < 0) {
