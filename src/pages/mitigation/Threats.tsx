@@ -5,9 +5,10 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { 
   Shield, AlertTriangle, Clock, Activity, 
   Radar, Waves, Globe, Radio, CheckCircle, 
-  XCircle, Filter, Trash2, ArrowRight, MousePointer2
+  XCircle, Filter, Trash2, ArrowRight, MousePointer2, ExternalLink, Info, MapPin, Target, ShieldCheck
 } from 'lucide-react';
 import { Skeleton } from '../../components/Skeleton';
+import { useNavigate } from '@tanstack/react-router';
 import { clsx } from 'clsx';
 import { toast } from 'sonner';
 import { Badge } from '../../components/ui/badge';
@@ -20,6 +21,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "../../components/ui/tooltip";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "../../components/ui/sheet";
+import { Separator } from "../../components/ui/separator";
 
 interface Threat {
   type: string;
@@ -34,6 +42,7 @@ interface Threat {
   bytes?: number;
   bpp?: number;
   mitigated?: boolean;
+  flowspec_id?: string;
 }
 
 interface ThreatsResponse {
@@ -44,7 +53,9 @@ interface ThreatsResponse {
 
 export default function Threats() {
   const { t } = useTranslation();
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const [selectedThreat, setSelectedThreat] = useState<Threat | null>(null);
   const [minutes, setMinutes] = useState(60);
   const [ignoredThreats, setIgnoredThreats] = useState<string[]>(() => {
     const saved = localStorage.getItem('ignored_threats');
@@ -59,6 +70,20 @@ export default function Threats() {
     },
     refetchInterval: 60000,
   });
+
+  const { data: flowspecData } = useQuery({
+    queryKey: ['flowspec-rules'],
+    queryFn: () => api.get('/api/mitigation/flowspec').then(r => r.data).catch(() => ({ items: [] })),
+    refetchInterval: 30000,
+  });
+
+  const isAlreadyMitigated = (threat: Threat) => {
+    const rules = flowspecData?.items || [];
+    return rules.find((r: any) => 
+      (r.src_prefix?.startsWith(threat.src_ip || '') || (!r.src_prefix && !threat.src_ip)) &&
+      r.dst_prefix?.startsWith(threat.dst_ip)
+    );
+  };
 
   const ignoreMutation = (threat: Threat) => {
     const threatKey = `${threat.src_ip || ''}-${threat.dst_ip}-${threat.type}`;
@@ -111,11 +136,19 @@ export default function Threats() {
 
   const filteredThreats = useMemo(() => {
     if (!data?.threats) return [];
-    return data.threats.filter(threat => {
-      const threatKey = `${threat.src_ip || ''}-${threat.dst_ip}-${threat.type}`;
-      return !ignoredThreats.includes(threatKey);
-    });
-  }, [data, ignoredThreats]);
+    return data.threats
+      .filter(threat => {
+        const threatKey = `${threat.src_ip || ''}-${threat.dst_ip}-${threat.type}`;
+        return !ignoredThreats.includes(threatKey);
+      })
+      .map(threat => {
+        const existingRule = isAlreadyMitigated(threat);
+        if (existingRule) {
+          return { ...threat, mitigated: true, flowspec_id: existingRule.id };
+        }
+        return threat;
+      });
+  }, [data, ignoredThreats, flowspecData]);
 
   const stats = useMemo(() => {
     const threats = filteredThreats;
@@ -143,11 +176,40 @@ export default function Threats() {
     }
   };
 
-  const getSeverityStyles = (severity: string) => {
+  const getSeverityStyles = (severity: string, mitigated?: boolean) => {
+    if (mitigated) return 'border-success/30 hover:border-success/50';
     switch (severity) {
       case 'high': return 'border-red-500/50 hover:border-red-500';
       case 'medium': return 'border-amber-500/50 hover:border-amber-500';
       default: return 'border-border';
+    }
+  };
+
+  const removeMitigation = async (flowspecId: string) => {
+    try {
+      await api.delete(`/api/mitigation/flowspec/${flowspecId}`);
+      toast.success('Mitigação removida');
+      queryClient.invalidateQueries({ queryKey: ['flowspec-rules'] });
+      queryClient.invalidateQueries({ queryKey: ['threats'] });
+    } catch (error: any) {
+      toast.error('Erro ao remover mitigação');
+    }
+  };
+
+  const getInterpretation = (type: string) => {
+    switch (type) {
+      case 'port_scan':
+        return "IP externo varrendo múltiplas portas do cliente. Indica reconhecimento de rede ou busca por serviços expostos.";
+      case 'syn_flood':
+        return "Alto volume de pacotes TCP SYN sem conclusão do handshake. Indica tentativa de esgotamento de recursos do servidor alvo.";
+      case 'dns_amplification':
+        return "Tráfego DNS com pacotes grandes (BPP alto) direcionado ao cliente. Indica uso de servidores DNS abertos para amplificar ataque.";
+      case 'ntp_amplification':
+        return "Tráfego NTP com pacotes grandes direcionado ao cliente. Indica uso de servidores NTP para amplificar ataque.";
+      case 'udp_flood':
+        return "Alto volume de pacotes UDP pequenos. Indica tentativa de saturar a conexão do cliente.";
+      default:
+        return "Comportamento anômalo detectado nos fluxos de rede que sugere atividade maliciosa ou ataque em andamento.";
     }
   };
 
@@ -274,9 +336,10 @@ export default function Threats() {
               <Card 
                 key={`${threat.src_ip}-${threat.dst_ip}-${threat.type}-${index}`}
                 className={clsx(
-                  "bg-bg-secondary border transition-all duration-300",
-                  getSeverityStyles(threat.severity)
+                  "bg-bg-secondary border transition-all duration-300 cursor-pointer",
+                  getSeverityStyles(threat.severity, threat.mitigated)
                 )}
+                onClick={() => setSelectedThreat(threat)}
               >
                 <CardHeader className="p-4 pb-2">
                   <div className="flex items-center justify-between gap-4">
@@ -348,8 +411,8 @@ export default function Threats() {
                       )}
                     </div>
 
-                    <div className="flex items-center gap-2 ml-auto">
-                      {!threat.mitigated && (
+                    <div className="flex items-center gap-2 ml-auto" onClick={(e) => e.stopPropagation()}>
+                      {!threat.mitigated ? (
                         <Button 
                           size="sm" 
                           variant="outline" 
@@ -359,15 +422,37 @@ export default function Threats() {
                         >
                           {blockMutation.isPending ? 'Processando...' : 'Bloquear via FlowSpec'}
                         </Button>
+                      ) : (
+                        <>
+                          <Button 
+                            size="sm" 
+                            variant="outline" 
+                            className="text-xs h-8 border-purple-500/30 text-purple-500 hover:bg-purple-500/5"
+                            onClick={() => navigate({ to: '/operation/bgp' })}
+                          >
+                            <ExternalLink size={14} className="mr-1" />
+                            Ver no BGP
+                          </Button>
+                          <Button 
+                            size="sm" 
+                            variant="ghost" 
+                            className="text-xs h-8 text-danger hover:bg-danger/5"
+                            onClick={() => threat.flowspec_id && removeMitigation(threat.flowspec_id)}
+                          >
+                            Remover mitigação
+                          </Button>
+                        </>
                       )}
-                      <Button 
-                        size="sm" 
-                        variant="ghost" 
-                        className="text-xs h-8 text-text-secondary hover:text-danger hover:bg-danger/5"
-                        onClick={() => ignoreMutation(threat)}
-                      >
-                        Ignorar
-                      </Button>
+                      {!threat.mitigated && (
+                        <Button 
+                          size="sm" 
+                          variant="ghost" 
+                          className="text-xs h-8 text-text-secondary hover:text-danger hover:bg-danger/5"
+                          onClick={() => ignoreMutation(threat)}
+                        >
+                          Ignorar
+                        </Button>
+                      )}
                     </div>
                   </div>
                 </CardContent>
@@ -376,6 +461,179 @@ export default function Threats() {
           })}
         </div>
       )}
+
+      {/* Threat Detail Modal */}
+      <Sheet open={!!selectedThreat} onOpenChange={(open) => !open && setSelectedThreat(null)}>
+        <SheetContent className="sm:max-w-md bg-bg-secondary border-l border-border">
+          <SheetHeader className="text-left pb-4">
+            <SheetTitle className="flex items-center gap-2 text-xl font-bold">
+              {selectedThreat?.label} Detectada
+            </SheetTitle>
+          </SheetHeader>
+          
+          {selectedThreat && (
+            <div className="space-y-6 animate-in slide-in-from-right duration-300">
+              {/* Severity & Type */}
+              <div className={clsx(
+                "p-4 rounded-xl border flex items-center gap-3",
+                selectedThreat.severity === 'high' ? "bg-red-500/5 border-red-500/20 text-red-500" : 
+                selectedThreat.severity === 'medium' ? "bg-amber-500/5 border-amber-500/20 text-amber-500" :
+                "bg-blue-500/5 border-blue-500/20 text-blue-500"
+              )}>
+                <div className={clsx(
+                  "p-2 rounded-lg",
+                  selectedThreat.severity === 'high' ? "bg-red-500/10" : 
+                  selectedThreat.severity === 'medium' ? "bg-amber-500/10" :
+                  "bg-blue-500/10"
+                )}>
+                  <AlertTriangle size={24} />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-black uppercase tracking-wider text-xs">
+                      {selectedThreat.severity === 'high' ? '🔴 ALTA' : selectedThreat.severity === 'medium' ? '🟡 MÉDIO' : '🔵 BAIXA'}
+                    </span>
+                    <span className="font-bold">· {selectedThreat.label}</span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Source Info */}
+              <div className="space-y-4">
+                <div>
+                  <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                    <MapPin size={12} /> ORIGEM DO SCAN
+                  </h4>
+                  <div className="space-y-2">
+                    <p className="font-mono text-sm text-text-primary flex justify-between">
+                      <span className="text-text-secondary">IP:</span>
+                      <span className="font-bold">{selectedThreat.src_ip || 'Desconhecido'}</span>
+                    </p>
+                    {selectedThreat.src_country && (
+                      <p className="text-sm text-text-primary flex justify-between">
+                        <span className="text-text-secondary">País:</span>
+                        <span className="flex items-center gap-2 font-bold">
+                          <Flag code={selectedThreat.src_country} size={18} />
+                          {selectedThreat.src_country}
+                        </span>
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                <Separator className="bg-border/50" />
+
+                {/* Target Info */}
+                <div>
+                  <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                    <Target size={12} /> ALVO DO SCAN
+                  </h4>
+                  <p className="font-mono text-sm text-text-primary flex justify-between">
+                    <span className="text-text-secondary">IP:</span>
+                    <span className="font-bold">{selectedThreat.dst_ip}</span>
+                  </p>
+                </div>
+
+                <Separator className="bg-border/50" />
+
+                {/* Behavior Info */}
+                <div>
+                  <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                    <Activity size={12} /> COMPORTAMENTO
+                  </h4>
+                  <div className="space-y-2">
+                    {selectedThreat.unique_ports && (
+                      <p className="text-sm text-text-primary flex justify-between">
+                        <span className="text-text-secondary">Portas únicas:</span>
+                        <span className="font-bold">{selectedThreat.unique_ports}</span>
+                      </p>
+                    )}
+                    <p className="text-sm text-text-primary flex justify-between">
+                      <span className="text-text-secondary">Flows:</span>
+                      <span className="font-bold">{selectedThreat.flows?.toLocaleString()}</span>
+                    </p>
+                    <p className="text-sm text-text-primary flex justify-between">
+                      <span className="text-text-secondary">Protocolo:</span>
+                      <span className="font-bold uppercase">
+                        {selectedThreat.type === 'port_scan' || selectedThreat.type === 'syn_flood' ? 'TCP' : 'UDP'}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                <Separator className="bg-border/50" />
+
+                {/* Interpretation */}
+                <div>
+                  <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                    <Info size={12} /> INTERPRETAÇÃO
+                  </h4>
+                  <div className="bg-bg-primary/50 p-4 rounded-lg border border-border/50">
+                    <p className="text-sm text-text-primary leading-relaxed">
+                      {getInterpretation(selectedThreat.type)}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              <div className="pt-4 flex flex-col gap-3">
+                {!selectedThreat.mitigated ? (
+                  <>
+                    <Button 
+                      className="w-full font-bold gap-2 bg-primary hover:bg-primary/90"
+                      onClick={() => blockMutation.mutate({ threat: selectedThreat, index: filteredThreats.indexOf(selectedThreat) })}
+                      disabled={blockMutation.isPending}
+                    >
+                      <Zap size={16} />
+                      {blockMutation.isPending ? 'Processando...' : 'Bloquear via FlowSpec'}
+                    </Button>
+                    <Button 
+                      variant="ghost" 
+                      className="w-full text-text-secondary hover:text-danger hover:bg-danger/5 font-bold"
+                      onClick={() => {
+                        ignoreMutation(selectedThreat);
+                        setSelectedThreat(null);
+                      }}
+                    >
+                      Ignorar
+                    </Button>
+                  </>
+                ) : (
+                  <div className="p-4 bg-success/5 border border-success/20 rounded-xl text-center">
+                    <div className="flex flex-col items-center gap-2 mb-3">
+                      <ShieldCheck size={32} className="text-success" />
+                      <p className="font-bold text-success">Mitigação Ativa</p>
+                      <p className="text-xs text-text-secondary">Uma regra FlowSpec está protegendo este alvo no momento.</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <Button 
+                        variant="outline" 
+                        className="flex-1 text-xs border-purple-500/30 text-purple-500 hover:bg-purple-500/5"
+                        onClick={() => {
+                          setSelectedThreat(null);
+                          navigate({ to: '/operation/bgp' });
+                        }}
+                      >
+                        Ver no BGP
+                      </Button>
+                      <Button 
+                        variant="ghost" 
+                        className="flex-1 text-xs text-danger hover:bg-danger/5"
+                        onClick={() => {
+                          selectedThreat.flowspec_id && removeMitigation(selectedThreat.flowspec_id);
+                          setSelectedThreat(null);
+                        }}
+                      >
+                        Remover
+                      </Button>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+        </SheetContent>
+      </Sheet>
     </div>
   );
 }
