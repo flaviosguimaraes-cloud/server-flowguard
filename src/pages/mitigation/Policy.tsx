@@ -165,6 +165,7 @@ export default function Policy() {
              ...autoConfig,
              enabled: isAutoConfigEnabled,
              operation_mode: isAutoConfigEnabled ? autoConfig.operation_mode : 'blackhole_flowspec',
+             flowspec_src_mode: autoConfig.flowspec_src_mode || 'any',
              default_rate_limit_kbps: Number(autoConfig.default_rate_limit_kbps) || 1000,
              default_ttl_minutes: Number(autoConfig.default_ttl_minutes) || 120,
           }),
