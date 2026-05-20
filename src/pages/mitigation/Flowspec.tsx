@@ -179,10 +179,7 @@ const Flowspec = () => {
                       {!rule.dst_port && !rule.src_port ? 'any' : ''}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="flex flex-col gap-1">
-                        {getActionBadge(rule.action)}
-                        {rule.rate_limit_kbps && <span className="text-[9px] text-text-secondary font-mono">{rule.rate_limit_kbps} kbps</span>}
-                      </div>
+                      {getActionBadge(rule.action, rule.rate_limit_kbps)}
                     </td>
                     <td className="px-4 py-3">{getBgpStatusBadge(rule.bgp_status)}</td>
                     <td className="px-4 py-3">
