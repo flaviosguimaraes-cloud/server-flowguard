@@ -90,7 +90,7 @@ export default function Threats() {
   });
 
   const isAlreadyMitigated = (threat: Threat) => {
-    const rules = flowspecData?.items || [];
+    const rules = flowspecData?.rules || flowspecData?.items || [];
     return rules.find((r: any) => 
       (r.src_prefix?.startsWith(threat.src_ip || '') || (!r.src_prefix && !threat.src_ip)) &&
       r.dst_prefix?.startsWith(threat.dst_ip)
@@ -152,7 +152,7 @@ export default function Threats() {
 
   const filteredThreats = useMemo(() => {
     const threatsFromApi = data?.threats || [];
-    const rules = flowspecData?.items || [];
+    const rules = flowspecData?.rules || flowspecData?.items || [];
 
     // 1. Process current threats from API
     const activeThreats = threatsFromApi

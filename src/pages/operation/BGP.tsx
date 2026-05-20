@@ -149,7 +149,7 @@ export default function BGP() {
       if (type === 'flowspec') {
         // Para flowspec, precisamos buscar o ID real da regra
         const fsResponse = await api.get('/api/mitigation/flowspec');
-        const flowspecRules = fsResponse.data?.items || [];
+        const flowspecRules = fsResponse.data?.rules || fsResponse.data?.items || [];
         const matchRule = flowspecRules.find((r: any) => r.dst_prefix === route.prefix);
         
         if (matchRule?.id) {
@@ -409,7 +409,8 @@ export default function BGP() {
                         <td className="px-4 py-3 text-xs">
                           {type === 'flowspec' ? (
                             (() => {
-                              const rule = flowspecData?.rules?.find((r: any) => r.dst_prefix === route.prefix);
+                              const rules = flowspecData?.rules || flowspecData?.items || [];
+                              const rule = rules.find((r: any) => r.dst_prefix === route.prefix);
                               const expiresAt = rule?.expires_at;
                               return expiresAt ? (
                                 <span className={clsx("font-mono font-bold", getCountdownColor(expiresAt))}>
