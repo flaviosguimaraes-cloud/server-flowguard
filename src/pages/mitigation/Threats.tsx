@@ -712,6 +712,43 @@ export default function Threats() {
 
                 <Separator className="bg-border/50" />
 
+                {/* Period Info */}
+                <div>
+                  <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 flex items-center gap-1.5">
+                    <Clock size={12} /> PERÍODO DE ATIVIDADE
+                  </h4>
+                  <div className="space-y-2">
+                    <p className="text-sm text-text-primary flex justify-between">
+                      <span className="text-text-secondary">Início:</span>
+                      <span className="font-bold">
+                        {selectedThreat.first_seen ? (
+                          <>
+                            {selectedThreat.first_seen.slice(8, 10)}/{selectedThreat.first_seen.slice(5, 7)} {selectedThreat.first_seen.slice(11, 16)}
+                          </>
+                        ) : '–'}
+                      </span>
+                    </p>
+                    <p className="text-sm text-text-primary flex justify-between">
+                      <span className="text-text-secondary">Último:</span>
+                      <span className="font-bold">
+                        {selectedThreat.last_seen ? (
+                          <>
+                            {selectedThreat.last_seen.slice(8, 10)}/{selectedThreat.last_seen.slice(5, 7)} {selectedThreat.last_seen.slice(11, 16)}
+                          </>
+                        ) : 'Agora'}
+                      </span>
+                    </p>
+                    <p className="text-sm text-text-primary flex justify-between">
+                      <span className="text-text-secondary">Duração:</span>
+                      <span className="font-bold">
+                        {selectedThreat.first_seen ? formatRange(selectedThreat.first_seen, selectedThreat.last_seen).split('(')[1].replace(' ativo)', '') : '–'}
+                      </span>
+                    </p>
+                  </div>
+                </div>
+
+                <Separator className="bg-border/50" />
+
                 {/* Behavior Info */}
                 <div>
                   <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 flex items-center gap-1.5">
