@@ -620,7 +620,7 @@ export default function Threats() {
                         className="flex-1 text-xs border-purple-500/30 text-purple-500 hover:bg-purple-500/5"
                         onClick={() => {
                           setSelectedThreat(null);
-                          navigate({ to: '/operation/bgp' });
+                          navigate({ to: '/mitigation/bgp' });
                         }}
                       >
                         Ver no BGP
