@@ -124,9 +124,9 @@ import { useUI } from '../contexts/UIContext';
         "h-[72px] flex items-center gap-3 border-b border-border transition-all duration-200", 
         collapsed ? "justify-center" : "px-6"
       )}>
-        {settings?.org_logo_url ? (
+        {settings?.org_logo_url?.value || settings?.org_logo_url ? (
           <img 
-            src={settings.org_logo_url} 
+            src={settings.org_logo_url?.value ?? settings.org_logo_url} 
             alt="Logo" 
             className={clsx("rounded-lg object-contain", collapsed ? "w-8 h-8" : "w-8 h-8")} 
             onError={(e) => {
@@ -140,7 +140,7 @@ import { useUI } from '../contexts/UIContext';
         )}
         {!collapsed && (
           <span className="font-bold text-lg tracking-tight text-text-primary truncate">
-            {settings?.org_name || 'FlowGuard'}
+            {settings?.org_name?.value || settings?.org_name || 'FlowGuard'}
           </span>
         )}
       </div>
