@@ -5,7 +5,7 @@ import { useTranslation } from '../../hooks/useTranslation';
 import { 
   Shield, AlertTriangle, Clock, Activity, 
   Radar, Waves, Globe, Radio, CheckCircle, 
-  XCircle, Filter, Trash2, ArrowRight, MousePointer2, ExternalLink, Info, MapPin, Target, ShieldCheck
+  XCircle, Filter, Trash2, ArrowRight, MousePointer2, ExternalLink, Info, MapPin, Target, ShieldCheck, Zap
 } from 'lucide-react';
 import { Skeleton } from '../../components/Skeleton';
 import { useNavigate } from '@tanstack/react-router';
