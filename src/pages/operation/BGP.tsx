@@ -384,9 +384,9 @@ export default function BGP() {
                         .split(',')
                         .map((p: string) => p.trim())
                         .join(' · ')
-                        .replace('proto:tcp', 'proto:TCP')
-                        .replace('proto:udp', 'proto:UDP')
-                        .replace('proto:icmp', 'proto:ICMP');
+                        .replace(/proto:tcp/i, 'proto:TCP')
+                        .replace(/proto:udp/i, 'proto:UDP')
+                        .replace(/proto:icmp/i, 'proto:ICMP');
                     };
 
                     return (
