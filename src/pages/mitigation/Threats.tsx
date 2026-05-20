@@ -108,10 +108,11 @@ export default function Threats() {
   };
 
   const blockMutation = useMutation({
-    mutationFn: async ({ threat, index, ttl_minutes }: { threat: Threat, index: number, ttl_minutes: number }) => {
+    mutationFn: async ({ threat, index, ttl_minutes, action, rate_limit_kbps }: { threat: Threat, index: number, ttl_minutes: number, action: 'discard' | 'rate-limit', rate_limit_kbps: number }) => {
       let payload: any = {
         dst_prefix: `${threat.dst_ip}/32`,
-        action: 'discard',
+        action,
+        rate_limit_kbps: action === 'rate-limit' ? rate_limit_kbps : 0,
         reason: `threat:${threat.type},label:${threat.label},severity:${threat.severity}`,
         ttl_minutes
       };
