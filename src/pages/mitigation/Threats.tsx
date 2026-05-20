@@ -728,7 +728,7 @@ export default function Threats() {
       </Sheet>
 
       {/* Block Confirmation Modal */}
-      <AlertDialog open={!!threatToBlock} onOpenChange={(open) => !open && setThreatToBlock(null)}>
+      <AlertDialog open={!!threatToBlock} onOpenChange={(open: boolean) => !open && setThreatToBlock(null)}>
         <AlertDialogContent className="bg-bg-secondary border-border max-w-md">
           <AlertDialogHeader>
             <AlertDialogTitle className="flex items-center gap-2">
