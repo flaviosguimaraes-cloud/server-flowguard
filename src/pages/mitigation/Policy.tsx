@@ -18,7 +18,7 @@ import {
 
 import { clsx } from 'clsx';
 
-type Mode = 'blackhole' | 'external';
+type Mode = 'blackhole' | 'external' | null;
 
 export default function Policy() {
   const isAdmin = localStorage.getItem('role') === 'admin';
@@ -42,7 +42,7 @@ export default function Policy() {
     queryFn: () => api.get('/api/thresholds').then(r => r.data).catch(() => ({})),
   });
 
-  const [mode, setMode] = useState<Mode>('blackhole');
+  const [mode, setMode] = useState<Mode>(null);
   const [externalBlock, setExternalBlock] = useState('');
   const [blackholeCommunity, setBlackholeCommunity] = useState('65000:666');
   const [externalCommunity, setExternalCommunity] = useState('65000:999');
@@ -78,7 +78,7 @@ export default function Policy() {
 
   useEffect(() => {
     if (policyData) {
-      setMode((policyData.mode as Mode) || 'blackhole');
+      setMode((policyData.mode as Mode) || null);
       setExternalBlock(policyData.external_block || '192.168.1.0/24');
       setBlackholeCommunity(policyData.blackhole_community || '65000:666');
       setExternalCommunity(policyData.external_community || '65000:999');
@@ -210,7 +210,7 @@ export default function Policy() {
           selected ? "border-primary bg-primary/5 shadow-lg shadow-primary/10" : "border-border bg-bg-secondary hover:border-text-secondary/30",
           disabled && "opacity-50 grayscale cursor-not-allowed"
         )}
-        onClick={() => !disabled && setMode(value)}
+        onClick={() => !disabled && setMode(prev => prev === value ? null : value)}
       >
 
         <div className="flex items-center justify-between mb-3">
@@ -313,12 +313,28 @@ export default function Policy() {
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500 pb-12">
-      <div className="flex items-center gap-3">
-        <Shield className="text-primary" size={24} />
-        <div>
-          <h1 className="text-2xl font-bold text-text-primary">Política de Mitigação</h1>
-           <p className="text-sm text-text-secondary">Configuração de bloqueio, FlowSpec automático e limiares de detecção</p>
+      <div className="flex items-center justify-between">
+        <div className="flex items-center gap-3">
+          <Shield className="text-primary" size={24} />
+          <div>
+            <h1 className="text-2xl font-bold text-text-primary">Política de Mitigação</h1>
+            <p className="text-sm text-text-secondary">Configuração de bloqueio, FlowSpec automático e limiares de detecção</p>
+          </div>
         </div>
+        {isAdmin && (
+          <button 
+            onClick={handleSaveClick} 
+            disabled={saving}
+            className="flex items-center gap-2 px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-bold transition-all shadow-md shadow-primary/20 disabled:opacity-50"
+          >
+            {saving ? (
+              <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              <Save size={16} />
+            )}
+            Salvar e aplicar
+          </button>
+        )}
       </div>
 
       {/* SEÇÃO 1: MODO BGP */}
@@ -343,8 +359,8 @@ export default function Policy() {
             community={externalCommunity}
             onChangeCommunity={setExternalCommunity}
             description={`Anuncia bloco ${externalBlock || '192.168.1.0/24'} para scrubbing externo.`}
-            disabled={autoConfig.operation_mode === 'flowspec_only'}
-            tooltip="Modo B desabilitado em Apenas FlowSpec"
+            disabled={autoConfig.operation_mode === 'flowspec_only' || autoConfig.operation_mode === 'blackhole_flowspec'}
+            tooltip={autoConfig.operation_mode === 'blackhole_flowspec' ? "Modo B não disponível no modo Complementar" : "Modo B desabilitado em Apenas FlowSpec"}
           />
 
         </div>
@@ -358,7 +374,10 @@ export default function Policy() {
       </div>
 
       {/* SEÇÃO 2: FLOWSPEC */}
-      <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm space-y-6">
+      <div className={clsx(
+        "bg-bg-secondary p-6 rounded-xl border border-border shadow-sm space-y-6 transition-all",
+        (mode === null && autoConfig.operation_mode !== 'flowspec_only') && "opacity-60 grayscale-[0.5]"
+      )}>
         <div className="flex items-center gap-2 mb-2">
           <Zap size={20} className="text-warning" />
           <h2 className="text-lg font-bold text-text-primary">⚡ FlowSpec</h2>
@@ -375,7 +394,7 @@ export default function Policy() {
               ].map((opt) => {
                   const isSelected = autoConfig.operation_mode === opt.id;
 
-                  const isDisabled = mode === 'external' && opt.id !== 'disabled';
+                  const isDisabled = (mode === 'external' || mode === null) && opt.id !== 'disabled' && opt.id !== 'flowspec_only';
                   
                   const button = (
                     <button
@@ -387,6 +406,8 @@ export default function Policy() {
                         setAutoConfig({ ...autoConfig, operation_mode: nextMode });
                         if (nextMode === 'blackhole_flowspec') {
                           setMode('blackhole');
+                        } else if (nextMode === 'flowspec_only') {
+                          setMode(null);
                         }
                       }}
 
@@ -406,7 +427,8 @@ export default function Policy() {
                     </button>
                   );
 
-                  if (isDisabled) {
+                  if (isDisabled || (mode === 'external' && opt.id !== 'disabled')) {
+                    const tooltip = mode === 'external' ? "FlowSpec não disponível no Modo B" : "Ative o Modo A para usar este modo";
                     return (
                       <TooltipProvider key={opt.id}>
                         <Tooltip>
@@ -416,7 +438,7 @@ export default function Policy() {
                             </div>
                           </TooltipTrigger>
                           <TooltipContent className="bg-bg-secondary text-text-primary border border-border shadow-xl">
-                            <p className="text-xs font-bold">FlowSpec não disponível no Modo B</p>
+                            <p className="text-xs font-bold">{tooltip}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
@@ -503,20 +525,6 @@ export default function Policy() {
         <div className="space-y-4 pt-4">
           <div className="flex items-center justify-between pb-2 border-b border-border/50">
             <h3 className="text-sm font-bold text-text-primary">Seção 3 — Geral</h3>
-            {isAdmin && (
-              <button 
-                onClick={handleSaveClick} 
-                disabled={saving}
-                className="flex items-center gap-2 px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-bold transition-all shadow-md shadow-primary/20 disabled:opacity-50"
-              >
-                {saving ? (
-                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                ) : (
-                  <Save size={16} />
-                )}
-                Salvar e aplicar
-              </button>
-            )}
           </div>
           <div className="max-w-xs p-4 rounded-xl border border-border bg-bg-primary/30 space-y-3">
             <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Tempo de bloqueio</label>
