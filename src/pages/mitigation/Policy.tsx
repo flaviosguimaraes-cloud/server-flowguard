@@ -202,67 +202,39 @@ export default function Policy() {
     };
 
 
-  const ModeCard = ({ value, title, community, onChangeCommunity, description, disabled, tooltip }: any) => {
-    const selected = mode === value;
-    const content = (
-
+  const ResponseModeCard = ({ id, title, description, icon: Icon, colorClass, selected, onSelect, children }: any) => {
+    return (
       <button
         type="button"
-        disabled={disabled || !isAdmin}
+        onClick={() => isAdmin && onSelect()}
         className={clsx(
-          "text-left p-5 rounded-xl border-2 transition-all w-full",
+          "relative text-left p-5 rounded-xl border-2 transition-all w-full flex flex-col h-full",
           selected ? "border-primary bg-primary/5 shadow-lg shadow-primary/10" : "border-border bg-bg-secondary hover:border-text-secondary/30",
-          disabled && "opacity-50 grayscale cursor-not-allowed"
+          !isAdmin && "opacity-50 cursor-not-allowed"
         )}
-        onClick={() => !disabled && setMode(prev => prev === value ? null : value)}
       >
-
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Shield size={18} className={selected ? 'text-primary' : 'text-text-secondary'} />
-            <h3 className="font-bold text-text-primary">{title}</h3>
+        <div className="flex items-start justify-between mb-4">
+          <div className={clsx("p-2.5 rounded-lg", colorClass)}>
+            <Icon size={20} />
           </div>
           <div className={clsx(
-            "w-10 h-6 rounded-full p-0.5 transition-all flex",
-            selected ? "bg-primary justify-end" : "bg-bg-primary justify-start"
+            "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
+            selected ? "border-primary bg-primary" : "border-border"
           )}>
-            <div className="w-5 h-5 rounded-full bg-white shadow" />
+            {selected && <div className="w-2 h-2 rounded-full bg-white" />}
           </div>
         </div>
-        <div className="mb-3" onClick={e => e.stopPropagation()}>
-          <label className="text-[10px] font-bold text-text-secondary uppercase">Community BGP</label>
-          <input 
-            value={community} 
-            disabled={!isAdmin}
-            onChange={(e) => onChangeCommunity(e.target.value)}
-            placeholder={value === 'blackhole' ? '65000:666' : '65000:999'}
-            className="w-full mt-1 bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30" 
-          />
-        </div>
-        <p className="text-xs text-text-secondary">{description}</p>
+        
+        <h3 className="font-bold text-text-primary text-sm mb-1">{title}</h3>
+        <p className="text-xs text-text-secondary mb-4 flex-grow">{description}</p>
+        
+        {children && (
+          <div className="mt-auto pt-4 border-t border-border/50" onClick={e => e.stopPropagation()}>
+            {children}
+          </div>
+        )}
       </button>
     );
-
-    if (disabled && tooltip) {
-      return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="w-full cursor-not-allowed">
-                {content}
-              </div>
-            </TooltipTrigger>
-            <TooltipContent className="bg-bg-secondary text-text-primary border border-border shadow-xl">
-              <p className="text-xs font-bold">{tooltip}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      );
-    }
-
-    return content;
-
-
   };
 
   const ThresholdCard = ({ id, label, banKey, unit, placeholder, description, disabled }: any) => {
