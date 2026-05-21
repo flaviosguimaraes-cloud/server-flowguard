@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
-import { Shield, Save, Zap, Sliders, AlertTriangle } from 'lucide-react';
+import { Shield, Save, Zap, Sliders, AlertTriangle, Ban, Cloud, ShieldAlert, Plus, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "../../components/ui/tooltip";
 import {
@@ -43,7 +43,7 @@ export default function Policy() {
   });
 
   const [mode, setMode] = useState<Mode>(null);
-  const [externalBlock, setExternalBlock] = useState('');
+  const [externalBlocks, setExternalBlocks] = useState<string[]>(['']);
   const [blackholeCommunity, setBlackholeCommunity] = useState('65000:666');
   const [externalCommunity, setExternalCommunity] = useState('65000:999');
 
@@ -79,7 +79,11 @@ export default function Policy() {
   useEffect(() => {
     if (policyData) {
       setMode((policyData.mode as Mode) || null);
-      setExternalBlock(policyData.external_block || '192.168.1.0/24');
+      if (Array.isArray(policyData.external_block)) {
+        setExternalBlocks(policyData.external_block.length > 0 ? policyData.external_block : ['']);
+      } else if (typeof policyData.external_block === 'string') {
+        setExternalBlocks([policyData.external_block || '']);
+      }
       setBlackholeCommunity(policyData.blackhole_community || '65000:666');
       setExternalCommunity(policyData.external_community || '65000:999');
     }
@@ -149,7 +153,7 @@ export default function Policy() {
              mode,
              blackhole_community: blackholeCommunity,
              external_community: externalCommunity,
-             external_block: externalBlock,
+             external_block: externalBlocks.filter(b => !!b),
              flowspec_enabled: isAutoConfigEnabled,
           }),
           api.put('/api/mitigation/auto-config', {
@@ -198,67 +202,55 @@ export default function Policy() {
     };
 
 
-  const ModeCard = ({ value, title, community, onChangeCommunity, description, disabled, tooltip }: any) => {
-    const selected = mode === value;
-    const content = (
-
+  const ResponseModeCard = ({ id, title, description, icon: Icon, colorClass, selected, onSelect, children }: any) => {
+    return (
       <button
         type="button"
-        disabled={disabled || !isAdmin}
+        onClick={() => isAdmin && onSelect()}
         className={clsx(
-          "text-left p-5 rounded-xl border-2 transition-all w-full",
+          "relative text-left p-5 rounded-xl border-2 transition-all w-full flex flex-col h-full",
           selected ? "border-primary bg-primary/5 shadow-lg shadow-primary/10" : "border-border bg-bg-secondary hover:border-text-secondary/30",
-          disabled && "opacity-50 grayscale cursor-not-allowed"
+          !isAdmin && "opacity-50 cursor-not-allowed"
         )}
-        onClick={() => !disabled && setMode(prev => prev === value ? null : value)}
       >
-
-        <div className="flex items-center justify-between mb-3">
-          <div className="flex items-center gap-2">
-            <Shield size={18} className={selected ? 'text-primary' : 'text-text-secondary'} />
-            <h3 className="font-bold text-text-primary">{title}</h3>
+        <div className="flex items-start justify-between mb-4">
+          <div className={clsx("p-2.5 rounded-lg", colorClass)}>
+            <Icon size={20} />
           </div>
           <div className={clsx(
-            "w-10 h-6 rounded-full p-0.5 transition-all flex",
-            selected ? "bg-primary justify-end" : "bg-bg-primary justify-start"
+            "w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all",
+            selected ? "border-primary bg-primary" : "border-border"
           )}>
-            <div className="w-5 h-5 rounded-full bg-white shadow" />
+            {selected && <div className="w-2 h-2 rounded-full bg-white" />}
           </div>
         </div>
-        <div className="mb-3" onClick={e => e.stopPropagation()}>
-          <label className="text-[10px] font-bold text-text-secondary uppercase">Community BGP</label>
-          <input 
-            value={community} 
-            disabled={!isAdmin}
-            onChange={(e) => onChangeCommunity(e.target.value)}
-            placeholder={value === 'blackhole' ? '65000:666' : '65000:999'}
-            className="w-full mt-1 bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30" 
-          />
-        </div>
-        <p className="text-xs text-text-secondary">{description}</p>
+        
+        <h3 className="font-bold text-text-primary text-sm mb-1">{title}</h3>
+        <p className="text-xs text-text-secondary mb-4 flex-grow">{description}</p>
+        
+        {children && (
+          <div className="mt-auto pt-4 border-t border-border/50" onClick={e => e.stopPropagation()}>
+            {children}
+          </div>
+        )}
       </button>
     );
+  };
 
-    if (disabled && tooltip) {
-      return (
-        <TooltipProvider>
-          <Tooltip>
-            <TooltipTrigger asChild>
-              <div className="w-full cursor-not-allowed">
-                {content}
-              </div>
-            </TooltipTrigger>
-            <TooltipContent className="bg-bg-secondary text-text-primary border border-border shadow-xl">
-              <p className="text-xs font-bold">{tooltip}</p>
-            </TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-      );
+  const handleSelectCard = (cardId: number) => {
+    if (cardId === 1) {
+      setMode('blackhole');
+      setAutoConfig(prev => ({ ...prev, operation_mode: 'disabled' }));
+    } else if (cardId === 2) {
+      setMode('blackhole');
+      setAutoConfig(prev => ({ ...prev, operation_mode: 'flowspec_only' }));
+    } else if (cardId === 3) {
+      setMode('blackhole');
+      setAutoConfig(prev => ({ ...prev, operation_mode: 'blackhole_flowspec' }));
+    } else if (cardId === 4) {
+      setMode('external');
+      setAutoConfig(prev => ({ ...prev, operation_mode: 'disabled' }));
     }
-
-    return content;
-
-
   };
 
   const ThresholdCard = ({ id, label, banKey, unit, placeholder, description, disabled }: any) => {
@@ -337,124 +329,133 @@ export default function Policy() {
         )}
       </div>
 
-      {/* SEÇÃO 1: MODO BGP */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Shield size={18} className="text-primary" />
-          <h2 className="text-lg font-bold text-text-primary">Modo de Operação BGP</h2>
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <ModeCard
-            value="blackhole"
-            title="Modo A — Blackhole /32"
-            community={blackholeCommunity}
-            onChangeCommunity={setBlackholeCommunity}
-            description="Cada IP banido recebe rota /32 para blackhole."
-            disabled={autoConfig.operation_mode === 'flowspec_only' || autoConfig.operation_mode === 'blackhole_flowspec'}
-            tooltip={autoConfig.operation_mode === 'blackhole_flowspec' ? "Modo A é obrigatório no modo Complementar" : "Modo A desabilitado em Apenas FlowSpec"}
-          />
-          <ModeCard
-            value="external"
-            title="Modo B — Mitigação Externa"
-            community={externalCommunity}
-            onChangeCommunity={setExternalCommunity}
-            description={`Anuncia bloco ${externalBlock || '192.168.1.0/24'} para scrubbing externo.`}
-            disabled={autoConfig.operation_mode === 'flowspec_only' || autoConfig.operation_mode === 'blackhole_flowspec'}
-            tooltip={autoConfig.operation_mode === 'blackhole_flowspec' ? "Modo B não disponível no modo Complementar" : "Modo B desabilitado em Apenas FlowSpec"}
-          />
-
-        </div>
-        {mode === 'external' && (
-          <div className="bg-bg-secondary p-4 rounded-xl border border-border">
-            <label className="text-[10px] font-bold text-text-secondary uppercase">Bloco externo (CIDR)</label>
-            <input value={externalBlock} readOnly={!isAdmin} onChange={(e) => setExternalBlock(e.target.value)}
-              className="w-full mt-1 bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30 read-only:opacity-70" />
+      {/* MODO DE RESPOSTA AO ATAQUE */}
+      <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
+        <div className="p-6 border-b border-border flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Shield size={20} className="text-primary" />
+            <h2 className="text-lg font-bold text-text-primary">Modo de resposta ao ataque</h2>
           </div>
-        )}
-      </div>
-
-      {/* SEÇÃO 2: FLOWSPEC */}
-      <div className={clsx(
-        "bg-bg-secondary p-6 rounded-xl border border-border shadow-sm space-y-6 transition-all",
-        (mode === null && autoConfig.operation_mode !== 'flowspec_only') && "opacity-60 grayscale-[0.5]"
-      )}>
-        <div className="flex items-center gap-2 mb-2">
-          <Zap size={20} className="text-warning" />
-          <h2 className="text-lg font-bold text-text-primary">⚡ FlowSpec</h2>
+          {isAdmin && (
+            <button 
+              onClick={handleSaveClick} 
+              disabled={saving}
+              className="flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-xs font-bold transition-all"
+            >
+              {saving ? (
+                <div className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+              ) : (
+                <Save size={14} />
+              )}
+              Salvar
+            </button>
+          )}
         </div>
-
-        <div className="space-y-6">
-          <div>
-            <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block mb-3">Modo</label>
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {[
-                { id: 'disabled', label: 'Desabilitado', desc: 'FlowSpec automático inativo' },
-                { id: 'blackhole_flowspec', label: 'Complementar ao Blackhole', desc: 'Blackhole imediato + FlowSpec cirúrgico' },
-                { id: 'flowspec_only', label: 'Apenas FlowSpec', desc: 'Mitigação cirúrgica (sem blackhole)' },
-              ].map((opt) => {
-                  const isSelected = autoConfig.operation_mode === opt.id;
-
-                  const isDisabled = (mode === 'external' || mode === null) && opt.id !== 'disabled' && opt.id !== 'flowspec_only';
-                  
-                  const button = (
-                    <button
-                      type="button"
-                      disabled={!isAdmin || isDisabled}
-                      onClick={() => {
-                        if (isDisabled) return;
-                        const nextMode = opt.id;
-                        setAutoConfig({ ...autoConfig, operation_mode: nextMode });
-                        if (nextMode === 'blackhole_flowspec') {
-                          setMode('blackhole');
-                        } else if (nextMode === 'flowspec_only') {
-                          setMode(null);
-                        }
-                      }}
-
-                      className={clsx(
-                        "text-left p-4 rounded-xl border transition-all h-full w-full",
-                        isSelected ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-bg-primary/50 hover:border-border-hover",
-                        isDisabled && "opacity-40 grayscale cursor-not-allowed"
-                      )}
-                    >
-                      <div className="flex items-center justify-between mb-2">
-                        <span className={clsx("text-sm font-bold", isSelected ? "text-primary" : "text-text-primary")}>{opt.label}</span>
-                        <div className={clsx("w-4 h-4 rounded-full border flex items-center justify-center", isSelected ? "border-primary" : "border-border")}>
-                          {isSelected && <div className="w-2 h-2 rounded-full bg-primary" />}
-                        </div>
-                      </div>
-                      <p className="text-[10px] text-text-secondary leading-tight">{opt.desc}</p>
-                    </button>
-                  );
-
-                  if (isDisabled || (mode === 'external' && opt.id !== 'disabled')) {
-                    const tooltip = mode === 'external' ? "FlowSpec não disponível no Modo B" : "Ative o Modo A para usar este modo";
-                    return (
-                      <TooltipProvider key={opt.id}>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div className="w-full cursor-not-allowed">
-                              {button}
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent className="bg-bg-secondary text-text-primary border border-border shadow-xl">
-                            <p className="text-xs font-bold">{tooltip}</p>
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    );
-                  }
-
-                  return (
-                    <div key={opt.id} className="w-full">
-                      {button}
-                    </div>
-
-                  );
-              })}
-
+        
+        <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <ResponseModeCard
+            id={1}
+            title="Blackhole /32"
+            description="Bloqueia o IP completamente via BGP. Resposta imediata mas o cliente fica offline."
+            icon={Ban}
+            colorClass="bg-[#FCEBEB] text-[#A32D2D]"
+            selected={mode === 'blackhole' && autoConfig.operation_mode === 'disabled'}
+            onSelect={() => handleSelectCard(1)}
+          >
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-text-secondary uppercase">Community BGP</label>
+              <input 
+                value={blackholeCommunity} 
+                onChange={(e) => setBlackholeCommunity(e.target.value)}
+                className="w-full bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30" 
+              />
             </div>
-          </div>
+          </ResponseModeCard>
+
+          <ResponseModeCard
+            id={2}
+            title="Apenas FlowSpec"
+            description="Bloqueia só o tráfego malicioso. Cliente permanece online durante a mitigação."
+            icon={Zap}
+            colorClass="bg-[#EEEDFE] text-[#534AB7]"
+            selected={mode === 'blackhole' && autoConfig.operation_mode === 'flowspec_only'}
+            onSelect={() => handleSelectCard(2)}
+          />
+
+          <ResponseModeCard
+            id={3}
+            title="Blackhole + FlowSpec"
+            description="Blackhole imediato para proteção rápida + FlowSpec cirúrgico em paralelo."
+            icon={ShieldAlert}
+            colorClass="bg-[#FEF3E2] text-[#854F0B]"
+            selected={mode === 'blackhole' && autoConfig.operation_mode === 'blackhole_flowspec'}
+            onSelect={() => handleSelectCard(3)}
+          >
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-text-secondary uppercase">Community BGP</label>
+              <input 
+                value={blackholeCommunity} 
+                onChange={(e) => setBlackholeCommunity(e.target.value)}
+                className="w-full bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30" 
+              />
+            </div>
+          </ResponseModeCard>
+
+          <ResponseModeCard
+            id={4}
+            title="Mitigação externa"
+            description="Anuncia blocos /24 para scrubbing externo."
+            icon={Cloud}
+            colorClass="bg-[#E1F5EE] text-[#0F6E56]"
+            selected={mode === 'external'}
+            onSelect={() => handleSelectCard(4)}
+          >
+            <div className="space-y-4">
+              <div className="space-y-1.5">
+                <label className="text-[10px] font-bold text-text-secondary uppercase">Community BGP</label>
+                <input 
+                  value={externalCommunity} 
+                  onChange={(e) => setExternalCommunity(e.target.value)}
+                  className="w-full bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30" 
+                />
+              </div>
+              <div className="space-y-2">
+                <div className="flex items-center justify-between">
+                  <label className="text-[10px] font-bold text-text-secondary uppercase">Blocos CIDR</label>
+                  <button 
+                    onClick={() => setExternalBlocks([...externalBlocks, ''])}
+                    className="p-1 hover:bg-bg-primary rounded text-primary"
+                  >
+                    <Plus size={12} />
+                  </button>
+                </div>
+                <div className="space-y-2 max-h-[120px] overflow-y-auto pr-1 custom-scrollbar">
+                  {externalBlocks.map((block, idx) => (
+                    <div key={idx} className="flex gap-2">
+                      <input 
+                        value={block} 
+                        onChange={(e) => {
+                          const newBlocks = [...externalBlocks];
+                          newBlocks[idx] = e.target.value;
+                          setExternalBlocks(newBlocks);
+                        }}
+                        placeholder="192.168.1.0/24"
+                        className="flex-grow bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-[11px] font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30" 
+                      />
+                      {externalBlocks.length > 1 && (
+                        <button 
+                          onClick={() => setExternalBlocks(externalBlocks.filter((_, i) => i !== idx))}
+                          className="p-1.5 text-danger hover:bg-danger/5 rounded"
+                        >
+                          <Trash2 size={12} />
+                        </button>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </ResponseModeCard>
         </div>
       </div>
 
