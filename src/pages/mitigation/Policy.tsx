@@ -374,7 +374,10 @@ export default function Policy() {
       </div>
 
       {/* SEÇÃO 2: FLOWSPEC */}
-      <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm space-y-6">
+      <div className={clsx(
+        "bg-bg-secondary p-6 rounded-xl border border-border shadow-sm space-y-6 transition-all",
+        (mode === null && autoConfig.operation_mode !== 'flowspec_only') && "opacity-60 grayscale-[0.5]"
+      )}>
         <div className="flex items-center gap-2 mb-2">
           <Zap size={20} className="text-warning" />
           <h2 className="text-lg font-bold text-text-primary">⚡ FlowSpec</h2>
