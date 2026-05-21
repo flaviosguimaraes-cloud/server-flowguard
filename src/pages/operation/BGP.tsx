@@ -459,7 +459,7 @@ export default function BGP() {
                         </td>
 
                         <td className="px-4 py-3">
-                          {(route.triggered_by === 'detector' || route.created_by === 'auto-detector') ? (
+                          {(route.triggered_by === 'detector' || route.triggered_by === 'auto-detector' || route.created_by === 'auto-detector' || route.created_by === 'detector') ? (
                             <Badge variant="outline" className="bg-purple-500/10 text-purple-400 border-purple-500/20 font-bold text-[10px]">
                               Automático
                             </Badge>
@@ -609,7 +609,7 @@ export default function BGP() {
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-text-secondary flex items-center gap-1.5"><User size={14} /> Origem:</span>
-                          <span className="text-text-primary font-bold">{(selectedRoute.triggered_by === 'detector' || selectedRoute.created_by === 'auto-detector') ? 'Automático' : 'Manual'}</span>
+                          <span className="text-text-primary font-bold">{(selectedRoute.triggered_by === 'detector' || selectedRoute.triggered_by === 'auto-detector' || selectedRoute.created_by === 'auto-detector' || selectedRoute.created_by === 'detector') ? 'Automático' : 'Manual'}</span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-text-secondary flex items-center gap-1.5"><Clock size={14} /> Tempo ativo:</span>
@@ -676,7 +676,7 @@ export default function BGP() {
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-text-secondary flex items-center gap-1.5"><Info size={14} /> Origem:</span>
                           <span className="text-text-primary font-bold">
-                            {(selectedRoute.triggered_by === 'detector' || selectedRoute.created_by === 'auto-detector' || selectedRoute.source === 'mitigation') ? 'Automático' : 'Manual'}
+                            {(selectedRoute.triggered_by === 'detector' || selectedRoute.triggered_by === 'auto-detector' || selectedRoute.created_by === 'auto-detector' || selectedRoute.created_by === 'detector' || selectedRoute.source === 'mitigation') ? 'Automático' : 'Manual'}
                           </span>
                         </div>
                       </div>
