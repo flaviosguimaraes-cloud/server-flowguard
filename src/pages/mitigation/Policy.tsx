@@ -153,7 +153,7 @@ export default function Policy() {
              mode,
              blackhole_community: blackholeCommunity,
              external_community: externalCommunity,
-             external_block: externalBlock,
+             external_block: externalBlocks.filter(b => !!b),
              flowspec_enabled: isAutoConfigEnabled,
           }),
           api.put('/api/mitigation/auto-config', {
