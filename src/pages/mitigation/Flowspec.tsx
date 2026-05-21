@@ -58,7 +58,8 @@ const Flowspec = () => {
       toast.success('Configuração automática salva');
       queryClient.invalidateQueries({ queryKey: ['mitigation-auto-config'] });
     } catch (e: any) {
-      toast.error('Erro ao salvar configuração: ' + (e.response?.data?.detail || e.message));
+      const errorMsg = e.response?.data?.detail || e.message || 'Erro ao salvar configuração';
+      toast.error('Erro ao salvar configuração: ' + (typeof errorMsg === 'object' ? JSON.stringify(errorMsg) : String(errorMsg)));
     } finally {
       setSavingAutoConfig(false);
     }
@@ -85,7 +86,8 @@ const Flowspec = () => {
       toast.success('Regra removida com sucesso');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Erro ao remover regra');
+      const errorMsg = error.response?.data?.detail || error.message || 'Erro ao remover regra';
+      toast.error(typeof errorMsg === 'object' ? JSON.stringify(errorMsg) : String(errorMsg));
     }
   });
 
