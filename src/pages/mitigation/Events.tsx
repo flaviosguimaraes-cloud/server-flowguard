@@ -90,12 +90,12 @@ function SectionDivider({ title }: { title: string }) {
     const { data: activeMitigations, dataUpdatedAt: activeMitigationsUpdatedAt } = useQuery({
      queryKey: ['mitigation-active-events'],
      queryFn: async () => {
-       const r = await api.get('/api/mitigation/events').catch(() => api.get('/api/mitigation/active'));
+       const r = await api.get('/api/mitigation/active');
        return r.data;
      },
       staleTime: 0,
       gcTime: 0,
-      refetchInterval: 10000,
+      refetchInterval: 5000,
       refetchOnMount: 'always',
       refetchOnWindowFocus: true,
    });
@@ -119,9 +119,11 @@ function SectionDivider({ title }: { title: string }) {
 
     const EventBadges = ({ actionType, direction }: { actionType: string, direction: string }) => {
       const badges = [];
+      const normalizedAction = (actionType || '').toLowerCase();
+      const normalizedDir = (direction || '').toLowerCase();
 
       // Action Type Badges
-      if (actionType === 'blackhole' || actionType === 'blackhole_flowspec') {
+      if (normalizedAction === 'blackhole' || normalizedAction === 'blackhole_flowspec') {
         badges.push(
           <span key="bh" className="px-2 py-0.5 bg-danger/10 text-danger border border-danger/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
             Blackhole /32
@@ -129,13 +131,13 @@ function SectionDivider({ title }: { title: string }) {
         );
       }
       
-      if (actionType === 'flowspec' || actionType === 'blackhole_flowspec') {
+      if (normalizedAction === 'flowspec' || normalizedAction === 'blackhole_flowspec') {
         badges.push(
           <span key="fs" className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
             FlowSpec
           </span>
         );
-      } else if (actionType === 'external') {
+      } else if (normalizedAction === 'external') {
         badges.push(
           <span key="ext" className="px-2 py-0.5 bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
             Externo /24
@@ -144,13 +146,13 @@ function SectionDivider({ title }: { title: string }) {
       }
 
       // Direction Badges
-      if (direction === 'incoming' || direction === 'inbound') {
+      if (normalizedDir === 'incoming' || normalizedDir === 'inbound') {
         badges.push(
           <span key="dir" className="px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[10px] font-bold rounded uppercase flex items-center gap-1 whitespace-nowrap">
             <i className="ti-arrow-down" /> Download
           </span>
         );
-      } else if (direction === 'outgoing' || direction === 'outbound') {
+      } else if (normalizedDir === 'outgoing' || normalizedDir === 'outbound') {
         badges.push(
           <span key="dir" className="px-2 py-0.5 bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 text-[10px] font-bold rounded uppercase flex items-center gap-1 whitespace-nowrap">
             <i className="ti-arrow-up" /> Upload
@@ -513,7 +515,7 @@ function SectionDivider({ title }: { title: string }) {
                         </td>
                         <td className="px-6 py-3.5 text-center">
                           <EventBadges 
-                            actionType={item.action_type || item.type?.toLowerCase()} 
+                            actionType={item.action_type || item.type} 
                             direction={item.direction} 
                           />
                         </td>
@@ -788,7 +790,7 @@ function SectionDivider({ title }: { title: string }) {
                     </td>
                     <td className="px-6 py-3.5 text-center">
                       <EventBadges 
-                        actionType={event.action_type || event.type?.toLowerCase()} 
+                        actionType={event.action_type || event.type} 
                         direction={event.direction || event.flow_direction} 
                       />
                     </td>
