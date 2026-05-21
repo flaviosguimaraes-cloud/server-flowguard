@@ -20,7 +20,7 @@ const Flowspec = () => {
 
   const [autoConfig, setAutoConfig] = useState<any>({
     block_mode: 'by_port',
-    protocols: ['udp', 'tcp'],
+    block_protocols: ['udp', 'tcp'],
     direction: 'incoming',
     default_action: 'discard',
     default_rate_limit_kbps: 1000,
