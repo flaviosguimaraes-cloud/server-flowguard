@@ -69,7 +69,7 @@ export default function BGP() {
 
   const getCountdownColor = (expires_at: string) => {
     if (!expires_at) return '';
-    const diff = new Date(expires_at).getTime() - now.getTime();
+    const diff = new Date(expires_at.replace(' ', 'T')).getTime() - now.getTime();
     if (diff <= 0) return 'text-danger';
     if (diff < 300000) return 'text-danger animate-pulse'; // < 5min
     if (diff < 1800000) return 'text-[#ef4444]'; // < 30min
