@@ -505,8 +505,9 @@ function SectionDivider({ title }: { title: string }) {
                           </p>
                         </td>
                         <td className="px-6 py-3.5 text-center">
-                          <MitigationBadges actionType={item.action_type} ip={item.ip} />
+                          <MitigationBadges actionType={item.action_type || item.type?.toLowerCase()} ip={item.ip} />
                         </td>
+
                         <td className="px-6 py-3.5 text-center">
                           <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20 text-[10px] font-bold rounded uppercase">
                             {item.direction === 'outgoing' ? '↑ Upload' : '↓ Download'}
