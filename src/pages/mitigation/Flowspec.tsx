@@ -302,31 +302,15 @@ const Flowspec = () => {
           {/* 2. Protocolos (Alinhados com Por protocolo) */}
           <div className="space-y-3">
             {autoConfig.block_mode !== 'by_port' && (
-              <div className="md:mt-[89px] space-y-2 animate-in fade-in slide-in-from-left-2 duration-300">
+              <div className="md:mt-[89px] flex gap-2 animate-in fade-in slide-in-from-left-2 duration-300">
                 {/* Fixed TCP / UDP */}
-                <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-bg-primary/30 opacity-80 cursor-default">
+                <div className="flex-1 flex items-center justify-between p-3 rounded-lg border border-border bg-bg-primary/30 opacity-80 cursor-default">
                   <div className="flex items-center gap-2">
                     <span className="text-xs font-bold uppercase text-text-secondary">TCP / UDP</span>
                     <Lock size={12} className="text-text-secondary" />
                   </div>
-                  <span className="text-[9px] font-bold text-text-secondary uppercase">Sempre ON</span>
+                  <span className="text-[9px] font-bold text-text-secondary uppercase">ON</span>
                 </div>
-
-                {/* ICMP Checkbox */}
-                <button
-                  type="button"
-                  disabled={!isAdmin}
-                  onClick={() => toggleProtocol('icmp')}
-                  className={clsx(
-                    "flex items-center justify-between p-3 rounded-lg border transition-all w-full",
-                    autoConfig.block_protocols?.includes('icmp') ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-bg-primary/50"
-                  )}
-                >
-                  <span className={clsx("text-xs font-bold uppercase", autoConfig.block_protocols?.includes('icmp') ? "text-primary" : "text-text-primary")}>
-                    ICMP
-                  </span>
-                  {autoConfig.block_protocols?.includes('icmp') && <Check size={14} className="text-primary" />}
-                </button>
 
                 {/* IP Checkbox */}
                 <button
@@ -334,7 +318,7 @@ const Flowspec = () => {
                   disabled={!isAdmin}
                   onClick={() => toggleProtocol('ip')}
                   className={clsx(
-                    "flex items-center justify-between p-3 rounded-lg border transition-all w-full",
+                    "flex-1 flex items-center justify-between p-3 rounded-lg border transition-all",
                     autoConfig.block_protocols?.includes('ip') ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-bg-primary/50"
                   )}
                 >
