@@ -210,7 +210,7 @@ export default function Policy() {
           selected ? "border-primary bg-primary/5 shadow-lg shadow-primary/10" : "border-border bg-bg-secondary hover:border-text-secondary/30",
           disabled && "opacity-50 grayscale cursor-not-allowed"
         )}
-        onClick={() => !disabled && setMode(value)}
+        onClick={() => !disabled && setMode(prev => prev === value ? null : value)}
       >
 
         <div className="flex items-center justify-between mb-3">
