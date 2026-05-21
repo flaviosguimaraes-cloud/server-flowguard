@@ -13,6 +13,66 @@ const Flowspec = () => {
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
 
+  const { data: autoConfigData } = useQuery({
+    queryKey: ['mitigation-auto-config'],
+    queryFn: () => api.get('/api/mitigation/auto-config').then(r => r.data).catch(() => ({})),
+  });
+
+  const [autoConfig, setAutoConfig] = useState<any>({
+    block_mode: 'by_port',
+    protocols: ['udp', 'tcp'],
+    direction: 'incoming',
+    default_action: 'discard',
+    default_rate_limit_kbps: 1000,
+    default_ttl_minutes: 120,
+    detect_udp_flood: true,
+    detect_syn_flood: true,
+    detect_dns_amp: true,
+    detect_ntp_amp: true,
+    detect_ssdp_amp: false,
+    flowspec_src_mode: 'any'
+  });
+
+  const [savingAutoConfig, setSavingAutoConfig] = useState(false);
+
+  useEffect(() => {
+    if (autoConfigData && Object.keys(autoConfigData).length > 0) {
+      setAutoConfig({
+        ...autoConfig,
+        ...autoConfigData,
+        protocols: Array.isArray(autoConfigData.protocols) ? autoConfigData.protocols : (autoConfigData.protocols?.split(',') || ['udp', 'tcp']),
+        block_mode: autoConfigData.block_mode || 'by_port',
+        direction: autoConfigData.direction || 'incoming',
+      });
+    }
+  }, [autoConfigData]);
+
+  const handleSaveAutoConfig = async () => {
+    setSavingAutoConfig(true);
+    try {
+      await api.put('/api/mitigation/auto-config', {
+        ...autoConfig,
+        default_rate_limit_kbps: Number(autoConfig.default_rate_limit_kbps) || 1000,
+        default_ttl_minutes: Number(autoConfig.default_ttl_minutes) || 120,
+      });
+      toast.success('Configuração automática salva');
+      queryClient.invalidateQueries({ queryKey: ['mitigation-auto-config'] });
+    } catch (e: any) {
+      toast.error('Erro ao salvar configuração: ' + (e.response?.data?.detail || e.message));
+    } finally {
+      setSavingAutoConfig(false);
+    }
+  };
+
+  const toggleProtocol = (proto: string) => {
+    const current = [...autoConfig.protocols];
+    if (current.includes(proto)) {
+      setAutoConfig({ ...autoConfig, protocols: current.filter(p => p !== proto) });
+    } else {
+      setAutoConfig({ ...autoConfig, protocols: [...current, proto] });
+    }
+  };
+
   const { data, isLoading } = useQuery({
     queryKey: ['flowspec-rules'],
     queryFn: () => api.get('/api/mitigation/flowspec').then(r => r.data),
