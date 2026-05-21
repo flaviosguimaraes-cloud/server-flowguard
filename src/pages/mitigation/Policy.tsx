@@ -79,7 +79,11 @@ export default function Policy() {
   useEffect(() => {
     if (policyData) {
       setMode((policyData.mode as Mode) || null);
-      setExternalBlock(policyData.external_block || '192.168.1.0/24');
+      if (Array.isArray(policyData.external_block)) {
+        setExternalBlocks(policyData.external_block.length > 0 ? policyData.external_block : ['']);
+      } else if (typeof policyData.external_block === 'string') {
+        setExternalBlocks([policyData.external_block || '']);
+      }
       setBlackholeCommunity(policyData.blackhole_community || '65000:666');
       setExternalCommunity(policyData.external_community || '65000:999');
     }
