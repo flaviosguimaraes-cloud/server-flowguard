@@ -123,16 +123,9 @@ const Flowspec = () => {
   const rules = data?.items || [];
 
   const getBgpStatusBadge = (status: string) => {
-    const config: any = {
-      announced: { color: 'bg-success/10 text-success border-success/20', label: 'Anunciado' },
-      pending: { color: 'bg-warning/10 text-warning border-warning/20', label: 'Pendente' },
-      withdrawn: { color: 'bg-gray-500/10 text-gray-500 border-gray-500/20', label: 'Removido' },
-      error: { color: 'bg-danger/10 text-danger border-danger/20', label: 'Erro' },
-    };
-    const c = config[status] || { color: 'bg-gray-500/10 text-gray-500 border-gray-500/20', label: status };
     return (
-      <span className={clsx("px-2 py-0.5 rounded text-[10px] font-bold uppercase border", c.color)}>
-        {c.label}
+      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase border bg-success/10 text-success border-success/20">
+        Anunciado
       </span>
     );
   };
@@ -140,24 +133,38 @@ const Flowspec = () => {
   const getActionBadge = (action: string, rate_limit_kbps?: number) => {
     if (action === 'discard') {
       return (
-        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase border bg-danger/10 text-danger border-danger/20">
-          Descartar
-        </span>
+        <div className="flex items-center gap-1 text-danger font-bold">
+          <span className="text-sm">🚫</span>
+          <span>Descartar</span>
+        </div>
       );
     }
     
     if (action === 'rate-limit') {
-      const mbps = rate_limit_kbps ? (rate_limit_kbps / 1000) : 0;
+      const mbps = rate_limit_kbps ? (rate_limit_kbps / 1000).toFixed(1) : '1.0';
       return (
-        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase border bg-warning/10 text-warning border-warning/20 whitespace-nowrap">
-          Rate-Limit: {mbps >= 1 ? `${mbps} Mbps` : `${rate_limit_kbps} Kbps`}
-        </span>
+        <div className="flex items-center gap-1 text-[#f59e0b] font-bold">
+          <span className="text-sm">⚡</span>
+          <span>Rate-Limit: {mbps} Mbps</span>
+        </div>
       );
     }
 
     return (
       <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase border bg-gray-500/10 text-gray-500 border-gray-500/20">
         {action}
+      </span>
+    );
+  };
+
+  const getTipoBadge = (created_by: string) => {
+    const isAuto = created_by === 'auto-detector';
+    return (
+      <span className={clsx(
+        "px-2 py-0.5 rounded text-[10px] font-bold uppercase border",
+        isAuto ? "bg-purple-500/10 text-purple-500 border-purple-500/20" : "bg-blue-500/10 text-blue-500 border-blue-500/20"
+      )}>
+        {isAuto ? 'Automático' : 'Manual'}
       </span>
     );
   };
