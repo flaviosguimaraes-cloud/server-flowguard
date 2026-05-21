@@ -119,8 +119,8 @@ function SectionDivider({ title }: { title: string }) {
 
     const EventBadges = ({ actionType, direction }: { actionType: string, direction: string }) => {
       const badges = [];
-      const normalizedAction = (actionType || '').toLowerCase();
-      const normalizedDir = (direction || '').toLowerCase();
+      const normalizedAction = String(actionType || '').toLowerCase().trim();
+      const normalizedDir = String(direction || '').toLowerCase().trim();
 
       // Action Type Badges
       if (normalizedAction === 'blackhole' || normalizedAction === 'blackhole_flowspec') {
