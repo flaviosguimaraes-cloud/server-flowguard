@@ -90,12 +90,12 @@ function SectionDivider({ title }: { title: string }) {
     const { data: activeMitigations, dataUpdatedAt: activeMitigationsUpdatedAt } = useQuery({
      queryKey: ['mitigation-active-events'],
      queryFn: async () => {
-       const r = await api.get('/api/mitigation/events').catch(() => api.get('/api/mitigation/active'));
+       const r = await api.get('/api/mitigation/active');
        return r.data;
      },
       staleTime: 0,
       gcTime: 0,
-      refetchInterval: 10000,
+      refetchInterval: 5000,
       refetchOnMount: 'always',
       refetchOnWindowFocus: true,
    });
