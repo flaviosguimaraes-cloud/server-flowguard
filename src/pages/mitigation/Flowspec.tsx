@@ -58,7 +58,8 @@ const Flowspec = () => {
       toast.success('Configuração automática salva');
       queryClient.invalidateQueries({ queryKey: ['mitigation-auto-config'] });
     } catch (e: any) {
-      toast.error('Erro ao salvar configuração: ' + (e.response?.data?.detail || e.message));
+      const errorMsg = e.response?.data?.detail || e.message || 'Erro ao salvar configuração';
+      toast.error('Erro ao salvar configuração: ' + (typeof errorMsg === 'object' ? JSON.stringify(errorMsg) : String(errorMsg)));
     } finally {
       setSavingAutoConfig(false);
     }
