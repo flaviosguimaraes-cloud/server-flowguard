@@ -368,11 +368,11 @@ export default function BGP() {
 
                       if (type !== 'flowspec') return '—';
                       
-                      // Use action from rule if route.action is missing or potentially incorrect
-                      const effectiveAction = action || rule?.action || 'discard';
+                      // Prioritize action from the flowspec rule list if available
+                      const effectiveAction = rule?.action || action || 'discard';
                       
                       if (effectiveAction === 'rate-limit') {
-                        const rateKbps = route.rate_limit_kbps || rule?.rate_limit_kbps;
+                        const rateKbps = rule?.rate_limit_kbps || route.rate_limit_kbps;
                         const mbps = rateKbps 
                           ? (Number(rateKbps) / 1000).toFixed(1)
                           : '1.0';
