@@ -81,13 +81,13 @@ const Flowspec = () => {
       // Filter out tcp/udp as they are handled implicitly in the UI now
       const filteredProtocols = protocols.filter((p: string) => p === 'icmp' || p === 'ip');
 
-      setAutoConfig({
-        ...autoConfig,
+      setAutoConfig(prev => ({
+        ...prev,
         ...autoConfigData,
         block_protocols: filteredProtocols,
-        block_mode: autoConfigData.block_mode || 'by_port',
-        direction: autoConfigData.direction || 'incoming',
-      });
+        block_mode: autoConfigData.block_mode || prev.block_mode || 'by_port',
+        direction: autoConfigData.direction || prev.direction || 'incoming',
+      }));
     }
   }, [autoConfigData]);
 
