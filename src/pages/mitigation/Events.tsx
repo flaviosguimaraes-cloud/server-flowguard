@@ -119,8 +119,8 @@ function SectionDivider({ title }: { title: string }) {
 
     const EventBadges = ({ actionType, direction }: { actionType: string, direction: string }) => {
       const badges = [];
-      const normalizedAction = (actionType || '').toLowerCase();
-      const normalizedDir = (direction || '').toLowerCase();
+      const normalizedAction = String(actionType || '').toLowerCase().trim();
+      const normalizedDir = String(direction || '').toLowerCase().trim();
 
       // Action Type Badges
       if (normalizedAction === 'blackhole' || normalizedAction === 'blackhole_flowspec') {
@@ -515,8 +515,8 @@ function SectionDivider({ title }: { title: string }) {
                         </td>
                         <td className="px-6 py-3.5 text-center">
                           <EventBadges 
-                            actionType={item.action_type} 
-                            direction={item.direction} 
+                            actionType={item.action_type || item.type} 
+                            direction={item.direction || item.flow_direction} 
                           />
                         </td>
 
@@ -790,7 +790,7 @@ function SectionDivider({ title }: { title: string }) {
                     </td>
                     <td className="px-6 py-3.5 text-center">
                       <EventBadges 
-                        actionType={event.action_type} 
+                        actionType={event.action_type || event.type} 
                         direction={event.direction || event.flow_direction} 
                       />
                     </td>
