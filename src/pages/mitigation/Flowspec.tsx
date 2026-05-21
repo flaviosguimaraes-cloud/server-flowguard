@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
-import { List, Plus, Trash2, Shield, Info, AlertTriangle, Clock, Zap, Save, Check, User, Calendar, ExternalLink } from 'lucide-react';
+import { List, Plus, Trash2, Shield, Info, AlertTriangle, Clock, Zap, Save, Check, User, Calendar, ExternalLink, Lock } from 'lucide-react';
 import { toast } from 'sonner';
 import { clsx } from 'clsx';
 import FlowSpecModal from '../../components/FlowSpecModal';
@@ -41,7 +41,7 @@ const Flowspec = () => {
 
   const [autoConfig, setAutoConfig] = useState<any>({
     block_mode: 'by_port',
-    block_protocols: ['udp', 'tcp'],
+    block_protocols: [], // ICMP, IP are managed here. TCP/UDP are implicit.
     direction: 'incoming',
     default_action: 'discard',
     default_rate_limit_kbps: 1000,
@@ -58,12 +58,17 @@ const Flowspec = () => {
 
   useEffect(() => {
     if (autoConfigData && Object.keys(autoConfigData).length > 0) {
+      const protocols = Array.isArray(autoConfigData.block_protocols) 
+        ? autoConfigData.block_protocols 
+        : (autoConfigData.block_protocols?.split(',') || autoConfigData.protocols?.split(',') || []);
+      
+      // Filter out tcp/udp as they are handled implicitly in the UI now
+      const filteredProtocols = protocols.filter((p: string) => p === 'icmp' || p === 'ip');
+
       setAutoConfig({
         ...autoConfig,
         ...autoConfigData,
-        block_protocols: Array.isArray(autoConfigData.block_protocols) 
-          ? autoConfigData.block_protocols 
-          : (autoConfigData.block_protocols?.split(',') || autoConfigData.protocols?.split(',') || ['udp', 'tcp']),
+        block_protocols: filteredProtocols,
         block_mode: autoConfigData.block_mode || 'by_port',
         direction: autoConfigData.direction || 'incoming',
       });
@@ -92,6 +97,8 @@ const Flowspec = () => {
   };
 
   const toggleProtocol = (proto: string) => {
+    if (proto === 'tcp' || proto === 'udp') return; // Fixed
+    
     const current = [...(autoConfig.block_protocols || [])];
     if (current.includes(proto)) {
       setAutoConfig({ ...autoConfig, block_protocols: current.filter(p => p !== proto) });
@@ -268,34 +275,53 @@ const Flowspec = () => {
             </div>
           </div>
 
-          {/* 2. Protocolos Monitorados */}
-          {autoConfig.block_mode !== 'by_port' && (
-            <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block">Protocolos monitorados</label>
-              <div className="grid grid-cols-2 gap-2">
-                {['udp', 'tcp', 'icmp', 'ip'].map((proto) => {
-                  const isSelected = autoConfig.block_protocols?.includes(proto);
-                  return (
-                    <button
-                      key={proto}
-                      type="button"
-                      disabled={!isAdmin}
-                      onClick={() => toggleProtocol(proto)}
-                      className={clsx(
-                        "flex items-center justify-between p-3 rounded-lg border transition-all",
-                        isSelected ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-bg-primary/50"
-                      )}
-                    >
-                      <span className={clsx("text-xs font-bold uppercase", isSelected ? "text-primary" : "text-text-primary")}>
-                        {proto === 'ip' ? 'IP (Todos)' : proto}
-                      </span>
-                      {isSelected && <Check size={14} className="text-primary" />}
-                    </button>
-                  );
-                })}
+          {/* 2. Protocolos (Alinhados com Por protocolo) */}
+          <div className="space-y-3">
+            {autoConfig.block_mode !== 'by_port' && (
+              <div className="md:mt-[89px] space-y-2 animate-in fade-in slide-in-from-left-2 duration-300">
+                {/* Fixed TCP / UDP */}
+                <div className="flex items-center justify-between p-3 rounded-lg border border-border bg-bg-primary/30 opacity-80 cursor-default">
+                  <div className="flex items-center gap-2">
+                    <span className="text-xs font-bold uppercase text-text-secondary">TCP / UDP</span>
+                    <Lock size={12} className="text-text-secondary" />
+                  </div>
+                  <span className="text-[9px] font-bold text-text-secondary uppercase">Sempre ON</span>
+                </div>
+
+                {/* ICMP Checkbox */}
+                <button
+                  type="button"
+                  disabled={!isAdmin}
+                  onClick={() => toggleProtocol('icmp')}
+                  className={clsx(
+                    "flex items-center justify-between p-3 rounded-lg border transition-all w-full",
+                    autoConfig.block_protocols?.includes('icmp') ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-bg-primary/50"
+                  )}
+                >
+                  <span className={clsx("text-xs font-bold uppercase", autoConfig.block_protocols?.includes('icmp') ? "text-primary" : "text-text-primary")}>
+                    ICMP
+                  </span>
+                  {autoConfig.block_protocols?.includes('icmp') && <Check size={14} className="text-primary" />}
+                </button>
+
+                {/* IP Checkbox */}
+                <button
+                  type="button"
+                  disabled={!isAdmin}
+                  onClick={() => toggleProtocol('ip')}
+                  className={clsx(
+                    "flex items-center justify-between p-3 rounded-lg border transition-all w-full",
+                    autoConfig.block_protocols?.includes('ip') ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-bg-primary/50"
+                  )}
+                >
+                  <span className={clsx("text-xs font-bold uppercase", autoConfig.block_protocols?.includes('ip') ? "text-primary" : "text-text-primary")}>
+                    IP
+                  </span>
+                  {autoConfig.block_protocols?.includes('ip') && <Check size={14} className="text-primary" />}
+                </button>
               </div>
-            </div>
-          )}
+            )}
+          </div>
 
           {/* 3. Direção */}
           <div className="space-y-3">
