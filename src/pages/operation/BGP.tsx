@@ -136,7 +136,7 @@ export default function BGP() {
   // Contadores para os cards
   const activeFlowspecCount = routes.filter((r: any) => r.type === 'flowspec').length;
   const activeUnicastCount = routes.filter((r: any) => 
-    r.type === 'blackhole' || r.type === 'external' || r.type === 'blacklist'
+    r.type === 'blackhole' || r.type === 'external'
   ).length;
 
   const refresh = () => {
