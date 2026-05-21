@@ -174,15 +174,15 @@ const Flowspec = () => {
   };
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
+    <div className="space-y-6 animate-in fade-in duration-500 pb-12">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <div className="p-2 bg-primary/10 rounded-lg">
-            <List className="text-primary" size={24} />
+            <Zap className="text-primary" size={24} />
           </div>
           <div>
-            <h1 className="text-2xl font-bold text-text-primary">Regras FlowSpec</h1>
-            <p className="text-sm text-text-secondary">Gerenciamento de mitigação BGP na origem</p>
+            <h1 className="text-2xl font-bold text-text-primary">FlowSpec</h1>
+            <p className="text-sm text-text-secondary">Configuração automática e regras ativas</p>
           </div>
         </div>
         {isAdmin && (
@@ -196,8 +196,227 @@ const Flowspec = () => {
         )}
       </div>
 
-      <div className="bg-bg-secondary rounded-xl border border-border overflow-hidden shadow-sm">
-        <div className="overflow-x-auto custom-scrollbar">
+      {/* SEÇÃO: CONFIGURAÇÃO AUTOMÁTICA */}
+      <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm space-y-6">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Zap size={20} className="text-warning" />
+            <h2 className="text-lg font-bold text-text-primary">Configuração Automática</h2>
+          </div>
+          {isAdmin && (
+            <button
+              onClick={handleSaveAutoConfig}
+              disabled={savingAutoConfig}
+              className="flex items-center gap-2 px-4 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-xs font-bold transition-all border border-primary/20 disabled:opacity-50"
+            >
+              {savingAutoConfig ? <div className="w-3 h-3 border-2 border-primary/30 border-t-primary rounded-full animate-spin" /> : <Save size={14} />}
+              Salvar Configuração
+            </button>
+          )}
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {/* 1. Tipo de Bloqueio */}
+          <div className="space-y-3">
+            <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block">Tipo de Bloqueio</label>
+            <div className="space-y-2">
+              {[
+                { id: 'by_port', label: 'Por porta', desc: 'Descobre a porta atacada e cria regra específica' },
+                { id: 'by_protocol', label: 'Por protocolo', desc: 'Bloqueia o protocolo inteiro sem especificar porta' },
+                { id: 'both', label: 'Ambos', desc: 'Cria as duas regras simultaneamente' },
+              ].map((opt) => (
+                <label key={opt.id} className="flex items-start gap-3 p-3 rounded-lg bg-bg-primary/50 border border-border cursor-pointer hover:border-primary/30 transition-all group">
+                  <input
+                    type="radio"
+                    name="block_mode"
+                    disabled={!isAdmin}
+                    checked={autoConfig.block_mode === opt.id}
+                    onChange={() => setAutoConfig({ ...autoConfig, block_mode: opt.id })}
+                    className="mt-1 w-4 h-4 accent-primary"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-text-primary group-hover:text-primary transition-colors">{opt.label}</span>
+                    <span className="text-[10px] text-text-secondary leading-tight">{opt.desc}</span>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* 2. Protocolos Monitorados */}
+          <div className="space-y-3">
+            <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block">Protocolos monitorados</label>
+            <div className="grid grid-cols-2 gap-2">
+              {['udp', 'tcp', 'icmp', 'ip'].map((proto) => {
+                const isSelected = autoConfig.protocols?.includes(proto);
+                return (
+                  <button
+                    key={proto}
+                    type="button"
+                    disabled={!isAdmin}
+                    onClick={() => toggleProtocol(proto)}
+                    className={clsx(
+                      "flex items-center justify-between p-3 rounded-lg border transition-all",
+                      isSelected ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-bg-primary/50"
+                    )}
+                  >
+                    <span className={clsx("text-xs font-bold uppercase", isSelected ? "text-primary" : "text-text-primary")}>
+                      {proto === 'ip' ? 'IP (Todos)' : proto}
+                    </span>
+                    {isSelected && <Check size={14} className="text-primary" />}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+
+          {/* 3. Direção */}
+          <div className="space-y-3">
+            <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block">Direção</label>
+            <div className="flex flex-col gap-2">
+              {[
+                { id: 'incoming', label: 'Incoming', desc: 'Meu IP está sendo atacado (padrão)' },
+                { id: 'outgoing', label: 'Outgoing', desc: 'Meu servidor/CPE está gerando ataque' },
+              ].map((opt) => (
+                <label key={opt.id} className="flex items-start gap-3 p-3 rounded-lg bg-bg-primary/50 border border-border cursor-pointer hover:border-primary/30 transition-all group">
+                  <input
+                    type="radio"
+                    name="direction"
+                    disabled={!isAdmin}
+                    checked={autoConfig.direction === opt.id}
+                    onChange={() => setAutoConfig({ ...autoConfig, direction: opt.id })}
+                    className="mt-1 w-4 h-4 accent-primary"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-text-primary group-hover:text-primary transition-colors">{opt.label}</span>
+                    <span className="text-[10px] text-text-secondary leading-tight">{opt.desc}</span>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* 4. Ação Padrão */}
+          <div className="space-y-3">
+            <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block">Ação padrão</label>
+            <div className="space-y-3">
+              <label className="flex items-center gap-3 p-3 rounded-lg bg-bg-primary/50 border border-border cursor-pointer group">
+                <input
+                  type="radio"
+                  name="default_action"
+                  disabled={!isAdmin}
+                  checked={autoConfig.default_action === 'discard'}
+                  onChange={() => setAutoConfig({ ...autoConfig, default_action: 'discard' })}
+                  className="w-4 h-4 accent-primary"
+                />
+                <span className="text-xs font-bold text-text-primary">Descartar tudo</span>
+              </label>
+              
+              <div className="space-y-2">
+                <label className="flex items-center gap-3 p-3 rounded-lg bg-bg-primary/50 border border-border cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="default_action"
+                    disabled={!isAdmin}
+                    checked={autoConfig.default_action === 'rate-limit'}
+                    onChange={() => setAutoConfig({ ...autoConfig, default_action: 'rate-limit' })}
+                    className="w-4 h-4 accent-primary"
+                  />
+                  <span className="text-xs font-bold text-text-primary">Rate-Limit</span>
+                </label>
+                
+                {autoConfig.default_action === 'rate-limit' && (
+                  <div className="flex items-center gap-2 ml-2 animate-in slide-in-from-top-2 duration-200">
+                    <input
+                      type="number"
+                      disabled={!isAdmin}
+                      value={autoConfig.default_rate_limit_kbps}
+                      onChange={(e) => setAutoConfig({ ...autoConfig, default_rate_limit_kbps: e.target.value })}
+                      className="w-24 bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30"
+                    />
+                    <span className="text-xs font-bold text-text-secondary uppercase">Kbps</span>
+                  </div>
+                )}
+              </div>
+            </div>
+          </div>
+
+          {/* 5. TTL Padrão */}
+          <div className="space-y-3">
+            <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block">TTL padrão (minutos)</label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                disabled={!isAdmin}
+                value={autoConfig.default_ttl_minutes}
+                onChange={(e) => setAutoConfig({ ...autoConfig, default_ttl_minutes: e.target.value })}
+                className="w-full bg-bg-primary/50 border border-border rounded-lg px-4 py-2.5 text-sm font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30"
+              />
+              <Clock size={18} className="text-text-secondary shrink-0" />
+            </div>
+            <p className="text-[10px] text-text-secondary leading-tight italic">Tempo que as regras permanecem ativas</p>
+          </div>
+
+          {/* 7. Origem do Bloqueio */}
+          <div className="space-y-3">
+            <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block">Origem do bloqueio</label>
+            <div className="flex flex-col gap-2">
+              {[
+                { id: 'any', label: 'Qualquer origem', desc: 'Mais eficaz contra botnets' },
+                { id: 'attacker', label: 'Só IP atacante', desc: 'Mais cirúrgico mas menos eficaz' },
+              ].map((opt) => (
+                <label key={opt.id} className="flex items-start gap-3 p-3 rounded-lg bg-bg-primary/50 border border-border cursor-pointer hover:border-primary/30 transition-all group">
+                  <input
+                    type="radio"
+                    name="flowspec_src_mode"
+                    disabled={!isAdmin}
+                    checked={autoConfig.flowspec_src_mode === opt.id}
+                    onChange={() => setAutoConfig({ ...autoConfig, flowspec_src_mode: opt.id })}
+                    className="mt-1 w-4 h-4 accent-primary"
+                  />
+                  <div className="flex flex-col">
+                    <span className="text-xs font-bold text-text-primary group-hover:text-primary transition-colors">{opt.label}</span>
+                    <span className="text-[10px] text-text-secondary leading-tight">{opt.desc}</span>
+                  </div>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* 6. Tipos de Detecção */}
+          <div className="lg:col-span-3 space-y-4 pt-6 border-t border-border">
+            <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block">Tipos de detecção</label>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
+              {[
+                { id: 'detect_udp_flood', label: 'UDP Flood' },
+                { id: 'detect_syn_flood', label: 'SYN Flood' },
+                { id: 'detect_dns_amp', label: 'DNS Amplification' },
+                { id: 'detect_ntp_amp', label: 'NTP Amplification' },
+                { id: 'detect_ssdp_amp', label: 'SSDP Amplification' },
+              ].map((type) => (
+                <label key={type.id} className="flex items-center gap-3 p-3 rounded-lg bg-bg-primary/50 border border-border cursor-pointer hover:border-primary/30 transition-all group">
+                  <input
+                    type="checkbox"
+                    disabled={!isAdmin}
+                    checked={(autoConfig as any)[type.id]}
+                    onChange={(e) => setAutoConfig({ ...autoConfig, [type.id]: e.target.checked })}
+                    className="w-4 h-4 rounded border-border text-primary focus:ring-primary/20 accent-primary"
+                  />
+                  <span className="text-xs font-bold text-text-primary group-hover:text-primary transition-colors">{type.label}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="flex items-center gap-2">
+          <List size={18} className="text-primary" />
+          <h2 className="text-lg font-bold text-text-primary">Regras Ativas</h2>
+        </div>
+        <div className="bg-bg-secondary rounded-xl border border-border overflow-hidden shadow-sm">
+          <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-bg-primary/50 border-b border-border">
