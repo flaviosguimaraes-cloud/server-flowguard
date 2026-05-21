@@ -924,7 +924,7 @@ function SectionDivider({ title }: { title: string }) {
                {isBanned ? (
                  <MitigationTooltip data={{
                    ip: host.ip,
-                   tipo: mitigationData?.type || 'Blackhole /32',
+                   tipo: mitigationData?.action_type || mitigationData?.type || 'blackhole',
                    desde: mitigationData?.since || mitigationData?.age,
                    pps: mitigationData?.pps || host.pps,
                    mbps: mitigationData?.mbps || host.mbps,
