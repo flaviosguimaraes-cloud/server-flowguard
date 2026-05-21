@@ -41,7 +41,7 @@ const Flowspec = () => {
 
   const [autoConfig, setAutoConfig] = useState<any>({
     block_mode: 'by_port',
-    block_protocols: ['udp', 'tcp'],
+    block_protocols: [], // ICMP, IP are managed here. TCP/UDP are implicit.
     direction: 'incoming',
     default_action: 'discard',
     default_rate_limit_kbps: 1000,
@@ -58,12 +58,17 @@ const Flowspec = () => {
 
   useEffect(() => {
     if (autoConfigData && Object.keys(autoConfigData).length > 0) {
+      const protocols = Array.isArray(autoConfigData.block_protocols) 
+        ? autoConfigData.block_protocols 
+        : (autoConfigData.block_protocols?.split(',') || autoConfigData.protocols?.split(',') || []);
+      
+      // Filter out tcp/udp as they are handled implicitly in the UI now
+      const filteredProtocols = protocols.filter((p: string) => p === 'icmp' || p === 'ip');
+
       setAutoConfig({
         ...autoConfig,
         ...autoConfigData,
-        block_protocols: Array.isArray(autoConfigData.block_protocols) 
-          ? autoConfigData.block_protocols 
-          : (autoConfigData.block_protocols?.split(',') || autoConfigData.protocols?.split(',') || ['udp', 'tcp']),
+        block_protocols: filteredProtocols,
         block_mode: autoConfigData.block_mode || 'by_port',
         direction: autoConfigData.direction || 'incoming',
       });
