@@ -78,8 +78,8 @@ const Flowspec = () => {
         ? autoConfigData.block_protocols 
         : (autoConfigData.block_protocols?.split(',') || autoConfigData.protocols?.split(',') || []);
       
-      // Filter out tcp/udp as they are handled implicitly in the UI now
-      const filteredProtocols = protocols.filter((p: string) => p === 'icmp' || p === 'ip');
+      // Filter out tcp/udp/icmp as they are handled differently in the UI now
+      const filteredProtocols = protocols.filter((p: string) => p === 'ip');
 
       setAutoConfig(prev => ({
         ...prev,
