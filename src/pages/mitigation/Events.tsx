@@ -800,8 +800,9 @@ function SectionDivider({ title }: { title: string }) {
                       )}
                     </td>
                     <td className="px-6 py-3.5 text-center">
-                      <MitigationBadges actionType={event.action_type} ip={event.ip} />
+                      <MitigationBadges actionType={event.action_type || event.type?.toLowerCase()} ip={event.ip} />
                     </td>
+
 
                     <td className="px-6 py-3.5 text-text-secondary text-[11px] font-bold uppercase tracking-wider">
                       {event.triggered_by === 'detector' ? 'Automático' : 'Manual'}
