@@ -105,21 +105,18 @@ const Flowspec = () => {
     queryFn: () => api.get('/api/mitigation/flowspec').then(r => r.data),
   });
 
-  const deleteMutation = useMutation({
-    mutationFn: (id: number) => api.delete(`/api/mitigation/flowspec/${id}`),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['flowspec-rules'] });
+  const handleDelete = async (id: number) => {
+    setIsDeleting(true);
+    try {
+      await api.delete(`/api/mitigation/flowspec/${id}`);
       toast.success('Regra removida com sucesso');
-    },
-    onError: (error: any) => {
+      queryClient.invalidateQueries({ queryKey: ['flowspec-rules'] });
+      setRuleToDelete(null);
+    } catch (error: any) {
       const errorMsg = error.response?.data?.detail || error.message || 'Erro ao remover regra';
       toast.error(typeof errorMsg === 'object' ? JSON.stringify(errorMsg) : String(errorMsg));
-    }
-  });
-
-  const handleDelete = (id: number) => {
-    if (window.confirm('Tem certeza que deseja remover esta regra FlowSpec?')) {
-      deleteMutation.mutate(id);
+    } finally {
+      setIsDeleting(false);
     }
   };
 
