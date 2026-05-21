@@ -490,6 +490,7 @@ function SectionDivider({ title }: { title: string }) {
                       <th className="px-6 py-4 border-b border-border">Início</th>
                       <th className="px-6 py-4 border-b border-border">Volume</th>
                       <th className="px-6 py-4 border-b border-border text-center">Tipo</th>
+                      <th className="px-6 py-4 border-b border-border text-center">Origem</th>
 
                       <th className="px-6 py-4 border-b border-border text-center">Ações</th>
                     </tr>
@@ -518,6 +519,17 @@ function SectionDivider({ title }: { title: string }) {
                             actionType={item.action_type || item.type} 
                             direction={item.direction || item.flow_direction} 
                           />
+                        </td>
+                        <td className="px-6 py-3.5 text-center">
+                          {item.triggered_by === 'detector' ? (
+                            <span className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
+                              Automático
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
+                              Manual
+                            </span>
+                          )}
                         </td>
 
                         <td className="px-6 py-3.5 text-center">
@@ -699,7 +711,7 @@ function SectionDivider({ title }: { title: string }) {
                   <th className="px-6 py-3 border-b border-border">Pico (PPS/Mbps)</th>
                    <th className="px-6 py-3 border-b border-border text-center">Status</th>
                   <th className="px-6 py-3 border-b border-border text-center">Tipo</th>
-                  <th className="px-6 py-3 border-b border-border">Origem</th>
+                  <th className="px-6 py-3 border-b border-border text-center">Origem</th>
                 </tr>
               </thead>
                <tbody className="text-sm divide-y divide-border/50">
@@ -796,8 +808,16 @@ function SectionDivider({ title }: { title: string }) {
                     </td>
 
 
-                    <td className="px-6 py-3.5 text-text-secondary text-[11px] font-bold uppercase tracking-wider">
-                      {event.triggered_by === 'detector' ? 'Automático' : 'Manual'}
+                    <td className="px-6 py-3.5 text-center">
+                      {event.triggered_by === 'detector' ? (
+                        <span className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
+                          Automático
+                        </span>
+                      ) : (
+                        <span className="px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
+                          Manual
+                        </span>
+                      )}
                     </td>
                   </tr>
                 ))}
