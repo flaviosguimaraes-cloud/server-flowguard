@@ -59,27 +59,20 @@ export default function Policy() {
     detect_ssdp_amp: false
   });
  
-   const [thresholds, setThresholds] = useState<any>({
-     threshold_pps: '',
-     threshold_mbps: '',
-     threshold_flows: '',
-     threshold_tcp_pps: '',
-     threshold_tcp_mbps: '',
-     threshold_udp_pps: '',
-     threshold_udp_mbps: '',
-     threshold_icmp_pps: '',
-      threshold_icmp_mbps: '',
+    const [thresholds, setThresholds] = useState<any>({
+      threshold_pps: '',
+      threshold_mbps: '',
+      threshold_flows: '',
+      my_hosts_enable_ban: false,
+      my_hosts_threshold_pps: '',
+      my_hosts_threshold_mbps: '',
       ban_for_pps: true,
       ban_for_bandwidth: true,
       ban_for_flows: false,
-      ban_for_tcp_pps: false,
-      ban_for_tcp_bandwidth: false,
-      ban_for_udp_pps: false,
-      ban_for_udp_bandwidth: false,
-      ban_for_icmp_pps: false,
-      ban_for_icmp_bandwidth: false,
+      my_hosts_ban_for_pps: false,
+      my_hosts_ban_for_bandwidth: false,
       ban_time: ''
-   });
+    });
 
   useEffect(() => {
     if (policyData) {
