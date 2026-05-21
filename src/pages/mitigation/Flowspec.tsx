@@ -411,9 +411,20 @@ const Flowspec = () => {
       </div>
 
       <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <List size={18} className="text-primary" />
-          <h2 className="text-lg font-bold text-text-primary">Regras Ativas</h2>
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-center gap-2">
+            <List size={18} className="text-primary" />
+            <h2 className="text-lg font-bold text-text-primary">Regras Ativas</h2>
+          </div>
+          {isAdmin && (
+            <button
+              onClick={() => setIsModalOpen(true)}
+              className="flex items-center justify-center gap-2 bg-bg-primary hover:bg-bg-primary/80 text-text-primary px-4 py-2 rounded-lg text-xs font-bold transition-all border border-border"
+            >
+              <Plus size={14} />
+              Nova Regra manual
+            </button>
+          )}
         </div>
         <div className="bg-bg-secondary rounded-xl border border-border overflow-hidden shadow-sm">
           <div className="overflow-x-auto custom-scrollbar">
