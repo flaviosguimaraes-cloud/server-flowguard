@@ -358,17 +358,21 @@ export default function BGP() {
 
                     const getFormattedAction = () => {
                       if (type !== 'flowspec') return '—';
-                      if (rule?.action === 'rate-limit') {
-                        const mbps = rule.rate_limit_kbps 
-                          ? (rule.rate_limit_kbps / 1000).toFixed(1)
-                          : '?';
+                      
+                      // Use action directly from route object
+                      if (action === 'rate-limit') {
+                        const rateKbps = route.rate_limit_kbps || rule?.rate_limit_kbps;
+                        const mbps = rateKbps 
+                          ? (Number(rateKbps) / 1000).toFixed(1)
+                          : '1.0';
                         return (
-                          <div className="flex items-center gap-1 text-primary font-bold">
+                          <div className="flex items-center gap-1 text-warning font-bold">
                             <span>⚡</span>
                             <span>Rate-Limit: {mbps} Mbps</span>
                           </div>
                         );
                       }
+                      
                       return (
                         <div className="flex items-center gap-1 text-danger font-bold">
                           <span>🚫</span>
