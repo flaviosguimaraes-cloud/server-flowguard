@@ -490,6 +490,7 @@ function SectionDivider({ title }: { title: string }) {
                       <th className="px-6 py-4 border-b border-border">Início</th>
                       <th className="px-6 py-4 border-b border-border">Volume</th>
                       <th className="px-6 py-4 border-b border-border text-center">Tipo</th>
+                      <th className="px-6 py-4 border-b border-border text-center">Origem</th>
 
                       <th className="px-6 py-4 border-b border-border text-center">Ações</th>
                     </tr>
