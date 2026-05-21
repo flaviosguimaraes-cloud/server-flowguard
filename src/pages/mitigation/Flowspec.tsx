@@ -68,11 +68,11 @@ const Flowspec = () => {
   };
 
   const toggleProtocol = (proto: string) => {
-    const current = [...autoConfig.protocols];
+    const current = [...(autoConfig.block_protocols || [])];
     if (current.includes(proto)) {
-      setAutoConfig({ ...autoConfig, protocols: current.filter(p => p !== proto) });
+      setAutoConfig({ ...autoConfig, block_protocols: current.filter(p => p !== proto) });
     } else {
-      setAutoConfig({ ...autoConfig, protocols: [...current, proto] });
+      setAutoConfig({ ...autoConfig, block_protocols: [...current, proto] });
     }
   };
 
