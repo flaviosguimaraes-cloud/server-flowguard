@@ -1,11 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
-import { List, Plus, Trash2, Shield, Info, AlertTriangle, Clock, Zap, Save, Check } from 'lucide-react';
+import { List, Plus, Trash2, Shield, Info, AlertTriangle, Clock, Zap, Save, Check, User, Calendar, ExternalLink } from 'lucide-react';
 import { toast } from 'sonner';
 import { clsx } from 'clsx';
 import FlowSpecModal from '../../components/FlowSpecModal';
 import { useAuth } from '../../contexts/AuthContext';
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "../../components/ui/sheet";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "../../components/ui/alert-dialog";
+import { Badge } from "../../components/ui/badge";
+import { Separator } from "../../components/ui/separator";
 
 const Flowspec = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
