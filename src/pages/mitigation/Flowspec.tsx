@@ -97,7 +97,7 @@ const Flowspec = () => {
     }
   };
 
-  const rules = data?.rules || [];
+  const rules = data?.items || [];
 
   const getBgpStatusBadge = (status: string) => {
     const config: any = {
@@ -126,16 +126,9 @@ const Flowspec = () => {
     if (action === 'rate-limit') {
       const mbps = rate_limit_kbps ? (rate_limit_kbps / 1000) : 0;
       return (
-        <div className="flex flex-col gap-0.5">
-          <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase border bg-warning/10 text-warning border-warning/20">
-            Rate-Limit
-          </span>
-          {rate_limit_kbps && (
-            <span className="text-[9px] text-text-secondary font-bold text-center">
-              {mbps >= 1 ? `${mbps} Mbps` : `${rate_limit_kbps} Kbps`}
-            </span>
-          )}
-        </div>
+        <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase border bg-warning/10 text-warning border-warning/20 whitespace-nowrap">
+          Rate-Limit: {mbps >= 1 ? `${mbps} Mbps` : `${rate_limit_kbps} Kbps`}
+        </span>
       );
     }
 
@@ -450,12 +443,12 @@ const Flowspec = () => {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    <td colSpan={10} className="px-4 py-4"><div className="h-4 bg-border/50 rounded w-full" /></td>
+                    <td colSpan={11} className="px-4 py-4"><div className="h-4 bg-border/50 rounded w-full" /></td>
                   </tr>
                 ))
               ) : rules.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-4 py-8 text-center text-text-secondary italic">Nenhuma regra ativa encontrada</td>
+                  <td colSpan={11} className="px-4 py-8 text-center text-text-secondary italic">Nenhuma regra ativa encontrada</td>
                 </tr>
               ) : (
                 rules.map((rule: any) => (
@@ -473,7 +466,11 @@ const Flowspec = () => {
                     <td className="px-4 py-3">
                       {getActionBadge(rule.action, rule.rate_limit_kbps)}
                     </td>
-                    <td className="px-4 py-3">{getBgpStatusBadge(rule.bgp_status)}</td>
+                    <td className="px-4 py-3">
+                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase border bg-success/10 text-success border-success/20">
+                        Anunciado
+                      </span>
+                    </td>
                     <td className="px-4 py-3">
                       {rule.expires_at ? (
                         <span className={clsx("font-mono text-xs font-bold", getCountdownColor(rule.expires_at))}>
@@ -485,7 +482,7 @@ const Flowspec = () => {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-xs text-text-primary">{rule.operator || 'system'}</td>
+                    <td className="px-4 py-3 text-xs text-text-primary">{rule.created_by || 'system'}</td>
                     <td className="px-4 py-3">
                       <div className="flex flex-col">
                         <span className="text-xs text-text-primary">{rule.created_at?.split(' ')[0]}</span>
