@@ -341,54 +341,6 @@ export default function Policy() {
         
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <ResponseModeCard
-            id={1}
-            title="Blackhole /32"
-            description="Bloqueia o IP completamente via BGP. Resposta imediata mas o cliente fica offline."
-            icon={Ban}
-            colorClass="bg-[#FCEBEB] text-[#A32D2D]"
-            selected={mode === 'blackhole' && autoConfig.operation_mode === 'disabled'}
-            onSelect={() => handleSelectCard(1)}
-          >
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-text-secondary uppercase">Community BGP</label>
-              <input 
-                value={blackholeCommunity} 
-                onChange={(e) => setBlackholeCommunity(e.target.value)}
-                className="w-full bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30" 
-              />
-            </div>
-          </ResponseModeCard>
-
-          <ResponseModeCard
-            id={2}
-            title="Apenas FlowSpec"
-            description="Bloqueia só o tráfego malicioso. Cliente permanece online durante a mitigação."
-            icon={Zap}
-            colorClass="bg-[#EEEDFE] text-[#534AB7]"
-            selected={mode === 'blackhole' && autoConfig.operation_mode === 'flowspec_only'}
-            onSelect={() => handleSelectCard(2)}
-          />
-
-          <ResponseModeCard
-            id={3}
-            title="Blackhole + FlowSpec"
-            description="Blackhole imediato para proteção rápida + FlowSpec cirúrgico em paralelo."
-            icon={ShieldAlert}
-            colorClass="bg-[#FEF3E2] text-[#854F0B]"
-            selected={mode === 'blackhole' && autoConfig.operation_mode === 'blackhole_flowspec'}
-            onSelect={() => handleSelectCard(3)}
-          >
-            <div className="space-y-1.5">
-              <label className="text-[10px] font-bold text-text-secondary uppercase">Community BGP</label>
-              <input 
-                value={blackholeCommunity} 
-                onChange={(e) => setBlackholeCommunity(e.target.value)}
-                className="w-full bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30" 
-              />
-            </div>
-          </ResponseModeCard>
-
-          <ResponseModeCard
             id={4}
             title="Mitigação externa"
             description="Anuncia blocos /24 para scrubbing externo."
@@ -443,7 +395,56 @@ export default function Policy() {
               </div>
             </div>
           </ResponseModeCard>
+
+          <ResponseModeCard
+            id={1}
+            title="Blackhole /32"
+            description="Bloqueia o IP completamente via BGP. Resposta imediata mas o cliente fica offline."
+            icon={Ban}
+            colorClass="bg-[#FCEBEB] text-[#A32D2D]"
+            selected={mode === 'blackhole' && autoConfig.operation_mode === 'disabled'}
+            onSelect={() => handleSelectCard(1)}
+          >
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-text-secondary uppercase">Community BGP</label>
+              <input 
+                value={blackholeCommunity} 
+                onChange={(e) => setBlackholeCommunity(e.target.value)}
+                className="w-full bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30" 
+              />
+            </div>
+          </ResponseModeCard>
+
+          <ResponseModeCard
+            id={3}
+            title="Blackhole + FlowSpec"
+            description="Blackhole imediato para proteção rápida + FlowSpec cirúrgico em paralelo."
+            icon={ShieldAlert}
+            colorClass="bg-[#FEF3E2] text-[#854F0B]"
+            selected={mode === 'blackhole' && autoConfig.operation_mode === 'blackhole_flowspec'}
+            onSelect={() => handleSelectCard(3)}
+          >
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-text-secondary uppercase">Community BGP</label>
+              <input 
+                value={blackholeCommunity} 
+                onChange={(e) => setBlackholeCommunity(e.target.value)}
+                className="w-full bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-xs font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30" 
+              />
+            </div>
+          </ResponseModeCard>
+
+          <ResponseModeCard
+            id={2}
+            title="Apenas FlowSpec"
+            description="Bloqueia só o tráfego malicioso. Cliente permanece online durante a mitigação."
+            icon={Zap}
+            colorClass="bg-[#EEEDFE] text-[#534AB7]"
+            selected={mode === 'blackhole' && autoConfig.operation_mode === 'flowspec_only'}
+            onSelect={() => handleSelectCard(2)}
+          />
         </div>
+
       </div>
 
       {/* SEÇÃO 3: LIMIARES */}
