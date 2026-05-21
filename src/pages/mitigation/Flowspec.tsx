@@ -20,7 +20,7 @@ const Flowspec = () => {
 
   const [autoConfig, setAutoConfig] = useState<any>({
     block_mode: 'by_port',
-    protocols: ['udp', 'tcp'],
+    block_protocols: ['udp', 'tcp'],
     direction: 'incoming',
     default_action: 'discard',
     default_rate_limit_kbps: 1000,
@@ -40,7 +40,9 @@ const Flowspec = () => {
       setAutoConfig({
         ...autoConfig,
         ...autoConfigData,
-        protocols: Array.isArray(autoConfigData.protocols) ? autoConfigData.protocols : (autoConfigData.protocols?.split(',') || ['udp', 'tcp']),
+        block_protocols: Array.isArray(autoConfigData.block_protocols) 
+          ? autoConfigData.block_protocols 
+          : (autoConfigData.block_protocols?.split(',') || autoConfigData.protocols?.split(',') || ['udp', 'tcp']),
         block_mode: autoConfigData.block_mode || 'by_port',
         direction: autoConfigData.direction || 'incoming',
       });
@@ -50,8 +52,11 @@ const Flowspec = () => {
   const handleSaveAutoConfig = async () => {
     setSavingAutoConfig(true);
     try {
+      // Remove old 'protocols' key if it exists to keep payload clean
+      const { protocols, ...configToSend } = autoConfig;
+      
       await api.put('/api/mitigation/auto-config', {
-        ...autoConfig,
+        ...configToSend,
         default_rate_limit_kbps: Number(autoConfig.default_rate_limit_kbps) || 1000,
         default_ttl_minutes: Number(autoConfig.default_ttl_minutes) || 120,
       });
@@ -66,11 +71,11 @@ const Flowspec = () => {
   };
 
   const toggleProtocol = (proto: string) => {
-    const current = [...autoConfig.protocols];
+    const current = [...(autoConfig.block_protocols || [])];
     if (current.includes(proto)) {
-      setAutoConfig({ ...autoConfig, protocols: current.filter(p => p !== proto) });
+      setAutoConfig({ ...autoConfig, block_protocols: current.filter(p => p !== proto) });
     } else {
-      setAutoConfig({ ...autoConfig, protocols: [...current, proto] });
+      setAutoConfig({ ...autoConfig, block_protocols: [...current, proto] });
     }
   };
 
@@ -239,31 +244,33 @@ const Flowspec = () => {
           </div>
 
           {/* 2. Protocolos Monitorados */}
-          <div className="space-y-3">
-            <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block">Protocolos monitorados</label>
-            <div className="grid grid-cols-2 gap-2">
-              {['udp', 'tcp', 'icmp', 'ip'].map((proto) => {
-                const isSelected = autoConfig.protocols?.includes(proto);
-                return (
-                  <button
-                    key={proto}
-                    type="button"
-                    disabled={!isAdmin}
-                    onClick={() => toggleProtocol(proto)}
-                    className={clsx(
-                      "flex items-center justify-between p-3 rounded-lg border transition-all",
-                      isSelected ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-bg-primary/50"
-                    )}
-                  >
-                    <span className={clsx("text-xs font-bold uppercase", isSelected ? "text-primary" : "text-text-primary")}>
-                      {proto === 'ip' ? 'IP (Todos)' : proto}
-                    </span>
-                    {isSelected && <Check size={14} className="text-primary" />}
-                  </button>
-                );
-              })}
+          {autoConfig.block_mode !== 'by_port' && (
+            <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block">Protocolos monitorados</label>
+              <div className="grid grid-cols-2 gap-2">
+                {['udp', 'tcp', 'icmp', 'ip'].map((proto) => {
+                  const isSelected = autoConfig.block_protocols?.includes(proto);
+                  return (
+                    <button
+                      key={proto}
+                      type="button"
+                      disabled={!isAdmin}
+                      onClick={() => toggleProtocol(proto)}
+                      className={clsx(
+                        "flex items-center justify-between p-3 rounded-lg border transition-all",
+                        isSelected ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-bg-primary/50"
+                      )}
+                    >
+                      <span className={clsx("text-xs font-bold uppercase", isSelected ? "text-primary" : "text-text-primary")}>
+                        {proto === 'ip' ? 'IP (Todos)' : proto}
+                      </span>
+                      {isSelected && <Check size={14} className="text-primary" />}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* 3. Direção */}
           <div className="space-y-3">
