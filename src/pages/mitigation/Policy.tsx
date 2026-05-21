@@ -163,12 +163,8 @@ export default function Policy() {
              threshold_pps: Number(thresholds.threshold_pps) || 0,
              threshold_mbps: Number(thresholds.threshold_mbps) || 0,
              threshold_flows: Number(thresholds.threshold_flows) || 0,
-             threshold_tcp_pps: Number(thresholds.threshold_tcp_pps) || 0,
-             threshold_tcp_mbps: Number(thresholds.threshold_tcp_mbps) || 0,
-             threshold_udp_pps: Number(thresholds.threshold_udp_pps) || 0,
-             threshold_udp_mbps: Number(thresholds.threshold_udp_mbps) || 0,
-             threshold_icmp_pps: Number(thresholds.threshold_icmp_pps) || 0,
-             threshold_icmp_mbps: Number(thresholds.threshold_icmp_mbps) || 0,
+             my_hosts_threshold_pps: Number(thresholds.my_hosts_threshold_pps) || 0,
+             my_hosts_threshold_mbps: Number(thresholds.my_hosts_threshold_mbps) || 0,
              ban_time: Number(thresholds.ban_time) || 0,
           })
         ];
