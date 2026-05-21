@@ -118,10 +118,10 @@ const Flowspec = () => {
   const toggleProtocol = (proto: string) => {
     if (proto === 'tcp' || proto === 'udp') return;
     
-    setAutoConfig(prev => {
+    setAutoConfig((prev: AutoConfig) => {
       const current = Array.isArray(prev.block_protocols) ? prev.block_protocols : [];
       const updated = current.includes(proto)
-        ? current.filter(p => p !== proto)
+        ? current.filter((p: string) => p !== proto)
         : [...current, proto];
       
       return {
