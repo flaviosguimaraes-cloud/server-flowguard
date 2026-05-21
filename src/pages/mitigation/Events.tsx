@@ -520,6 +520,16 @@ function SectionDivider({ title }: { title: string }) {
                             direction={item.direction || item.flow_direction} 
                           />
                         </td>
+                        <td className="px-6 py-3.5 text-center">
+                          {item.triggered_by === 'detector' ? (
+                            <span className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
+                              Automático
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
+                              Manual
+                            </span>
+                          )}
 
                         <td className="px-6 py-3.5 text-center">
                           {isAdmin && (
