@@ -133,8 +133,11 @@ export default function BGP() {
   const sessions = sessionsData?.sessions || [];
   const routes = routesData?.routes || [];
   
-  // AJUSTE 5 — Contador no card FlowSpec
+  // Contadores para os cards
   const activeFlowspecCount = routes.filter((r: any) => r.type === 'flowspec').length;
+  const activeUnicastCount = routes.filter((r: any) => 
+    r.type === 'blackhole' || r.type === 'external' || r.type === 'blacklist'
+  ).length;
 
   const refresh = () => {
     refetchSessions();
@@ -243,7 +246,7 @@ export default function BGP() {
                     <div className="flex gap-4 pt-2 border-t border-border/50">
                       <div>
                         <div className="text-[10px] text-text-secondary uppercase">Enviadas</div>
-                        <div className="text-lg font-bold text-text-primary">{s.prefixes_sent || 0}</div>
+                        <div className="text-lg font-bold text-text-primary">{activeUnicastCount}</div>
                         <div className="text-[10px] text-text-secondary">rotas anunciadas ao peer</div>
                       </div>
                       <div>
@@ -455,10 +458,16 @@ export default function BGP() {
                           {getFormattedAction()}
                         </td>
 
-                        <td className="px-4 py-3 text-xs text-text-primary">
-                          {source === 'mitigation' ? 'Mitigação automática' :
-                           source === 'blacklist' ? 'Blacklist manual' :
-                           source === 'manual' ? 'Manual' : (route.source || '—')}
+                        <td className="px-4 py-3">
+                          {route.created_by === 'auto-detector' ? (
+                            <Badge variant="outline" className="bg-purple-500/10 text-purple-400 border-purple-500/20 font-bold text-[10px]">
+                              Automático
+                            </Badge>
+                          ) : (
+                            <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20 font-bold text-[10px]">
+                              Manual
+                            </Badge>
+                          )}
                         </td>
                         <td className="px-4 py-3 text-xs">
                           {route.expires_at ? (
