@@ -381,7 +381,15 @@ export default function Policy() {
                     <button
                       type="button"
                       disabled={!isAdmin || isDisabled}
-                      onClick={() => !isDisabled && setAutoConfig({ ...autoConfig, operation_mode: opt.id })}
+                      onClick={() => {
+                        if (isDisabled) return;
+                        const nextMode = opt.id;
+                        setAutoConfig({ ...autoConfig, operation_mode: nextMode });
+                        if (nextMode === 'blackhole_flowspec') {
+                          setMode('blackhole');
+                        }
+                      }}
+
                       className={clsx(
                         "text-left p-4 rounded-xl border transition-all h-full w-full",
                         isSelected ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-bg-primary/50 hover:border-border-hover",
