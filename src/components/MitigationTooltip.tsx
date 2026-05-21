@@ -48,7 +48,11 @@
         <div className="font-bold border-b border-border pb-1 mb-1">IP: {item.ip}</div>
         <div className="flex justify-between">
           <span className="text-text-secondary">Tipo:</span>
-          <span>Blackhole /32</span>
+          <span className="font-bold">
+            {item.type === 'flowspec' ? 'FlowSpec' : 
+             item.type === 'blackhole_flowspec' ? 'Blackhole + FlowSpec' :
+             item.type === 'external' ? 'Externo /24' : 'Blackhole /32'}
+          </span>
         </div>
         <div className="flex justify-between">
           <span className="text-text-secondary">Community:</span>

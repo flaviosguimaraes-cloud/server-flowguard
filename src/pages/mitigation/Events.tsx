@@ -515,7 +515,7 @@ function SectionDivider({ title }: { title: string }) {
                         </td>
                         <td className="px-6 py-3.5 text-center">
                           <EventBadges 
-                            actionType={item.action_type || item.type} 
+                            actionType={item.action_type} 
                             direction={item.direction} 
                           />
                         </td>
@@ -790,7 +790,7 @@ function SectionDivider({ title }: { title: string }) {
                     </td>
                     <td className="px-6 py-3.5 text-center">
                       <EventBadges 
-                        actionType={event.action_type || event.type} 
+                        actionType={event.action_type} 
                         direction={event.direction || event.flow_direction} 
                       />
                     </td>
@@ -924,7 +924,7 @@ function SectionDivider({ title }: { title: string }) {
                {isBanned ? (
                  <MitigationTooltip data={{
                    ip: host.ip,
-                   tipo: mitigationData?.type || 'Blackhole /32',
+                   tipo: mitigationData?.action_type || mitigationData?.type || 'blackhole',
                    desde: mitigationData?.since || mitigationData?.age,
                    pps: mitigationData?.pps || host.pps,
                    mbps: mitigationData?.mbps || host.mbps,
