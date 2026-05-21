@@ -258,7 +258,7 @@ export default function Policy() {
 
     return content;
 
-    );
+
   };
 
   const ThresholdCard = ({ id, label, banKey, unit, placeholder, description, disabled }: any) => {
@@ -419,7 +419,6 @@ export default function Policy() {
                     <div key={opt.id} className="w-full">
                       {button}
                     </div>
-                  );
 
                   );
               })}
