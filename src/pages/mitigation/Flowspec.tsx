@@ -40,7 +40,9 @@ const Flowspec = () => {
       setAutoConfig({
         ...autoConfig,
         ...autoConfigData,
-        protocols: Array.isArray(autoConfigData.protocols) ? autoConfigData.protocols : (autoConfigData.protocols?.split(',') || ['udp', 'tcp']),
+        block_protocols: Array.isArray(autoConfigData.block_protocols) 
+          ? autoConfigData.block_protocols 
+          : (autoConfigData.block_protocols?.split(',') || autoConfigData.protocols?.split(',') || ['udp', 'tcp']),
         block_mode: autoConfigData.block_mode || 'by_port',
         direction: autoConfigData.direction || 'incoming',
       });
