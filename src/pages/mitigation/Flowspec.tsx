@@ -25,6 +25,22 @@ import {
 import { Badge } from "../../components/ui/badge";
 import { Separator } from "../../components/ui/separator";
 
+interface AutoConfig {
+  block_mode: string;
+  block_protocols: string[];
+  direction: string;
+  default_action: string;
+  default_rate_limit_kbps: number | string;
+  default_ttl_minutes: number | string;
+  detect_udp_flood: boolean;
+  detect_syn_flood: boolean;
+  detect_dns_amp: boolean;
+  detect_ntp_amp: boolean;
+  detect_ssdp_amp: boolean;
+  flowspec_src_mode: string;
+  [key: string]: any;
+}
+
 const Flowspec = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRule, setSelectedRule] = useState<any>(null);
@@ -39,7 +55,7 @@ const Flowspec = () => {
     queryFn: () => api.get('/api/mitigation/auto-config').then(r => r.data).catch(() => ({})),
   });
 
-  const [autoConfig, setAutoConfig] = useState<any>({
+  const [autoConfig, setAutoConfig] = useState<AutoConfig>({
     block_mode: 'by_port',
     block_protocols: [], // ICMP, IP are managed here. TCP/UDP are implicit.
     direction: 'incoming',
@@ -65,27 +81,30 @@ const Flowspec = () => {
       // Filter out tcp/udp as they are handled implicitly in the UI now
       const filteredProtocols = protocols.filter((p: string) => p === 'icmp' || p === 'ip');
 
-      setAutoConfig({
-        ...autoConfig,
+      setAutoConfig(prev => ({
+        ...prev,
         ...autoConfigData,
         block_protocols: filteredProtocols,
-        block_mode: autoConfigData.block_mode || 'by_port',
-        direction: autoConfigData.direction || 'incoming',
-      });
+        block_mode: autoConfigData.block_mode || prev.block_mode || 'by_port',
+        direction: autoConfigData.direction || prev.direction || 'incoming',
+      }));
     }
   }, [autoConfigData]);
 
   const handleSaveAutoConfig = async () => {
     setSavingAutoConfig(true);
     try {
-      // Remove old 'protocols' key if it exists to keep payload clean
-      const { protocols, ...configToSend } = autoConfig;
+      // Clean up the payload before sending
+      const { protocols, ...rest } = autoConfig;
       
-      await api.put('/api/mitigation/auto-config', {
-        ...configToSend,
+      const payload = {
+        ...rest,
+        block_protocols: autoConfig.block_protocols || [],
         default_rate_limit_kbps: Number(autoConfig.default_rate_limit_kbps) || 1000,
         default_ttl_minutes: Number(autoConfig.default_ttl_minutes) || 120,
-      });
+      };
+      
+      await api.put('/api/mitigation/auto-config', payload);
       toast.success('Configuração automática salva');
       queryClient.invalidateQueries({ queryKey: ['mitigation-auto-config'] });
     } catch (e: any) {
@@ -97,14 +116,19 @@ const Flowspec = () => {
   };
 
   const toggleProtocol = (proto: string) => {
-    if (proto === 'tcp' || proto === 'udp') return; // Fixed
+    if (proto === 'tcp' || proto === 'udp') return;
     
-    const current = [...(autoConfig.block_protocols || [])];
-    if (current.includes(proto)) {
-      setAutoConfig({ ...autoConfig, block_protocols: current.filter(p => p !== proto) });
-    } else {
-      setAutoConfig({ ...autoConfig, block_protocols: [...current, proto] });
-    }
+    setAutoConfig((prev: AutoConfig) => {
+      const current = Array.isArray(prev.block_protocols) ? prev.block_protocols : [];
+      const updated = current.includes(proto)
+        ? current.filter((p: string) => p !== proto)
+        : [...current, proto];
+      
+      return {
+        ...prev,
+        block_protocols: updated
+      };
+    });
   };
 
   const { data, isLoading } = useQuery({
