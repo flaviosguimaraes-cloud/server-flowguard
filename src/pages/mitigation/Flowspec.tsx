@@ -99,7 +99,7 @@ const Flowspec = () => {
       
       const payload = {
         ...rest,
-        block_protocols: autoConfig.block_protocols || [],
+        block_protocols: (autoConfig.block_protocols || []).filter(p => p === 'ip'),
         default_rate_limit_kbps: Number(autoConfig.default_rate_limit_kbps) || 1000,
         default_ttl_minutes: Number(autoConfig.default_ttl_minutes) || 120,
       };
