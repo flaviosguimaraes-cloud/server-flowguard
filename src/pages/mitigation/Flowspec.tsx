@@ -354,22 +354,38 @@ const Flowspec = () => {
               {[
                 { id: 'incoming', label: 'Incoming', desc: 'Meu IP está sendo atacado (padrão)' },
                 { id: 'outgoing', label: 'Outgoing', desc: 'Meu servidor/CPE está gerando ataque' },
-              ].map((opt) => (
-                <label key={opt.id} className="flex items-start gap-3 p-3 rounded-lg bg-bg-primary/50 border border-border cursor-pointer hover:border-primary/30 transition-all group">
-                  <input
-                    type="radio"
-                    name="direction"
-                    disabled={!isAdmin}
-                    checked={autoConfig.direction === opt.id}
-                    onChange={() => setAutoConfig({ ...autoConfig, direction: opt.id })}
-                    className="mt-1 w-4 h-4 accent-primary"
-                  />
-                  <div className="flex flex-col">
-                    <span className="text-xs font-bold text-text-primary group-hover:text-primary transition-colors">{opt.label}</span>
-                    <span className="text-[10px] text-text-secondary leading-tight">{opt.desc}</span>
-                  </div>
-                </label>
-              ))}
+              ].map((opt) => {
+                const isChecked = autoConfig.direction === opt.id || autoConfig.direction === 'both';
+                
+                return (
+                  <label key={opt.id} className="flex items-start gap-3 p-3 rounded-lg bg-bg-primary/50 border border-border cursor-pointer hover:border-primary/30 transition-all group">
+                    <input
+                      type="checkbox"
+                      disabled={!isAdmin}
+                      checked={isChecked}
+                      onChange={() => {
+                        let newIncoming = autoConfig.direction === 'incoming' || autoConfig.direction === 'both';
+                        let newOutgoing = autoConfig.direction === 'outgoing' || autoConfig.direction === 'both';
+                        
+                        if (opt.id === 'incoming') newIncoming = !newIncoming;
+                        if (opt.id === 'outgoing') newOutgoing = !newOutgoing;
+                        
+                        let newDirection = '';
+                        if (newIncoming && newOutgoing) newDirection = 'both';
+                        else if (newIncoming) newDirection = 'incoming';
+                        else if (newOutgoing) newDirection = 'outgoing';
+                        
+                        setAutoConfig({ ...autoConfig, direction: newDirection });
+                      }}
+                      className="mt-1 w-4 h-4 accent-primary rounded cursor-pointer"
+                    />
+                    <div className="flex flex-col">
+                      <span className="text-xs font-bold text-text-primary group-hover:text-primary transition-colors">{opt.label}</span>
+                      <span className="text-[10px] text-text-secondary leading-tight">{opt.desc}</span>
+                    </div>
+                  </label>
+                );
+              })}
             </div>
           </div>
 
