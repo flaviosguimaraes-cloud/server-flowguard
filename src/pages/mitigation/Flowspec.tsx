@@ -241,31 +241,33 @@ const Flowspec = () => {
           </div>
 
           {/* 2. Protocolos Monitorados */}
-          <div className="space-y-3">
-            <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block">Protocolos monitorados</label>
-            <div className="grid grid-cols-2 gap-2">
-              {['udp', 'tcp', 'icmp', 'ip'].map((proto) => {
-                const isSelected = autoConfig.protocols?.includes(proto);
-                return (
-                  <button
-                    key={proto}
-                    type="button"
-                    disabled={!isAdmin}
-                    onClick={() => toggleProtocol(proto)}
-                    className={clsx(
-                      "flex items-center justify-between p-3 rounded-lg border transition-all",
-                      isSelected ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-bg-primary/50"
-                    )}
-                  >
-                    <span className={clsx("text-xs font-bold uppercase", isSelected ? "text-primary" : "text-text-primary")}>
-                      {proto === 'ip' ? 'IP (Todos)' : proto}
-                    </span>
-                    {isSelected && <Check size={14} className="text-primary" />}
-                  </button>
-                );
-              })}
+          {autoConfig.block_mode !== 'by_port' && (
+            <div className="space-y-3 animate-in fade-in slide-in-from-top-2 duration-300">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block">Protocolos monitorados</label>
+              <div className="grid grid-cols-2 gap-2">
+                {['udp', 'tcp', 'icmp', 'ip'].map((proto) => {
+                  const isSelected = autoConfig.block_protocols?.includes(proto);
+                  return (
+                    <button
+                      key={proto}
+                      type="button"
+                      disabled={!isAdmin}
+                      onClick={() => toggleProtocol(proto)}
+                      className={clsx(
+                        "flex items-center justify-between p-3 rounded-lg border transition-all",
+                        isSelected ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-bg-primary/50"
+                      )}
+                    >
+                      <span className={clsx("text-xs font-bold uppercase", isSelected ? "text-primary" : "text-text-primary")}>
+                        {proto === 'ip' ? 'IP (Todos)' : proto}
+                      </span>
+                      {isSelected && <Check size={14} className="text-primary" />}
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
+          )}
 
           {/* 3. Direção */}
           <div className="space-y-3">
