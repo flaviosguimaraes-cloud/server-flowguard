@@ -57,7 +57,7 @@ export default function BGP() {
 
   const getCountdown = (expires_at: string) => {
     if (!expires_at) return null;
-    const diff = new Date(expires_at).getTime() - now.getTime();
+    const diff = new Date(expires_at.replace(' ', 'T')).getTime() - now.getTime();
     if (diff <= 0) return "Expirado";
     const h = Math.floor(diff / 3600000);
     const m = Math.floor((diff % 3600000) / 60000);
@@ -69,7 +69,7 @@ export default function BGP() {
 
   const getCountdownColor = (expires_at: string) => {
     if (!expires_at) return '';
-    const diff = new Date(expires_at).getTime() - now.getTime();
+    const diff = new Date(expires_at.replace(' ', 'T')).getTime() - now.getTime();
     if (diff <= 0) return 'text-danger';
     if (diff < 300000) return 'text-danger animate-pulse'; // < 5min
     if (diff < 1800000) return 'text-[#ef4444]'; // < 30min
@@ -136,7 +136,7 @@ export default function BGP() {
   // Contadores para os cards
   const activeFlowspecCount = routes.filter((r: any) => r.type === 'flowspec').length;
   const activeUnicastCount = routes.filter((r: any) => 
-    r.type === 'blackhole' || r.type === 'external' || r.type === 'blacklist'
+    r.type === 'blackhole' || r.type === 'external'
   ).length;
 
   const refresh = () => {
@@ -347,14 +347,14 @@ export default function BGP() {
                       </div>
                     </td>
                   </tr>
-                ) : (
-                  routes.map((route: any, i: number) => {
+                ) : (() => {
+                  const rules = flowspecData?.rules || flowspecData?.items || [];
+                  return routes.map((route: any, i: number) => {
                     const type = (route.type || '').toLowerCase();
                     const source = (route.source || '').toLowerCase();
                     const action = (route.action || '').toLowerCase();
                     
                     // Cross-reference with FlowSpec rules to get full action details
-                    const rules = flowspecData?.rules || flowspecData?.items || [];
                     const rule = rules.find((r: any) => 
                       r.dst_prefix === route.prefix || r.src_prefix === route.prefix
                     );
@@ -470,9 +470,9 @@ export default function BGP() {
                           )}
                         </td>
                         <td className="px-4 py-3 text-xs">
-                          {route.expires_at ? (
-                            <span className={clsx("font-mono font-bold", getCountdownColor(route.expires_at))}>
-                              {getCountdown(route.expires_at)}
+                          {(route.expires_at || rule?.expires_at) ? (
+                            <span className={clsx("font-mono font-bold", getCountdownColor(route.expires_at || rule?.expires_at))}>
+                              {getCountdown(route.expires_at || rule?.expires_at)}
                             </span>
                           ) : (
                             <span className="text-text-secondary">—</span>
@@ -500,8 +500,8 @@ export default function BGP() {
                         </td>
                       </tr>
                     );
-                  })
-                )}
+                  });
+                })()}
               </tbody>
             </table>
           </div>
