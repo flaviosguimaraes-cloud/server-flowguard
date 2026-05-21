@@ -443,12 +443,12 @@ const Flowspec = () => {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    <td colSpan={10} className="px-4 py-4"><div className="h-4 bg-border/50 rounded w-full" /></td>
+                    <td colSpan={11} className="px-4 py-4"><div className="h-4 bg-border/50 rounded w-full" /></td>
                   </tr>
                 ))
               ) : rules.length === 0 ? (
                 <tr>
-                  <td colSpan={10} className="px-4 py-8 text-center text-text-secondary italic">Nenhuma regra ativa encontrada</td>
+                  <td colSpan={11} className="px-4 py-8 text-center text-text-secondary italic">Nenhuma regra ativa encontrada</td>
                 </tr>
               ) : (
                 rules.map((rule: any) => (
