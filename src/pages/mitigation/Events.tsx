@@ -90,7 +90,7 @@ function SectionDivider({ title }: { title: string }) {
     const { data: activeMitigations, dataUpdatedAt: activeMitigationsUpdatedAt } = useQuery({
      queryKey: ['mitigation-active-events'],
      queryFn: async () => {
-       const r = await api.get('/api/mitigation/active');
+       const r = await api.get('/api/mitigation/events').catch(() => api.get('/api/mitigation/active'));
        return r.data;
      },
       staleTime: 0,
@@ -99,7 +99,62 @@ function SectionDivider({ title }: { title: string }) {
       refetchOnMount: 'always',
       refetchOnWindowFocus: true,
    });
- 
+
+    const { data: flowspecRules } = useQuery({
+      queryKey: ['mitigation-flowspec-active'],
+      queryFn: async () => {
+        const r = await api.get('/api/mitigation/flowspec').catch(() => ({ data: { items: [] } }));
+        return r.data;
+      },
+      staleTime: 5000,
+    });
+
+    const hasActiveFlowspec = (ip: string) => {
+      if (!flowspecRules?.items) return false;
+      const cleanIp = ip.split('/')[0];
+      return flowspecRules.items.some((item: any) => 
+        item.dst_prefix?.includes(cleanIp) && item.status === 'active'
+      );
+    };
+
+    const MitigationBadges = ({ actionType, ip }: { actionType: string, ip: string }) => {
+      if (!actionType && !ip) return null;
+      const activeFlowspec = hasActiveFlowspec(ip);
+      const badges = [];
+
+      if (actionType === 'blackhole') {
+        badges.push(
+          <span key="bh" className="px-2 py-0.5 bg-danger/10 text-danger border border-danger/20 text-[10px] font-bold rounded uppercase">
+            Blackhole /32
+          </span>
+        );
+      } else if (actionType === 'external') {
+        badges.push(
+          <span key="ext" className="px-2 py-0.5 bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 text-[10px] font-bold rounded uppercase">
+            Externo /24
+          </span>
+        );
+      } else if (actionType === 'flowspec') {
+        badges.push(
+          <span key="fs" className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[10px] font-bold rounded uppercase">
+            FlowSpec
+          </span>
+        );
+      }
+
+      if (actionType === 'blackhole' && activeFlowspec) {
+        badges.push(
+          <span key="fs-extra" className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[10px] font-bold rounded uppercase">
+            FlowSpec
+          </span>
+        );
+      }
+
+      if (badges.length === 0) return <span>—</span>;
+
+      return <div className="flex flex-wrap gap-1 items-center justify-center">{badges}</div>;
+    };
+
     const [filters, setFilters] = useState({
       ip: '',
       direction: '',
@@ -424,7 +479,9 @@ function SectionDivider({ title }: { title: string }) {
                       <th className="px-6 py-4 border-b border-border">IP Atacado</th>
                       <th className="px-6 py-4 border-b border-border">Início</th>
                       <th className="px-6 py-4 border-b border-border">Volume</th>
+                      <th className="px-6 py-4 border-b border-border text-center">Tipo</th>
                       <th className="px-6 py-4 border-b border-border text-center">Direção</th>
+
                       <th className="px-6 py-4 border-b border-border text-center">Ações</th>
                     </tr>
                   </thead>
@@ -448,10 +505,15 @@ function SectionDivider({ title }: { title: string }) {
                           </p>
                         </td>
                         <td className="px-6 py-3.5 text-center">
+                          <MitigationBadges actionType={item.action_type || item.type?.toLowerCase()} ip={item.ip} />
+                        </td>
+
+                        <td className="px-6 py-3.5 text-center">
                           <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20 text-[10px] font-bold rounded uppercase">
                             {item.direction === 'outgoing' ? '↑ Upload' : '↓ Download'}
                           </span>
                         </td>
+
                         <td className="px-6 py-3.5 text-center">
                           {isAdmin && (
                             <button 
@@ -738,9 +800,11 @@ function SectionDivider({ title }: { title: string }) {
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-3.5 text-text-secondary text-[11px] font-medium uppercase tracking-wider">
-                      {event.type || 'Blackhole'}
+                    <td className="px-6 py-3.5 text-center">
+                      <MitigationBadges actionType={event.action_type || event.type?.toLowerCase()} ip={event.ip} />
                     </td>
+
+
                     <td className="px-6 py-3.5 text-text-secondary text-[11px] font-bold uppercase tracking-wider">
                       {event.triggered_by === 'detector' ? 'Automático' : 'Manual'}
                     </td>

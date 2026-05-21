@@ -3,7 +3,9 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import { Shield, Save, Zap, Sliders, AlertTriangle } from 'lucide-react';
 import { toast } from 'sonner';
+import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "../../components/ui/tooltip";
 import {
+
   AlertDialog,
   AlertDialogAction,
   AlertDialogCancel,
@@ -196,17 +198,21 @@ export default function Policy() {
     };
 
 
-  const ModeCard = ({ value, title, community, onChangeCommunity, description }: any) => {
+  const ModeCard = ({ value, title, community, onChangeCommunity, description, disabled, tooltip }: any) => {
     const selected = mode === value;
-    return (
+    const content = (
+
       <button
         type="button"
+        disabled={disabled || !isAdmin}
         className={clsx(
           "text-left p-5 rounded-xl border-2 transition-all w-full",
-          selected ? "border-primary bg-primary/5 shadow-lg shadow-primary/10" : "border-border bg-bg-secondary hover:border-text-secondary/30"
+          selected ? "border-primary bg-primary/5 shadow-lg shadow-primary/10" : "border-border bg-bg-secondary hover:border-text-secondary/30",
+          disabled && "opacity-50 grayscale cursor-not-allowed"
         )}
-        onClick={() => setMode(value)}
+        onClick={() => !disabled && setMode(value)}
       >
+
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-2">
             <Shield size={18} className={selected ? 'text-primary' : 'text-text-secondary'} />
@@ -232,6 +238,27 @@ export default function Policy() {
         <p className="text-xs text-text-secondary">{description}</p>
       </button>
     );
+
+    if (disabled && tooltip) {
+      return (
+        <TooltipProvider>
+          <Tooltip>
+            <TooltipTrigger asChild>
+              <div className="w-full cursor-not-allowed">
+                {content}
+              </div>
+            </TooltipTrigger>
+            <TooltipContent className="bg-bg-secondary text-text-primary border border-border shadow-xl">
+              <p className="text-xs font-bold">{tooltip}</p>
+            </TooltipContent>
+          </Tooltip>
+        </TooltipProvider>
+      );
+    }
+
+    return content;
+
+
   };
 
   const ThresholdCard = ({ id, label, banKey, unit, placeholder, description, disabled }: any) => {
@@ -307,6 +334,8 @@ export default function Policy() {
             community={blackholeCommunity}
             onChangeCommunity={setBlackholeCommunity}
             description="Cada IP banido recebe rota /32 para blackhole."
+            disabled={autoConfig.operation_mode === 'flowspec_only' || autoConfig.operation_mode === 'blackhole_flowspec'}
+            tooltip={autoConfig.operation_mode === 'blackhole_flowspec' ? "Modo A é obrigatório no modo Complementar" : "Modo A desabilitado em Apenas FlowSpec"}
           />
           <ModeCard
             value="external"
@@ -314,7 +343,10 @@ export default function Policy() {
             community={externalCommunity}
             onChangeCommunity={setExternalCommunity}
             description={`Anuncia bloco ${externalBlock || '192.168.1.0/24'} para scrubbing externo.`}
+            disabled={autoConfig.operation_mode === 'flowspec_only'}
+            tooltip="Modo B desabilitado em Apenas FlowSpec"
           />
+
         </div>
         {mode === 'external' && (
           <div className="bg-bg-secondary p-4 rounded-xl border border-border">
@@ -341,28 +373,64 @@ export default function Policy() {
                 { id: 'blackhole_flowspec', label: 'Complementar ao Blackhole', desc: 'Blackhole imediato + FlowSpec cirúrgico' },
                 { id: 'flowspec_only', label: 'Apenas FlowSpec', desc: 'Mitigação cirúrgica (sem blackhole)' },
               ].map((opt) => {
-                const isSelected = autoConfig.operation_mode === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    disabled={!isAdmin}
-                    onClick={() => setAutoConfig({ ...autoConfig, operation_mode: opt.id })}
-                    className={clsx(
-                      "text-left p-4 rounded-xl border transition-all",
-                      isSelected ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-bg-primary/50 hover:border-border-hover"
-                    )}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className={clsx("text-sm font-bold", isSelected ? "text-primary" : "text-text-primary")}>{opt.label}</span>
-                      <div className={clsx("w-4 h-4 rounded-full border flex items-center justify-center", isSelected ? "border-primary" : "border-border")}>
-                        {isSelected && <div className="w-2 h-2 rounded-full bg-primary" />}
+                  const isSelected = autoConfig.operation_mode === opt.id;
+
+                  const isDisabled = mode === 'external' && opt.id !== 'disabled';
+                  
+                  const button = (
+                    <button
+                      type="button"
+                      disabled={!isAdmin || isDisabled}
+                      onClick={() => {
+                        if (isDisabled) return;
+                        const nextMode = opt.id;
+                        setAutoConfig({ ...autoConfig, operation_mode: nextMode });
+                        if (nextMode === 'blackhole_flowspec') {
+                          setMode('blackhole');
+                        }
+                      }}
+
+                      className={clsx(
+                        "text-left p-4 rounded-xl border transition-all h-full w-full",
+                        isSelected ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-bg-primary/50 hover:border-border-hover",
+                        isDisabled && "opacity-40 grayscale cursor-not-allowed"
+                      )}
+                    >
+                      <div className="flex items-center justify-between mb-2">
+                        <span className={clsx("text-sm font-bold", isSelected ? "text-primary" : "text-text-primary")}>{opt.label}</span>
+                        <div className={clsx("w-4 h-4 rounded-full border flex items-center justify-center", isSelected ? "border-primary" : "border-border")}>
+                          {isSelected && <div className="w-2 h-2 rounded-full bg-primary" />}
+                        </div>
                       </div>
+                      <p className="text-[10px] text-text-secondary leading-tight">{opt.desc}</p>
+                    </button>
+                  );
+
+                  if (isDisabled) {
+                    return (
+                      <TooltipProvider key={opt.id}>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <div className="w-full cursor-not-allowed">
+                              {button}
+                            </div>
+                          </TooltipTrigger>
+                          <TooltipContent className="bg-bg-secondary text-text-primary border border-border shadow-xl">
+                            <p className="text-xs font-bold">FlowSpec não disponível no Modo B</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    );
+                  }
+
+                  return (
+                    <div key={opt.id} className="w-full">
+                      {button}
                     </div>
-                    <p className="text-[10px] text-text-secondary leading-tight">{opt.desc}</p>
-                  </button>
-                );
+
+                  );
               })}
+
             </div>
           </div>
         </div>
