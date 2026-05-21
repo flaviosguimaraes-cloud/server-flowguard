@@ -347,14 +347,14 @@ export default function BGP() {
                       </div>
                     </td>
                   </tr>
-                ) : (
-                  routes.map((route: any, i: number) => {
+                ) : (() => {
+                  const rules = flowspecData?.rules || flowspecData?.items || [];
+                  return routes.map((route: any, i: number) => {
                     const type = (route.type || '').toLowerCase();
                     const source = (route.source || '').toLowerCase();
                     const action = (route.action || '').toLowerCase();
                     
                     // Cross-reference with FlowSpec rules to get full action details
-                    const rules = flowspecData?.rules || flowspecData?.items || [];
                     const rule = rules.find((r: any) => 
                       r.dst_prefix === route.prefix || r.src_prefix === route.prefix
                     );
