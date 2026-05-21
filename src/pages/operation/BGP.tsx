@@ -470,9 +470,9 @@ export default function BGP() {
                           )}
                         </td>
                         <td className="px-4 py-3 text-xs">
-                          {route.expires_at ? (
-                            <span className={clsx("font-mono font-bold", getCountdownColor(route.expires_at))}>
-                              {getCountdown(route.expires_at)}
+                          {(route.expires_at || rule?.expires_at) ? (
+                            <span className={clsx("font-mono font-bold", getCountdownColor(route.expires_at || rule?.expires_at))}>
+                              {getCountdown(route.expires_at || rule?.expires_at)}
                             </span>
                           ) : (
                             <span className="text-text-secondary">—</span>
