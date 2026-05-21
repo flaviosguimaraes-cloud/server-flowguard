@@ -117,35 +117,43 @@ function SectionDivider({ title }: { title: string }) {
       );
     };
 
-    const MitigationBadges = ({ actionType, ip }: { actionType: string, ip: string }) => {
-      if (!actionType && !ip) return null;
-      const activeFlowspec = hasActiveFlowspec(ip);
+    const EventBadges = ({ actionType, direction }: { actionType: string, direction: string }) => {
       const badges = [];
 
-      if (actionType === 'blackhole') {
+      // Action Type Badges
+      if (actionType === 'blackhole' || actionType === 'blackhole_flowspec') {
         badges.push(
-          <span key="bh" className="px-2 py-0.5 bg-danger/10 text-danger border border-danger/20 text-[10px] font-bold rounded uppercase">
+          <span key="bh" className="px-2 py-0.5 bg-danger/10 text-danger border border-danger/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
             Blackhole /32
+          </span>
+        );
+      }
+      
+      if (actionType === 'flowspec' || actionType === 'blackhole_flowspec') {
+        badges.push(
+          <span key="fs" className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
+            FlowSpec
           </span>
         );
       } else if (actionType === 'external') {
         badges.push(
-          <span key="ext" className="px-2 py-0.5 bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 text-[10px] font-bold rounded uppercase">
+          <span key="ext" className="px-2 py-0.5 bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
             Externo /24
-          </span>
-        );
-      } else if (actionType === 'flowspec') {
-        badges.push(
-          <span key="fs" className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[10px] font-bold rounded uppercase">
-            FlowSpec
           </span>
         );
       }
 
-      if (actionType === 'blackhole' && activeFlowspec) {
+      // Direction Badges
+      if (direction === 'incoming' || direction === 'inbound') {
         badges.push(
-          <span key="fs-extra" className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[10px] font-bold rounded uppercase">
-            FlowSpec
+          <span key="dir" className="px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[10px] font-bold rounded uppercase flex items-center gap-1 whitespace-nowrap">
+            <i className="ti-arrow-down" /> Download
+          </span>
+        );
+      } else if (direction === 'outgoing' || direction === 'outbound') {
+        badges.push(
+          <span key="dir" className="px-2 py-0.5 bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 text-[10px] font-bold rounded uppercase flex items-center gap-1 whitespace-nowrap">
+            <i className="ti-arrow-up" /> Upload
           </span>
         );
       }
@@ -480,7 +488,6 @@ function SectionDivider({ title }: { title: string }) {
                       <th className="px-6 py-4 border-b border-border">Início</th>
                       <th className="px-6 py-4 border-b border-border">Volume</th>
                       <th className="px-6 py-4 border-b border-border text-center">Tipo</th>
-                      <th className="px-6 py-4 border-b border-border text-center">Direção</th>
 
                       <th className="px-6 py-4 border-b border-border text-center">Ações</th>
                     </tr>
@@ -505,13 +512,10 @@ function SectionDivider({ title }: { title: string }) {
                           </p>
                         </td>
                         <td className="px-6 py-3.5 text-center">
-                          <MitigationBadges actionType={item.action_type || item.type?.toLowerCase()} ip={item.ip} />
-                        </td>
-
-                        <td className="px-6 py-3.5 text-center">
-                          <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20 text-[10px] font-bold rounded uppercase">
-                            {item.direction === 'outgoing' ? '↑ Upload' : '↓ Download'}
-                          </span>
+                          <EventBadges 
+                            actionType={item.action_type || item.type?.toLowerCase()} 
+                            direction={item.direction} 
+                          />
                         </td>
 
                         <td className="px-6 py-3.5 text-center">
@@ -691,9 +695,8 @@ function SectionDivider({ title }: { title: string }) {
                   <th className="px-6 py-3 border-b border-border">Fim</th>
                   <th className="px-6 py-3 border-b border-border text-center">Duração</th>
                   <th className="px-6 py-3 border-b border-border">Pico (PPS/Mbps)</th>
-                  <th className="px-6 py-3 border-b border-border text-center">Direção</th>
-                  <th className="px-6 py-3 border-b border-border text-center">Status</th>
-                  <th className="px-6 py-3 border-b border-border">Tipo</th>
+                   <th className="px-6 py-3 border-b border-border text-center">Status</th>
+                  <th className="px-6 py-3 border-b border-border text-center">Tipo</th>
                   <th className="px-6 py-3 border-b border-border">Origem</th>
                 </tr>
               </thead>
@@ -773,23 +776,6 @@ function SectionDivider({ title }: { title: string }) {
                       </div>
                     </td>
                     <td className="px-6 py-3.5 text-center">
-                      {(() => {
-                        const dir = dirLabel(event.direction || event.flow_direction);
-                        return (
-                          <span style={{
-                            color: dir.color,
-                            background: dir.bg,
-                            padding: '2px 8px',
-                            borderRadius: 4,
-                            fontSize: 10,
-                            fontWeight: 500
-                          }}>
-                            {dir.label}
-                          </span>
-                        );
-                      })()}
-                    </td>
-                    <td className="px-6 py-3.5 text-center">
                       {event.status === 'active' ? (
                         <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded bg-danger/10 text-danger text-[9px] font-black border border-danger/20 animate-pulse">
                           ● ATIVO
@@ -801,7 +787,10 @@ function SectionDivider({ title }: { title: string }) {
                       )}
                     </td>
                     <td className="px-6 py-3.5 text-center">
-                      <MitigationBadges actionType={event.action_type || event.type?.toLowerCase()} ip={event.ip} />
+                      <EventBadges 
+                        actionType={event.action_type || event.type?.toLowerCase()} 
+                        direction={event.direction || event.flow_direction} 
+                      />
                     </td>
 
 
