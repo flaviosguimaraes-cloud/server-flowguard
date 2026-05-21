@@ -357,17 +357,28 @@ export default function BGP() {
                     );
 
                     const getFormattedAction = () => {
+                      if (type === 'blackhole' || type === 'blacklist') {
+                        return (
+                          <div className="flex items-center gap-1 text-danger font-bold">
+                            <span className="text-sm">🚫</span>
+                            <span>Descartar</span>
+                          </div>
+                        );
+                      }
+
                       if (type !== 'flowspec') return '—';
                       
-                      // Use action directly from route object
-                      if (action === 'rate-limit') {
+                      // Use action from rule if route.action is missing or potentially incorrect
+                      const effectiveAction = action || rule?.action || 'discard';
+                      
+                      if (effectiveAction === 'rate-limit') {
                         const rateKbps = route.rate_limit_kbps || rule?.rate_limit_kbps;
                         const mbps = rateKbps 
                           ? (Number(rateKbps) / 1000).toFixed(1)
                           : '1.0';
                         return (
-                          <div className="flex items-center gap-1 text-warning font-bold">
-                            <span>⚡</span>
+                          <div className="flex items-center gap-1 text-[#f59e0b] font-bold">
+                            <span className="text-sm">⚡</span>
                             <span>Rate-Limit: {mbps} Mbps</span>
                           </div>
                         );
@@ -375,7 +386,7 @@ export default function BGP() {
                       
                       return (
                         <div className="flex items-center gap-1 text-danger font-bold">
-                          <span>🚫</span>
+                          <span className="text-sm">🚫</span>
                           <span>Descartar</span>
                         </div>
                       );
