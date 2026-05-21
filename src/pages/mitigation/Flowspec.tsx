@@ -497,6 +497,7 @@ const Flowspec = () => {
           </table>
         </div>
       </div>
+    </div>
 
       <FlowSpecModal
         isOpen={isModalOpen}
