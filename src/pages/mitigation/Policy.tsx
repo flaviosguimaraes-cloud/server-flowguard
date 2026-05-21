@@ -343,8 +343,8 @@ export default function Policy() {
             community={externalCommunity}
             onChangeCommunity={setExternalCommunity}
             description={`Anuncia bloco ${externalBlock || '192.168.1.0/24'} para scrubbing externo.`}
-            disabled={autoConfig.operation_mode === 'flowspec_only'}
-            tooltip="Modo B desabilitado em Apenas FlowSpec"
+            disabled={autoConfig.operation_mode === 'flowspec_only' || autoConfig.operation_mode === 'blackhole_flowspec'}
+            tooltip={autoConfig.operation_mode === 'blackhole_flowspec' ? "Modo B não disponível no modo Complementar" : "Modo B desabilitado em Apenas FlowSpec"}
           />
 
         </div>
