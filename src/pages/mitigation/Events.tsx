@@ -809,7 +809,7 @@ function SectionDivider({ title }: { title: string }) {
 
 
                     <td className="px-6 py-3.5 text-center">
-                      {event.triggered_by === 'detector' ? (
+                      {(event.triggered_by === 'detector' || event.triggered_by === 'auto-detector' || event.created_by === 'auto-detector' || event.created_by === 'detector') ? (
                         <span className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
                           Automático
                         </span>
