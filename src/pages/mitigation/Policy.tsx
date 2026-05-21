@@ -391,7 +391,7 @@ export default function Policy() {
               ].map((opt) => {
                   const isSelected = autoConfig.operation_mode === opt.id;
 
-                  const isDisabled = mode === 'external' && opt.id !== 'disabled';
+                  const isDisabled = (mode === 'external' || mode === null) && opt.id !== 'disabled' && opt.id !== 'flowspec_only';
                   
                   const button = (
                     <button
@@ -403,6 +403,8 @@ export default function Policy() {
                         setAutoConfig({ ...autoConfig, operation_mode: nextMode });
                         if (nextMode === 'blackhole_flowspec') {
                           setMode('blackhole');
+                        } else if (nextMode === 'flowspec_only') {
+                          setMode(null);
                         }
                       }}
 
@@ -422,7 +424,8 @@ export default function Policy() {
                     </button>
                   );
 
-                  if (isDisabled) {
+                  if (isDisabled || (mode === 'external' && opt.id !== 'disabled')) {
+                    const tooltip = mode === 'external' ? "FlowSpec não disponível no Modo B" : "Ative o Modo A para usar este modo";
                     return (
                       <TooltipProvider key={opt.id}>
                         <Tooltip>
