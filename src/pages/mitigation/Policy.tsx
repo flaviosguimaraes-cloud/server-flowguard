@@ -478,7 +478,18 @@ export default function Policy() {
               <button
                 type="button"
                 disabled={!isAdmin}
-                onClick={() => setThresholds({ ...thresholds, my_hosts_enable_ban: !thresholds.my_hosts_enable_ban })}
+                onClick={() => {
+                  const newState = !thresholds.my_hosts_enable_ban;
+                  setThresholds({ 
+                    ...thresholds, 
+                    my_hosts_enable_ban: newState,
+                    ...(newState ? { 
+                      my_hosts_ban_for_pps: true, 
+                      my_hosts_ban_for_bandwidth: true 
+                    } : {})
+                  });
+                }}
+
                 className={clsx(
                   "w-10 h-5 rounded-full p-0.5 transition-all flex",
                   thresholds.my_hosts_enable_ban ? "bg-primary justify-end" : "bg-bg-primary justify-start border border-border"
