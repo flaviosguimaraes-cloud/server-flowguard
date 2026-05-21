@@ -42,7 +42,7 @@ export default function Policy() {
     queryFn: () => api.get('/api/thresholds').then(r => r.data).catch(() => ({})),
   });
 
-  const [mode, setMode] = useState<Mode>('blackhole');
+  const [mode, setMode] = useState<Mode>(null);
   const [externalBlock, setExternalBlock] = useState('');
   const [blackholeCommunity, setBlackholeCommunity] = useState('65000:666');
   const [externalCommunity, setExternalCommunity] = useState('65000:999');
