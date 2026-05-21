@@ -120,7 +120,7 @@ export default function Policy() {
         const current = thresholds[key];
         const initial = initialThresholds[key];
         
-        if (key.startsWith('threshold_') || key === 'ban_time') {
+        if (key.includes('threshold_') || key === 'ban_time') {
           return (Number(current) || 0) !== (Number(initial) || 0);
         }
         
