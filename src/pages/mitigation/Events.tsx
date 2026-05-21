@@ -530,6 +530,7 @@ function SectionDivider({ title }: { title: string }) {
                               Manual
                             </span>
                           )}
+                        </td>
 
                         <td className="px-6 py-3.5 text-center">
                           {isAdmin && (
