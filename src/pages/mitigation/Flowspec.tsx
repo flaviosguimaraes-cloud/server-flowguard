@@ -25,6 +25,22 @@ import {
 import { Badge } from "../../components/ui/badge";
 import { Separator } from "../../components/ui/separator";
 
+interface AutoConfig {
+  block_mode: string;
+  block_protocols: string[];
+  direction: string;
+  default_action: string;
+  default_rate_limit_kbps: number | string;
+  default_ttl_minutes: number | string;
+  detect_udp_flood: boolean;
+  detect_syn_flood: boolean;
+  detect_dns_amp: boolean;
+  detect_ntp_amp: boolean;
+  detect_ssdp_amp: boolean;
+  flowspec_src_mode: string;
+  [key: string]: any;
+}
+
 const Flowspec = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedRule, setSelectedRule] = useState<any>(null);
@@ -39,7 +55,7 @@ const Flowspec = () => {
     queryFn: () => api.get('/api/mitigation/auto-config').then(r => r.data).catch(() => ({})),
   });
 
-  const [autoConfig, setAutoConfig] = useState<any>({
+  const [autoConfig, setAutoConfig] = useState<AutoConfig>({
     block_mode: 'by_port',
     block_protocols: [], // ICMP, IP are managed here. TCP/UDP are implicit.
     direction: 'incoming',
