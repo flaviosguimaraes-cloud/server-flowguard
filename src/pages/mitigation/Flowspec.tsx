@@ -27,6 +27,9 @@ import { Separator } from "../../components/ui/separator";
 
 const Flowspec = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedRule, setSelectedRule] = useState<any>(null);
+  const [ruleToDelete, setRuleToDelete] = useState<any>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
   const queryClient = useQueryClient();
   const { user } = useAuth();
   const isAdmin = user?.role === 'admin';
