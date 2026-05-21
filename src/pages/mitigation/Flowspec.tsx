@@ -86,7 +86,8 @@ const Flowspec = () => {
       toast.success('Regra removida com sucesso');
     },
     onError: (error: any) => {
-      toast.error(error.response?.data?.detail || 'Erro ao remover regra');
+      const errorMsg = error.response?.data?.detail || error.message || 'Erro ao remover regra';
+      toast.error(typeof errorMsg === 'object' ? JSON.stringify(errorMsg) : String(errorMsg));
     }
   });
 
