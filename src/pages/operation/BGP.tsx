@@ -459,7 +459,7 @@ export default function BGP() {
                         </td>
 
                         <td className="px-4 py-3">
-                          {route.created_by === 'auto-detector' ? (
+                          {(route.triggered_by === 'detector' || route.created_by === 'auto-detector') ? (
                             <Badge variant="outline" className="bg-purple-500/10 text-purple-400 border-purple-500/20 font-bold text-[10px]">
                               Automático
                             </Badge>
