@@ -283,7 +283,7 @@ export default function Policy() {
             type="number" 
             value={thresholds[id] ?? ''} 
             placeholder={placeholder} 
-            readOnly={isCardDisabled || !enabled} 
+            readOnly={isCardDisabled} 
             onChange={(e) => setThresholds({ ...thresholds, [id]: e.target.value })}
             className={clsx(
               "w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30",
