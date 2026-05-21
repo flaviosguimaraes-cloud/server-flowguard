@@ -57,7 +57,7 @@ export default function BGP() {
 
   const getCountdown = (expires_at: string) => {
     if (!expires_at) return null;
-    const diff = new Date(expires_at).getTime() - now.getTime();
+    const diff = new Date(expires_at.replace(' ', 'T')).getTime() - now.getTime();
     if (diff <= 0) return "Expirado";
     const h = Math.floor(diff / 3600000);
     const m = Math.floor((diff % 3600000) / 60000);
