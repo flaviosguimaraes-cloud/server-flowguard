@@ -433,8 +433,22 @@ export default function Policy() {
 
         {/* Section 3: Geral */}
         <div className="space-y-4 pt-4">
-          <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+          <div className="flex items-center justify-between pb-2 border-b border-border/50">
             <h3 className="text-sm font-bold text-text-primary">Seção 3 — Geral</h3>
+            {isAdmin && (
+              <button 
+                onClick={handleSaveClick} 
+                disabled={saving}
+                className="flex items-center gap-2 px-6 py-2 bg-primary hover:bg-primary/90 text-white rounded-lg text-sm font-bold transition-all shadow-md shadow-primary/20 disabled:opacity-50"
+              >
+                {saving ? (
+                  <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+                ) : (
+                  <Save size={16} />
+                )}
+                Salvar e aplicar
+              </button>
+            )}
           </div>
           <div className="max-w-xs p-4 rounded-xl border border-border bg-bg-primary/30 space-y-3">
             <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Tempo de bloqueio</label>
@@ -448,23 +462,6 @@ export default function Policy() {
           </div>
         </div>
 
-        {/* BOTÃO SALVAR */}
-        {isAdmin && (
-          <div className="flex justify-end pt-6 border-t border-border/50">
-            <button 
-              onClick={handleSaveClick} 
-              disabled={saving}
-              className="flex items-center gap-2 px-8 py-3 bg-primary hover:bg-primary/90 text-white rounded-xl font-bold transition-all shadow-lg shadow-primary/20 disabled:opacity-50"
-            >
-              {saving ? (
-                <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <Save size={18} />
-              )}
-              Salvar e aplicar
-            </button>
-          </div>
-        )}
       </div>
 
 
