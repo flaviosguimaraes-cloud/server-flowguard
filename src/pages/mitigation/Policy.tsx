@@ -337,11 +337,11 @@ export default function Policy() {
         )}
       </div>
 
-      {/* SEÇÃO 2: FLOWSPEC AUTOMÁTICO */}
+      {/* SEÇÃO 2: FLOWSPEC */}
       <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm space-y-6">
         <div className="flex items-center gap-2 mb-2">
           <Zap size={20} className="text-warning" />
-          <h2 className="text-lg font-bold text-text-primary">⚡ FlowSpec Automático</h2>
+          <h2 className="text-lg font-bold text-text-primary">⚡ FlowSpec</h2>
         </div>
 
         <div className="space-y-6">
@@ -360,131 +360,6 @@ export default function Policy() {
                     type="button"
                     disabled={!isAdmin}
                     onClick={() => setAutoConfig({ ...autoConfig, operation_mode: opt.id })}
-                    className={clsx(
-                      "text-left p-4 rounded-xl border transition-all",
-                      isSelected ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-bg-primary/50 hover:border-border-hover"
-                    )}
-                  >
-                    <div className="flex items-center justify-between mb-2">
-                      <span className={clsx("text-sm font-bold", isSelected ? "text-primary" : "text-text-primary")}>{opt.label}</span>
-                      <div className={clsx("w-4 h-4 rounded-full border flex items-center justify-center", isSelected ? "border-primary" : "border-border")}>
-                        {isSelected && <div className="w-2 h-2 rounded-full bg-primary" />}
-                      </div>
-                    </div>
-                    <p className="text-[10px] text-text-secondary leading-tight">{opt.desc}</p>
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8 pt-6 border-t border-border">
-            <div>
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block mb-4">Ação Padrão</label>
-              <div className="space-y-4">
-                <label className="flex items-center gap-3 cursor-pointer group">
-                  <input
-                    type="radio"
-                    name="default_action"
-                    disabled={!isAdmin}
-                    checked={autoConfig.default_action === 'discard'}
-                    onChange={() => setAutoConfig({ ...autoConfig, default_action: 'discard' })}
-                    className="w-4 h-4 accent-primary"
-                  />
-                  <div>
-                    <span className="text-sm font-bold text-text-primary block">Descartar tudo</span>
-                    <span className="text-[10px] text-text-secondary">Bloqueio total do tráfego malicioso</span>
-                  </div>
-                </label>
-                
-                <div className="space-y-3">
-                  <label className="flex items-center gap-3 cursor-pointer group">
-                    <input
-                      type="radio"
-                      name="default_action"
-                      disabled={!isAdmin}
-                      checked={autoConfig.default_action === 'rate-limit'}
-                      onChange={() => setAutoConfig({ ...autoConfig, default_action: 'rate-limit' })}
-                      className="w-4 h-4 accent-primary"
-                    />
-                    <div>
-                      <span className="text-sm font-bold text-text-primary block">Rate-Limit (limitar banda)</span>
-                      <span className="text-[10px] text-text-secondary">Limita tráfego ao valor definido abaixo</span>
-                    </div>
-                  </label>
-                  
-                  {autoConfig.default_action === 'rate-limit' && (
-                    <div className="flex items-center gap-2 ml-7 animate-in slide-in-from-top-2 duration-200">
-                      <input
-                        type="number"
-                        disabled={!isAdmin}
-                        value={autoConfig.default_rate_limit_kbps}
-                        onChange={(e) => setAutoConfig({ ...autoConfig, default_rate_limit_kbps: parseInt(e.target.value) || 0 })}
-                        className="w-28 bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-sm font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30"
-                      />
-                      <span className="text-xs font-bold text-text-secondary">Kbps</span>
-                    </div>
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block mb-3">TTL Padrão</label>
-                <div className="flex items-center gap-2">
-                  <input
-                    type="number"
-                    disabled={!isAdmin}
-                    value={autoConfig.default_ttl_minutes}
-                    onChange={(e) => setAutoConfig({ ...autoConfig, default_ttl_minutes: parseInt(e.target.value) || 0 })}
-                    className="w-28 bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-sm font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30"
-                  />
-                  <span className="text-sm font-bold text-text-primary">minutos</span>
-                </div>
-                <p className="text-[10px] text-text-secondary mt-1 tracking-tight">Tempo que as regras permanecem ativas antes da expiração automática.</p>
-              </div>
-            </div>
-          </div>
-
-          <div className="pt-6 border-t border-border">
-            <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block mb-4">Tipos de Detecção</label>
-            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-              {[
-                { id: 'detect_udp_flood', label: 'UDP Flood' },
-                { id: 'detect_syn_flood', label: 'SYN Flood' },
-                { id: 'detect_dns_amp', label: 'DNS Amplification' },
-                { id: 'detect_ntp_amp', label: 'NTP Amplification' },
-                { id: 'detect_ssdp_amp', label: 'SSDP Amplification' },
-              ].map((type) => (
-                <label key={type.id} className="flex items-center gap-3 cursor-pointer group">
-                  <input
-                    type="checkbox"
-                    disabled={!isAdmin}
-                    checked={(autoConfig as any)[type.id]}
-                    onChange={(e) => setAutoConfig({ ...autoConfig, [type.id]: e.target.checked })}
-                    className="w-4 h-4 rounded border-border text-primary focus:ring-primary accent-primary"
-                  />
-                  <span className="text-xs font-bold text-text-primary group-hover:text-primary transition-colors">{type.label}</span>
-                </label>
-              ))}
-            </div>
-          </div>
-
-          <div className="pt-6 border-t border-border">
-            <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest block mb-4">Origem do Bloqueio FlowSpec</label>
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[
-                { id: 'any', label: 'Qualquer origem (recomendado)', desc: 'Bloqueia todo tráfego do protocolo/porta atacada, independente da origem. Mais eficaz contra botnets e ataques com IPs spoofados.' },
-                { id: 'attacker', label: 'Só IP atacante', desc: 'Bloqueia apenas o IP de origem identificado no ataque. Mais cirúrgico mas menos eficaz se o atacante mudar de IP.' },
-              ].map((opt) => {
-                const isSelected = (autoConfig.flowspec_src_mode || 'any') === opt.id;
-                return (
-                  <button
-                    key={opt.id}
-                    type="button"
-                    disabled={!isAdmin}
-                    onClick={() => setAutoConfig({ ...autoConfig, flowspec_src_mode: opt.id })}
                     className={clsx(
                       "text-left p-4 rounded-xl border transition-all",
                       isSelected ? "border-primary bg-primary/5 ring-1 ring-primary/20" : "border-border bg-bg-primary/50 hover:border-border-hover"
