@@ -90,7 +90,7 @@ function SectionDivider({ title }: { title: string }) {
     const { data: activeMitigations, dataUpdatedAt: activeMitigationsUpdatedAt } = useQuery({
      queryKey: ['mitigation-active-events'],
      queryFn: async () => {
-       const r = await api.get('/api/mitigation/active');
+       const r = await api.get('/api/mitigation/events').catch(() => api.get('/api/mitigation/active'));
        return r.data;
      },
       staleTime: 0,
@@ -479,7 +479,9 @@ function SectionDivider({ title }: { title: string }) {
                       <th className="px-6 py-4 border-b border-border">IP Atacado</th>
                       <th className="px-6 py-4 border-b border-border">Início</th>
                       <th className="px-6 py-4 border-b border-border">Volume</th>
+                      <th className="px-6 py-4 border-b border-border text-center">Tipo</th>
                       <th className="px-6 py-4 border-b border-border text-center">Direção</th>
+
                       <th className="px-6 py-4 border-b border-border text-center">Ações</th>
                     </tr>
                   </thead>
@@ -503,10 +505,14 @@ function SectionDivider({ title }: { title: string }) {
                           </p>
                         </td>
                         <td className="px-6 py-3.5 text-center">
+                          <MitigationBadges actionType={item.action_type} ip={item.ip} />
+                        </td>
+                        <td className="px-6 py-3.5 text-center">
                           <span className="px-2 py-0.5 bg-blue-50 text-blue-700 border border-blue-200 dark:bg-blue-500/10 dark:text-blue-300 dark:border-blue-500/20 text-[10px] font-bold rounded uppercase">
                             {item.direction === 'outgoing' ? '↑ Upload' : '↓ Download'}
                           </span>
                         </td>
+
                         <td className="px-6 py-3.5 text-center">
                           {isAdmin && (
                             <button 
@@ -793,9 +799,10 @@ function SectionDivider({ title }: { title: string }) {
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-3.5 text-text-secondary text-[11px] font-medium uppercase tracking-wider">
-                      {event.type || 'Blackhole'}
+                    <td className="px-6 py-3.5 text-center">
+                      <MitigationBadges actionType={event.action_type} ip={event.ip} />
                     </td>
+
                     <td className="px-6 py-3.5 text-text-secondary text-[11px] font-bold uppercase tracking-wider">
                       {event.triggered_by === 'detector' ? 'Automático' : 'Manual'}
                     </td>
