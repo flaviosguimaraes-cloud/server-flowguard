@@ -608,8 +608,8 @@ export default function BGP() {
                           <span className="text-text-primary font-bold">{selectedRoute.age?.substring(5, 16).replace('-', '/') || '—'}</span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
-                          <span className="text-text-secondary flex items-center gap-1.5"><User size={14} /> Criado por:</span>
-                          <span className="text-text-primary font-bold">{selectedRoute.created_by || 'sistema'}</span>
+                          <span className="text-text-secondary flex items-center gap-1.5"><User size={14} /> Origem:</span>
+                          <span className="text-text-primary font-bold">{(selectedRoute.triggered_by === 'detector' || selectedRoute.created_by === 'auto-detector') ? 'Automático' : 'Manual'}</span>
                         </div>
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-text-secondary flex items-center gap-1.5"><Clock size={14} /> Tempo ativo:</span>
