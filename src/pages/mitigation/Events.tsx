@@ -790,7 +790,7 @@ function SectionDivider({ title }: { title: string }) {
                     </td>
                     <td className="px-6 py-3.5 text-center">
                       <EventBadges 
-                        actionType={event.action_type || event.type} 
+                        actionType={event.action_type} 
                         direction={event.direction || event.flow_direction} 
                       />
                     </td>
