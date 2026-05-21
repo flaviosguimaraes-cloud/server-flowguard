@@ -676,7 +676,7 @@ export default function BGP() {
                         <div className="flex items-center justify-between text-sm">
                           <span className="text-text-secondary flex items-center gap-1.5"><Info size={14} /> Origem:</span>
                           <span className="text-text-primary font-bold">
-                            {(selectedRoute.triggered_by === 'detector' || selectedRoute.created_by === 'auto-detector' || selectedRoute.source === 'mitigation') ? 'Automático' : 'Manual'}
+                            {(selectedRoute.triggered_by === 'detector' || selectedRoute.triggered_by === 'auto-detector' || selectedRoute.created_by === 'auto-detector' || selectedRoute.created_by === 'detector' || selectedRoute.source === 'mitigation') ? 'Automático' : 'Manual'}
                           </span>
                         </div>
                       </div>
