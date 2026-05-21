@@ -801,14 +801,14 @@ function SectionDivider({ title }: { title: string }) {
                 ))}
                 {(!eventsHistory?.items || eventsHistory.items.length === 0) && !historyLoading && (
                   <tr>
-                    <td colSpan={9} className="px-6 py-12 text-center text-text-secondary italic text-xs">
+                    <td colSpan={8} className="px-6 py-12 text-center text-text-secondary italic text-xs">
                       Nenhum histórico de anomalias encontrado
                     </td>
                   </tr>
                 )}
                 {historyLoading && (
                   <tr>
-                    <td colSpan={9} className="px-6 py-12 text-center">
+                    <td colSpan={8} className="px-6 py-12 text-center">
                       <Skeleton count={5} />
                     </td>
                   </tr>
