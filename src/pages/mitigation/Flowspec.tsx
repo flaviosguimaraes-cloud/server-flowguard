@@ -52,8 +52,11 @@ const Flowspec = () => {
   const handleSaveAutoConfig = async () => {
     setSavingAutoConfig(true);
     try {
+      // Remove old 'protocols' key if it exists to keep payload clean
+      const { protocols, ...configToSend } = autoConfig;
+      
       await api.put('/api/mitigation/auto-config', {
-        ...autoConfig,
+        ...configToSend,
         default_rate_limit_kbps: Number(autoConfig.default_rate_limit_kbps) || 1000,
         default_ttl_minutes: Number(autoConfig.default_ttl_minutes) || 120,
       });
