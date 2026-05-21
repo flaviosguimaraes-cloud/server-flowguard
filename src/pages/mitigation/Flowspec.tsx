@@ -78,14 +78,17 @@ const Flowspec = () => {
   const handleSaveAutoConfig = async () => {
     setSavingAutoConfig(true);
     try {
-      // Remove old 'protocols' key if it exists to keep payload clean
-      const { protocols, ...configToSend } = autoConfig;
+      // Clean up the payload before sending
+      const { protocols, ...rest } = autoConfig;
       
-      await api.put('/api/mitigation/auto-config', {
-        ...configToSend,
+      const payload = {
+        ...rest,
+        block_protocols: autoConfig.block_protocols || [],
         default_rate_limit_kbps: Number(autoConfig.default_rate_limit_kbps) || 1000,
         default_ttl_minutes: Number(autoConfig.default_ttl_minutes) || 120,
-      });
+      };
+      
+      await api.put('/api/mitigation/auto-config', payload);
       toast.success('Configuração automática salva');
       queryClient.invalidateQueries({ queryKey: ['mitigation-auto-config'] });
     } catch (e: any) {
@@ -97,14 +100,19 @@ const Flowspec = () => {
   };
 
   const toggleProtocol = (proto: string) => {
-    if (proto === 'tcp' || proto === 'udp') return; // Fixed
+    if (proto === 'tcp' || proto === 'udp') return;
     
-    const current = [...(autoConfig.block_protocols || [])];
-    if (current.includes(proto)) {
-      setAutoConfig({ ...autoConfig, block_protocols: current.filter(p => p !== proto) });
-    } else {
-      setAutoConfig({ ...autoConfig, block_protocols: [...current, proto] });
-    }
+    setAutoConfig(prev => {
+      const current = Array.isArray(prev.block_protocols) ? prev.block_protocols : [];
+      const updated = current.includes(proto)
+        ? current.filter(p => p !== proto)
+        : [...current, proto];
+      
+      return {
+        ...prev,
+        block_protocols: updated
+      };
+    });
   };
 
   const { data, isLoading } = useQuery({
