@@ -99,7 +99,62 @@ function SectionDivider({ title }: { title: string }) {
       refetchOnMount: 'always',
       refetchOnWindowFocus: true,
    });
- 
+
+    const { data: flowspecRules } = useQuery({
+      queryKey: ['mitigation-flowspec-active'],
+      queryFn: async () => {
+        const r = await api.get('/api/mitigation/flowspec').catch(() => ({ data: { items: [] } }));
+        return r.data;
+      },
+      staleTime: 5000,
+    });
+
+    const hasActiveFlowspec = (ip: string) => {
+      if (!flowspecRules?.items) return false;
+      const cleanIp = ip.split('/')[0];
+      return flowspecRules.items.some((item: any) => 
+        item.dst_prefix?.includes(cleanIp) && item.status === 'active'
+      );
+    };
+
+    const MitigationBadges = ({ actionType, ip }: { actionType: string, ip: string }) => {
+      if (!actionType && !ip) return null;
+      const activeFlowspec = hasActiveFlowspec(ip);
+      const badges = [];
+
+      if (actionType === 'blackhole') {
+        badges.push(
+          <span key="bh" className="px-2 py-0.5 bg-danger/10 text-danger border border-danger/20 text-[10px] font-bold rounded uppercase">
+            Blackhole /32
+          </span>
+        );
+      } else if (actionType === 'external') {
+        badges.push(
+          <span key="ext" className="px-2 py-0.5 bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 text-[10px] font-bold rounded uppercase">
+            Externo /24
+          </span>
+        );
+      } else if (actionType === 'flowspec') {
+        badges.push(
+          <span key="fs" className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[10px] font-bold rounded uppercase">
+            FlowSpec
+          </span>
+        );
+      }
+
+      if (actionType === 'blackhole' && activeFlowspec) {
+        badges.push(
+          <span key="fs-extra" className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[10px] font-bold rounded uppercase">
+            FlowSpec
+          </span>
+        );
+      }
+
+      if (badges.length === 0) return <span>—</span>;
+
+      return <div className="flex flex-wrap gap-1 items-center justify-center">{badges}</div>;
+    };
+
     const [filters, setFilters] = useState({
       ip: '',
       direction: '',
