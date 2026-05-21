@@ -200,8 +200,8 @@ export default function Policy() {
 
   const ModeCard = ({ value, title, community, onChangeCommunity, description, disabled, tooltip }: any) => {
     const selected = mode === value;
-    return (
     const content = (
+
       <button
         type="button"
         disabled={disabled || !isAdmin}
@@ -373,9 +373,8 @@ export default function Policy() {
                 { id: 'blackhole_flowspec', label: 'Complementar ao Blackhole', desc: 'Blackhole imediato + FlowSpec cirúrgico' },
                 { id: 'flowspec_only', label: 'Apenas FlowSpec', desc: 'Mitigação cirúrgica (sem blackhole)' },
               ].map((opt) => {
-                const isSelected = autoConfig.operation_mode === opt.id;
-                return (
                   const isSelected = autoConfig.operation_mode === opt.id;
+
                   const isDisabled = mode === 'external' && opt.id !== 'disabled';
                   
                   const button = (
@@ -422,8 +421,9 @@ export default function Policy() {
                     </div>
                   );
 
-                );
+                  );
               })}
+
             </div>
           </div>
         </div>
