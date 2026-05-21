@@ -43,7 +43,7 @@ export default function Policy() {
   });
 
   const [mode, setMode] = useState<Mode>(null);
-  const [externalBlock, setExternalBlock] = useState('');
+  const [externalBlocks, setExternalBlocks] = useState<string[]>(['']);
   const [blackholeCommunity, setBlackholeCommunity] = useState('65000:666');
   const [externalCommunity, setExternalCommunity] = useState('65000:999');
 
