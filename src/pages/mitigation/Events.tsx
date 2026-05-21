@@ -711,7 +711,7 @@ function SectionDivider({ title }: { title: string }) {
                   <th className="px-6 py-3 border-b border-border">Pico (PPS/Mbps)</th>
                    <th className="px-6 py-3 border-b border-border text-center">Status</th>
                   <th className="px-6 py-3 border-b border-border text-center">Tipo</th>
-                  <th className="px-6 py-3 border-b border-border">Origem</th>
+                  <th className="px-6 py-3 border-b border-border text-center">Origem</th>
                 </tr>
               </thead>
                <tbody className="text-sm divide-y divide-border/50">
