@@ -369,7 +369,7 @@ export default function Policy() {
       </div>
 
       {/* SEÇÃO 3: LIMIARES */}
-      <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm space-y-6">
+      <div className="bg-bg-secondary p-6 rounded-xl border border-border shadow-sm space-y-8">
         <div className="flex items-center gap-2">
           <Sliders size={18} className="text-primary" />
           <div>
@@ -378,23 +378,65 @@ export default function Policy() {
           </div>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          <ThresholdCard id="threshold_pps" label="PPS Global" banKey="ban_for_pps" unit="pps" placeholder="100000" description="gatilho principal" />
-          <ThresholdCard id="threshold_mbps" label="Banda Global" banKey="ban_for_bandwidth" unit="Mbps" placeholder="1000" description="gatilho principal" />
-          <ThresholdCard id="threshold_flows" label="Flows Global" banKey="ban_for_flows" unit="flows" placeholder="3500" description="gatilho de volume" />
-          
-          <ThresholdCard id="threshold_tcp_pps" label="TCP PPS" banKey="ban_for_tcp_pps" unit="pps" placeholder="50000" description="anomalias TCP flood" />
-          <ThresholdCard id="threshold_tcp_mbps" label="TCP Banda" banKey="ban_for_tcp_bandwidth" unit="Mbps" placeholder="500" description="anomalias TCP flood" />
-          <div className="hidden lg:block" />
+        {/* Section 1: Download */}
+        <div className="space-y-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+            <h3 className="text-sm font-bold text-text-primary">Seção 1 — Download (Incoming)</h3>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <ThresholdCard id="threshold_pps" label="PPS Download" banKey="ban_for_pps" unit="pps" placeholder="100000" description="gatilho de pacotes" />
+            <ThresholdCard id="threshold_mbps" label="Banda Download" banKey="ban_for_bandwidth" unit="Mbps" placeholder="1000" description="gatilho de banda" />
+            <ThresholdCard id="threshold_flows" label="Flows Download" banKey="ban_for_flows" unit="flows" placeholder="3500" description="gatilho de fluxos" />
+          </div>
+        </div>
 
-          <ThresholdCard id="threshold_udp_pps" label="UDP PPS" banKey="ban_for_udp_pps" unit="pps" placeholder="50000" description="anomalias UDP flood" />
-          <ThresholdCard id="threshold_udp_mbps" label="UDP Banda" banKey="ban_for_udp_bandwidth" unit="Mbps" placeholder="500" description="anomalias UDP flood" />
-          <div className="hidden lg:block" />
+        {/* Section 2: Upload */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between pb-2 border-b border-border/50">
+            <h3 className="text-sm font-bold text-text-primary">Seção 2 — Upload (Outgoing)</h3>
+            <div className="flex items-center gap-3">
+              <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Habilitar detecção Upload</span>
+              <button
+                type="button"
+                disabled={!isAdmin}
+                onClick={() => setThresholds({ ...thresholds, my_hosts_enable_ban: !thresholds.my_hosts_enable_ban })}
+                className={clsx(
+                  "w-10 h-5 rounded-full p-0.5 transition-all flex",
+                  thresholds.my_hosts_enable_ban ? "bg-primary justify-end" : "bg-bg-primary justify-start border border-border"
+                )}
+              >
+                <div className="w-4 h-4 rounded-full bg-white shadow" />
+              </button>
+            </div>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <ThresholdCard 
+              id="my_hosts_threshold_pps" 
+              label="PPS Upload" 
+              banKey="my_hosts_ban_for_pps" 
+              unit="pps" 
+              placeholder="50000" 
+              description="gatilho de pacotes"
+              disabled={!thresholds.my_hosts_enable_ban}
+            />
+            <ThresholdCard 
+              id="my_hosts_threshold_mbps" 
+              label="Banda Upload" 
+              banKey="my_hosts_ban_for_bandwidth" 
+              unit="Mbps" 
+              placeholder="500" 
+              description="gatilho de banda"
+              disabled={!thresholds.my_hosts_enable_ban}
+            />
+          </div>
+        </div>
 
-          <ThresholdCard id="threshold_icmp_pps" label="ICMP PPS" banKey="ban_for_icmp_pps" unit="pps" placeholder="5000" description="anomalias ICMP flood" />
-          <ThresholdCard id="threshold_icmp_mbps" label="ICMP Banda" banKey="ban_for_icmp_bandwidth" unit="Mbps" placeholder="50" description="anomalias ICMP flood" />
-          
-          <div className="p-4 rounded-xl border border-border bg-bg-primary/30 space-y-3">
+        {/* Section 3: Geral */}
+        <div className="space-y-4 pt-4">
+          <div className="flex items-center gap-2 pb-2 border-b border-border/50">
+            <h3 className="text-sm font-bold text-text-primary">Seção 3 — Geral</h3>
+          </div>
+          <div className="max-w-xs p-4 rounded-xl border border-border bg-bg-primary/30 space-y-3">
             <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Tempo de bloqueio</label>
             <div className="flex items-center gap-2">
               <input type="number" value={thresholds.ban_time ?? ''} readOnly={!isAdmin}
