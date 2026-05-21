@@ -234,18 +234,21 @@ export default function Policy() {
     );
   };
 
-  const ThresholdCard = ({ id, label, banKey, unit, placeholder, description }: any) => {
+  const ThresholdCard = ({ id, label, banKey, unit, placeholder, description, disabled }: any) => {
     const enabled = !!thresholds[banKey];
+    const isCardDisabled = disabled || !isAdmin;
+    
     return (
       <div className={clsx(
         "p-4 rounded-xl border transition-all space-y-3",
-        enabled ? "border-primary/30 bg-primary/5 shadow-sm" : "border-border bg-bg-secondary opacity-60"
+        enabled && !disabled ? "border-primary/30 bg-primary/5 shadow-sm" : "border-border bg-bg-secondary",
+        disabled && "opacity-40 grayscale pointer-events-none"
       )}>
         <div className="flex items-center justify-between">
           <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">{label}</span>
           <button
             type="button"
-            disabled={!isAdmin}
+            disabled={isCardDisabled}
             onClick={() => setThresholds({ ...thresholds, [banKey]: !enabled })}
             className={clsx(
               "w-8 h-4 rounded-full p-0.5 transition-all flex",
@@ -261,20 +264,20 @@ export default function Policy() {
             type="number" 
             value={thresholds[id] ?? ''} 
             placeholder={placeholder} 
-            readOnly={!isAdmin || !enabled} 
+            readOnly={isCardDisabled || !enabled} 
             onChange={(e) => setThresholds({ ...thresholds, [id]: e.target.value })}
             className={clsx(
               "w-full bg-bg-primary border border-border rounded-lg px-3 py-2 text-sm font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30",
-              !enabled && "bg-bg-secondary text-text-secondary cursor-not-allowed"
+              (!enabled || disabled) && "bg-bg-secondary text-text-secondary cursor-not-allowed"
             )} 
           />
           <span className="text-xs font-bold text-text-secondary">{unit}</span>
         </div>
         <div className="flex items-center gap-1.5 text-[10px]">
-          {enabled ? (
+          {enabled && !disabled ? (
             <><Zap size={10} className="text-warning" /> <span className="text-text-primary font-bold tracking-tight">Ativo — {description}</span></>
           ) : (
-            <><Shield size={10} className="text-text-secondary" /> <span className="text-text-secondary">Inativo</span></>
+            <><Shield size={10} className="text-text-secondary" /> <span className="text-text-secondary">{disabled ? 'Desabilitado' : 'Inativo'}</span></>
           )}
         </div>
       </div>
