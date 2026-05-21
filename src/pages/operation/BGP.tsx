@@ -500,8 +500,8 @@ export default function BGP() {
                         </td>
                       </tr>
                     );
-                  })
-                )}
+                  });
+                })()}
               </tbody>
             </table>
           </div>
