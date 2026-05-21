@@ -450,21 +450,10 @@ export default function BGP() {
                            source === 'manual' ? 'Manual' : (route.source || '—')}
                         </td>
                         <td className="px-4 py-3 text-xs">
-                          {type === 'flowspec' ? (
-                            (() => {
-                              const rules = flowspecData?.rules || flowspecData?.items || [];
-                              const rule = rules.find((r: any) => r.dst_prefix === route.prefix);
-                              const expiresAt = rule?.expires_at;
-                              return expiresAt ? (
-                                <span className={clsx("font-mono font-bold", getCountdownColor(expiresAt))}>
-                                  {getCountdown(expiresAt)}
-                                </span>
-                              ) : (
-                                <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase bg-gray-500/10 text-gray-500 border border-gray-500/20">
-                                  Permanente
-                                </span>
-                              );
-                            })()
+                          {route.expires_at ? (
+                            <span className={clsx("font-mono font-bold", getCountdownColor(route.expires_at))}>
+                              {getCountdown(route.expires_at)}
+                            </span>
                           ) : (
                             <span className="text-text-secondary">—</span>
                           )}
