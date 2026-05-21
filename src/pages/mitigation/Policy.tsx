@@ -78,7 +78,7 @@ export default function Policy() {
 
   useEffect(() => {
     if (policyData) {
-      setMode((policyData.mode as Mode) || 'blackhole');
+      setMode((policyData.mode as Mode) || null);
       setExternalBlock(policyData.external_block || '192.168.1.0/24');
       setBlackholeCommunity(policyData.blackhole_community || '65000:666');
       setExternalCommunity(policyData.external_community || '65000:999');
