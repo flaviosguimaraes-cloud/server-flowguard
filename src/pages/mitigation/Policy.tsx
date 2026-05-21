@@ -110,13 +110,9 @@ export default function Policy() {
       
       const keys = [
         'threshold_pps', 'threshold_mbps', 'threshold_flows',
-        'threshold_tcp_pps', 'threshold_tcp_mbps',
-        'threshold_udp_pps', 'threshold_udp_mbps',
-        'threshold_icmp_pps', 'threshold_icmp_mbps',
+        'my_hosts_enable_ban', 'my_hosts_threshold_pps', 'my_hosts_threshold_mbps',
         'ban_for_pps', 'ban_for_bandwidth', 'ban_for_flows',
-        'ban_for_tcp_pps', 'ban_for_tcp_bandwidth',
-        'ban_for_udp_pps', 'ban_for_udp_bandwidth',
-        'ban_for_icmp_pps', 'ban_for_icmp_bandwidth',
+        'my_hosts_ban_for_pps', 'my_hosts_ban_for_bandwidth',
         'ban_time'
       ];
 
