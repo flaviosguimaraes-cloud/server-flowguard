@@ -435,7 +435,7 @@ export default function Policy() {
                             </div>
                           </TooltipTrigger>
                           <TooltipContent className="bg-bg-secondary text-text-primary border border-border shadow-xl">
-                            <p className="text-xs font-bold">FlowSpec não disponível no Modo B</p>
+                            <p className="text-xs font-bold">{tooltip}</p>
                           </TooltipContent>
                         </Tooltip>
                       </TooltipProvider>
