@@ -457,9 +457,9 @@ const Flowspec = () => {
           <div className="overflow-x-auto custom-scrollbar">
           <table className="w-full text-left border-collapse">
             <thead>
-              <tr className="bg-bg-primary/50 border-b border-border">
-                <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">ID</th>
-                <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Destino</th>
+              <tr className="bg-bg-primary/50 border-b border-border text-center">
+                <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider text-left">ID</th>
+                <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider text-left">Destino</th>
                 <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Origem</th>
                 <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Protocolo</th>
                 <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Portas</th>
@@ -468,6 +468,7 @@ const Flowspec = () => {
                 <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Expira em</th>
                 <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Operador</th>
                 <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Criado</th>
+                <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Tipo</th>
                 {isAdmin && <th className="px-4 py-3 text-[10px] font-bold text-text-secondary uppercase tracking-wider">Ações</th>}
               </tr>
             </thead>
@@ -475,35 +476,37 @@ const Flowspec = () => {
               {isLoading ? (
                 Array.from({ length: 5 }).map((_, i) => (
                   <tr key={i} className="animate-pulse">
-                    <td colSpan={11} className="px-4 py-4"><div className="h-4 bg-border/50 rounded w-full" /></td>
+                    <td colSpan={12} className="px-4 py-4"><div className="h-4 bg-border/50 rounded w-full" /></td>
                   </tr>
                 ))
               ) : rules.length === 0 ? (
                 <tr>
-                  <td colSpan={11} className="px-4 py-8 text-center text-text-secondary italic">Nenhuma regra ativa encontrada</td>
+                  <td colSpan={12} className="px-4 py-8 text-center text-text-secondary italic">Nenhuma regra ativa encontrada</td>
                 </tr>
               ) : (
                 rules.map((rule: any) => (
-                  <tr key={rule.id} className="hover:bg-bg-primary/30 transition-colors">
+                  <tr 
+                    key={rule.id} 
+                    onClick={() => setSelectedRule(rule)}
+                    className="hover:bg-bg-primary/50 transition-colors cursor-pointer group"
+                  >
                     <td className="px-4 py-3 font-mono text-xs text-text-secondary">{rule.id}</td>
                     <td className="px-4 py-3 font-mono text-sm text-text-primary font-bold">{rule.dst_prefix}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-text-secondary">{rule.src_prefix || 'any'}</td>
-                    <td className="px-4 py-3 font-bold text-xs uppercase text-text-primary">{rule.protocol || 'any'}</td>
-                    <td className="px-4 py-3 font-mono text-xs text-text-secondary">
+                    <td className="px-4 py-3 font-mono text-xs text-text-secondary text-center">{rule.src_prefix || 'any'}</td>
+                    <td className="px-4 py-3 font-bold text-xs uppercase text-text-primary text-center">{rule.protocol || 'any'}</td>
+                    <td className="px-4 py-3 font-mono text-xs text-text-secondary text-center">
                       {rule.dst_port ? `Dst: ${rule.dst_port}` : ''}
                       {rule.dst_port && rule.src_port ? ' | ' : ''}
                       {rule.src_port ? `Src: ${rule.src_port}` : ''}
                       {!rule.dst_port && !rule.src_port ? 'any' : ''}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-center">
                       {getActionBadge(rule.action, rule.rate_limit_kbps)}
                     </td>
-                    <td className="px-4 py-3">
-                      <span className="px-2 py-0.5 rounded text-[10px] font-bold uppercase border bg-success/10 text-success border-success/20">
-                        Anunciado
-                      </span>
+                    <td className="px-4 py-3 text-center">
+                      {getBgpStatusBadge('announced')}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-center">
                       {rule.expires_at ? (
                         <span className={clsx("font-mono text-xs font-bold", getCountdownColor(rule.expires_at))}>
                           {getCountdown(rule.expires_at)}
@@ -514,17 +517,23 @@ const Flowspec = () => {
                         </span>
                       )}
                     </td>
-                    <td className="px-4 py-3 text-xs text-text-primary">{rule.created_by || 'system'}</td>
-                    <td className="px-4 py-3">
+                    <td className="px-4 py-3 text-xs text-text-primary text-center">{rule.created_by || 'system'}</td>
+                    <td className="px-4 py-3 text-center">
                       <div className="flex flex-col">
                         <span className="text-xs text-text-primary">{rule.created_at?.split(' ')[0]}</span>
                         <span className="text-[10px] text-text-secondary">{rule.created_at?.split(' ')[1]}</span>
                       </div>
                     </td>
+                    <td className="px-4 py-3 text-center">
+                      {getTipoBadge(rule.created_by)}
+                    </td>
                     {isAdmin && (
-                      <td className="px-4 py-3">
+                      <td className="px-4 py-3 text-center">
                         <button
-                          onClick={() => handleDelete(rule.id)}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setRuleToDelete(rule);
+                          }}
                           className="p-1.5 text-danger hover:bg-danger/10 rounded transition-colors"
                           title="Remover regra"
                         >
@@ -541,11 +550,192 @@ const Flowspec = () => {
       </div>
     </div>
 
-      <FlowSpecModal
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        onSuccess={() => queryClient.invalidateQueries({ queryKey: ['flowspec-rules'] })}
-      />
+    {/* Modal de Detalhes da Regra */}
+    <Sheet open={!!selectedRule} onOpenChange={(open) => !open && setSelectedRule(null)}>
+      <SheetContent className="bg-bg-secondary border-border sm:max-w-md overflow-y-auto">
+        <SheetHeader className="pb-6 border-b border-border">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-lg text-primary">
+              <Shield size={24} />
+            </div>
+            <div>
+              <SheetTitle className="text-xl font-bold text-text-primary text-left">Detalhes da Regra</SheetTitle>
+              <p className="text-xs text-text-secondary text-left">ID #{selectedRule?.id}</p>
+            </div>
+          </div>
+        </SheetHeader>
+
+        {selectedRule && (
+          <div className="py-6 space-y-8 animate-in fade-in slide-in-from-right-4 duration-300">
+            {/* Status Section */}
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">BGP Status</span>
+                <div>{getBgpStatusBadge('announced')}</div>
+              </div>
+              <div className="space-y-1.5">
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest">Tipo</span>
+                <div>{getTipoBadge(selectedRule.created_by)}</div>
+              </div>
+            </div>
+
+            <Separator className="bg-border/50" />
+
+            {/* Target Section */}
+            <div className="space-y-4">
+              <h4 className="text-xs font-bold text-text-primary flex items-center gap-2">
+                <Info size={14} className="text-primary" />
+                Definição do Alvo
+              </h4>
+              <div className="grid grid-cols-1 gap-4 bg-bg-primary/50 p-4 rounded-xl border border-border">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-text-secondary">Prefixo Destino</span>
+                  <span className="font-mono text-sm text-text-primary font-bold">{selectedRule.dst_prefix}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-text-secondary">Prefixo Origem</span>
+                  <span className="font-mono text-sm text-text-primary">{selectedRule.src_prefix || 'any'}</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-text-secondary">Protocolo</span>
+                  <span className="text-sm text-text-primary font-bold uppercase">{selectedRule.protocol || 'any'}</span>
+                </div>
+              </div>
+            </div>
+
+            {/* Ports Section */}
+            <div className="space-y-4">
+              <h4 className="text-xs font-bold text-text-primary flex items-center gap-2">
+                <ExternalLink size={14} className="text-primary" />
+                Portas
+              </h4>
+              <div className="grid grid-cols-2 gap-4 bg-bg-primary/50 p-4 rounded-xl border border-border">
+                <div className="space-y-1">
+                  <span className="text-[10px] text-text-secondary uppercase">Destino</span>
+                  <div className="font-mono text-sm text-text-primary font-bold">{selectedRule.dst_port || 'any'}</div>
+                </div>
+                <div className="space-y-1">
+                  <span className="text-[10px] text-text-secondary uppercase">Origem</span>
+                  <div className="font-mono text-sm text-text-primary font-bold">{selectedRule.src_port || 'any'}</div>
+                </div>
+              </div>
+            </div>
+
+            {/* Action Section */}
+            <div className="space-y-4">
+              <h4 className="text-xs font-bold text-text-primary flex items-center gap-2">
+                <Zap size={14} className="text-warning" />
+                Ação & Mitigação
+              </h4>
+              <div className="bg-bg-primary/50 p-4 rounded-xl border border-border space-y-4">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-text-secondary">Ação</span>
+                  {getActionBadge(selectedRule.action, selectedRule.rate_limit_kbps)}
+                </div>
+                {selectedRule.action === 'rate-limit' && (
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs text-text-secondary">Limite de Taxa</span>
+                    <span className="font-mono text-sm text-[#f59e0b] font-bold">
+                      {selectedRule.rate_limit_kbps / 1000} Mbps
+                    </span>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Meta Section */}
+            <div className="space-y-4">
+              <h4 className="text-xs font-bold text-text-primary flex items-center gap-2">
+                <Clock size={14} className="text-primary" />
+                Histórico & Expiração
+              </h4>
+              <div className="bg-bg-primary/50 p-4 rounded-xl border border-border space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="p-1.5 bg-bg-secondary rounded border border-border">
+                    <User size={14} className="text-text-secondary" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-text-secondary uppercase font-bold">Criado por</p>
+                    <p className="text-xs text-text-primary font-medium">{selectedRule.created_by || 'system'}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="p-1.5 bg-bg-secondary rounded border border-border">
+                    <Calendar size={14} className="text-text-secondary" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-text-secondary uppercase font-bold">Data de Criação</p>
+                    <p className="text-xs text-text-primary font-medium">{selectedRule.created_at}</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-3">
+                  <div className="p-1.5 bg-bg-secondary rounded border border-border">
+                    <Clock size={14} className="text-text-secondary" />
+                  </div>
+                  <div>
+                    <p className="text-[10px] text-text-secondary uppercase font-bold">Expiração</p>
+                    {selectedRule.expires_at ? (
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs text-text-primary font-medium">{selectedRule.expires_at}</span>
+                        <span className={clsx("text-[10px] font-bold", getCountdownColor(selectedRule.expires_at))}>
+                          ({getCountdown(selectedRule.expires_at)})
+                        </span>
+                      </div>
+                    ) : (
+                      <span className="text-xs text-text-primary font-medium">Permanente</span>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {isAdmin && (
+              <div className="pt-4">
+                <button
+                  onClick={() => {
+                    setRuleToDelete(selectedRule);
+                    setSelectedRule(null);
+                  }}
+                  className="w-full py-3 bg-danger/10 hover:bg-danger text-danger hover:text-white border border-danger/20 rounded-xl text-sm font-bold transition-all flex items-center justify-center gap-2"
+                >
+                  <Trash2 size={16} />
+                  Remover Regra FlowSpec
+                </button>
+              </div>
+            )}
+          </div>
+        )}
+      </SheetContent>
+    </Sheet>
+
+    {/* Alerta de Confirmação de Deleção */}
+    <AlertDialog open={!!ruleToDelete} onOpenChange={(open) => !open && setRuleToDelete(null)}>
+      <AlertDialogContent className="bg-bg-secondary border-border">
+        <AlertDialogHeader>
+          <AlertDialogTitle className="text-text-primary">Confirmar Remoção</AlertDialogTitle>
+          <AlertDialogDescription className="text-text-secondary">
+            Esta ação irá remover permanentemente a regra FlowSpec para o prefixo <span className="font-bold text-text-primary">{ruleToDelete?.dst_prefix}</span>. 
+            O anúncio BGP será retirado imediatamente.
+          </AlertDialogDescription>
+        </AlertDialogHeader>
+        <AlertDialogFooter>
+          <AlertDialogCancel className="bg-bg-primary text-text-primary border-border hover:bg-bg-primary/80">Cancelar</AlertDialogCancel>
+          <AlertDialogAction 
+            onClick={() => handleDelete(ruleToDelete.id)}
+            className="bg-danger hover:bg-danger/90 text-white"
+            disabled={isDeleting}
+          >
+            {isDeleting ? 'Removendo...' : 'Sim, remover regra'}
+          </AlertDialogAction>
+        </AlertDialogFooter>
+      </AlertDialogContent>
+    </AlertDialog>
+
+    <FlowSpecModal
+      isOpen={isModalOpen}
+      onClose={() => setIsModalOpen(false)}
+      onSuccess={() => queryClient.invalidateQueries({ queryKey: ['flowspec-rules'] })}
+    />
     </div>
   );
 };
