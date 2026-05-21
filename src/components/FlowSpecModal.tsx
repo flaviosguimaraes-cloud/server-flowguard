@@ -43,12 +43,14 @@ export default function FlowSpecModal({ isOpen, onClose, onSuccess }: FlowSpecMo
     };
 
     try {
-      await api.post('/api/mitigation/flowspec', payload);
-      toast.success('Regra FlowSpec criada com sucesso');
+      const response = await api.post('/api/mitigation/flowspec', payload);
+      const { id } = response.data || {};
+      toast.success(`Regra #${id || ''} criada com sucesso`);
       onSuccess();
       onClose();
     } catch (error: any) {
-      toast.error(error.response?.data?.detail || 'Erro ao criar regra');
+      const errorMsg = error.response?.data?.detail || error.message || 'Erro ao criar regra';
+      toast.error(typeof errorMsg === 'object' ? JSON.stringify(errorMsg) : String(errorMsg));
     } finally {
       setLoading(false);
     }
