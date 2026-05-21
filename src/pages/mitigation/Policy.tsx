@@ -237,6 +237,22 @@ export default function Policy() {
     );
   };
 
+  const handleSelectCard = (cardId: number) => {
+    if (cardId === 1) {
+      setMode('blackhole');
+      setAutoConfig(prev => ({ ...prev, operation_mode: 'disabled' }));
+    } else if (cardId === 2) {
+      setMode('blackhole');
+      setAutoConfig(prev => ({ ...prev, operation_mode: 'flowspec_only' }));
+    } else if (cardId === 3) {
+      setMode('blackhole');
+      setAutoConfig(prev => ({ ...prev, operation_mode: 'blackhole_flowspec' }));
+    } else if (cardId === 4) {
+      setMode('external');
+      setAutoConfig(prev => ({ ...prev, operation_mode: 'disabled' }));
+    }
+  };
+
   const ThresholdCard = ({ id, label, banKey, unit, placeholder, description, disabled }: any) => {
     const enabled = !!thresholds[banKey];
     const isCardDisabled = disabled || !isAdmin;
