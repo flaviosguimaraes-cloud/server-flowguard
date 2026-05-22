@@ -315,22 +315,22 @@ function ThreatTable({
                 key={t.id} 
                 className={clsx(
                   "cursor-pointer hover:bg-bg-primary transition-colors group",
-                  (t.fator_anomalia || 0) >= 5 ? "border-l-4 border-l-red-500" : 
-                  (t.fator_anomalia || 0) >= 3 ? "border-l-4 border-l-yellow-500" : "",
+                  (Number(t.fator_anomalia) || 0) >= 5 ? "border-l-4 border-l-red-500" : 
+                  (Number(t.fator_anomalia) || 0) >= 3 ? "border-l-4 border-l-yellow-500" : "",
                   t.status === 'ignored' && "opacity-50"
                 )}
                 onClick={() => onSelect(t)}
               >
                 <TableCell className="font-mono font-bold text-text-primary">{t.ip || '—'}</TableCell>
-                <TableCell className="font-medium">{formatMbps(t.mbps_atual ?? t.mbps)}</TableCell>
-                <TableCell>{getFatorBadge(t.fator_anomalia ?? t.fator ?? t.factor)}</TableCell>
+                <TableCell className="font-medium">{formatMbps(t.mbps_atual)}</TableCell>
+                <TableCell>{getFatorBadge(t.fator_anomalia)}</TableCell>
 
                 <TableCell>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span className="text-text-secondary border-b border-dotted border-border cursor-help">
-                          {formatMbps(t.p95_mbps ?? t.p95)}
+                          {formatMbps(t.p95_mbps)}
                         </span>
 
                       </TooltipTrigger>
