@@ -317,8 +317,9 @@ function ThreatTable({
                 onClick={() => onSelect(t)}
               >
                 <TableCell className="font-mono font-bold text-text-primary">{t.ip || '—'}</TableCell>
-                <TableCell className="font-medium">{formatMbps(t.mbps_atual)}</TableCell>
-                <TableCell>{getFatorBadge(t.fator_anomalia)}</TableCell>
+                <TableCell className="font-medium">{formatMbps(t.mbps_atual ?? t.mbps)}</TableCell>
+                <TableCell>{getFatorBadge(t.fator_anomalia ?? t.fator ?? t.factor)}</TableCell>
+
                 <TableCell>
                   <TooltipProvider>
                     <Tooltip>
