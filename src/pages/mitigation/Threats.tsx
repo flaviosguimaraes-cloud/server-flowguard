@@ -390,11 +390,12 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <p className="text-[10px] uppercase font-semibold text-text-secondary">Volume Atual</p>
-                  <p className="text-lg font-bold text-text-primary">{formatMbps(threat.mbps_atual)}</p>
+                  <p className="text-lg font-bold text-text-primary">{formatMbps(threat.mbps_atual ?? threat.mbps)}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] uppercase font-semibold text-text-secondary">Normal (P95)</p>
-                  <p className="text-lg font-bold text-text-primary">{formatMbps(threat.p95_mbps)}</p>
+                  <p className="text-lg font-bold text-text-primary">{formatMbps(threat.p95_mbps ?? threat.p95)}</p>
+
                 </div>
               </div>
               <div className="space-y-2">
