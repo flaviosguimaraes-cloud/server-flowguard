@@ -36,29 +36,31 @@ export default function Threats() {
     refetchInterval: 30000 
   });
   
-  const { data: threatsData, isLoading: threatsLoading, refetch } = useQuery({
-    queryKey: ['threats-active'],
-    queryFn: () => api.get('/api/threats?active_only=true').then(r => r.data),
+  const getItems = (data: any) => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    return data.items || data.threats || data.data || [];
+  };
+
+  const { data: downloadData, isLoading: downloadLoading, refetch: refetchDownload } = useQuery({
+    queryKey: ['threats', 'ANOMALIA_DOWNLOAD'],
+    queryFn: () => api.get('/api/threats?active_only=true&attack_type=ANOMALIA_DOWNLOAD').then(r => r.data),
     refetchInterval: 30000,
   });
 
-  const threats = useMemo(() => {
-    if (!threatsData) return [];
-    const items = Array.isArray(threatsData) ? threatsData : (threatsData.items || []);
-    return items.filter((t: any) => 
-      t.attack_type === 'ANOMALIA_DOWNLOAD' || t.attack_type === 'ANOMALIA_UPLOAD'
-    );
-  }, [threatsData]);
+  const { data: uploadData, isLoading: uploadLoading, refetch: refetchUpload } = useQuery({
+    queryKey: ['threats', 'ANOMALIA_UPLOAD'],
+    queryFn: () => api.get('/api/threats?active_only=true&attack_type=ANOMALIA_UPLOAD').then(r => r.data),
+    refetchInterval: 30000,
+  });
 
   const downloadThreats = useMemo(() => 
-    threats.filter((t: any) => t.attack_type === 'ANOMALIA_DOWNLOAD')
-      .sort((a: any, b: any) => b.fator_anomalia - a.fator_anomalia), 
-  [threats]);
+    getItems(downloadData).sort((a: any, b: any) => b.fator_anomalia - a.fator_anomalia), 
+  [downloadData]);
 
   const uploadThreats = useMemo(() => 
-    threats.filter((t: any) => t.attack_type === 'ANOMALIA_UPLOAD')
-      .sort((a: any, b: any) => b.fator_anomalia - a.fator_anomalia), 
-  [threats]);
+    getItems(uploadData).sort((a: any, b: any) => b.fator_anomalia - a.fator_anomalia), 
+  [uploadData]);
 
   // Define a aba ativa inicial baseada na contagem
   useEffect(() => {
