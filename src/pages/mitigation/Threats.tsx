@@ -398,20 +398,29 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
               <div className="space-y-2">
                 <div className="flex justify-between items-end">
                   <p className="text-[10px] uppercase font-semibold text-text-secondary">Fator de Anomalia</p>
-                  <span className="text-xs font-bold text-text-primary">{threat.fator_anomalia?.toFixed(1) ?? '—'}x acima</span>
+                  <span className="text-xs font-bold text-text-primary">
+                    {(() => {
+                      const f = typeof threat.fator_anomalia === 'string' ? parseFloat(threat.fator_anomalia) : threat.fator_anomalia;
+                      return (f !== null && f !== undefined && !isNaN(f)) ? `${f.toFixed(1)}x acima` : '—';
+                    })()}
+                  </span>
                 </div>
                 <div className="h-2 bg-bg-secondary rounded-full overflow-hidden border border-border">
                   <div 
                     className={clsx(
                       "h-full transition-all duration-500",
-                      (threat.fator_anomalia || 0) >= 5 ? "bg-red-500" : "bg-blue-500"
+                      (Number(threat.fator_anomalia) || 0) >= 5 ? "bg-red-500" : "bg-blue-500"
                     )}
-                    style={{ width: `${Math.min(((threat.fator_anomalia || 0) / 10) * 100, 100)}%` }}
+                    style={{ width: `${Math.min(((Number(threat.fator_anomalia) || 0) / 10) * 100, 100)}%` }}
                   />
                 </div>
                 <p className="text-[10px] text-text-secondary leading-relaxed italic">
-                  * Este IP está recebendo {threat.fator_anomalia?.toFixed(1) ?? '—'}x mais tráfego que o normal para este horário.
+                  * Este IP está recebendo {(() => {
+                    const f = typeof threat.fator_anomalia === 'string' ? parseFloat(threat.fator_anomalia) : threat.fator_anomalia;
+                    return (f !== null && f !== undefined && !isNaN(f)) ? f.toFixed(1) : '—';
+                  })()}x mais tráfego que o normal para este horário.
                 </p>
+
               </div>
             </div>
           </section>
