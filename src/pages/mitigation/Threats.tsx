@@ -311,6 +311,7 @@ function ThreatTable({
   getFatorBadge, 
   getSeverityBadge, 
   getStatusBadge, 
+  getAttackTypeBadge,
   timeAgo 
 }: { 
   threats: any[], 
@@ -320,6 +321,7 @@ function ThreatTable({
   getFatorBadge: (v: any) => any,
   getSeverityBadge: (s: string) => any,
   getStatusBadge: (s: string) => any,
+  getAttackTypeBadge: (t: string) => any,
   timeAgo: (d: string) => string
 }) {
 
@@ -329,6 +331,7 @@ function ThreatTable({
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead className="w-[180px]">{type === 'download' ? 'IP Vítima' : 'IP Cliente'}</TableHead>
+            <TableHead>Tipo</TableHead>
             <TableHead>Volume Atual</TableHead>
             <TableHead>Fator</TableHead>
             <TableHead>P95 Normal</TableHead>
@@ -341,7 +344,7 @@ function ThreatTable({
         <TableBody>
           {threats.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center py-10 text-text-secondary italic">
+              <TableCell colSpan={9} className="text-center py-10 text-text-secondary italic">
                 Nenhuma anomalia encontrada
               </TableCell>
             </TableRow>
@@ -358,6 +361,7 @@ function ThreatTable({
                 onClick={() => onSelect(t)}
               >
                 <TableCell className="font-mono font-bold text-text-primary">{t.ip || '—'}</TableCell>
+                <TableCell>{getAttackTypeBadge(t.attack_type)}</TableCell>
                 <TableCell className="font-medium">{formatMbps(t.mbps_atual)}</TableCell>
                 <TableCell>{getFatorBadge(t.fator_anomalia)}</TableCell>
 
