@@ -42,16 +42,26 @@ export default function Threats() {
     return data.items || data.threats || data.data || data.results || data.records || [];
   };
 
-  const { data: downloadData, isLoading: downloadLoading, refetch: refetchDownload } = useQuery({
-    queryKey: ['threats', 'ANOMALIA_DOWNLOAD'],
-    queryFn: () => api.get('/api/threats/?active_only=true&attack_type=ANOMALIA_DOWNLOAD').then(r => r.data),
-    refetchInterval: 30000,
-  });
+  const isDownloadThreat = (type: string) => {
+    const t = type?.toUpperCase() || '';
+    return t.startsWith('ANOMALIA_DOWNLOAD') || 
+           t.startsWith('CONNECTION_FLOOD') || 
+           t.startsWith('SYN_FLOOD') || 
+           t.startsWith('LOW_PACKET_FLOOD') || 
+           t.startsWith('UDP_AMPLIFICATION') || 
+           t.startsWith('SLOWLORIS') || 
+           t.startsWith('PORT_SCAN');
+  };
 
-  const { data: uploadData, isLoading: uploadLoading, refetch: refetchUpload } = useQuery({
-    queryKey: ['threats', 'ANOMALIA_UPLOAD'],
-    queryFn: () => api.get('/api/threats/?active_only=true&attack_type=ANOMALIA_UPLOAD').then(r => r.data),
+  const isUploadThreat = (type: string) => {
+    const t = type?.toUpperCase() || '';
+    return t.startsWith('ANOMALIA_UPLOAD') || 
+           t.startsWith('OUTGOING_SCAN');
+  };
 
+  const { data: threatsData, isLoading: threatsLoading, refetch: refetchThreats } = useQuery({
+    queryKey: ['threats', 'all'],
+    queryFn: () => api.get('/api/threats/?active_only=true').then(r => r.data),
     refetchInterval: 30000,
   });
 
@@ -61,14 +71,23 @@ export default function Threats() {
     return fb - fa;
   };
 
+  const allThreats = useMemo(() => getItems(threatsData), [threatsData]);
 
   const downloadThreats = useMemo(() => 
-    getItems(downloadData).sort(sortByFator), 
-  [downloadData]);
+    allThreats.filter((t: any) => isDownloadThreat(t.attack_type)).sort((a: any, b: any) => {
+      const fa = Number(a.fator_anomalia) || 0;
+      const fb = Number(b.fator_anomalia) || 0;
+      return fb - fa;
+    }), 
+  [allThreats]);
 
   const uploadThreats = useMemo(() => 
-    getItems(uploadData).sort(sortByFator), 
-  [uploadData]);
+    allThreats.filter((t: any) => isUploadThreat(t.attack_type)).sort((a: any, b: any) => {
+      const fa = Number(a.fator_anomalia) || 0;
+      const fb = Number(b.fator_anomalia) || 0;
+      return fb - fa;
+    }), 
+  [allThreats]);
 
   // Define a aba ativa inicial baseada na contagem apenas no primeiro carregamento
   useEffect(() => {
@@ -121,6 +140,20 @@ export default function Threats() {
     return <Badge variant="outline" className={clsx("font-mono", color)}>{num.toFixed(1)}x</Badge>;
   };
 
+  const getAttackTypeBadge = (type: string) => {
+    const t = type?.toUpperCase() || '';
+    let color = 'bg-gray-500/10 text-gray-500 border-gray-500/20';
+    
+    if (t.startsWith('ANOMALIA_DOWNLOAD')) color = 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+    else if (t.startsWith('ANOMALIA_UPLOAD')) color = 'bg-orange-500/10 text-orange-500 border-orange-500/20';
+    else if (t.startsWith('PORT_SCAN')) color = 'bg-purple-500/10 text-purple-500 border-purple-500/20';
+    else if (t.startsWith('SYN_FLOOD') || t.startsWith('CONNECTION_FLOOD') || t.startsWith('LOW_PACKET_FLOOD')) color = 'bg-red-500/10 text-red-500 border-red-500/20';
+    else if (t.startsWith('UDP_AMPLIFICATION')) color = 'bg-orange-500/10 text-orange-500 border-orange-500/20';
+    else if (t.startsWith('SLOWLORIS')) color = 'bg-yellow-500/10 text-yellow-600 border-yellow-600/20';
+    else if (t.startsWith('OUTGOING_SCAN')) color = 'bg-red-900/10 text-red-800 border-red-800/20';
+    
+    return <Badge variant="outline" className={clsx("text-[10px] font-bold", color)}>{t}</Badge>;
+  };
 
   const getSeverityBadge = (sev: string) => {
     const colors: any = {
@@ -153,8 +186,8 @@ export default function Threats() {
           <h1 className="text-2xl font-bold tracking-tight">Ameaças</h1>
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-bold uppercase text-[10px]">Detector v2</Badge>
         </div>
-        <Button variant="outline" size="sm" onClick={() => { refetchDownload(); refetchUpload(); queryClient.invalidateQueries({ queryKey: ['threats-summary'] }); }}>
-          <RefreshCw size={16} className={clsx("mr-2", (downloadLoading || uploadLoading) && "animate-spin")} /> Atualizar
+        <Button variant="outline" size="sm" onClick={() => { refetchThreats(); queryClient.invalidateQueries({ queryKey: ['threats-summary'] }); }}>
+          <RefreshCw size={16} className={clsx("mr-2", threatsLoading && "animate-spin")} /> Atualizar
         </Button>
       </div>
 
@@ -164,7 +197,7 @@ export default function Threats() {
             <div className="p-3 bg-gray-500/10 text-gray-500 rounded-xl"><Activity size={24} /></div>
             <div>
               <p className="text-[10px] font-bold uppercase text-text-secondary tracking-wider">Anomalias Ativas</p>
-              <p className="text-2xl font-bold text-text-primary">{summary?.active_total || 0}</p>
+              <p className="text-2xl font-bold text-text-primary">{allThreats.length}</p>
             </div>
           </CardContent>
         </Card>
@@ -173,7 +206,9 @@ export default function Threats() {
             <div className="p-3 bg-red-500/10 text-red-500 rounded-xl"><Flame size={24} /></div>
             <div>
               <p className="text-[10px] font-bold uppercase text-red-500 tracking-wider">Alta / Crítica</p>
-              <p className="text-2xl font-bold text-red-500">{(summary?.high_count || 0) + (summary?.critical_count || 0)}</p>
+              <p className="text-2xl font-bold text-red-500">
+                {allThreats.filter((t: any) => t.severity === 'high' || t.severity === 'critical').length}
+              </p>
             </div>
           </CardContent>
         </Card>
@@ -232,6 +267,7 @@ export default function Threats() {
             getFatorBadge={getFatorBadge}
             getSeverityBadge={getSeverityBadge}
             getStatusBadge={getStatusBadge}
+            getAttackTypeBadge={getAttackTypeBadge}
             timeAgo={timeAgo}
           />
         </TabsContent>
@@ -249,6 +285,7 @@ export default function Threats() {
             getFatorBadge={getFatorBadge}
             getSeverityBadge={getSeverityBadge}
             getStatusBadge={getStatusBadge}
+            getAttackTypeBadge={getAttackTypeBadge}
             timeAgo={timeAgo}
           />
 
@@ -262,6 +299,7 @@ export default function Threats() {
         formatMbps={formatMbps}
         getSeverityBadge={getSeverityBadge}
         getFatorBadge={getFatorBadge}
+        getAttackTypeBadge={getAttackTypeBadge}
       />
     </div>
   );
@@ -275,6 +313,7 @@ function ThreatTable({
   getFatorBadge, 
   getSeverityBadge, 
   getStatusBadge, 
+  getAttackTypeBadge,
   timeAgo 
 }: { 
   threats: any[], 
@@ -284,6 +323,7 @@ function ThreatTable({
   getFatorBadge: (v: any) => any,
   getSeverityBadge: (s: string) => any,
   getStatusBadge: (s: string) => any,
+  getAttackTypeBadge: (t: string) => any,
   timeAgo: (d: string) => string
 }) {
 
@@ -293,6 +333,7 @@ function ThreatTable({
         <TableHeader>
           <TableRow className="hover:bg-transparent">
             <TableHead className="w-[180px]">{type === 'download' ? 'IP Vítima' : 'IP Cliente'}</TableHead>
+            <TableHead>Tipo</TableHead>
             <TableHead>Volume Atual</TableHead>
             <TableHead>Fator</TableHead>
             <TableHead>P95 Normal</TableHead>
@@ -305,7 +346,7 @@ function ThreatTable({
         <TableBody>
           {threats.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={8} className="text-center py-10 text-text-secondary italic">
+              <TableCell colSpan={9} className="text-center py-10 text-text-secondary italic">
                 Nenhuma anomalia encontrada
               </TableCell>
             </TableRow>
@@ -322,6 +363,7 @@ function ThreatTable({
                 onClick={() => onSelect(t)}
               >
                 <TableCell className="font-mono font-bold text-text-primary">{t.ip || '—'}</TableCell>
+                <TableCell>{getAttackTypeBadge(t.attack_type)}</TableCell>
                 <TableCell className="font-medium">{formatMbps(t.mbps_atual)}</TableCell>
                 <TableCell>{getFatorBadge(t.fator_anomalia)}</TableCell>
 
@@ -354,18 +396,30 @@ function ThreatTable({
 }
 
 
-function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverityBadge, getFatorBadge }: { 
+function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverityBadge, getFatorBadge, getAttackTypeBadge }: { 
   threat: any, 
   onClose: () => void, 
   onStatusChange: (id: number, status: string) => void,
   formatMbps: (v: any) => string,
   getSeverityBadge: (s: string) => any,
-  getFatorBadge: (f: any) => any
+  getFatorBadge: (f: any) => any,
+  getAttackTypeBadge: (t: string) => any
 }) {
 
   if (!threat) return null;
 
-  const isDownload = threat.attack_type === 'ANOMALIA_DOWNLOAD';
+  const isDownloadThreat = (type: string) => {
+    const t = type?.toUpperCase() || '';
+    return t.startsWith('ANOMALIA_DOWNLOAD') || 
+           t.startsWith('CONNECTION_FLOOD') || 
+           t.startsWith('SYN_FLOOD') || 
+           t.startsWith('LOW_PACKET_FLOOD') || 
+           t.startsWith('UDP_AMPLIFICATION') || 
+           t.startsWith('SLOWLORIS') || 
+           t.startsWith('PORT_SCAN');
+  };
+
+  const isDownload = isDownloadThreat(threat.attack_type);
   const evidence = Array.isArray(threat.evidence) ? threat.evidence : [];
 
   return (
@@ -373,12 +427,15 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
       <SheetContent className="sm:max-w-lg overflow-y-auto">
         <SheetHeader className="space-y-4">
           <div className="flex items-center justify-between mt-2">
-            <Badge className={clsx(
-              "font-black uppercase tracking-widest text-[10px] px-2 py-0.5",
-              isDownload ? "bg-blue-500 text-white" : "bg-orange-500 text-white"
-            )}>
-              {isDownload ? 'Download' : 'Upload'}
-            </Badge>
+            <div className="flex gap-2">
+              <Badge className={clsx(
+                "font-black uppercase tracking-widest text-[10px] px-2 py-0.5",
+                isDownload ? "bg-blue-500 text-white" : "bg-orange-500 text-white"
+              )}>
+                {isDownload ? 'Download' : 'Upload'}
+              </Badge>
+              {getAttackTypeBadge(threat.attack_type)}
+            </div>
             {getSeverityBadge(threat.severity)}
           </div>
           <SheetTitle className="text-2xl font-mono">{threat.ip || '—'}</SheetTitle>
