@@ -64,22 +64,22 @@ export default function Threats() {
 
   // Define a aba ativa inicial baseada na contagem
   useEffect(() => {
-    if (!activeTab && threats.length > 0) {
+    if (!activeTab && (downloadThreats.length > 0 || uploadThreats.length > 0)) {
       if (uploadThreats.length > downloadThreats.length) {
         setActiveTab('upload');
       } else {
         setActiveTab('download');
       }
-    } else if (!activeTab && !threatsLoading && threatsData) {
+    } else if (!activeTab && !downloadLoading && !uploadLoading && (downloadData || uploadData)) {
       setActiveTab('download');
     }
-  }, [threats.length, downloadThreats.length, uploadThreats.length, activeTab, threatsLoading, threatsData]);
+  }, [downloadThreats.length, uploadThreats.length, activeTab, downloadLoading, uploadLoading, downloadData, uploadData]);
 
   const updateStatus = useMutation({
     mutationFn: (data: { id: number, status: string }) => api.patch(`/api/threats/${data.id}/status`, { status: data.status }),
     onSuccess: () => { 
       toast.success('Status atualizado'); 
-      queryClient.invalidateQueries({ queryKey: ['threats-active'] }); 
+      queryClient.invalidateQueries({ queryKey: ['threats'] }); 
       queryClient.invalidateQueries({ queryKey: ['threats-summary'] });
       setSelectedThreat(null); 
     }
