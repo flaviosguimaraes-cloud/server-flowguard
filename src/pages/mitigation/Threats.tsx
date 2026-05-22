@@ -17,6 +17,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogD
 import { Switch } from "../../components/ui/switch";
 import { Label } from "../../components/ui/label";
 import { Slider } from "../../components/ui/slider";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../components/ui/tooltip";
+import { LayoutGrid } from 'lucide-react';
+
 
 export default function Threats() {
   const { t } = useTranslation();
