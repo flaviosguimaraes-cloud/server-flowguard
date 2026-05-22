@@ -28,7 +28,7 @@ export default function Threats() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedThreat, setSelectedThreat] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<string>('download');
+  const [activeTab, setActiveTab] = useState<string>('');
 
   const { data: summary } = useQuery({ 
     queryKey: ['threats-summary'], 
