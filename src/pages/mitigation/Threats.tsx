@@ -68,7 +68,7 @@ export default function Threats() {
   const sortByFator = (a: any, b: any) => {
     const fa = Number(a.fator_anomalia) || 0;
     const fb = Number(b.fator_anomalia) || 0;
-    return fb - fb; // Corrected sort: fb - fa
+    return fb - fa;
   };
 
   const allThreats = useMemo(() => getItems(threatsData), [threatsData]);
