@@ -417,14 +417,15 @@ function ThreatTable({
 }
 
 
-function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverityBadge, getFatorBadge, getAttackTypeBadge }: { 
+function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverityBadge, getFatorBadge, getAttackTypeBadge, isBehavioral }: { 
   threat: any, 
   onClose: () => void, 
   onStatusChange: (id: number, status: string) => void,
   formatMbps: (v: any) => string,
   getSeverityBadge: (s: string) => any,
-  getFatorBadge: (f: any) => any,
-  getAttackTypeBadge: (t: string) => any
+  getFatorBadge: (f: any, t: string) => any,
+  getAttackTypeBadge: (t: string) => any,
+  isBehavioral: (t: string) => boolean
 }) {
 
   if (!threat) return null;
@@ -441,6 +442,7 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
   };
 
   const isDownload = isDownloadThreat(threat.attack_type);
+  const isBeh = isBehavioral(threat.attack_type);
   const evidence = Array.isArray(threat.evidence) ? threat.evidence : [];
 
   return (
