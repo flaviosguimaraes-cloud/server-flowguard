@@ -10,13 +10,13 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Input } from '../../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Skeleton } from '../../components/Skeleton';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '../../components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '../../components/ui/sheet';
 import { Separator } from '../../components/ui/separator';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../../components/ui/dialog';
 import { Switch } from "../../components/ui/switch";
 import { Label } from "../../components/ui/label";
-import { Progress } from "../../components/ui/progress";
+import { Slider } from "../../components/ui/slider";
 
 export default function Threats() {
   const { t } = useTranslation();
@@ -42,6 +42,9 @@ export default function Threats() {
     refetchInterval: 30000,
   });
 
+  const { data: detectorConfig } = useQuery({ queryKey: ['detector-config'], queryFn: () => api.get('/api/threats/config/detector').then(r => r.data), enabled: showConfig });
+  useEffect(() => { if (detectorConfig) setConfig(detectorConfig); }, [detectorConfig]);
+
   const updateStatus = useMutation({
     mutationFn: (data: { id: number, status: string }) => api.patch(`/api/threats/${data.id}/status`, { status: data.status }),
     onSuccess: () => { toast.success('Status atualizado'); queryClient.invalidateQueries({ queryKey: ['threats'] }); setSelectedThreat(null); }
@@ -50,6 +53,11 @@ export default function Threats() {
   const applyMitigation = useMutation({
     mutationFn: (data: any) => api.post(`/api/threats/${data.id}/apply`, data),
     onSuccess: () => { toast.success('FlowSpec aplicado com sucesso'); queryClient.invalidateQueries({ queryKey: ['threats'] }); setConfirmModal(null); setSelectedThreat(null); }
+  });
+
+  const saveConfig = useMutation({
+    mutationFn: (c: any) => api.put('/api/threats/config/detector', c),
+    onSuccess: () => { toast.success('Configuração salva'); setShowConfig(false); }
   });
 
   const getAttackTypeBadge = (type: string) => {
@@ -68,12 +76,6 @@ export default function Threats() {
     if (conf >= 0.88) return "bg-orange-500";
     if (conf >= 0.75) return "bg-amber-500";
     return "bg-gray-500";
-  };
-
-  const timeAgo = (date: string) => {
-    const diff = Date.now() - new Date(date).getTime();
-    const mins = Math.floor(diff / 60000);
-    return mins < 60 ? `há ${mins} min` : `há ${Math.floor(mins/60)} h`;
   };
 
   return (
@@ -105,7 +107,7 @@ export default function Threats() {
                 <TableCell className="font-mono font-medium">{t.ip}</TableCell>
                 <TableCell>{getAttackTypeBadge(t.attack_type)}</TableCell>
                 <TableCell className="font-mono text-xs uppercase">{t.protocol} / {t.dst_port}</TableCell>
-                <TableCell className="w-32"><div className="space-y-1"><Progress value={t.confidence * 100} className="h-1.5" indicatorClassName={getConfidenceColor(t.confidence)} /><span className="text-[10px] text-text-secondary">{(t.confidence * 100).toFixed(0)}%</span></div></TableCell>
+                <TableCell className="w-32"><div className="space-y-1"><div className="w-full bg-border rounded-full h-1.5 overflow-hidden"><div className={`h-full ${getConfidenceColor(t.confidence)}`} style={{ width: `${t.confidence * 100}%` }} /></div><span className="text-[10px] text-text-secondary">{(t.confidence * 100).toFixed(0)}%</span></div></TableCell>
                 <TableCell><Badge variant="outline" className={t.severity === 'critical' ? 'text-red-500 border-red-500/20' : t.severity === 'high' ? 'text-orange-500 border-orange-500/20' : ''}>{t.severity}</Badge></TableCell>
                 <TableCell><Badge variant="outline">{t.status}</Badge></TableCell>
                 <TableCell onClick={e => e.stopPropagation()} className="space-x-2">
@@ -126,10 +128,7 @@ export default function Threats() {
               <div className="p-4 bg-bg-primary border border-border rounded-lg"><p className="text-xs font-mono leading-relaxed text-text-primary whitespace-pre-wrap">{selectedThreat?.reasoning}</p></div>
               <div className="grid grid-cols-2 gap-2 text-xs">
                 {selectedThreat?.evidence && Object.entries(selectedThreat.evidence).map(([k, v]: any) => (
-                  <div key={k} className="p-2 bg-bg-primary/50 rounded flex justify-between">
-                    <span className="text-text-secondary">{k}</span>
-                    <span className="font-mono">{typeof v === 'number' ? v.toFixed(k.includes('ratio') ? 4 : 0) : String(v)}</span>
-                  </div>
+                  <div key={k} className="p-2 bg-bg-primary/50 rounded flex justify-between"><span className="text-text-secondary">{k}</span><span className="font-mono">{typeof v === 'number' ? v.toFixed(k.includes('ratio') ? 4 : 0) : String(v)}</span></div>
                 ))}
               </div>
             </div>
@@ -142,19 +141,31 @@ export default function Threats() {
                   <div className="flex justify-between uppercase"><span>Protocolo:</span><span className="font-mono">{selectedThreat.flowspec_suggestion.match.protocol}</span></div>
                   <div className="flex justify-between"><span>Ação:</span><span className="font-mono">Rate-limit {(selectedThreat.flowspec_suggestion.then.rate_limit_bps / 1e6).toFixed(0)} Mbps</span></div>
                 </div>
-                <div className="flex items-start gap-2 p-2 bg-amber-500/5 border border-amber-500/10 rounded text-[10px] text-amber-600 dark:text-amber-500">
-                  <AlertTriangle size={14} className="shrink-0" /> Sugestão do detector. Valide o impacto antes de aplicar.
-                </div>
               </div>
             )}
             <div className="flex flex-col gap-2 pt-4">
               {selectedThreat?.status !== 'applied' && selectedThreat?.action === 'flowspec' && <Button className="w-full bg-purple-600 hover:bg-purple-700" onClick={() => setConfirmModal(selectedThreat)}>Aplicar FlowSpec</Button>}
-              <div className="grid grid-cols-2 gap-2">
-                <Button variant="outline" onClick={() => updateStatus.mutate({ id: selectedThreat.id, status: 'acknowledged' })}>Reconhecer</Button>
-                <Button variant="outline" onClick={() => updateStatus.mutate({ id: selectedThreat.id, status: 'ignored' })}>Ignorar</Button>
-              </div>
+              <div className="grid grid-cols-2 gap-2"><Button variant="outline" onClick={() => updateStatus.mutate({ id: selectedThreat.id, status: 'acknowledged' })}>Reconhecer</Button><Button variant="outline" onClick={() => updateStatus.mutate({ id: selectedThreat.id, status: 'ignored' })}>Ignorar</Button></div>
             </div>
           </div>
+        </SheetContent>
+      </Sheet>
+
+      <Sheet open={showConfig} onOpenChange={setShowConfig}>
+        <SheetContent className="sm:max-w-md overflow-y-auto">
+          <SheetHeader><SheetTitle>Configuração do Detector</SheetTitle></SheetHeader>
+          {config && <div className="mt-6 space-y-6">
+            <div className="flex items-center justify-between"><Label>Detector ativo</Label><Switch checked={config.enabled} onCheckedChange={(e) => setConfig({...config, enabled: e})} /></div>
+            <div className="space-y-4">
+              <Label>Confiança mínima para alertar ({(config.min_conf_emit * 100).toFixed(0)}%)</Label>
+              <Slider value={[config.min_conf_emit * 100]} min={50} max={99} step={1} onValueChange={([v]) => setConfig({...config, min_conf_emit: v/100})} />
+            </div>
+            <div className="space-y-4">
+              <Label>Intervalo de execução ({config.run_interval_seconds}s)</Label>
+              <Input type="number" value={config.run_interval_seconds} onChange={e => setConfig({...config, run_interval_seconds: parseInt(e.target.value)})} />
+            </div>
+            <Button className="w-full" onClick={() => saveConfig.mutate(config)}>Salvar Configuração</Button>
+          </div>}
         </SheetContent>
       </Sheet>
 
@@ -166,7 +177,6 @@ export default function Threats() {
               <p><strong>Destino:</strong> {confirmModal?.flowspec_suggestion?.match?.destination}</p>
               <p><strong>Ação:</strong> Rate-limit {(confirmModal?.flowspec_suggestion?.then?.rate_limit_bps / 1e6).toFixed(0)} Mbps</p>
             </div>
-            <p className="text-[11px] text-text-secondary leading-relaxed">Esta ação criará uma regra FlowSpec no roteador Huawei NE-20 via ExaBGP. A regra expira automaticamente após o TTL definido.</p>
           </div>
           <DialogFooter><Button variant="outline" onClick={() => setConfirmModal(null)}>Cancelar</Button><Button className="bg-purple-600" onClick={() => applyMitigation.mutate({ id: confirmModal.id, action: 'rate-limit', rate_limit_kbps: confirmModal.flowspec_suggestion.then.rate_limit_bps/1000, ttl_minutes: 60 })}>Aplicar mitigação</Button></DialogFooter>
         </DialogContent>
