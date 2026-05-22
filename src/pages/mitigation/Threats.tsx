@@ -55,7 +55,12 @@ export default function Threats() {
     refetchInterval: 30000,
   });
 
-  const sortByFator = (a: any, b: any) => (b.fator_anomalia || 0) - (a.fator_anomalia || 0);
+  const sortByFator = (a: any, b: any) => {
+    const fa = Number(a.fator_anomalia ?? a.fator ?? a.factor) || 0;
+    const fb = Number(b.fator_anomalia ?? b.fator ?? b.factor) || 0;
+    return fb - fa;
+  };
+
 
   const downloadThreats = useMemo(() => 
     getItems(downloadData).sort(sortByFator), 
@@ -84,30 +89,38 @@ export default function Threats() {
     }
   });
 
-  const formatMbps = (mbps: number | null | undefined) => {
-    if (mbps === null || mbps === undefined) return '—';
-    if (mbps >= 1000) return `${(mbps / 1000).toFixed(1)} Gbps`;
-    return `${mbps.toFixed(1)} Mbps`;
+  const formatMbps = (value: any) => {
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    if (num === null || num === undefined || isNaN(num)) return '—';
+    if (num >= 1000) return `${(num / 1000).toFixed(1)} Gbps`;
+    return `${num.toFixed(1)} Mbps`;
   };
 
   const timeAgo = (date: string) => {
     if (!date) return '—';
-    const diff = Date.now() - new Date(date).getTime();
-    const secs = Math.floor(diff / 1000);
-    if (secs < 60) return `há ${secs}s`;
-    const mins = Math.floor(secs / 60);
-    if (mins < 60) return `há ${mins}m`;
-    const hrs = Math.floor(mins / 60);
-    return `há ${hrs}h`;
+    try {
+      const diff = Date.now() - new Date(date).getTime();
+      const secs = Math.floor(diff / 1000);
+      if (isNaN(secs)) return '—';
+      if (secs < 60) return `há ${secs}s`;
+      const mins = Math.floor(secs / 60);
+      if (mins < 60) return `há ${mins}m`;
+      const hrs = Math.floor(mins / 60);
+      return `há ${hrs}h`;
+    } catch {
+      return '—';
+    }
   };
 
-  const getFatorBadge = (fator: number | null | undefined) => {
-    if (fator === null || fator === undefined) return <Badge variant="outline">—</Badge>;
-    const color = fator >= 5 ? 'text-red-500 border-red-500/20 bg-red-500/5' : 
-                  fator >= 3 ? 'text-yellow-600 border-yellow-600/20 bg-yellow-600/5' : 
+  const getFatorBadge = (value: any) => {
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    if (num === null || num === undefined || isNaN(num)) return <Badge variant="outline">—</Badge>;
+    const color = num >= 5 ? 'text-red-500 border-red-500/20 bg-red-500/5' : 
+                  num >= 3 ? 'text-yellow-600 border-yellow-600/20 bg-yellow-600/5' : 
                   'text-blue-500 border-blue-500/20 bg-blue-500/5';
-    return <Badge variant="outline" className={clsx("font-mono", color)}>{fator.toFixed(1)}x</Badge>;
+    return <Badge variant="outline" className={clsx("font-mono", color)}>{num.toFixed(1)}x</Badge>;
   };
+
 
   const getSeverityBadge = (sev: string) => {
     const colors: any = {
@@ -267,12 +280,13 @@ function ThreatTable({
   threats: any[], 
   onSelect: (t: any) => void, 
   type: 'download' | 'upload',
-  formatMbps: (v: number | null | undefined) => string,
-  getFatorBadge: (v: number | null | undefined) => any,
+  formatMbps: (v: any) => string,
+  getFatorBadge: (v: any) => any,
   getSeverityBadge: (s: string) => any,
   getStatusBadge: (s: string) => any,
   timeAgo: (d: string) => string
 }) {
+
   return (
     <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden shadow-sm">
       <Table>
@@ -308,15 +322,17 @@ function ThreatTable({
                 onClick={() => onSelect(t)}
               >
                 <TableCell className="font-mono font-bold text-text-primary">{t.ip || '—'}</TableCell>
-                <TableCell className="font-medium">{formatMbps(t.mbps_atual)}</TableCell>
-                <TableCell>{getFatorBadge(t.fator_anomalia)}</TableCell>
+                <TableCell className="font-medium">{formatMbps(t.mbps_atual ?? t.mbps)}</TableCell>
+                <TableCell>{getFatorBadge(t.fator_anomalia ?? t.fator ?? t.factor)}</TableCell>
+
                 <TableCell>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span className="text-text-secondary border-b border-dotted border-border cursor-help">
-                          {formatMbps(t.p95_mbps)}
+                          {formatMbps(t.p95_mbps ?? t.p95)}
                         </span>
+
                       </TooltipTrigger>
                       <TooltipContent><p className="text-xs">Volume normal deste IP (P95 das últimas 24h)</p></TooltipContent>
                     </Tooltip>
@@ -342,10 +358,11 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
   threat: any, 
   onClose: () => void, 
   onStatusChange: (id: number, status: string) => void,
-  formatMbps: (v: number | null | undefined) => string,
+  formatMbps: (v: any) => string,
   getSeverityBadge: (s: string) => any,
-  getFatorBadge: (f: number | null | undefined) => any
+  getFatorBadge: (f: any) => any
 }) {
+
   if (!threat) return null;
 
   const isDownload = threat.attack_type === 'ANOMALIA_DOWNLOAD';
@@ -378,30 +395,45 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <p className="text-[10px] uppercase font-semibold text-text-secondary">Volume Atual</p>
-                  <p className="text-lg font-bold text-text-primary">{formatMbps(threat.mbps_atual)}</p>
+                  <p className="text-lg font-bold text-text-primary">{formatMbps(threat.mbps_atual ?? threat.mbps)}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] uppercase font-semibold text-text-secondary">Normal (P95)</p>
-                  <p className="text-lg font-bold text-text-primary">{formatMbps(threat.p95_mbps)}</p>
+                  <p className="text-lg font-bold text-text-primary">{formatMbps(threat.p95_mbps ?? threat.p95)}</p>
+
                 </div>
               </div>
               <div className="space-y-2">
                 <div className="flex justify-between items-end">
                   <p className="text-[10px] uppercase font-semibold text-text-secondary">Fator de Anomalia</p>
-                  <span className="text-xs font-bold text-text-primary">{threat.fator_anomalia?.toFixed(1) ?? '—'}x acima</span>
+                  <span className="text-xs font-bold text-text-primary">
+                    {(() => {
+                      const val = threat.fator_anomalia ?? threat.fator ?? threat.factor;
+                      const f = typeof val === 'string' ? parseFloat(val) : val;
+                      return (f !== null && f !== undefined && !isNaN(f)) ? `${f.toFixed(1)}x acima` : '—';
+                    })()}
+                  </span>
+
                 </div>
                 <div className="h-2 bg-bg-secondary rounded-full overflow-hidden border border-border">
                   <div 
                     className={clsx(
                       "h-full transition-all duration-500",
-                      (threat.fator_anomalia || 0) >= 5 ? "bg-red-500" : "bg-blue-500"
+                      (Number(threat.fator_anomalia ?? threat.fator ?? threat.factor) || 0) >= 5 ? "bg-red-500" : "bg-blue-500"
                     )}
-                    style={{ width: `${Math.min(((threat.fator_anomalia || 0) / 10) * 100, 100)}%` }}
+                    style={{ width: `${Math.min(((Number(threat.fator_anomalia ?? threat.fator ?? threat.factor) || 0) / 10) * 100, 100)}%` }}
+
                   />
                 </div>
                 <p className="text-[10px] text-text-secondary leading-relaxed italic">
-                  * Este IP está recebendo {threat.fator_anomalia?.toFixed(1) ?? '—'}x mais tráfego que o normal para este horário.
+                  * Este IP está recebendo {(() => {
+                    const val = threat.fator_anomalia ?? threat.fator ?? threat.factor;
+                    const f = typeof val === 'string' ? parseFloat(val) : val;
+                    return (f !== null && f !== undefined && !isNaN(f)) ? f.toFixed(1) : '—';
+                  })()}x mais tráfego que o normal para este horário.
                 </p>
+
+
               </div>
             </div>
           </section>
@@ -443,8 +475,14 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
                       </div>
                       <div className="flex justify-between">
                         <span className="text-text-secondary">Volume:</span>
-                        <span className="font-mono text-text-primary">{item.mbps?.toFixed(1) ?? '—'} Mbps</span>
+                        <span className="font-mono text-text-primary">
+                          {(() => {
+                            const m = typeof item.mbps === 'string' ? parseFloat(item.mbps) : item.mbps;
+                            return (m !== null && m !== undefined && !isNaN(m)) ? m.toFixed(1) : '—';
+                          })()} Mbps
+                        </span>
                       </div>
+
                       <div className="flex justify-between">
                         <span className="text-text-secondary">PPS:</span>
                         <span className="font-mono text-text-primary">{item.pps?.toLocaleString() ?? '—'}</span>
