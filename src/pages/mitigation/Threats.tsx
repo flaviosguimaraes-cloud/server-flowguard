@@ -1,1006 +1,295 @@
-import React, { useState, useMemo, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import { useTranslation } from '../../hooks/useTranslation';
-import { 
-  Shield, AlertTriangle, Clock, Activity, 
-  Radar, Waves, Globe, Radio, CheckCircle, 
-  XCircle, Filter, Trash2, ArrowRight, MousePointer2, ExternalLink, Info, MapPin, Target, ShieldCheck, Zap
-} from 'lucide-react';
-import { Skeleton } from '../../components/Skeleton';
-import { useNavigate } from '@tanstack/react-router';
-import { clsx } from 'clsx';
-import { toast } from 'sonner';
+import { Shield, Flame, Bolt, ShieldCheck, RefreshCw, AlertTriangle, Search, Clock, Zap, X, Info, Settings2, LayoutGrid } from 'lucide-react';
+import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '../../components/ui/card';
 import { Button } from '../../components/ui/button';
-import { Flag } from '../../components/Flag';
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "../../components/ui/tooltip";
-import {
-  Sheet,
-  SheetContent,
-  SheetHeader,
-  SheetTitle,
-} from "../../components/ui/sheet";
-import { Separator } from "../../components/ui/separator";
-import {
-  AlertDialog,
-  AlertDialogAction,
-  AlertDialogCancel,
-  AlertDialogContent,
-  AlertDialogDescription,
-  AlertDialogFooter,
-  AlertDialogHeader,
-  AlertDialogTitle,
-} from "../../components/ui/alert-dialog";
-
-interface Threat {
-  type: string;
-  label: string;
-  severity: 'high' | 'medium' | 'low';
-  src_ip?: string;
-  dst_ip: string;
-  src_country?: string;
-  unique_ports?: number;
-  flows?: number;
-  packets?: number;
-  bytes?: number;
-  bpp?: number;
-  port_range_min?: number;
-  port_range_max?: number;
-  syn_flows?: number;
-  mitigated?: boolean;
-  flowspec_id?: number;
-  first_seen?: string;
-  last_seen?: string;
-}
-
-interface ThreatsResponse {
-  minutes: number;
-  total: number;
-  threats: Threat[];
-}
-
-const formatRange = (first?: string, last?: string) => {
-  if (!first) return '';
-  const f = first.slice(11, 16); // HH:MM
-  const l = last?.slice(11, 16);
-
-  // Calcular duração
-  const startDate = new Date(first.replace(' ', 'T'));
-  const endDate = last ? new Date(last.replace(' ', 'T')) : new Date();
-  const diff = endDate.getTime() - startDate.getTime();
-  const mins = Math.floor(diff / 60000);
-  const hours = Math.floor(mins / 60);
-  const remMins = mins % 60;
-
-  const duration = hours > 0
-    ? `${hours}h ${remMins}m`
-    : `${mins}m`;
-
-  return `${f} – ${l || 'agora'} (${duration} ativo)`;
-};
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
+import { Input } from '../../components/ui/input';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
+import { Skeleton } from '../../components/Skeleton';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '../../components/ui/sheet';
+import { Separator } from '../../components/ui/separator';
+import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../../components/ui/dialog';
+import { Switch } from "../../components/ui/switch";
+import { Label } from "../../components/ui/label";
+import { Slider } from "../../components/ui/slider";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../components/ui/tooltip";
 
 export default function Threats() {
   const { t } = useTranslation();
-  const navigate = useNavigate();
   const queryClient = useQueryClient();
-  const [selectedThreat, setSelectedThreat] = useState<Threat | null>(null);
-  const [threatToBlock, setThreatToBlock] = useState<{ threat: Threat, index: number } | null>(null);
-  const [ttlMinutes, setTtlMinutes] = useState(360);
-  const [blockAction, setBlockAction] = useState<'discard' | 'rate-limit'>('discard');
-  const [blockRateLimit, setBlockRateLimit] = useState(1000);
-  const [minutes, setMinutes] = useState(60);
-  const [lastUpdate, setLastUpdate] = useState<Date>(new Date());
-  const [countdown, setCountdown] = useState(60);
-  const [ignoredThreats, setIgnoredThreats] = useState<string[]>(() => {
-    const saved = localStorage.getItem('ignored_threats');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [filters, setFilters] = useState({ status: 'active', severity: 'all', attackType: 'all', search: '' });
+  const [selectedThreat, setSelectedThreat] = useState<any>(null);
+  const [confirmModal, setConfirmModal] = useState<any>(null);
+  const [showConfig, setShowConfig] = useState(false);
+  const [config, setConfig] = useState<any>(null);
 
-  const { data, isLoading, refetch } = useQuery<ThreatsResponse>({
-    queryKey: ['threats', minutes],
+  const { data: summary } = useQuery({ queryKey: ['threats-summary'], queryFn: () => api.get('/api/threats/summary').then(r => r.data), refetchInterval: 30000 });
+  
+  const { data: threats, isLoading: threatsLoading, refetch } = useQuery({
+    queryKey: ['threats', filters],
     queryFn: async () => {
-      const response = await api.get(`/api/flows/threats?minutes=${minutes}`);
-      setLastUpdate(new Date());
-      setCountdown(60);
-      return response.data;
+      const params = new URLSearchParams();
+      if (filters.status !== 'all') params.append('status', filters.status);
+      if (filters.severity !== 'all') params.append('severity', filters.severity);
+      if (filters.attackType !== 'all') params.append('attack_type', filters.attackType);
+      if (filters.search) params.append('ip', filters.search);
+      const r = await api.get('/api/threats?' + params.toString());
+      return r.data;
     },
-    refetchInterval: 60000,
-  });
-
-  useEffect(() => {
-    const timer = setInterval(() => {
-      setCountdown((prev) => (prev > 0 ? prev - 1 : 0));
-    }, 1000);
-    return () => clearInterval(timer);
-  }, []);
-
-  const { data: flowspecData } = useQuery({
-    queryKey: ['flowspec-rules'],
-    queryFn: () => api.get('/api/mitigation/flowspec').then(r => r.data).catch(() => ({ items: [] })),
     refetchInterval: 30000,
   });
 
-  const isAlreadyMitigated = (threat: Threat) => {
-    const rules = flowspecData?.rules || flowspecData?.items || [];
-    return rules.find((r: any) => 
-      (r.src_prefix?.startsWith(threat.src_ip || '') || (!r.src_prefix && !threat.src_ip)) &&
-      r.dst_prefix?.startsWith(threat.dst_ip)
-    );
-  };
+  const { data: detectorConfig } = useQuery({ queryKey: ['detector-config'], queryFn: () => api.get('/api/threats/config/detector').then(r => r.data), enabled: showConfig });
+  useEffect(() => { if (detectorConfig) setConfig(detectorConfig); }, [detectorConfig]);
 
-  const ignoreMutation = (threat: Threat) => {
-    const threatKey = `${threat.src_ip || ''}-${threat.dst_ip}-${threat.type}`;
-    const newIgnored = [...ignoredThreats, threatKey];
-    setIgnoredThreats(newIgnored);
-    localStorage.setItem('ignored_threats', JSON.stringify(newIgnored));
-    toast.info('Ameaça ignorada');
-  };
-
-  const blockMutation = useMutation({
-    mutationFn: async ({ threat, index, ttl_minutes, action, rate_limit_kbps }: { threat: Threat, index: number, ttl_minutes: number, action: 'discard' | 'rate-limit', rate_limit_kbps: number }) => {
-      let payload: any = {
-        dst_prefix: `${threat.dst_ip}/32`,
-        action,
-        rate_limit_kbps: action === 'rate-limit' ? rate_limit_kbps : 0,
-        reason: `threat:${threat.type},label:${threat.label},severity:${threat.severity}`,
-        ttl_minutes
-      };
-
-      if (threat.src_ip) {
-        payload.src_prefix = `${threat.src_ip}/32`;
-      }
-
-      if (threat.type === 'port_scan' || threat.type === 'syn_flood') {
-        payload.protocol = 'tcp';
-      } else if (threat.type === 'dns_amplification') {
-        payload.protocol = 'udp';
-        payload.src_port = 53;
-      } else if (threat.type === 'ntp_amplification') {
-        payload.protocol = 'udp';
-        payload.src_port = 123;
-      } else if (threat.type === 'ssdp_amplification' || threat.type === 'udp_flood') {
-        payload.protocol = 'udp';
-      }
-
-      const response = await api.post('/api/mitigation/flowspec', payload);
-      return { response, index };
-    },
-    onSuccess: (data) => {
-      toast.success('Regra FlowSpec aplicada');
-      setThreatToBlock(null);
-      // Update local data state to show "MITIGADO"
-      queryClient.setQueryData(['threats', minutes], (old: ThreatsResponse | undefined) => {
-        if (!old) return old;
-        const newThreats = [...old.threats];
-        newThreats[data.index] = { ...newThreats[data.index], mitigated: true };
-        return { ...old, threats: newThreats };
-      });
-    },
-    onError: (error: any) => {
-      const msg = error.response?.data?.detail || error.message || 'Erro ao aplicar FlowSpec';
-      toast.error(String(msg));
-    }
+  const updateStatus = useMutation({
+    mutationFn: (data: { id: number, status: string }) => api.patch(`/api/threats/${data.id}/status`, { status: data.status }),
+    onSuccess: () => { toast.success('Status atualizado'); queryClient.invalidateQueries({ queryKey: ['threats'] }); setSelectedThreat(null); }
   });
 
-  const filteredThreats = useMemo(() => {
-    const threatsFromApi = data?.threats || [];
-    const rules = flowspecData?.rules || flowspecData?.items || [];
+  const applyMitigation = useMutation({
+    mutationFn: (data: any) => api.post(`/api/threats/${data.id}/apply`, data),
+    onSuccess: () => { toast.success('FlowSpec aplicado com sucesso'); queryClient.invalidateQueries({ queryKey: ['threats'] }); setConfirmModal(null); setSelectedThreat(null); }
+  });
 
-    // 1. Process current threats from API
-    const activeThreats = threatsFromApi
-      .filter(threat => {
-        const threatKey = `${threat.src_ip || ''}-${threat.dst_ip}-${threat.type}`;
-        return !ignoredThreats.includes(threatKey);
-      })
-      .map(threat => {
-        const existingRule = isAlreadyMitigated(threat);
-        if (existingRule) {
-          return { ...threat, mitigated: true, flowspec_id: existingRule.id };
-        }
-        return threat;
-      });
+  const saveConfig = useMutation({
+    mutationFn: (c: any) => api.put('/api/threats/config/detector', c),
+    onSuccess: () => { toast.success('Configuração salva'); setShowConfig(false); }
+  });
 
-    // 2. Identify rules that were threats but are no longer in activeThreats
-    const historicalThreats: Threat[] = rules
-      .filter((rule: any) => {
-        // Only consider discard rules
-        if (rule.action !== 'discard') return false;
-        
-        // Skip if already matched with an active threat
-        if (activeThreats.some(t => t.flowspec_id === rule.id)) return false;
-
-        // Only include if it has threat metadata in reason
-        return rule.reason?.includes('threat:');
-      })
-      .map((rule: any) => {
-        // Parse reason to reconstruct the Threat object: "threat:port_scan,label:Port Scan,severity:high"
-        const parts: any = {};
-        rule.reason.split(',').forEach((p: string) => {
-          const [k, v] = p.split(':');
-          if (k && v) parts[k.trim()] = v.trim();
-        });
-
-        return {
-          type: parts.threat || 'unknown',
-          label: parts.label || 'Ameaça Mitigada',
-          severity: (parts.severity as any) || 'medium',
-          src_ip: rule.src_prefix?.replace('/32', ''),
-          dst_ip: rule.dst_prefix?.replace('/32', ''),
-          mitigated: true,
-          flowspec_id: rule.id,
-          flows: 0,
-          packets: 0,
-          bytes: 0,
-          unique_ports: 0,
-        };
-      });
-
-    // 3. Combine and sort: mitigated at top, then by severity
-    return [...activeThreats, ...historicalThreats].sort((a, b) => {
-      // Mitigated always on top
-      if (a.mitigated && !b.mitigated) return -1;
-      if (!a.mitigated && b.mitigated) return 1;
-      
-      // Then by severity
-      const severityOrder: Record<string, number> = { high: 3, medium: 2, low: 1 };
-      return (severityOrder[b.severity] || 0) - (severityOrder[a.severity] || 0);
-    });
-  }, [data, ignoredThreats, flowspecData]);
-
-  const stats = useMemo(() => {
-    const threats = filteredThreats;
-    const high = threats.filter(t => t.severity === 'high').length;
-    const medium = threats.filter(t => t.severity === 'medium').length;
-    const uniqueDstIps = new Set(threats.map(t => t.dst_ip)).size;
-
-    return {
-      total: threats.length,
-      high,
-      medium,
-      uniqueDstIps
-    };
-  }, [filteredThreats]);
-
-  const getIcon = (type: string) => {
-    switch (type) {
-      case 'port_scan': return Radar;
-      case 'syn_flood': return Activity;
-      case 'dns_amplification': return Globe;
-      case 'ntp_amplification': return Clock;
-      case 'ssdp_amplification': return Radio;
-      case 'udp_flood': return Waves;
-      default: return AlertTriangle;
-    }
+  const getAttackTypeBadge = (type: string) => {
+    const attackType = type.toUpperCase();
+    let color = "bg-gray-500/10 text-gray-500 border-gray-500/20";
+    if (attackType.includes('ACK_FLOOD')) color = "bg-purple-500/10 text-purple-500 border-purple-500/20";
+    else if (attackType.includes('SYN_FLOOD')) color = "bg-red-500/10 text-red-500 border-red-500/20";
+    else if (attackType.includes('UDP_FLOOD') || attackType.includes('UDP_AMPLIFICATION')) color = "bg-orange-500/10 text-orange-500 border-orange-500/20";
+    else if (attackType.includes('PORT_SCAN')) color = "bg-blue-500/10 text-blue-500 border-blue-500/20";
+    else if (attackType.includes('BRUTE_FORCE')) color = "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
+    return <Badge className={color}>{type}</Badge>;
   };
 
-  const getSeverityStyles = (severity: string, mitigated?: boolean) => {
-    if (mitigated) return 'border-success/30 hover:border-success/50';
-    switch (severity) {
-      case 'high': return 'border-red-500/50 hover:border-red-500';
-      case 'medium': return 'border-amber-500/50 hover:border-amber-500';
-      default: return 'border-border';
-    }
+  const getConfidenceColor = (conf: number) => {
+    if (conf >= 0.95) return "bg-red-500";
+    if (conf >= 0.88) return "bg-orange-500";
+    if (conf >= 0.75) return "bg-amber-500";
+    return "bg-gray-500";
   };
 
-  const removeMitigation = async (flowspecId: number) => {
-    try {
-      await api.delete(`/api/mitigation/flowspec/${flowspecId}`);
-      toast.success('Mitigação removida');
-      queryClient.invalidateQueries({ queryKey: ['flowspec-rules'] });
-      queryClient.invalidateQueries({ queryKey: ['threats'] });
-    } catch (error: any) {
-      const msg = error.response?.data?.detail || error.message || 'Erro ao remover mitigação';
-      toast.error(String(msg));
-    }
+  const timeAgo = (date: string) => {
+    if (!date) return '—';
+    const diff = Date.now() - new Date(date).getTime();
+    const mins = Math.floor(diff / 60000);
+    if (mins < 60) return `há ${mins} min`;
+    const hrs = Math.floor(mins / 60);
+    return `há ${hrs} h`;
   };
 
-  const getInterpretation = (threat: Threat) => {
-    switch (threat.type) {
-      case 'port_scan':
-        if (threat.port_range_min !== undefined && threat.port_range_min < 1024) {
-          return `IP externo varrendo portas de serviço (${threat.port_range_min}–${threat.port_range_max}) do cliente. Indica reconhecimento de serviços expostos ou busca por vulnerabilidades.`;
-        }
-        if (threat.port_range_min !== undefined && threat.port_range_min >= 1024) {
-          return `IP externo varrendo portas altas (${threat.port_range_min}–${threat.port_range_max}) do cliente. Pode indicar scan de serviços não-padrão ou aplicações.`;
-        }
-        return "IP externo varrendo múltiplas portas do cliente. Indica reconhecimento de rede ou busca por serviços expostos.";
-      case 'syn_flood':
-        return "Alto volume de pacotes TCP SYN sem conclusão do handshake. Indica tentativa de esgotamento de recursos do servidor alvo.";
-      case 'dns_amplification':
-        return "Tráfego DNS com pacotes grandes (BPP alto) direcionado ao cliente. Indica uso de servidores DNS abertos para amplificar ataque.";
-      case 'ntp_amplification':
-        return "Tráfego NTP com pacotes grandes direcionado ao cliente. Indica uso de servidores NTP para amplificar ataque.";
-      case 'udp_flood':
-        return "Alto volume de pacotes UDP pequenos. Indica tentativa de saturar a conexão do cliente.";
-      default:
-        return "Comportamento anômalo detectado nos fluxos de rede que sugere atividade maliciosa ou ataque em andamento.";
+  const getStatusLabel = (status: string) => {
+    switch (status) {
+      case 'new': return { label: 'Nova', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' };
+      case 'acknowledged': return { label: 'Analisando', color: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' };
+      case 'applied': return { label: 'Aplicada', color: 'bg-green-500/10 text-green-500 border-green-500/20' };
+      case 'ignored': return { label: 'Ignorada', color: 'bg-gray-500/10 text-gray-500 border-gray-500/20' };
+      case 'expired': return { label: 'Expirada', color: 'bg-gray-500/5 text-gray-400 border-gray-500/10 opacity-60' };
+      default: return { label: status, color: '' };
     }
   };
-
-  const getSeverityBadge = (severity: string) => {
-    switch (severity) {
-      case 'high': return <Badge variant="destructive" className="bg-red-500/10 text-red-500 border-red-500/20 uppercase text-[10px] font-bold">HIGH</Badge>;
-      case 'medium': return <Badge variant="outline" className="bg-amber-500/10 text-amber-500 border-amber-500/20 uppercase text-[10px] font-bold">MEDIUM</Badge>;
-      default: return <Badge variant="secondary" className="uppercase text-[10px] font-bold">LOW</Badge>;
-    }
-  };
-
-  const getSuggestedTtl = (type: string) => {
-    switch (type) {
-      case 'port_scan': return 360; // 6h
-      case 'syn_flood': return 60;  // 1h
-      case 'dns_amplification': return 120; // 2h
-      case 'ntp_amplification': return 120; // 2h
-      case 'ssdp_amplification': return 60;  // 1h
-      case 'udp_flood': return 60;   // 1h
-      default: return 60;
-    }
-  };
-
-  const handleBlockClick = (threat: Threat, index: number) => {
-    setTtlMinutes(getSuggestedTtl(threat.type));
-    
-    // Set default action and rate limit based on threat type
-    if (['dns_amplification', 'ntp_amplification', 'ssdp_amplification'].includes(threat.type)) {
-      setBlockAction('rate-limit');
-      setBlockRateLimit(512);
-    } else {
-      setBlockAction('discard');
-      setBlockRateLimit(1000);
-    }
-    
-    setThreatToBlock({ threat, index });
-  };
-
-  if (isLoading && !data) {
-    return (
-      <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-24 rounded-xl" />)}
-        </div>
-        <div className="space-y-4">
-          {[1, 2, 3].map(i => <Skeleton key={i} className="h-40 rounded-xl" />)}
-        </div>
-      </div>
-    );
-  }
 
   return (
-    <div className="space-y-6 animate-in fade-in duration-500">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div className="flex flex-col gap-1">
-          <div className="flex items-center gap-2 mb-1">
-            <h1 className="text-2xl font-bold tracking-tight">{t('threats')} Detectadas</h1>
-            <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-bold">IPv4</Badge>
-          </div>
-          <div className="flex items-center gap-2 text-text-secondary text-sm">
-            <span>Análise comportamental de flows em tempo real</span>
-            <span className="text-border">|</span>
-            <div className="flex items-center gap-1.5 text-xs bg-bg-secondary px-2 py-0.5 rounded border border-border">
-              <div className="w-1.5 h-1.5 rounded-full bg-success animate-pulse" />
-              <span>Atualizado às {lastUpdate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-              <span className="text-text-tertiary">·</span>
-              <span>Próxima em {countdown}s</span>
-            </div>
-          </div>
-        </div>
-
-        <div className="flex items-center bg-bg-secondary rounded-lg border border-border p-1 gap-1">
-          {[
-            { label: '30min', value: 30 },
-            { label: '1h', value: 60 },
-            { label: '6h', value: 360 },
-            { label: '24h', value: 1440 }
-          ].map((period) => (
-            <button
-              key={period.value}
-              onClick={() => setMinutes(period.value)}
-              className={clsx(
-                "px-3 py-1.5 text-xs font-medium rounded-md transition-all",
-                minutes === period.value 
-                  ? "bg-primary text-white shadow-sm" 
-                  : "text-text-secondary hover:bg-bg-primary hover:text-text-primary"
-              )}
-            >
-              {period.label}
-            </button>
-          ))}
-        </div>
+    <div className="space-y-6">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold tracking-tight">Ameaças</h1>
+        <Button variant="outline" size="sm" onClick={() => setShowConfig(true)}>
+          <Settings2 size={16} className="mr-2" /> Configuração
+        </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="bg-bg-secondary border-border shadow-sm">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-primary/10 rounded-xl text-primary border border-primary/10">
-              <Shield size={24} />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Total Ameaças</p>
-              <p className="text-2xl font-bold">{stats.total}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-bg-secondary border-border shadow-sm">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-red-500/10 rounded-xl text-red-500 border border-red-500/10">
-              <AlertTriangle size={24} />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Alta Severidade</p>
-              <p className="text-2xl font-bold">{stats.high}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-bg-secondary border-border shadow-sm">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-amber-500/10 rounded-xl text-amber-500 border border-amber-500/10">
-              <AlertTriangle size={24} />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">Média Severidade</p>
-              <p className="text-2xl font-bold">{stats.medium}</p>
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card className="bg-bg-secondary border-border shadow-sm">
-          <CardContent className="p-4 flex items-center gap-4">
-            <div className="p-3 bg-blue-500/10 rounded-xl text-blue-500 border border-blue-500/10">
-              <MousePointer2 size={24} />
-            </div>
-            <div>
-              <p className="text-xs font-semibold text-text-secondary uppercase tracking-wider">IPs Afetados</p>
-              <p className="text-2xl font-bold">{stats.uniqueDstIps}</p>
-            </div>
-          </CardContent>
-        </Card>
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <Card><CardContent className="p-4 flex items-center gap-4"><div className="p-3 bg-gray-500/10 text-gray-500 rounded-xl"><Shield size={24} /></div><div><p className="text-xs font-semibold uppercase text-gray-500">Ameaças Ativas</p><p className="text-2xl font-bold">{summary?.active_total || 0}</p></div></CardContent></Card>
+        <Card><CardContent className="p-4 flex items-center gap-4"><div className="p-3 bg-red-500/10 text-red-500 rounded-xl"><Flame size={24} /></div><div><p className="text-xs font-semibold uppercase text-gray-500">Críticas / Altas</p><p className="text-2xl font-bold">{(summary?.critical_count || 0) + (summary?.high_count || 0)}</p></div></CardContent></Card>
+        <Card><CardContent className="p-4 flex items-center gap-4"><div className="p-3 bg-purple-500/10 text-purple-500 rounded-xl"><Bolt size={24} /></div><div><p className="text-xs font-semibold uppercase text-gray-500">FlowSpec sugerido</p><p className="text-2xl font-bold">{summary?.flowspec_suggested || 0}</p></div></CardContent></Card>
+        <Card><CardContent className="p-4 flex items-center gap-4"><div className="p-3 bg-green-500/10 text-green-500 rounded-xl"><ShieldCheck size={24} /></div><div><p className="text-xs font-semibold uppercase text-gray-500">Aplicadas (24h)</p><p className="text-2xl font-bold">{summary?.applied_24h || 0}</p></div></CardContent></Card>
       </div>
 
-      {filteredThreats.length === 0 ? (
-        <Card className="bg-bg-secondary border-border border-dashed py-16 flex flex-col items-center justify-center text-center">
-          <div className="w-16 h-16 bg-success/10 text-success rounded-full flex items-center justify-center mb-6 shadow-sm border border-success/20">
-            <CheckCircle size={32} />
+      <div className="flex flex-wrap items-center gap-2">
+        <Select value={filters.status} onValueChange={(v) => setFilters(f => ({ ...f, status: v }))}>
+          <SelectTrigger className="w-[150px] bg-bg-secondary"><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="all">Todas</SelectItem><SelectItem value="active">Ativas</SelectItem><SelectItem value="acknowledged">Analisando</SelectItem><SelectItem value="applied">Aplicadas</SelectItem><SelectItem value="ignored">Ignoradas</SelectItem></SelectContent>
+        </Select>
+        <Select value={filters.severity} onValueChange={(v) => setFilters(f => ({ ...f, severity: v }))}>
+          <SelectTrigger className="w-[150px] bg-bg-secondary"><SelectValue /></SelectTrigger>
+          <SelectContent><SelectItem value="all">Todas</SelectItem><SelectItem value="critical">Critical</SelectItem><SelectItem value="high">High</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="low">Low</SelectItem></SelectContent>
+        </Select>
+        <Input placeholder="Buscar IP..." className="w-[200px] bg-bg-secondary" value={filters.search} onChange={e => setFilters(f => ({...f, search: e.target.value}))} />
+        <Button variant="outline" size="icon" onClick={() => refetch()}><RefreshCw size={16} /></Button>
+      </div>
+
+      <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden shadow-sm">
+        <Table>
+          <TableHeader><TableRow><TableHead>IP</TableHead><TableHead>Tipo</TableHead><TableHead>Protocolo/Porta</TableHead><TableHead>Confiança</TableHead><TableHead>Severidade</TableHead><TableHead>Persistência</TableHead><TableHead>Status</TableHead><TableHead>Detectada</TableHead><TableHead>Ações</TableHead></TableRow></TableHeader>
+          <TableBody>
+            {threatsLoading ? [...Array(5)].map((_, i) => <TableRow key={i}><TableCell colSpan={9}><Skeleton className="h-10 w-full" /></TableCell></TableRow>) : threats?.map((t: any) => {
+              const status = getStatusLabel(t.status);
+              return (
+                <TableRow key={t.id} className={`cursor-pointer hover:bg-bg-primary transition-colors ${t.severity === 'critical' ? 'border-l-4 border-l-red-500' : ''} ${t.status === 'applied' || t.status === 'expired' ? 'opacity-60' : ''}`} onClick={() => setSelectedThreat(t)}>
+                  <TableCell className="font-mono font-medium">{t.ip}</TableCell>
+                  <TableCell>{getAttackTypeBadge(t.attack_type)}</TableCell>
+                  <TableCell className="font-mono text-[10px] uppercase text-text-secondary">{t.protocol} / {t.dst_port}</TableCell>
+                  <TableCell className="w-28">
+                    <div className="space-y-1">
+                      <div className="w-full bg-border rounded-full h-1 overflow-hidden">
+                        <div className={`h-full ${getConfidenceColor(t.confidence)}`} style={{ width: `${t.confidence * 100}%` }} />
+                      </div>
+                      <span className="text-[10px] text-text-secondary">{(t.confidence * 100).toFixed(0)}%</span>
+                    </div>
+                  </TableCell>
+                  <TableCell><Badge variant="outline" className={t.severity === 'critical' ? 'text-red-500 border-red-500/20 uppercase text-[10px]' : t.severity === 'high' ? 'text-orange-500 border-orange-500/20 uppercase text-[10px]' : 'uppercase text-[10px]'}>{t.severity}</Badge></TableCell>
+                  <TableCell>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild><div className="flex items-center gap-1.5 text-text-secondary text-[11px]"><LayoutGrid size={12} />{t.persistence_windows} janelas</div></TooltipTrigger>
+                        <TooltipContent><p className="text-[11px]">Detectado em {t.persistence_windows} ciclos consecutivos de 60s</p></TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </TableCell>
+                  <TableCell><Badge className={status.color + " text-[10px]"}>{status.label}</Badge></TableCell>
+                  <TableCell className="text-[10px] text-text-secondary">{timeAgo(t.created_at)}</TableCell>
+                  <TableCell onClick={e => e.stopPropagation()} className="space-x-1">
+                    {(t.status === 'new' || t.status === 'acknowledged') && t.action === 'flowspec' && <Button size="sm" className="bg-purple-600 hover:bg-purple-700 h-7 text-[10px] px-2" onClick={() => setConfirmModal(t)}><Zap size={12} className="mr-1" /> Aplicar</Button>}
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </div>
+
+      <Sheet open={!!selectedThreat} onOpenChange={() => setSelectedThreat(null)}>
+        <SheetContent className="sm:max-w-md overflow-y-auto">
+          <SheetHeader><SheetTitle className="text-xl">Detalhes da Ameaça</SheetTitle><SheetDescription className="font-mono">{selectedThreat?.ip}</SheetDescription></SheetHeader>
+          <div className="mt-6 space-y-6 pb-20">
+            <div className="space-y-3">
+              <h4 className="text-sm font-semibold flex items-center gap-2"><Info size={16} /> Diagnóstico</h4>
+              <div className="p-4 bg-bg-primary border border-border rounded-lg shadow-inner"><p className="text-xs font-mono leading-relaxed text-text-primary whitespace-pre-wrap">{selectedThreat?.reasoning}</p></div>
+              <div className="grid grid-cols-2 gap-2 text-[11px]">
+                {selectedThreat?.evidence && Object.entries(selectedThreat.evidence).map(([k, v]: any) => (
+                  <div key={k} className="p-2 bg-bg-primary/50 border border-border/40 rounded flex justify-between"><span className="text-text-secondary">{k}</span><span className="font-mono font-medium">{typeof v === 'number' ? v.toFixed(k.includes('ratio') ? 4 : 0) : String(v)}</span></div>
+                ))}
+              </div>
+              <div className="flex items-center gap-2 text-xs text-text-secondary px-1"><Clock size={14} /> Detectado em {selectedThreat?.persistence_windows} janelas consecutivas de 60s</div>
+            </div>
+            
+            {selectedThreat?.flowspec_suggestion && (
+              <>
+                <Separator />
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold flex items-center gap-2 text-purple-500"><Zap size={16} /> Regra FlowSpec sugerida</h4>
+                  <div className="text-xs space-y-2 p-4 bg-purple-500/5 border border-purple-500/10 rounded-lg shadow-inner">
+                    <div className="flex justify-between"><span>Destino:</span><span className="font-mono font-medium">{selectedThreat.flowspec_suggestion.match.destination}</span></div>
+                    <div className="flex justify-between uppercase"><span>Protocolo:</span><span className="font-mono font-medium">{selectedThreat.flowspec_suggestion.match.protocol}</span></div>
+                    <div className="flex justify-between uppercase"><span>Porta destino:</span><span className="font-mono font-medium">{selectedThreat.flowspec_suggestion.match.destination_port}</span></div>
+                    {selectedThreat.flowspec_suggestion.match.tcp_flags && <div className="flex justify-between uppercase"><span>Flags TCP:</span><span className="font-mono font-medium">{selectedThreat.flowspec_suggestion.match.tcp_flags}</span></div>}
+                    <div className="flex justify-between"><span>Ação:</span><span className="font-mono font-medium">Rate-limit {(selectedThreat.flowspec_suggestion.then.rate_limit_bps / 1e6).toFixed(0)} Mbps</span></div>
+                    <div className="flex justify-between"><span>TTL sugerido:</span><span className="font-mono font-medium">{Math.floor(selectedThreat.flowspec_suggestion.ttl_seconds / 60)} minutos</span></div>
+                  </div>
+                  <div className="flex items-start gap-2 p-2 bg-amber-500/5 border border-amber-500/10 rounded text-[10px] text-amber-600 dark:text-amber-500">
+                    <AlertTriangle size={14} className="shrink-0 mt-0.5" /> Sugestão do detector. Valide o impacto antes de aplicar.
+                  </div>
+                </div>
+              </>
+            )}
+
+            {selectedThreat?.also_detected?.length > 0 && (
+              <>
+                <Separator />
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold">Também detectado</h4>
+                  <div className="space-y-1">
+                    {selectedThreat.also_detected.map((d: any, i: number) => (
+                      <div key={i} className="flex items-center justify-between p-2 bg-bg-primary/30 rounded text-xs">
+                        <div className="flex items-center gap-2"><span className="font-medium">{d.attack_type}</span><Badge variant="outline" className="text-[10px] px-1 h-4">{(d.confidence * 100).toFixed(0)}%</Badge></div>
+                        <span className="text-text-secondary italic">{d.action}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </>
+            )}
           </div>
-          <CardTitle className="mb-2 text-xl">Nenhuma ameaça detectada</CardTitle>
-          <CardDescription className="max-w-md mx-auto px-6 mb-8">
-            Não foram identificados comportamentos anômalos no tráfego das últimas {minutes >= 60 ? `${minutes/60}h` : `${minutes}min`}.
-          </CardDescription>
-          
-          <div className="bg-bg-primary/50 border border-border rounded-xl p-6 text-left max-w-sm w-full">
-            <h4 className="text-xs font-bold text-text-secondary uppercase tracking-widest mb-4 flex items-center gap-2">
-              <Shield size={14} className="text-primary" />
-              Monitorando Ativamente
-            </h4>
-            <ul className="space-y-3">
-              {[
-                'Port Scan (TCP Recon)',
-                'SYN Flood (DoS)',
-                'DNS/NTP/SSDP Amplification',
-                'UDP Flood'
-              ].map((item, i) => (
-                <li key={i} className="flex items-center gap-2 text-sm text-text-primary">
-                  <div className="w-1.5 h-1.5 rounded-full bg-success" />
-                  {item}
-                </li>
-              ))}
-            </ul>
-            <div className="mt-6 pt-4 border-t border-border flex items-center justify-between text-[10px] text-text-tertiary uppercase font-bold tracking-tighter">
-              <span>Auto-refresh: 60s</span>
-              <span>Status: Ativo</span>
+          <div className="absolute bottom-0 left-0 right-0 p-6 bg-bg-secondary border-t border-border flex flex-col gap-2">
+            {selectedThreat?.status !== 'applied' && selectedThreat?.action === 'flowspec' && <Button className="w-full bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/20" onClick={() => setConfirmModal(selectedThreat)}>Aplicar FlowSpec</Button>}
+            <div className="grid grid-cols-2 gap-2">
+              <Button variant="outline" className="text-xs" onClick={() => updateStatus.mutate({ id: selectedThreat.id, status: 'acknowledged' })}>Reconhecer</Button>
+              <Button variant="outline" className="text-xs" onClick={() => updateStatus.mutate({ id: selectedThreat.id, status: 'ignored' })}>Ignorar</Button>
             </div>
           </div>
-        </Card>
-      ) : (
-        <div className="grid grid-cols-1 gap-4">
-          {filteredThreats.map((threat, index) => {
-            const Icon = getIcon(threat.type);
-            return (
-              <Card 
-                key={`${threat.src_ip}-${threat.dst_ip}-${threat.type}-${index}`}
-                className={clsx(
-                  "bg-bg-secondary border transition-all duration-300 cursor-pointer",
-                  getSeverityStyles(threat.severity, threat.mitigated)
-                )}
-                onClick={() => setSelectedThreat(threat)}
-              >
-                <CardHeader className="p-4 pb-2">
-                  <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                      <div className={clsx(
-                        "p-2 rounded-lg border",
-                        threat.severity === 'high' ? "bg-red-500/10 text-red-500 border-red-500/10" :
-                        threat.severity === 'medium' ? "bg-amber-500/10 text-amber-500 border-amber-500/10" :
-                        "bg-bg-primary text-text-secondary border-border"
-                      )}>
-                        <Icon size={20} />
-                      </div>
-                      <div>
-                        <div className="flex items-center gap-2">
-                          <CardTitle className="text-base font-bold">{threat.label}</CardTitle>
-                          {getSeverityBadge(threat.severity)}
-                          {threat.src_country && <Flag code={threat.src_country} size={18} />}
-                        </div>
-                      </div>
-                    </div>
-                    {threat.mitigated && (
-                      <Badge className="bg-purple-500/10 text-purple-500 border-purple-500/30 font-bold flex items-center gap-1 px-3 py-1">
-                        <ShieldCheck size={14} />
-                        MITIGADO
-                      </Badge>
-                    )}
-                  </div>
-                </CardHeader>
-                <CardContent className="p-4 pt-2">
-                  <div className="flex flex-col md:flex-row md:items-start justify-between gap-6 mt-2">
-                    <div className="flex-1 space-y-3">
-                      <div className="flex items-center gap-3 font-mono text-sm">
-                        {threat.src_ip ? (
-                          <>
-                            <span className="bg-bg-primary px-2 py-1 rounded border border-border">{threat.src_ip}</span>
-                            <ArrowRight size={16} className="text-text-secondary" />
-                          </>
-                        ) : null}
-                        <span className="bg-bg-primary px-2 py-1 rounded border border-border">{threat.dst_ip}</span>
-                      </div>
-
-                      <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-text-secondary">
-                        {threat.type === 'port_scan' && (
-                          <div className="flex flex-col gap-1">
-                            <div className="flex items-center gap-x-4 gap-y-2">
-                              <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.unique_ports}</span> portas únicas</span>
-                              <span className="w-1.5 h-1.5 rounded-full bg-border" />
-                              <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.flows}</span> flows</span>
-                            </div>
-                            <div className="flex items-center gap-x-4 gap-y-2 text-xs opacity-80">
-                              {threat.port_range_min && threat.port_range_max && (
-                                <span className="flex items-center gap-1.5">Faixa: <span className="font-bold">{threat.port_range_min}–{threat.port_range_max}</span></span>
-                              )}
-                              {threat.syn_flows && (
-                                <>
-                                  <span className="w-1 h-1 rounded-full bg-border" />
-                                  <span className="flex items-center gap-1.5"><span className="font-bold">{threat.syn_flows}</span> SYNs</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        )}
-                        {threat.type === 'syn_flood' && (
-                          <>
-                            <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.flows}</span> flows SYN</span>
-                            <span className="w-1.5 h-1.5 rounded-full bg-border" />
-                            <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.packets?.toLocaleString()}</span> pacotes</span>
-                          </>
-                        )}
-                        {(threat.type === 'dns_amplification' || threat.type === 'ntp_amplification') && (
-                          <>
-                            <span className="flex items-center gap-1.5">BPP: <span className="font-bold text-text-primary">{threat.bpp}</span> bytes</span>
-                            <span className="w-1.5 h-1.5 rounded-full bg-border" />
-                            <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.flows}</span> flows</span>
-                          </>
-                        )}
-                        {threat.type === 'udp_flood' && (
-                          <>
-                            <span className="flex items-center gap-1.5"><span className="font-bold text-text-primary">{threat.flows}</span> flows</span>
-                            <span className="w-1.5 h-1.5 rounded-full bg-border" />
-                            <span className="flex items-center gap-1.5">BPP: <span className="font-bold text-text-primary">{threat.bpp}</span></span>
-                          </>
-                        )}
-                      </div>
-
-                      <div className="flex items-center gap-2 text-xs text-text-secondary">
-                        <Clock size={12} className="text-primary" />
-                        <span className="font-medium">{formatRange(threat.first_seen, threat.last_seen)}</span>
-                      </div>
-
-                      {threat.mitigated && (
-                        <p className="text-xs text-text-secondary flex items-center gap-2">
-                          <Zap size={12} className="text-purple-500" />
-                          FlowSpec #{threat.flowspec_id} ativo · detectado em tempo real
-                        </p>
-                      )}
-                    </div>
-
-                    <div className="flex items-center gap-2 md:self-center" onClick={(e) => e.stopPropagation()}>
-                      {!threat.mitigated ? (
-                        <Button 
-                          size="sm" 
-                          variant="outline" 
-                          className="text-xs h-8 border-primary/30 text-primary hover:bg-primary/5 hover:border-primary"
-                          onClick={() => handleBlockClick(threat, index)}
-                          disabled={blockMutation.isPending}
-                        >
-                          {blockMutation.isPending ? 'Processando...' : 'Bloquear via FlowSpec'}
-                        </Button>
-                      ) : (
-                        <>
-                          <Button 
-                            size="sm" 
-                            variant="outline" 
-                            className="text-xs h-8 border-purple-500/30 text-purple-500 hover:bg-purple-500/5"
-                            onClick={() => navigate({ to: '/mitigation/bgp' })}
-                          >
-                            <ExternalLink size={14} className="mr-1" />
-                            Ver no BGP
-                          </Button>
-                          <Button 
-                            size="sm" 
-                            variant="ghost" 
-                            className="text-xs h-8 text-danger hover:bg-danger/5"
-                            onClick={() => threat.flowspec_id && removeMitigation(threat.flowspec_id)}
-                          >
-                            Remover mitigação
-                          </Button>
-                        </>
-                      )}
-                      {!threat.mitigated && (
-                        <Button 
-                          size="sm" 
-                          variant="ghost" 
-                          className="text-xs h-8 text-text-secondary hover:text-danger hover:bg-danger/5"
-                          onClick={() => ignoreMutation(threat)}
-                        >
-                          Ignorar
-                        </Button>
-                      )}
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            );
-          })}
-        </div>
-      )}
-
-      {/* Threat Detail Modal */}
-      <Sheet open={!!selectedThreat} onOpenChange={(open) => !open && setSelectedThreat(null)}>
-        <SheetContent className="sm:max-w-md bg-bg-secondary border-l border-border">
-          <SheetHeader className="text-left pb-4">
-            <SheetTitle className="flex items-center gap-2 text-xl font-bold">
-              {selectedThreat?.label} Detectada
-            </SheetTitle>
-          </SheetHeader>
-          
-          {selectedThreat && (
-            <div className="space-y-6 animate-in slide-in-from-right duration-300">
-              {/* Severity & Type */}
-              <div className={clsx(
-                "p-4 rounded-xl border flex items-center gap-3",
-                selectedThreat.severity === 'high' ? "bg-red-500/5 border-red-500/20 text-red-500" : 
-                selectedThreat.severity === 'medium' ? "bg-amber-500/5 border-amber-500/20 text-amber-500" :
-                "bg-blue-500/5 border-blue-500/20 text-blue-500"
-              )}>
-                <div className={clsx(
-                  "p-2 rounded-lg",
-                  selectedThreat.severity === 'high' ? "bg-red-500/10" : 
-                  selectedThreat.severity === 'medium' ? "bg-amber-500/10" :
-                  "bg-blue-500/10"
-                )}>
-                  <AlertTriangle size={24} />
-                </div>
-                <div>
-                  <div className="flex items-center gap-2">
-                    <span className="font-black uppercase tracking-wider text-xs">
-                      {selectedThreat.severity === 'high' ? '🔴 ALTA' : selectedThreat.severity === 'medium' ? '🟡 MÉDIO' : '🔵 BAIXA'}
-                    </span>
-                    <span className="font-bold">· {selectedThreat.label}</span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Source Info */}
-              <div className="space-y-4">
-                <div>
-                  <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                    <MapPin size={12} /> ORIGEM DO SCAN
-                  </h4>
-                  <div className="space-y-2">
-                    <p className="font-mono text-sm text-text-primary flex justify-between">
-                      <span className="text-text-secondary">IP:</span>
-                      <span className="font-bold">{selectedThreat.src_ip || 'Desconhecido'}</span>
-                    </p>
-                    {selectedThreat.src_country && (
-                      <p className="text-sm text-text-primary flex justify-between">
-                        <span className="text-text-secondary">País:</span>
-                        <span className="flex items-center gap-2 font-bold">
-                          <Flag code={selectedThreat.src_country} size={18} />
-                          {selectedThreat.src_country}
-                        </span>
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                <Separator className="bg-border/50" />
-
-                {/* Target Info */}
-                <div>
-                  <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                    <Target size={12} /> ALVO DO SCAN
-                  </h4>
-                  <p className="font-mono text-sm text-text-primary flex justify-between">
-                    <span className="text-text-secondary">IP:</span>
-                    <span className="font-bold">{selectedThreat.dst_ip}</span>
-                  </p>
-                </div>
-
-                <Separator className="bg-border/50" />
-
-                {/* Period Info */}
-                <div>
-                  <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                    <Clock size={12} /> PERÍODO DE ATIVIDADE
-                  </h4>
-                  <div className="space-y-2">
-                    <p className="text-sm text-text-primary flex justify-between">
-                      <span className="text-text-secondary">Início:</span>
-                      <span className="font-bold">
-                        {selectedThreat.first_seen ? (
-                          <>
-                            {selectedThreat.first_seen.slice(8, 10)}/{selectedThreat.first_seen.slice(5, 7)} {selectedThreat.first_seen.slice(11, 16)}
-                          </>
-                        ) : '–'}
-                      </span>
-                    </p>
-                    <p className="text-sm text-text-primary flex justify-between">
-                      <span className="text-text-secondary">Último:</span>
-                      <span className="font-bold">
-                        {selectedThreat.last_seen ? (
-                          <>
-                            {selectedThreat.last_seen.slice(8, 10)}/{selectedThreat.last_seen.slice(5, 7)} {selectedThreat.last_seen.slice(11, 16)}
-                          </>
-                        ) : 'Agora'}
-                      </span>
-                    </p>
-                    <p className="text-sm text-text-primary flex justify-between">
-                      <span className="text-text-secondary">Duração:</span>
-                      <span className="font-bold">
-                        {selectedThreat.first_seen ? formatRange(selectedThreat.first_seen, selectedThreat.last_seen).split('(')[1].replace(' ativo)', '') : '–'}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-
-                <Separator className="bg-border/50" />
-
-                {/* Behavior Info */}
-                <div>
-                  <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                    <Activity size={12} /> COMPORTAMENTO
-                  </h4>
-                  <div className="space-y-2">
-                    {selectedThreat.unique_ports && (
-                      <p className="text-sm text-text-primary flex justify-between">
-                        <span className="text-text-secondary">Portas únicas:</span>
-                        <span className="font-bold">{selectedThreat.unique_ports}</span>
-                      </p>
-                    )}
-                    {selectedThreat.type === 'port_scan' && selectedThreat.syn_flows && (
-                      <p className="text-sm text-text-primary flex justify-between">
-                        <span className="text-text-secondary">SYN packets:</span>
-                        <span className="font-bold">{selectedThreat.syn_flows}</span>
-                      </p>
-                    )}
-                    {selectedThreat.type === 'port_scan' && selectedThreat.port_range_min && (
-                      <p className="text-sm text-text-primary flex justify-between">
-                        <span className="text-text-secondary">Faixa de portas:</span>
-                        <span className="font-bold">{selectedThreat.port_range_min} – {selectedThreat.port_range_max}</span>
-                      </p>
-                    )}
-                    {selectedThreat.type === 'port_scan' && (
-                      <p className="text-sm text-text-primary flex justify-between">
-                        <span className="text-text-secondary">Tipo de scan:</span>
-                        <span className="font-bold">Vertical</span>
-                      </p>
-                    )}
-                    <p className="text-sm text-text-primary flex justify-between">
-                      <span className="text-text-secondary">Flows:</span>
-                      <span className="font-bold">{selectedThreat.flows?.toLocaleString()}</span>
-                    </p>
-                    <p className="text-sm text-text-primary flex justify-between">
-                      <span className="text-text-secondary">Protocolo:</span>
-                      <span className="font-bold uppercase">
-                        {selectedThreat.type === 'port_scan' || selectedThreat.type === 'syn_flood' ? 'TCP' : 'UDP'}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-
-                <Separator className="bg-border/50" />
-
-                {/* Interpretation */}
-                <div>
-                  <h4 className="text-[10px] font-bold text-text-secondary uppercase tracking-widest mb-2 flex items-center gap-1.5">
-                    <Info size={12} /> INTERPRETAÇÃO
-                  </h4>
-                  <div className="bg-bg-primary/50 p-4 rounded-lg border border-border/50">
-                    <p className="text-sm text-text-primary leading-relaxed">
-                      {getInterpretation(selectedThreat)}
-                    </p>
-                  </div>
-                </div>
-              </div>
-
-              <div className="pt-4 flex flex-col gap-3">
-                {!selectedThreat.mitigated ? (
-                  <>
-                    <Button 
-                      className="w-full font-bold gap-2 bg-primary hover:bg-primary/90"
-                      onClick={() => handleBlockClick(selectedThreat, filteredThreats.indexOf(selectedThreat))}
-                      disabled={blockMutation.isPending}
-                    >
-                      <Zap size={16} />
-                      {blockMutation.isPending ? 'Processando...' : 'Bloquear via FlowSpec'}
-                    </Button>
-                    <Button 
-                      variant="ghost" 
-                      className="w-full text-text-secondary hover:text-danger hover:bg-danger/5 font-bold"
-                      onClick={() => {
-                        ignoreMutation(selectedThreat);
-                        setSelectedThreat(null);
-                      }}
-                    >
-                      Ignorar
-                    </Button>
-                  </>
-                ) : (
-                  <div className="p-4 bg-success/5 border border-success/20 rounded-xl text-center">
-                    <div className="flex flex-col items-center gap-2 mb-3">
-                      <ShieldCheck size={32} className="text-success" />
-                      <p className="font-bold text-success">Mitigação Ativa</p>
-                      <p className="text-xs text-text-secondary">Uma regra FlowSpec está protegendo este alvo no momento.</p>
-                    </div>
-                    <div className="flex gap-2">
-                      <Button 
-                        variant="outline" 
-                        className="flex-1 text-xs border-purple-500/30 text-purple-500 hover:bg-purple-500/5"
-                        onClick={() => {
-                          setSelectedThreat(null);
-                          navigate({ to: '/mitigation/bgp' });
-                        }}
-                      >
-                        Ver no BGP
-                      </Button>
-                      <Button 
-                        variant="ghost" 
-                        className="flex-1 text-xs text-danger hover:bg-danger/5"
-                        onClick={() => {
-                          selectedThreat.flowspec_id && removeMitigation(selectedThreat.flowspec_id);
-                          setSelectedThreat(null);
-                        }}
-                      >
-                        Remover
-                      </Button>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </div>
-          )}
         </SheetContent>
       </Sheet>
 
-      {/* Block Confirmation Modal */}
-      <AlertDialog open={!!threatToBlock} onOpenChange={(open: boolean) => !open && setThreatToBlock(null)}>
-        <AlertDialogContent className="bg-bg-secondary border-border max-w-md">
-          <AlertDialogHeader>
-            <AlertDialogTitle className="flex items-center gap-2">
-              <Zap className="text-primary" size={20} />
-              Bloquear via FlowSpec
-            </AlertDialogTitle>
-            <div className="py-4 space-y-4">
-              <div className="p-3 bg-red-500/5 border border-red-500/10 rounded-lg">
-                <div className="flex items-center gap-2 mb-2">
-                  <div className="p-1.5 bg-red-500/10 rounded text-red-500">
-                    {threatToBlock && React.createElement(getIcon(threatToBlock.threat.type), { size: 16 })}
-                  </div>
-                  <span className="font-bold text-sm text-text-primary">{threatToBlock?.threat.label}</span>
-                </div>
-                <div className="font-mono text-xs text-text-secondary flex items-center gap-2">
-                  <span>{threatToBlock?.threat.src_ip}</span>
-                  <ArrowRight size={12} />
-                  <span>{threatToBlock?.threat.dst_ip}</span>
-                </div>
-                {threatToBlock?.threat.type === 'port_scan' && (
-                  <p className="text-[10px] text-text-secondary mt-1">{threatToBlock.threat.unique_ports} portas únicas</p>
-                )}
-              </div>
+      <Sheet open={showConfig} onOpenChange={setShowConfig}>
+        <SheetContent className="sm:max-w-md">
+          <SheetHeader><SheetTitle className="text-xl">Configuração do Detector</SheetTitle><SheetDescription>Ajuste os parâmetros da análise comportamental (detector_v3)</SheetDescription></SheetHeader>
+          {config && <div className="mt-8 space-y-8 pb-20 overflow-y-auto max-h-[calc(100vh-180px)] px-1">
+            <div className="flex items-center justify-between p-4 bg-bg-primary rounded-xl border border-border shadow-inner">
+              <div className="space-y-0.5"><Label className="text-base font-semibold">Detector ativo</Label><p className="text-[11px] text-text-secondary">Habilita/desabilita a análise em tempo real</p></div>
+              <Switch checked={config.enabled} onCheckedChange={(e) => setConfig({...config, enabled: e})} />
+            </div>
+            
+            <div className="space-y-5">
+              <div className="flex justify-between items-end"><Label className="text-sm font-semibold">Confiança mínima para alertar</Label><span className="text-xs font-mono bg-bg-primary px-2 py-1 rounded border border-border">{(config.min_conf_emit * 100).toFixed(0)}%</span></div>
+              <Slider value={[config.min_conf_emit * 100]} min={50} max={99} step={1} onValueChange={([v]) => setConfig({...config, min_conf_emit: v/100})} className="py-2" />
+            </div>
 
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Ação</label>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      type="button"
-                      onClick={() => setBlockAction('discard')}
-                      className={clsx(
-                        "flex flex-col items-center gap-1 p-2 rounded-lg border text-[10px] font-bold transition-all",
-                        blockAction === 'discard' 
-                          ? "bg-danger/10 border-danger/50 text-danger" 
-                          : "bg-bg-primary border-border text-text-secondary hover:border-border-hover"
-                      )}
-                    >
-                      <XCircle size={14} />
-                      Descartar
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => setBlockAction('rate-limit')}
-                      className={clsx(
-                        "flex flex-col items-center gap-1 p-2 rounded-lg border text-[10px] font-bold transition-all",
-                        blockAction === 'rate-limit' 
-                          ? "bg-warning/10 border-warning/50 text-warning" 
-                          : "bg-bg-primary border-border text-text-secondary hover:border-border-hover"
-                      )}
-                    >
-                      <Activity size={14} />
-                      Rate-Limit
-                    </button>
-                  </div>
-                </div>
+            <div className="space-y-5">
+              <div className="flex justify-between items-end"><Label className="text-sm font-semibold">Sugerir FlowSpec a partir de</Label><span className="text-xs font-mono bg-bg-primary px-2 py-1 rounded border border-border">{(config.min_conf_flowspec * 100).toFixed(0)}%</span></div>
+              <Slider value={[config.min_conf_flowspec * 100]} min={50} max={99} step={1} onValueChange={([v]) => setConfig({...config, min_conf_flowspec: v/100})} className="py-2" />
+            </div>
 
-                {blockAction === 'rate-limit' && (
-                  <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
-                    <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Limite de banda (Kbps)</label>
-                    <div className="flex items-center gap-2">
-                      <input
-                        type="number"
-                        min={1}
-                        className="flex-1 bg-bg-primary border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all text-sm text-text-primary"
-                        value={blockRateLimit}
-                        onChange={(e) => setBlockRateLimit(Number(e.target.value))}
-                      />
-                      <span className="text-xs font-bold text-text-secondary">Kbps</span>
-                    </div>
-                  </div>
-                )}
+            <div className="grid grid-cols-2 gap-4 pt-2">
+              <div className="space-y-2"><Label className="text-xs font-semibold text-text-secondary uppercase">Intervalo (seg)</Label><Input type="number" value={config.run_interval_seconds} onChange={e => setConfig({...config, run_interval_seconds: parseInt(e.target.value)})} className="bg-bg-primary" /></div>
+              <div className="space-y-2"><Label className="text-xs font-semibold text-text-secondary uppercase">Baseline (horas)</Label><Input type="number" value={config.baseline_hours} onChange={e => setConfig({...config, baseline_hours: parseInt(e.target.value)})} className="bg-bg-primary" /></div>
+            </div>
 
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Duração do bloqueio</label>
-                  <select
-                    className="w-full bg-bg-primary border border-border rounded-lg py-2 px-3 outline-none focus:ring-2 focus:ring-primary/50 transition-all text-sm text-text-primary appearance-none"
-                    value={ttlMinutes}
-                    onChange={(e) => setTtlMinutes(parseInt(e.target.value))}
-                  >
-                    <option value="5">5 minutos</option>
-                    <option value="10">10 minutos</option>
-                    <option value="30">30 minutos</option>
-                    <option value="60">1 hora</option>
-                    <option value="120">2 horas</option>
-                    <option value="360">6 horas</option>
-                    <option value="720">12 horas</option>
-                    <option value="1440">24 horas</option>
-                    <option value="0">Permanente</option>
-                  </select>
-                </div>
+            <div className="flex items-center justify-between pt-2">
+              <div className="space-y-0.5"><Label className="text-sm font-semibold">Auto-apply habilitado</Label><p className="text-[10px] text-text-secondary">Aplica mitigações críticas automaticamente</p></div>
+              <Switch checked={config.auto_apply_enabled} onCheckedChange={(e) => setConfig({...config, auto_apply_enabled: e})} />
+            </div>
+          </div>}
+          <div className="absolute bottom-0 left-0 right-0 p-6 bg-bg-secondary border-t border-border flex gap-3">
+            <Button variant="outline" className="flex-1" onClick={() => setShowConfig(false)}>Cancelar</Button>
+            <Button className="flex-1" onClick={() => saveConfig.mutate(config)}>Salvar Alterações</Button>
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      <Dialog open={!!confirmModal} onOpenChange={() => setConfirmModal(null)}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader><DialogTitle className="text-xl flex items-center gap-2"><Zap className="text-purple-500" size={20} /> Aplicar mitigação FlowSpec</DialogTitle><DialogDescription>Deseja aplicar a mitigação sugerida para o IP {confirmModal?.ip}?</DialogDescription></DialogHeader>
+          <div className="grid gap-6 py-4">
+            <div className="p-4 bg-purple-500/5 rounded-xl border border-purple-500/10 space-y-3 shadow-inner">
+              <div className="grid grid-cols-2 gap-y-2 text-xs">
+                <span className="text-text-secondary">Destino:</span><span className="font-mono font-bold text-right">{confirmModal?.flowspec_suggestion?.match?.destination}</span>
+                <span className="text-text-secondary">Ação:</span><span className="font-mono font-bold text-right uppercase text-purple-600 dark:text-purple-400">Rate-limit</span>
+                <span className="text-text-secondary">Banda limite:</span><span className="font-mono font-bold text-right">{(confirmModal?.flowspec_suggestion?.then?.rate_limit_bps / 1e6).toFixed(0)} Mbps</span>
+                <span className="text-text-secondary">TTL (Expiração):</span><span className="font-mono font-bold text-right">{Math.floor(confirmModal?.flowspec_suggestion?.ttl_seconds / 60)} min</span>
               </div>
             </div>
-          </AlertDialogHeader>
-          <AlertDialogFooter>
-            <AlertDialogCancel className="bg-transparent border-border hover:bg-bg-primary">Cancelar</AlertDialogCancel>
-            <AlertDialogAction
-              className="bg-primary hover:bg-primary/90 text-white font-bold"
-              disabled={blockMutation.isPending}
-              onClick={() => threatToBlock && blockMutation.mutate({ 
-                ...threatToBlock, 
-                ttl_minutes: ttlMinutes,
-                action: blockAction,
-                rate_limit_kbps: blockRateLimit
-              })}
-            >
-              {blockMutation.isPending ? 'Aplicando...' : '✅ Confirmar'}
-            </AlertDialogAction>
-          </AlertDialogFooter>
-        </AlertDialogContent>
-      </AlertDialog>
+            <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900/30">
+              <Info className="text-blue-500 shrink-0 mt-0.5" size={16} />
+              <p className="text-[11px] text-blue-700 dark:text-blue-400 leading-relaxed font-medium">Esta ação injetará a regra via BGP (ExaBGP) no roteador Huawei NE-20. A mitigação será removida automaticamente após o TTL.</p>
+            </div>
+          </div>
+          <DialogFooter className="gap-2 sm:gap-0">
+            <Button variant="outline" className="flex-1" onClick={() => setConfirmModal(null)}>Cancelar</Button>
+            <Button className="flex-1 bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/20" onClick={() => applyMitigation.mutate({ id: confirmModal.id, action: 'rate-limit', rate_limit_kbps: confirmModal.flowspec_suggestion.then.rate_limit_bps/1000, ttl_minutes: Math.floor(confirmModal.flowspec_suggestion.ttl_seconds / 60) })}>Aplicar mitigação</Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

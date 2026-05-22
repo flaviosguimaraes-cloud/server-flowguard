@@ -31,8 +31,17 @@ import { useUI } from '../contexts/UIContext';
     staleTime: 60000,
     enabled: !!localStorage.getItem('access_token'),
   });
+   const { data: threatsSummary } = useQuery({
+    queryKey: ['threats-summary'],
+    queryFn: () => api.get('/api/threats/summary').then(r => r.data),
+    refetchInterval: 30000,
+    enabled: !!localStorage.getItem('access_token'),
+  });
+
+  const activeThreats = threatsSummary?.active_total || 0;
 
   const downServices = useMemo(() => {
+
     const services = sysStatus?.services || {};
     return Object.entries(services).filter(([_, status]) => status !== 'active');
   }, [sysStatus?.services]);
@@ -174,6 +183,10 @@ import { useUI } from '../contexts/UIContext';
                   <div className="flex items-center gap-3">
                     <item.icon size={18} className={clsx("transition-colors", groupActive ? "text-primary" : "")} />
                     {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
+                    {collapsed && item.id === 'mitigation' && activeThreats > 0 && (
+                      <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-danger animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+                    )}
+
                   </div>
                   {!collapsed && (isOpen ? <ChevronDown size={14} opacity={0.5} /> : <ChevronRight size={14} opacity={0.5} />)}
                 </button>
@@ -185,13 +198,21 @@ import { useUI } from '../contexts/UIContext';
                         key={child.path} 
                         to={child.path} 
                         className={clsx(
-                          "flex items-center gap-3 py-1.5 px-3 transition-all duration-150 rounded-lg text-sm font-medium",
+                          "flex items-center justify-between py-1.5 px-3 transition-all duration-150 rounded-lg text-sm font-medium",
                           isActive(child.path) ? "text-primary bg-primary/5" : "text-text-secondary hover:text-text-primary hover:bg-bg-primary/50"
                         )}
                       >
-                        <child.icon size={14} />
-                        <span>{child.label}</span>
+                        <div className="flex items-center gap-3">
+                          <child.icon size={14} />
+                          <span>{child.label}</span>
+                        </div>
+                        {child.path === '/mitigation/threats' && activeThreats > 0 && (
+                          <span className="flex items-center justify-center text-[10px] font-bold text-white bg-danger rounded-full min-w-[16px] h-[16px] px-1">
+                            {activeThreats}
+                          </span>
+                        )}
                       </Link>
+
                     ))}
                   </div>
                 )}
