@@ -2,32 +2,33 @@ import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import { useTranslation } from '../../hooks/useTranslation';
-import { Shield, Flame, Bolt, ShieldCheck, RefreshCw, AlertTriangle, Search, Clock, Zap, X, Info, Settings2, LayoutGrid, ArrowRight, MousePointer2, ExternalLink, MapPin, Target, CheckCircle, XCircle } from 'lucide-react';
+import { 
+  Shield, Flame, Download, Upload, Clock, 
+  ExternalLink, Zap, X, Info, Settings2, 
+  ArrowRight, MapPin, Activity, Filter, 
+  Search, RefreshCw, AlertTriangle, ChevronRight
+} from 'lucide-react';
 import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '../../components/ui/select';
 import { Input } from '../../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Skeleton } from '../../components/Skeleton';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '../../components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '../../components/ui/sheet';
 import { Separator } from '../../components/ui/separator';
 import { toast } from 'sonner';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../../components/ui/dialog';
-import { Switch } from "../../components/ui/switch";
-import { Label } from "../../components/ui/label";
-import { Slider } from "../../components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../components/ui/tooltip";
 import { Progress } from "../../components/ui/progress";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "../../components/ui/tabs";
+import { Flag } from '../../components/Flag';
+import { clsx } from 'clsx';
 
 export default function Threats() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
-  const [filters, setFilters] = useState({ status: 'active', severity: 'all', attackType: 'all', search: '' });
+  const [searchTerm, setSearchTerm] = useState('');
   const [selectedThreat, setSelectedThreat] = useState<any>(null);
-  const [confirmModal, setConfirmModal] = useState<any>(null);
-  const [showConfig, setShowConfig] = useState(false);
-  const [config, setConfig] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState<string>('download');
 
   const { data: summary } = useQuery({ 
     queryKey: ['threats-summary'], 
@@ -36,305 +37,461 @@ export default function Threats() {
   });
   
   const { data: threatsData, isLoading: threatsLoading, refetch } = useQuery({
-    queryKey: ['threats', filters],
-    queryFn: async () => {
-      const params = new URLSearchParams();
-      
-      // Mapeamento de status para active_only se necessário
-      if (filters.status === 'active') {
-        params.append('active_only', 'true');
-      } else if (filters.status !== 'all') {
-        params.append('status', filters.status);
-      }
-      
-      if (filters.severity !== 'all') params.append('severity', filters.severity);
-      if (filters.attackType !== 'all') params.append('attack_type', filters.attackType);
-      if (filters.search) params.append('ip', filters.search);
-      
-      const r = await api.get('/api/threats?' + params.toString());
-      return r.data;
-    },
+    queryKey: ['threats-active'],
+    queryFn: () => api.get('/api/threats?active_only=true').then(r => r.data),
     refetchInterval: 30000,
   });
 
-  // Garantir que temos um array de ameaças, independente da estrutura da API
   const threats = useMemo(() => {
     if (!threatsData) return [];
-    if (Array.isArray(threatsData)) return threatsData;
-    return threatsData.items || threatsData.threats || threatsData.data || [];
+    const items = Array.isArray(threatsData) ? threatsData : (threatsData.items || []);
+    return items.filter((t: any) => 
+      t.attack_type === 'ANOMALIA_DOWNLOAD' || t.attack_type === 'ANOMALIA_UPLOAD'
+    );
   }, [threatsData]);
 
-  const { data: detectorConfig } = useQuery({ 
-    queryKey: ['detector-config'], 
-    queryFn: () => api.get('/api/threats/config/detector').then(r => r.data), 
-    enabled: showConfig 
-  });
+  const downloadThreats = useMemo(() => 
+    threats.filter((t: any) => t.attack_type === 'ANOMALIA_DOWNLOAD')
+      .sort((a: any, b: any) => b.fator_anomalia - a.fator_anomalia), 
+  [threats]);
 
-  useEffect(() => { 
-    if (detectorConfig) setConfig(detectorConfig); 
-  }, [detectorConfig]);
+  const uploadThreats = useMemo(() => 
+    threats.filter((t: any) => t.attack_type === 'ANOMALIA_UPLOAD')
+      .sort((a: any, b: any) => b.fator_anomalia - a.fator_anomalia), 
+  [threats]);
+
+  // Define a aba ativa inicial baseada na contagem
+  useEffect(() => {
+    if (!activeTab && threats.length > 0) {
+      if (uploadThreats.length > downloadThreats.length) {
+        setActiveTab('upload');
+      } else {
+        setActiveTab('download');
+      }
+    }
+  }, [threats.length, downloadThreats.length, uploadThreats.length, activeTab]);
 
   const updateStatus = useMutation({
     mutationFn: (data: { id: number, status: string }) => api.patch(`/api/threats/${data.id}/status`, { status: data.status }),
     onSuccess: () => { 
       toast.success('Status atualizado'); 
-      queryClient.invalidateQueries({ queryKey: ['threats'] }); 
+      queryClient.invalidateQueries({ queryKey: ['threats-active'] }); 
+      queryClient.invalidateQueries({ queryKey: ['threats-summary'] });
       setSelectedThreat(null); 
     }
   });
 
-  const applyMitigation = useMutation({
-    mutationFn: (data: any) => api.post(`/api/threats/${data.id}/apply`, data),
-    onSuccess: () => { 
-      toast.success('FlowSpec aplicado com sucesso'); 
-      queryClient.invalidateQueries({ queryKey: ['threats'] }); 
-      setConfirmModal(null); 
-      setSelectedThreat(null); 
-    }
-  });
-
-  const saveConfig = useMutation({
-    mutationFn: (c: any) => api.put('/api/threats/config/detector', c),
-    onSuccess: () => { 
-      toast.success('Configuração salva'); 
-      setShowConfig(false); 
-      queryClient.invalidateQueries({ queryKey: ['detector-config'] });
-    }
-  });
-
-  const getAttackTypeBadge = (type: string) => {
-    if (!type) return null;
-    const attackType = type.toUpperCase();
-    let color = "bg-gray-500/10 text-gray-500 border-gray-500/20";
-    if (attackType.includes('ACK_FLOOD')) color = "bg-purple-500/10 text-purple-500 border-purple-500/20";
-    else if (attackType.includes('SYN_FLOOD')) color = "bg-red-500/10 text-red-500 border-red-500/20";
-    else if (attackType.includes('UDP_FLOOD') || attackType.includes('UDP_AMPLIFICATION')) color = "bg-orange-500/10 text-orange-500 border-orange-500/20";
-    else if (attackType.includes('PORT_SCAN')) color = "bg-blue-500/10 text-blue-500 border-blue-500/20";
-    else if (attackType.includes('BRUTE_FORCE')) color = "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
-    else if (attackType.includes('LOW_VOLUME_PROBE')) color = "bg-gray-500/10 text-gray-500 border-gray-500/20";
-    return <Badge className={color}>{type}</Badge>;
-  };
-
-  const getConfidenceColor = (conf: number) => {
-    if (conf >= 0.95) return "bg-red-500";
-    if (conf >= 0.88) return "bg-orange-500";
-    if (conf >= 0.75) return "bg-amber-500";
-    return "bg-gray-500";
+  const formatMbps = (mbps: number) => {
+    if (!mbps) return '0 Mbps';
+    if (mbps >= 1000) return `${(mbps / 1000).toFixed(1)} Gbps`;
+    return `${mbps.toFixed(0)} Mbps`;
   };
 
   const timeAgo = (date: string) => {
     if (!date) return '—';
     const diff = Date.now() - new Date(date).getTime();
-    const mins = Math.floor(diff / 60000);
-    if (mins < 60) return `há ${mins} min`;
+    const secs = Math.floor(diff / 1000);
+    if (secs < 60) return `há ${secs}s`;
+    const mins = Math.floor(secs / 60);
+    if (mins < 60) return `há ${mins}m`;
     const hrs = Math.floor(mins / 60);
-    return `há ${hrs} h`;
+    return `há ${hrs}h`;
   };
 
-  const getStatusLabel = (status: string) => {
-    switch (status) {
-      case 'new': return { label: 'Nova', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' };
-      case 'acknowledged': return { label: 'Analisando', color: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' };
-      case 'applied': return { label: 'Aplicada', color: 'bg-green-500/10 text-green-500 border-green-500/20' };
-      case 'ignored': return { label: 'Ignorada', color: 'bg-gray-500/10 text-gray-500 border-gray-500/20' };
-      case 'expired': return { label: 'Expirada', color: 'bg-gray-500/5 text-gray-400 border-gray-500/10 opacity-60' };
-      default: return { label: status, color: '' };
-    }
+  const getFatorBadge = (fator: number) => {
+    const color = fator >= 5 ? 'text-red-500 border-red-500/20 bg-red-500/5' : 
+                  fator >= 3 ? 'text-yellow-600 border-yellow-600/20 bg-yellow-600/5' : 
+                  'text-blue-500 border-blue-500/20 bg-blue-500/5';
+    return <Badge variant="outline" className={clsx("font-mono", color)}>{fator.toFixed(1)}x</Badge>;
   };
+
+  const getSeverityBadge = (sev: string) => {
+    const colors: any = {
+      critical: 'text-red-600 border-red-600/20 bg-red-600/10',
+      high: 'text-orange-600 border-orange-600/20 bg-orange-600/10',
+      medium: 'text-yellow-600 border-yellow-600/20 bg-yellow-600/10',
+      low: 'text-blue-600 border-blue-600/20 bg-blue-600/10'
+    };
+    return <Badge variant="outline" className={clsx("uppercase text-[10px] font-bold", colors[sev] || 'text-gray-500 border-gray-500/20')}>{sev}</Badge>;
+  };
+
+  const getStatusBadge = (status: string) => {
+    const labels: any = {
+      new: { label: 'Nova', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
+      acknowledged: { label: 'Analisando', color: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' },
+      ignored: { label: 'Ignorada', color: 'bg-gray-500/10 text-gray-500 border-gray-500/20' }
+    };
+    const s = labels[status] || { label: status, color: '' };
+    return <Badge className={clsx(s.color, "text-[10px]")}>{s.label}</Badge>;
+  };
+
+  const filteredDownload = downloadThreats.filter(t => t.ip.includes(searchTerm));
+  const filteredUpload = uploadThreats.filter(t => t.ip.includes(searchTerm));
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl font-bold tracking-tight">Ameaças</h1>
-          <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-bold uppercase text-[10px]">Detector v3</Badge>
+          <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-bold uppercase text-[10px]">Detector v2</Badge>
         </div>
-        <Button variant="outline" size="sm" onClick={() => setShowConfig(true)}>
-          <Settings2 size={16} className="mr-2" /> Configuração
+        <Button variant="outline" size="sm" onClick={() => refetch()}>
+          <RefreshCw size={16} className={clsx("mr-2", threatsLoading && "animate-spin")} /> Atualizar
         </Button>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <Card><CardContent className="p-4 flex items-center gap-4"><div className="p-3 bg-gray-500/10 text-gray-500 rounded-xl"><Shield size={24} /></div><div><p className="text-xs font-semibold uppercase text-gray-500">Ameaças Ativas</p><p className="text-2xl font-bold">{summary?.active_total || 0}</p></div></CardContent></Card>
-        <Card><CardContent className="p-4 flex items-center gap-4"><div className="p-3 bg-red-500/10 text-red-500 rounded-xl"><Flame size={24} /></div><div><p className="text-xs font-semibold uppercase text-gray-500">Críticas / Altas</p><p className="text-2xl font-bold">{(summary?.critical_count || 0) + (summary?.high_count || 0)}</p></div></CardContent></Card>
-        <Card><CardContent className="p-4 flex items-center gap-4"><div className="p-3 bg-purple-500/10 text-purple-500 rounded-xl"><Bolt size={24} /></div><div><p className="text-xs font-semibold uppercase text-gray-500">FlowSpec sugerido</p><p className="text-2xl font-bold">{summary?.flowspec_suggested || 0}</p></div></CardContent></Card>
-        <Card><CardContent className="p-4 flex items-center gap-4"><div className="p-3 bg-green-500/10 text-green-500 rounded-xl"><ShieldCheck size={24} /></div><div><p className="text-xs font-semibold uppercase text-gray-500">Aplicadas (24h)</p><p className="text-2xl font-bold">{summary?.applied_24h || 0}</p></div></CardContent></Card>
+        <Card className="bg-bg-secondary border-border shadow-sm">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="p-3 bg-gray-500/10 text-gray-500 rounded-xl"><Activity size={24} /></div>
+            <div>
+              <p className="text-[10px] font-bold uppercase text-text-secondary tracking-wider">Anomalias Ativas</p>
+              <p className="text-2xl font-bold text-text-primary">{summary?.active_total || 0}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-bg-secondary border-border shadow-sm">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="p-3 bg-red-500/10 text-red-500 rounded-xl"><Flame size={24} /></div>
+            <div>
+              <p className="text-[10px] font-bold uppercase text-red-500 tracking-wider">Alta / Crítica</p>
+              <p className="text-2xl font-bold text-red-500">{(summary?.high_count || 0) + (summary?.critical_count || 0)}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-bg-secondary border-border shadow-sm">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="p-3 bg-blue-500/10 text-blue-500 rounded-xl"><Download size={24} /></div>
+            <div>
+              <p className="text-[10px] font-bold uppercase text-blue-500 tracking-wider">Download Anômalo</p>
+              <p className="text-2xl font-bold text-blue-500">{downloadThreats.length}</p>
+            </div>
+          </CardContent>
+        </Card>
+        <Card className="bg-bg-secondary border-border shadow-sm">
+          <CardContent className="p-4 flex items-center gap-4">
+            <div className="p-3 bg-orange-500/10 text-orange-500 rounded-xl"><Upload size={24} /></div>
+            <div>
+              <p className="text-[10px] font-bold uppercase text-orange-500 tracking-wider">Upload Anômalo</p>
+              <p className="text-2xl font-bold text-orange-500">{uploadThreats.length}</p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
-        <Select value={filters.status} onValueChange={(v) => setFilters(f => ({ ...f, status: v }))}>
-          <SelectTrigger className="w-[150px] bg-bg-secondary"><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="all">Todas</SelectItem><SelectItem value="active">Ativas</SelectItem><SelectItem value="acknowledged">Analisando</SelectItem><SelectItem value="applied">Aplicadas</SelectItem><SelectItem value="ignored">Ignoradas</SelectItem></SelectContent>
-        </Select>
-        <Select value={filters.severity} onValueChange={(v) => setFilters(f => ({ ...f, severity: v }))}>
-          <SelectTrigger className="w-[150px] bg-bg-secondary"><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="all">Todas Severidades</SelectItem><SelectItem value="critical">Critical</SelectItem><SelectItem value="high">High</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="low">Low</SelectItem></SelectContent>
-        </Select>
-        <Input placeholder="Buscar IP..." className="w-[200px] bg-bg-secondary" value={filters.search} onChange={e => setFilters(f => ({...f, search: e.target.value}))} />
-        <Button variant="outline" size="icon" onClick={() => refetch()}><RefreshCw size={16} /></Button>
+      <div className="flex items-center gap-2">
+        <div className="relative flex-1 max-w-sm">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
+          <Input 
+            placeholder="Buscar IP..." 
+            className="pl-9 bg-bg-secondary border-border" 
+            value={searchTerm} 
+            onChange={e => setSearchTerm(e.target.value)} 
+          />
+        </div>
       </div>
 
-      <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden shadow-sm">
-        <Table>
-          <TableHeader><TableRow><TableHead>IP</TableHead><TableHead>Tipo</TableHead><TableHead>Protocolo/Porta</TableHead><TableHead>Confiança</TableHead><TableHead>Severidade</TableHead><TableHead>Persistência</TableHead><TableHead>Status</TableHead><TableHead>Detectada</TableHead><TableHead>Ações</TableHead></TableRow></TableHeader>
-          <TableBody>
-            {threatsLoading ? [...Array(5)].map((_, i) => <TableRow key={i}><TableCell colSpan={9}><Skeleton className="h-10 w-full" /></TableCell></TableRow>) : 
-              threats.length === 0 ? <TableRow><TableCell colSpan={9} className="text-center py-10 text-text-secondary">Nenhuma ameaça encontrada</TableCell></TableRow> :
-              threats.map((t: any) => {
-              const status = getStatusLabel(t.status);
-              return (
-                <TableRow key={t.id} className={`cursor-pointer hover:bg-bg-primary transition-colors ${t.severity === 'critical' ? 'border-l-4 border-l-red-500' : ''} ${t.status === 'applied' || t.status === 'expired' ? 'opacity-60' : ''}`} onClick={() => setSelectedThreat(t)}>
-                  <TableCell className="font-mono font-medium">{t.ip}</TableCell>
-                  <TableCell>{getAttackTypeBadge(t.attack_type)}</TableCell>
-                  <TableCell className="font-mono text-[10px] uppercase text-text-secondary">{t.protocol} / {t.dst_port || 'múltiplas'}</TableCell>
-                  <TableCell className="w-28">
-                    <div className="space-y-1">
-                      <Progress value={t.confidence * 100} className="h-1" />
-                      <span className="text-[10px] text-text-secondary">{(t.confidence * 100).toFixed(0)}%</span>
-                    </div>
-                  </TableCell>
-                  <TableCell><Badge variant="outline" className={t.severity === 'critical' ? 'text-red-500 border-red-500/20 uppercase text-[10px]' : t.severity === 'high' ? 'text-orange-500 border-orange-500/20 uppercase text-[10px]' : 'uppercase text-[10px]'}>{t.severity}</Badge></TableCell>
-                  <TableCell>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild><div className="flex items-center gap-1.5 text-text-secondary text-[11px]"><LayoutGrid size={12} />{t.persistence_windows || 1} janelas</div></TooltipTrigger>
-                        <TooltipContent><p className="text-[11px]">Detectado em {t.persistence_windows || 1} ciclos consecutivos de 60s</p></TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
-                  </TableCell>
-                  <TableCell><Badge className={status.color + " text-[10px]"}>{status.label}</Badge></TableCell>
-                  <TableCell className="text-[10px] text-text-secondary">{timeAgo(t.created_at)}</TableCell>
-                  <TableCell onClick={e => e.stopPropagation()} className="space-x-1">
-                    {(t.status === 'new' || t.status === 'acknowledged') && t.action === 'flowspec' && <Button size="sm" className="bg-purple-600 hover:bg-purple-700 h-7 text-[10px] px-2" onClick={() => setConfirmModal(t)}><Zap size={12} className="mr-1" /> Aplicar</Button>}
-                  </TableCell>
-                </TableRow>
-              );
-            })}
-          </TableBody>
-        </Table>
-      </div>
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+        <TabsList className="bg-bg-secondary border border-border p-1 gap-1">
+          <TabsTrigger value="download" className="gap-2 data-[state=active]:bg-blue-500/10 data-[state=active]:text-blue-500">
+            <Download size={14} /> Download <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">{downloadThreats.length}</Badge>
+          </TabsTrigger>
+          <TabsTrigger value="upload" className="gap-2 data-[state=active]:bg-orange-500/10 data-[state=active]:text-orange-500">
+            <Upload size={14} /> Upload <Badge variant="secondary" className="ml-1 h-5 px-1.5 text-[10px]">{uploadThreats.length}</Badge>
+          </TabsTrigger>
+        </TabsList>
 
-      <Sheet open={!!selectedThreat} onOpenChange={() => setSelectedThreat(null)}>
-        <SheetContent className="sm:max-w-md overflow-y-auto">
-          <SheetHeader><SheetTitle className="text-xl">Detalhes da Ameaça</SheetTitle><SheetDescription className="font-mono">{selectedThreat?.ip}</SheetDescription></SheetHeader>
-          <div className="mt-6 space-y-6 pb-20">
-            <div className="space-y-3">
-              <h4 className="text-sm font-semibold flex items-center gap-2"><Info size={16} /> Diagnóstico</h4>
-              <div className="p-4 bg-bg-primary border border-border rounded-lg shadow-inner"><p className="text-xs font-mono leading-relaxed text-text-primary whitespace-pre-wrap">{selectedThreat?.reasoning}</p></div>
-              <div className="grid grid-cols-2 gap-2 text-[11px]">
-                {selectedThreat?.evidence && Object.entries(selectedThreat.evidence).map(([k, v]: any) => (
-                  <div key={k} className="p-2 bg-bg-primary/50 border border-border/40 rounded flex justify-between"><span className="text-text-secondary">{k}</span><span className="font-mono font-medium">{typeof v === 'number' ? v.toFixed(k.includes('ratio') ? 4 : 0) : String(v)}</span></div>
-                ))}
-              </div>
-              <div className="flex items-center gap-2 text-xs text-text-secondary px-1"><Clock size={14} /> Detectado em {selectedThreat?.persistence_windows || 1} janelas consecutivas de 60s</div>
-            </div>
-            
-            {selectedThreat?.flowspec_suggestion && (
-              <>
-                <Separator />
-                <div className="space-y-3">
-                  <h4 className="text-sm font-semibold flex items-center gap-2 text-purple-500"><Zap size={16} /> Regra FlowSpec sugerida</h4>
-                  <div className="text-xs space-y-2 p-4 bg-purple-500/5 border border-purple-500/10 rounded-lg shadow-inner">
-                    <div className="flex justify-between"><span>Destino:</span><span className="font-mono font-medium">{selectedThreat.flowspec_suggestion.match?.destination}</span></div>
-                    <div className="flex justify-between uppercase"><span>Protocolo:</span><span className="font-mono font-medium">{selectedThreat.flowspec_suggestion.match?.protocol}</span></div>
-                    <div className="flex justify-between uppercase"><span>Porta destino:</span><span className="font-mono font-medium">{selectedThreat.flowspec_suggestion.match?.destination_port || 'múltiplas'}</span></div>
-                    {selectedThreat.flowspec_suggestion.match?.tcp_flags && <div className="flex justify-between uppercase"><span>Flags TCP:</span><span className="font-mono font-medium">{selectedThreat.flowspec_suggestion.match.tcp_flags}</span></div>}
-                    <div className="flex justify-between"><span>Ação:</span><span className="font-mono font-medium">Rate-limit {(selectedThreat.flowspec_suggestion.then?.rate_limit_bps / 1e6).toFixed(0)} Mbps</span></div>
-                    <div className="flex justify-between"><span>TTL sugerido:</span><span className="font-mono font-medium">{Math.floor((selectedThreat.flowspec_suggestion.ttl_seconds || 600) / 60)} minutos</span></div>
-                  </div>
-                  <div className="flex items-start gap-2 p-2 bg-amber-500/5 border border-amber-500/10 rounded text-[10px] text-amber-600 dark:text-amber-500">
-                    <AlertTriangle size={14} className="shrink-0 mt-0.5" /> Sugestão do detector. Valide o impacto antes de aplicar.
-                  </div>
-                </div>
-              </>
-            )}
-
-            {selectedThreat?.also_detected?.length > 0 && (
-              <>
-                <Separator />
-                <div className="space-y-3">
-                  <h4 className="text-sm font-semibold">Também detectado</h4>
-                  <div className="space-y-1">
-                    {selectedThreat.also_detected.map((d: any, i: number) => (
-                      <div key={i} className="flex items-center justify-between p-2 bg-bg-primary/30 rounded text-xs">
-                        <div className="flex items-center gap-2"><span className="font-medium">{d.attack_type}</span><Badge variant="outline" className="text-[10px] px-1 h-4">{(d.confidence * 100).toFixed(0)}%</Badge></div>
-                        <span className="text-text-secondary italic">{d.action}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </>
-            )}
+        <TabsContent value="download" className="mt-4 space-y-4">
+          <div className="flex flex-col gap-1">
+            <h3 className="text-sm font-semibold text-text-primary">Download Anômalo</h3>
+            <p className="text-xs text-text-secondary">Possíveis ataques vindos da internet para nossos clientes</p>
           </div>
-          <div className="absolute bottom-0 left-0 right-0 p-6 bg-bg-secondary border-t border-border flex flex-col gap-2">
-            {selectedThreat?.status !== 'applied' && selectedThreat?.action === 'flowspec' && <Button className="w-full bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/20" onClick={() => setConfirmModal(selectedThreat)}>Aplicar FlowSpec</Button>}
-            <div className="grid grid-cols-2 gap-2">
-              <Button variant="outline" className="text-xs" onClick={() => updateStatus.mutate({ id: selectedThreat.id, status: 'acknowledged' })}>Reconhecer</Button>
-              <Button variant="outline" className="text-xs" onClick={() => updateStatus.mutate({ id: selectedThreat.id, status: 'ignored' })}>Ignorar</Button>
-            </div>
+          <ThreatTable threats={filteredDownload} onSelect={setSelectedThreat} type="download" />
+        </TabsContent>
+
+        <TabsContent value="upload" className="mt-4 space-y-4">
+          <div className="flex flex-col gap-1">
+            <h3 className="text-sm font-semibold text-text-primary">Upload Anômalo</h3>
+            <p className="text-xs text-text-secondary">Possíveis clientes infectados gerando tráfego para a internet</p>
           </div>
-        </SheetContent>
-      </Sheet>
+          <ThreatTable threats={filteredUpload} onSelect={setSelectedThreat} type="upload" />
+        </TabsContent>
+      </Tabs>
 
-      <Sheet open={showConfig} onOpenChange={setShowConfig}>
-        <SheetContent className="sm:max-w-md">
-          <SheetHeader><SheetTitle className="text-xl">Configuração do Detector</SheetTitle><SheetDescription>Ajuste os parâmetros da análise comportamental (detector_v3)</SheetDescription></SheetHeader>
-          {config && <div className="mt-8 space-y-8 pb-20 overflow-y-auto max-h-[calc(100vh-180px)] px-1">
-            <div className="flex items-center justify-between p-4 bg-bg-primary rounded-xl border border-border shadow-inner">
-              <div className="space-y-0.5"><Label className="text-base font-semibold">Detector ativo</Label><p className="text-[11px] text-text-secondary">Habilita/desabilita a análise em tempo real</p></div>
-              <Switch checked={config.enabled} onCheckedChange={(e) => setConfig({...config, enabled: e})} />
-            </div>
-            
-            <div className="space-y-5">
-              <div className="flex justify-between items-end"><Label className="text-sm font-semibold">Confiança mínima para alertar</Label><span className="text-xs font-mono bg-bg-primary px-2 py-1 rounded border border-border">{(config.min_conf_emit * 100).toFixed(0)}%</span></div>
-              <Slider value={[config.min_conf_emit * 100]} min={50} max={99} step={1} onValueChange={([v]) => setConfig({...config, min_conf_emit: v/100})} className="py-2" />
-            </div>
-
-            <div className="space-y-5">
-              <div className="flex justify-between items-end"><Label className="text-sm font-semibold">Sugerir FlowSpec a partir de</Label><span className="text-xs font-mono bg-bg-primary px-2 py-1 rounded border border-border">{(config.min_conf_flowspec * 100).toFixed(0)}%</span></div>
-              <Slider value={[config.min_conf_flowspec * 100]} min={50} max={99} step={1} onValueChange={([v]) => setConfig({...config, min_conf_flowspec: v/100})} className="py-2" />
-            </div>
-
-            <div className="grid grid-cols-2 gap-4 pt-2">
-              <div className="space-y-2"><Label className="text-xs font-semibold text-text-secondary uppercase">Intervalo (seg)</Label><Input type="number" value={config.run_interval_seconds} onChange={e => setConfig({...config, run_interval_seconds: parseInt(e.target.value)})} className="bg-bg-primary" /></div>
-              <div className="space-y-2"><Label className="text-xs font-semibold text-text-secondary uppercase">Baseline (horas)</Label><Input type="number" value={config.baseline_hours} onChange={e => setConfig({...config, baseline_hours: parseInt(e.target.value)})} className="bg-bg-primary" /></div>
-            </div>
-
-            <div className="flex items-center justify-between pt-2">
-              <div className="space-y-0.5"><Label className="text-sm font-semibold">Auto-apply habilitado</Label><p className="text-[10px] text-text-secondary">Aplica mitigações críticas automaticamente</p></div>
-              <Switch checked={config.auto_apply_enabled} onCheckedChange={(e) => setConfig({...config, auto_apply_enabled: e})} />
-            </div>
-          </div>}
-          <div className="absolute bottom-0 left-0 right-0 p-6 bg-bg-secondary border-t border-border flex gap-3">
-            <Button variant="outline" className="flex-1" onClick={() => setShowConfig(false)}>Cancelar</Button>
-            <Button className="flex-1" onClick={() => saveConfig.mutate(config)}>Salvar Alterações</Button>
-          </div>
-        </SheetContent>
-      </Sheet>
-
-      <Dialog open={!!confirmModal} onOpenChange={() => setConfirmModal(null)}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader><DialogTitle className="text-xl flex items-center gap-2"><Zap className="text-purple-500" size={20} /> Aplicar mitigação FlowSpec</DialogTitle><DialogDescription>Deseja aplicar a mitigação sugerida para o IP {confirmModal?.ip}?</DialogDescription></DialogHeader>
-          <div className="grid gap-6 py-4">
-            <div className="p-4 bg-purple-500/5 rounded-xl border border-purple-500/10 space-y-3 shadow-inner">
-              <div className="grid grid-cols-2 gap-y-2 text-xs">
-                <span className="text-text-secondary">Destino:</span><span className="font-mono font-bold text-right">{confirmModal?.flowspec_suggestion?.match?.destination}</span>
-                <span className="text-text-secondary">Ação:</span><span className="font-mono font-bold text-right uppercase text-purple-600 dark:text-purple-400">Rate-limit</span>
-                <span className="text-text-secondary">Banda limite:</span><span className="font-mono font-bold text-right">{(confirmModal?.flowspec_suggestion?.then?.rate_limit_bps / 1e6).toFixed(0)} Mbps</span>
-                <span className="text-text-secondary">TTL (Expiração):</span><span className="font-mono font-bold text-right">{Math.floor((confirmModal?.flowspec_suggestion?.ttl_seconds || 600) / 60)} min</span>
-              </div>
-            </div>
-            <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900/30">
-              <Info className="text-blue-500 shrink-0 mt-0.5" size={16} />
-              <p className="text-[11px] text-blue-700 dark:text-blue-400 leading-relaxed font-medium">Esta ação injetará a regra via BGP (ExaBGP) no roteador Huawei NE-20. A mitigação será removida automaticamente após o TTL.</p>
-            </div>
-          </div>
-          <DialogFooter className="gap-2 sm:gap-0">
-            <Button variant="outline" className="flex-1" onClick={() => setConfirmModal(null)}>Cancelar</Button>
-            <Button className="flex-1 bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/20" onClick={() => applyMitigation.mutate({ id: confirmModal.id, action: 'rate-limit', rate_limit_kbps: (confirmModal.flowspec_suggestion?.then?.rate_limit_bps || 0)/1000, ttl_minutes: Math.floor((confirmModal.flowspec_suggestion?.ttl_seconds || 600) / 60) })}>Aplicar mitigação</Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <ThreatDrawer 
+        threat={selectedThreat} 
+        onClose={() => setSelectedThreat(null)} 
+        onStatusChange={(id, status) => updateStatus.mutate({ id, status })}
+        formatMbps={formatMbps}
+        getSeverityBadge={getSeverityBadge}
+        getFatorBadge={getFatorBadge}
+      />
     </div>
+  );
+}
+
+function ThreatTable({ threats, onSelect, type }: { threats: any[], onSelect: (t: any) => void, type: 'download' | 'upload' }) {
+  const formatMbps = (mbps: number) => {
+    if (!mbps) return '0 Mbps';
+    if (mbps >= 1000) return `${(mbps / 1000).toFixed(1)} Gbps`;
+    return `${mbps.toFixed(0)} Mbps`;
+  };
+
+  const getFatorBadge = (fator: number) => {
+    const color = fator >= 5 ? 'text-red-500 border-red-500/20 bg-red-500/5' : 
+                  fator >= 3 ? 'text-yellow-600 border-yellow-600/20 bg-yellow-600/5' : 
+                  'text-blue-500 border-blue-500/20 bg-blue-500/5';
+    return <Badge variant="outline" className={clsx("font-mono", color)}>{fator.toFixed(1)}x</Badge>;
+  };
+
+  const getSeverityBadge = (sev: string) => {
+    const colors: any = {
+      critical: 'text-red-600 border-red-600/20 bg-red-600/10',
+      high: 'text-orange-600 border-orange-600/20 bg-orange-600/10',
+      medium: 'text-yellow-600 border-yellow-600/20 bg-yellow-600/10',
+      low: 'text-blue-600 border-blue-600/20 bg-blue-600/10'
+    };
+    return <Badge variant="outline" className={clsx("uppercase text-[10px] font-bold", colors[sev] || 'text-gray-500 border-gray-500/20')}>{sev}</Badge>;
+  };
+
+  const getStatusBadge = (status: string) => {
+    const labels: any = {
+      new: { label: 'Nova', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
+      acknowledged: { label: 'Analisando', color: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' },
+      ignored: { label: 'Ignorada', color: 'bg-gray-500/10 text-gray-500 border-gray-500/20' }
+    };
+    const s = labels[status] || { label: status, color: '' };
+    return <Badge className={clsx(s.color, "text-[10px]")}>{s.label}</Badge>;
+  };
+
+  const timeAgo = (date: string) => {
+    if (!date) return '—';
+    const diff = Date.now() - new Date(date).getTime();
+    const secs = Math.floor(diff / 1000);
+    if (secs < 60) return `há ${secs}s`;
+    const mins = Math.floor(secs / 60);
+    if (mins < 60) return `há ${mins}m`;
+    const hrs = Math.floor(mins / 60);
+    return `há ${hrs}h`;
+  };
+
+  return (
+    <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden shadow-sm">
+      <Table>
+        <TableHeader>
+          <TableRow className="hover:bg-transparent">
+            <TableHead className="w-[180px]">{type === 'download' ? 'IP Vítima' : 'IP Cliente'}</TableHead>
+            <TableHead>Volume Atual</TableHead>
+            <TableHead>Fator</TableHead>
+            <TableHead>P95 Normal</TableHead>
+            <TableHead>Severidade</TableHead>
+            <TableHead>Detectada</TableHead>
+            <TableHead>Status</TableHead>
+            <TableHead className="w-[80px]"></TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {threats.length === 0 ? (
+            <TableRow>
+              <TableCell colSpan={8} className="text-center py-10 text-text-secondary italic">
+                Nenhuma anomalia encontrada
+              </TableCell>
+            </TableRow>
+          ) : (
+            threats.map((t) => (
+              <TableRow 
+                key={t.id} 
+                className={clsx(
+                  "cursor-pointer hover:bg-bg-primary transition-colors group",
+                  t.fator_anomalia >= 5 ? "border-l-4 border-l-red-500" : 
+                  t.fator_anomalia >= 3 ? "border-l-4 border-l-yellow-500" : "",
+                  t.status === 'ignored' && "opacity-50"
+                )}
+                onClick={() => onSelect(t)}
+              >
+                <TableCell className="font-mono font-bold text-text-primary">{t.ip}</TableCell>
+                <TableCell className="font-medium">{formatMbps(t.mbps_atual)}</TableCell>
+                <TableCell>{getFatorBadge(t.fator_anomalia)}</TableCell>
+                <TableCell>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <span className="text-text-secondary border-b border-dotted border-border cursor-help">
+                          {formatMbps(t.p95_mbps)}
+                        </span>
+                      </TooltipTrigger>
+                      <TooltipContent><p className="text-xs">Volume normal deste IP (P95 das últimas 24h)</p></TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </TableCell>
+                <TableCell>{getSeverityBadge(t.severity)}</TableCell>
+                <TableCell className="text-[11px] text-text-secondary">{timeAgo(t.created_at)}</TableCell>
+                <TableCell>{getStatusBadge(t.status)}</TableCell>
+                <TableCell>
+                  <ChevronRight size={16} className="text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity" />
+                </TableCell>
+              </TableRow>
+            ))
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  );
+}
+
+function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverityBadge, getFatorBadge }: { 
+  threat: any, 
+  onClose: () => void, 
+  onStatusChange: (id: number, status: string) => void,
+  formatMbps: (v: number) => string,
+  getSeverityBadge: (s: string) => any,
+  getFatorBadge: (f: number) => any
+}) {
+  if (!threat) return null;
+
+  const isDownload = threat.attack_type === 'ANOMALIA_DOWNLOAD';
+  const evidence = Array.isArray(threat.evidence) ? threat.evidence : [];
+
+  return (
+    <Sheet open={!!threat} onOpenChange={(open) => !open && onClose()}>
+      <SheetContent className="sm:max-w-lg overflow-y-auto">
+        <SheetHeader className="space-y-4">
+          <div className="flex items-center justify-between mt-2">
+            <Badge className={clsx(
+              "font-black uppercase tracking-widest text-[10px] px-2 py-0.5",
+              isDownload ? "bg-blue-500 text-white" : "bg-orange-500 text-white"
+            )}>
+              {isDownload ? 'Download' : 'Upload'}
+            </Badge>
+            {getSeverityBadge(threat.severity)}
+          </div>
+          <SheetTitle className="text-2xl font-mono">{threat.ip}</SheetTitle>
+          <SheetDescription className="hidden">Detalhes da anomalia detectada</SheetDescription>
+        </SheetHeader>
+
+        <div className="mt-8 space-y-8 pb-32">
+          {/* Seção Resumo */}
+          <section className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary flex items-center gap-2">
+              <Activity size={14} /> Resumo da anomalia
+            </h4>
+            <div className="p-4 bg-bg-primary border border-border rounded-xl space-y-4 shadow-inner">
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-1">
+                  <p className="text-[10px] uppercase font-semibold text-text-secondary">Volume Atual</p>
+                  <p className="text-lg font-bold text-text-primary">{formatMbps(threat.mbps_atual)}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-[10px] uppercase font-semibold text-text-secondary">Normal (P95)</p>
+                  <p className="text-lg font-bold text-text-primary">{formatMbps(threat.p95_mbps)}</p>
+                </div>
+              </div>
+              <div className="space-y-2">
+                <div className="flex justify-between items-end">
+                  <p className="text-[10px] uppercase font-semibold text-text-secondary">Fator de Anomalia</p>
+                  <span className="text-xs font-bold text-text-primary">{threat.fator_anomalia.toFixed(1)}x acima</span>
+                </div>
+                <div className="h-2 bg-bg-secondary rounded-full overflow-hidden border border-border">
+                  <div 
+                    className={clsx(
+                      "h-full transition-all duration-500",
+                      threat.fator_anomalia >= 5 ? "bg-red-500" : "bg-blue-500"
+                    )}
+                    style={{ width: `${Math.min((threat.fator_anomalia / 10) * 100, 100)}%` }}
+                  />
+                </div>
+                <p className="text-[10px] text-text-secondary leading-relaxed italic">
+                  * Este IP está recebendo {threat.fator_anomalia.toFixed(1)}x mais tráfego que o normal para este horário.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Seção Evidências / Origens ou Destinos */}
+          <section className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary flex items-center gap-2">
+              <Info size={14} /> {isDownload ? 'Origens do tráfego' : 'Destinos do tráfego'}
+            </h4>
+            <div className="space-y-3">
+              {evidence.length === 0 ? (
+                <p className="text-xs text-text-secondary italic text-center py-4">Sem evidências detalhadas disponíveis</p>
+              ) : (
+                evidence.map((item: any, idx: number) => (
+                  <div key={idx} className="p-4 bg-bg-primary border border-border rounded-xl space-y-3 shadow-sm hover:border-primary/20 transition-colors">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <Flag code={isDownload ? item.atacante_pais : item.destino_pais} size={16} />
+                        <span className="font-mono text-sm font-bold text-text-primary">
+                          {isDownload ? item.atacante_ip : item.destino_ip}
+                        </span>
+                      </div>
+                      <Badge variant="secondary" className="text-[10px] font-mono">
+                        {item.protocolo} {item.tcp_flags !== '-' && `[${item.tcp_flags}]`}
+                      </Badge>
+                    </div>
+                    
+                    <div className="flex items-center gap-2 text-xs text-text-secondary">
+                      <MapPin size={12} className="shrink-0" />
+                      <span className="truncate">{isDownload ? item.atacante_org : item.destino_org}</span>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-[11px] p-2 bg-bg-secondary/50 rounded-lg border border-border/40">
+                      <div className="flex justify-between">
+                        <span className="text-text-secondary">Portas:</span>
+                        <span className="font-mono text-text-primary">
+                          {isDownload ? `${item.atacante_porta} → ${item.vitima_porta}` : `${item.cliente_porta} → ${item.destino_porta}`}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-text-secondary">Volume:</span>
+                        <span className="font-mono text-text-primary">{item.mbps.toFixed(1)} Mbps</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-text-secondary">PPS:</span>
+                        <span className="font-mono text-text-primary">{item.pps.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-text-secondary">BPP:</span>
+                        <span className="font-mono text-text-primary">{item.bpp} bytes</span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between text-[10px] text-text-secondary opacity-70">
+                      <div className="flex items-center gap-1"><Clock size={10} /> {item.primeira_vez}</div>
+                      <ArrowRight size={10} />
+                      <div className="flex items-center gap-1">{item.ultima_vez}</div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </section>
+        </div>
+
+        <div className="absolute bottom-0 left-0 right-0 p-6 bg-bg-secondary border-t border-border flex flex-col gap-3">
+          <div className="grid grid-cols-2 gap-3">
+            <Button 
+              variant="outline" 
+              className="flex-1 h-11 font-bold text-yellow-600 border-yellow-600/20 hover:bg-yellow-600/5" 
+              onClick={() => onStatusChange(threat.id, 'acknowledged')}
+              disabled={threat.status === 'acknowledged'}
+            >
+              Reconhecer
+            </Button>
+            <Button 
+              variant="outline" 
+              className="flex-1 h-11 font-bold text-gray-500 border-gray-500/20 hover:bg-gray-500/5" 
+              onClick={() => onStatusChange(threat.id, 'ignored')}
+              disabled={threat.status === 'ignored'}
+            >
+              Ignorar
+            </Button>
+          </div>
+          <p className="text-[10px] text-center text-text-secondary italic">
+            Ações de mitigação automáticas dependem da política configurada.
+          </p>
+        </div>
+      </SheetContent>
+    </Sheet>
   );
 }
