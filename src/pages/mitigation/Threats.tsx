@@ -234,51 +234,25 @@ export default function Threats() {
   );
 }
 
-function ThreatTable({ threats, onSelect, type }: { threats: any[], onSelect: (t: any) => void, type: 'download' | 'upload' }) {
-  const formatMbps = (mbps: number) => {
-    if (!mbps) return '0 Mbps';
-    if (mbps >= 1000) return `${(mbps / 1000).toFixed(1)} Gbps`;
-    return `${mbps.toFixed(0)} Mbps`;
-  };
-
-  const getFatorBadge = (fator: number) => {
-    const color = fator >= 5 ? 'text-red-500 border-red-500/20 bg-red-500/5' : 
-                  fator >= 3 ? 'text-yellow-600 border-yellow-600/20 bg-yellow-600/5' : 
-                  'text-blue-500 border-blue-500/20 bg-blue-500/5';
-    return <Badge variant="outline" className={clsx("font-mono", color)}>{fator.toFixed(1)}x</Badge>;
-  };
-
-  const getSeverityBadge = (sev: string) => {
-    const colors: any = {
-      critical: 'text-red-600 border-red-600/20 bg-red-600/10',
-      high: 'text-orange-600 border-orange-600/20 bg-orange-600/10',
-      medium: 'text-yellow-600 border-yellow-600/20 bg-yellow-600/10',
-      low: 'text-blue-600 border-blue-600/20 bg-blue-600/10'
-    };
-    return <Badge variant="outline" className={clsx("uppercase text-[10px] font-bold", colors[sev] || 'text-gray-500 border-gray-500/20')}>{sev}</Badge>;
-  };
-
-  const getStatusBadge = (status: string) => {
-    const labels: any = {
-      new: { label: 'Nova', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
-      acknowledged: { label: 'Analisando', color: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' },
-      ignored: { label: 'Ignorada', color: 'bg-gray-500/10 text-gray-500 border-gray-500/20' }
-    };
-    const s = labels[status] || { label: status, color: '' };
-    return <Badge className={clsx(s.color, "text-[10px]")}>{s.label}</Badge>;
-  };
-
-  const timeAgo = (date: string) => {
-    if (!date) return '—';
-    const diff = Date.now() - new Date(date).getTime();
-    const secs = Math.floor(diff / 1000);
-    if (secs < 60) return `há ${secs}s`;
-    const mins = Math.floor(secs / 60);
-    if (mins < 60) return `há ${mins}m`;
-    const hrs = Math.floor(mins / 60);
-    return `há ${hrs}h`;
-  };
-
+function ThreatTable({ 
+  threats, 
+  onSelect, 
+  type, 
+  formatMbps, 
+  getFatorBadge, 
+  getSeverityBadge, 
+  getStatusBadge, 
+  timeAgo 
+}: { 
+  threats: any[], 
+  onSelect: (t: any) => void, 
+  type: 'download' | 'upload',
+  formatMbps: (v: number | null | undefined) => string,
+  getFatorBadge: (v: number | null | undefined) => any,
+  getSeverityBadge: (s: string) => any,
+  getStatusBadge: (s: string) => any,
+  timeAgo: (d: string) => string
+}) {
   return (
     <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden shadow-sm">
       <Table>
@@ -307,13 +281,13 @@ function ThreatTable({ threats, onSelect, type }: { threats: any[], onSelect: (t
                 key={t.id} 
                 className={clsx(
                   "cursor-pointer hover:bg-bg-primary transition-colors group",
-                  t.fator_anomalia >= 5 ? "border-l-4 border-l-red-500" : 
-                  t.fator_anomalia >= 3 ? "border-l-4 border-l-yellow-500" : "",
+                  (t.fator_anomalia || 0) >= 5 ? "border-l-4 border-l-red-500" : 
+                  (t.fator_anomalia || 0) >= 3 ? "border-l-4 border-l-yellow-500" : "",
                   t.status === 'ignored' && "opacity-50"
                 )}
                 onClick={() => onSelect(t)}
               >
-                <TableCell className="font-mono font-bold text-text-primary">{t.ip}</TableCell>
+                <TableCell className="font-mono font-bold text-text-primary">{t.ip || '—'}</TableCell>
                 <TableCell className="font-medium">{formatMbps(t.mbps_atual)}</TableCell>
                 <TableCell>{getFatorBadge(t.fator_anomalia)}</TableCell>
                 <TableCell>
@@ -342,6 +316,7 @@ function ThreatTable({ threats, onSelect, type }: { threats: any[], onSelect: (t
     </div>
   );
 }
+
 
 function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverityBadge, getFatorBadge }: { 
   threat: any, 
