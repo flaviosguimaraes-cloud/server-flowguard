@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import { useTranslation } from '../../hooks/useTranslation';
-import { Shield, Flame, Bolt, ShieldCheck, RefreshCw, AlertTriangle, Search, Clock, Zap } from 'lucide-react';
+import { Shield, Flame, Bolt, ShieldCheck, RefreshCw, AlertTriangle, Search, Clock, Zap, X, Info } from 'lucide-react';
 import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
@@ -13,12 +13,14 @@ import { Skeleton } from '../../components/Skeleton';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '../../components/ui/sheet';
 import { Separator } from '../../components/ui/separator';
 import { toast } from 'sonner';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../../components/ui/dialog';
 
 export default function Threats() {
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [filters, setFilters] = useState({ status: 'active', severity: 'all', attackType: 'all', search: '' });
   const [selectedThreat, setSelectedThreat] = useState<any>(null);
+  const [confirmModal, setConfirmModal] = useState<any>(null);
 
   const { data: summary } = useQuery({
     queryKey: ['threats-summary'],
@@ -40,22 +42,24 @@ export default function Threats() {
     refetchInterval: 30000,
   });
 
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case 'critical': return 'bg-red-500/10 text-red-500 border-red-500/20';
-      case 'high': return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
-      case 'medium': return 'bg-amber-500/10 text-amber-500 border-amber-500/20';
-      default: return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
+  const updateStatus = useMutation({
+    mutationFn: (data: { id: number, status: string }) => api.patch(`/api/threats/${data.id}/status`, { status: data.status }),
+    onSuccess: () => {
+      toast.success('Status atualizado');
+      queryClient.invalidateQueries({ queryKey: ['threats'] });
+      setSelectedThreat(null);
     }
-  };
+  });
 
-  const getAttackTypeColor = (type: string) => {
-    if (type.includes('ACK_FLOOD')) return 'bg-purple-500/10 text-purple-500 border-purple-500/20';
-    if (type.includes('SYN_FLOOD')) return 'bg-red-500/10 text-red-500 border-red-500/20';
-    if (type.includes('UDP_FLOOD') || type.includes('UDP_AMPLIFICATION')) return 'bg-orange-500/10 text-orange-500 border-orange-500/20';
-    if (type.includes('PORT_SCAN')) return 'bg-blue-500/10 text-blue-500 border-blue-500/20';
-    return 'bg-gray-500/10 text-gray-500 border-gray-500/20';
-  };
+  const applyFlowSpec = useMutation({
+    mutationFn: (data: { id: number, action: string, rate_limit_kbps: number, ttl_minutes: number }) => api.post(`/api/threats/${data.id}/apply`, data),
+    onSuccess: () => {
+      toast.success('FlowSpec aplicado com sucesso');
+      queryClient.invalidateQueries({ queryKey: ['threats'] });
+      setConfirmModal(null);
+      setSelectedThreat(null);
+    }
+  });
 
   return (
     <div className="space-y-6">
@@ -68,23 +72,23 @@ export default function Threats() {
 
       <div className="flex flex-wrap items-center gap-2">
         <Select value={filters.status} onValueChange={(v) => setFilters(f => ({ ...f, status: v }))}><SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Todas</SelectItem><SelectItem value="active">Ativas</SelectItem><SelectItem value="acknowledged">Analisando</SelectItem><SelectItem value="applied">Aplicadas</SelectItem><SelectItem value="ignored">Ignoradas</SelectItem></SelectContent></Select>
-        <Select value={filters.severity} onValueChange={(v) => setFilters(f => ({ ...f, severity: v }))}><SelectTrigger className="w-[150px]"><SelectValue /></SelectTrigger><SelectContent><SelectItem value="all">Todas</SelectItem><SelectItem value="critical">Critical</SelectItem><SelectItem value="high">High</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="low">Low</SelectItem></SelectContent></Select>
         <Input placeholder="Buscar IP..." className="w-[200px]" value={filters.search} onChange={e => setFilters(f => ({...f, search: e.target.value}))} />
         <Button variant="outline" size="icon" onClick={() => refetch()}><RefreshCw size={16} /></Button>
       </div>
 
       <div className="bg-bg-secondary border border-border rounded-xl">
         <Table>
-          <TableHeader><TableRow><TableHead>IP</TableHead><TableHead>Tipo</TableHead><TableHead>Protocolo / Porta</TableHead><TableHead>Confiança</TableHead><TableHead>Severidade</TableHead><TableHead>Status</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>IP</TableHead><TableHead>Tipo</TableHead><TableHead>Severidade</TableHead><TableHead>Status</TableHead><TableHead>Ações</TableHead></TableRow></TableHeader>
           <TableBody>
             {threatsLoading ? [...Array(5)].map((_, i) => <TableRow key={i}><TableCell colSpan={6}><Skeleton className="h-10" /></TableCell></TableRow>) : threats?.map((t: any) => (
               <TableRow key={t.id} className="cursor-pointer hover:bg-bg-primary" onClick={() => setSelectedThreat(t)}>
                 <TableCell className="font-mono">{t.ip}</TableCell>
-                <TableCell><Badge className={getAttackTypeColor(t.attack_type)}>{t.attack_type}</Badge></TableCell>
-                <TableCell className="font-mono uppercase">{t.protocol} / {t.dst_port}</TableCell>
-                <TableCell className="w-32"><div className="w-full bg-border rounded-full h-2"><div className="h-full rounded-full" style={{ width: `${t.confidence * 100}%`, backgroundColor: t.confidence >= 0.95 ? '#ef4444' : t.confidence >= 0.88 ? '#f97316' : t.confidence >= 0.75 ? '#f59e0b' : '#6b7280' }} /></div></TableCell>
-                <TableCell><Badge className={getSeverityColor(t.severity)}>{t.severity}</Badge></TableCell>
+                <TableCell><Badge className="bg-purple-500/10 text-purple-500">{t.attack_type}</Badge></TableCell>
+                <TableCell><Badge className={t.severity === 'critical' ? 'bg-red-500/10 text-red-500' : 'bg-orange-500/10 text-orange-500'}>{t.severity}</Badge></TableCell>
                 <TableCell><Badge variant="outline">{t.status}</Badge></TableCell>
+                <TableCell onClick={e => e.stopPropagation()}>
+                  {t.status === 'new' && <Button size="sm" variant="outline" onClick={() => updateStatus.mutate({ id: t.id, status: 'acknowledged' })}>Reconhecer</Button>}
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
@@ -92,15 +96,26 @@ export default function Threats() {
       </div>
 
       <Sheet open={!!selectedThreat} onOpenChange={() => setSelectedThreat(null)}>
-        <SheetContent className="w-[400px] sm:w-[500px]">
-          <SheetHeader><SheetTitle>Detalhes da Ameaça</SheetTitle><SheetDescription>IP: {selectedThreat?.ip}</SheetDescription></SheetHeader>
-          <div className="mt-6 space-y-6">
-            <div><h4 className="font-semibold text-sm mb-2">Diagnóstico</h4><p className="p-3 bg-bg-primary rounded text-xs font-mono">{selectedThreat?.reasoning}</p></div>
-            <Separator />
-            <div><h4 className="font-semibold text-sm mb-2">Persistência</h4><div className="flex items-center gap-2"><Clock size={16} />{selectedThreat?.persistence_windows} janelas consecutivas (60s)</div></div>
-          </div>
+        <SheetContent className="w-[500px]">
+          <SheetHeader><SheetTitle>Detalhes da Ameaça</SheetTitle></SheetHeader>
+          {selectedThreat && (
+            <div className="mt-6 space-y-6">
+              <div><h4 className="text-sm font-semibold mb-2">Diagnóstico</h4><p className="p-3 bg-bg-primary rounded text-xs font-mono">{selectedThreat.reasoning}</p></div>
+              <div className="flex gap-2">
+                {selectedThreat.action === 'flowspec' && <Button className="bg-purple-600 hover:bg-purple-700" onClick={() => setConfirmModal(selectedThreat)}>Aplicar FlowSpec</Button>}
+                <Button variant="secondary" onClick={() => updateStatus.mutate({ id: selectedThreat.id, status: 'ignored' })}>Ignorar</Button>
+              </div>
+            </div>
+          )}
         </SheetContent>
       </Sheet>
+
+      <Dialog open={!!confirmModal} onOpenChange={() => setConfirmModal(null)}>
+        <DialogContent>
+          <DialogHeader><DialogTitle>Aplicar mitigação FlowSpec</DialogTitle><DialogDescription>Deseja aplicar a regra sugerida para {confirmModal?.ip}?</DialogDescription></DialogHeader>
+          <DialogFooter><Button variant="outline" onClick={() => setConfirmModal(null)}>Cancelar</Button><Button className="bg-purple-600" onClick={() => applyFlowSpec.mutate({ id: confirmModal.id, action: 'discard', rate_limit_kbps: 0, ttl_minutes: 60 })}>Confirmar</Button></DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
