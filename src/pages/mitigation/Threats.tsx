@@ -56,8 +56,8 @@ export default function Threats() {
   });
 
   const sortByFator = (a: any, b: any) => {
-    const fa = Number(a.fator_anomalia ?? a.fator ?? a.factor) || 0;
-    const fb = Number(b.fator_anomalia ?? b.fator ?? b.factor) || 0;
+    const fa = Number(a.fator_anomalia) || 0;
+    const fb = Number(b.fator_anomalia) || 0;
     return fb - fa;
   };
 
