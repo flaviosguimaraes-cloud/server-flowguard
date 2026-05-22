@@ -183,6 +183,10 @@ import { useUI } from '../contexts/UIContext';
                   <div className="flex items-center gap-3">
                     <item.icon size={18} className={clsx("transition-colors", groupActive ? "text-primary" : "")} />
                     {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
+                    {collapsed && item.id === 'mitigation' && activeThreats > 0 && (
+                      <div className="absolute top-1 right-1 w-2 h-2 rounded-full bg-danger animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.8)]" />
+                    )}
+
                   </div>
                   {!collapsed && (isOpen ? <ChevronDown size={14} opacity={0.5} /> : <ChevronRight size={14} opacity={0.5} />)}
                 </button>
