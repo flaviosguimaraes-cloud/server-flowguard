@@ -341,9 +341,9 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
   threat: any, 
   onClose: () => void, 
   onStatusChange: (id: number, status: string) => void,
-  formatMbps: (v: number) => string,
+  formatMbps: (v: number | null | undefined) => string,
   getSeverityBadge: (s: string) => any,
-  getFatorBadge: (f: number) => any
+  getFatorBadge: (f: number | null | undefined) => any
 }) {
   if (!threat) return null;
 
@@ -363,7 +363,7 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
             </Badge>
             {getSeverityBadge(threat.severity)}
           </div>
-          <SheetTitle className="text-2xl font-mono">{threat.ip}</SheetTitle>
+          <SheetTitle className="text-2xl font-mono">{threat.ip || '—'}</SheetTitle>
           <SheetDescription className="hidden">Detalhes da anomalia detectada</SheetDescription>
         </SheetHeader>
 
@@ -387,19 +387,19 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
               <div className="space-y-2">
                 <div className="flex justify-between items-end">
                   <p className="text-[10px] uppercase font-semibold text-text-secondary">Fator de Anomalia</p>
-                  <span className="text-xs font-bold text-text-primary">{threat.fator_anomalia.toFixed(1)}x acima</span>
+                  <span className="text-xs font-bold text-text-primary">{threat.fator_anomalia?.toFixed(1) ?? '—'}x acima</span>
                 </div>
                 <div className="h-2 bg-bg-secondary rounded-full overflow-hidden border border-border">
                   <div 
                     className={clsx(
                       "h-full transition-all duration-500",
-                      threat.fator_anomalia >= 5 ? "bg-red-500" : "bg-blue-500"
+                      (threat.fator_anomalia || 0) >= 5 ? "bg-red-500" : "bg-blue-500"
                     )}
-                    style={{ width: `${Math.min((threat.fator_anomalia / 10) * 100, 100)}%` }}
+                    style={{ width: `${Math.min(((threat.fator_anomalia || 0) / 10) * 100, 100)}%` }}
                   />
                 </div>
                 <p className="text-[10px] text-text-secondary leading-relaxed italic">
-                  * Este IP está recebendo {threat.fator_anomalia.toFixed(1)}x mais tráfego que o normal para este horário.
+                  * Este IP está recebendo {threat.fator_anomalia?.toFixed(1) ?? '—'}x mais tráfego que o normal para este horário.
                 </p>
               </div>
             </div>
@@ -442,22 +442,22 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
                       </div>
                       <div className="flex justify-between">
                         <span className="text-text-secondary">Volume:</span>
-                        <span className="font-mono text-text-primary">{item.mbps.toFixed(1)} Mbps</span>
+                        <span className="font-mono text-text-primary">{item.mbps?.toFixed(1) ?? '—'} Mbps</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-text-secondary">PPS:</span>
-                        <span className="font-mono text-text-primary">{item.pps.toLocaleString()}</span>
+                        <span className="font-mono text-text-primary">{item.pps?.toLocaleString() ?? '—'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-text-secondary">BPP:</span>
-                        <span className="font-mono text-text-primary">{item.bpp} bytes</span>
+                        <span className="font-mono text-text-primary">{item.bpp || '—'} bytes</span>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between text-[10px] text-text-secondary opacity-70">
-                      <div className="flex items-center gap-1"><Clock size={10} /> {item.primeira_vez}</div>
+                      <div className="flex items-center gap-1"><Clock size={10} /> {item.primeira_vez || '—'}</div>
                       <ArrowRight size={10} />
-                      <div className="flex items-center gap-1">{item.ultima_vez}</div>
+                      <div className="flex items-center gap-1">{item.ultima_vez || '—'}</div>
                     </div>
                   </div>
                 ))
@@ -493,3 +493,4 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
     </Sheet>
   );
 }
+
