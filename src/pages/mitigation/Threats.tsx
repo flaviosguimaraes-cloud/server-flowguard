@@ -474,46 +474,61 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
             <div className="p-4 bg-bg-primary border border-border rounded-xl space-y-4 shadow-inner">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <p className="text-[10px] uppercase font-semibold text-text-secondary">Volume Atual</p>
-                  <p className="text-lg font-bold text-text-primary">{formatMbps(threat.mbps_atual)}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] uppercase font-semibold text-text-secondary">Normal (P95)</p>
-                  <p className="text-lg font-bold text-text-primary">{formatMbps(threat.p95_mbps)}</p>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between items-end">
-                  <p className="text-[10px] uppercase font-semibold text-text-secondary">Fator de Anomalia</p>
-                  <span className="text-xs font-bold text-text-primary">
-                    {(() => {
+                  <p className="text-[10px] uppercase font-semibold text-text-secondary">
+                    {isBeh ? 'Confiança' : 'Volume Atual'}
+                  </p>
+                  <p className="text-lg font-bold text-text-primary">
+                    {isBeh ? (() => {
                       const val = threat.fator_anomalia;
                       const f = typeof val === 'string' ? parseFloat(val) : val;
-                      return (f !== null && f !== undefined && !isNaN(f)) ? `${f.toFixed(1)}x acima` : '—';
-                    })()}
-                  </span>
-
+                      return (f !== null && f !== undefined && !isNaN(f)) ? `${(f * 10).toFixed(0)}%` : '—';
+                    })() : formatMbps(threat.mbps_atual)}
+                  </p>
                 </div>
-                <div className="h-2 bg-bg-secondary rounded-full overflow-hidden border border-border">
-                  <div 
-                    className={clsx(
-                      "h-full transition-all duration-500",
-                      (Number(threat.fator_anomalia) || 0) >= 5 ? "bg-red-500" : "bg-blue-500"
-                    )}
-                    style={{ width: `${Math.min(((Number(threat.fator_anomalia) || 0) / 10) * 100, 100)}%` }}
-
-                  />
+                <div className="space-y-1">
+                  <p className="text-[10px] uppercase font-semibold text-text-secondary">
+                    {isBeh ? 'Fator' : 'Normal (P95)'}
+                  </p>
+                  <p className="text-lg font-bold text-text-primary">
+                    {isBeh ? getFatorBadge(threat.fator_anomalia, threat.attack_type) : formatMbps(threat.p95_mbps)}
+                  </p>
                 </div>
-                <p className="text-[10px] text-text-secondary leading-relaxed italic">
-                  * Este IP está recebendo {(() => {
-                    const val = threat.fator_anomalia;
-                    const f = typeof val === 'string' ? parseFloat(val) : val;
-                    return (f !== null && f !== undefined && !isNaN(f)) ? f.toFixed(1) : '—';
-                  })()}x mais tráfego que o normal para este horário.
-                </p>
-
-
               </div>
+              {!isBeh && (
+                <div className="space-y-2">
+                  <div className="flex justify-between items-end">
+                    <p className="text-[10px] uppercase font-semibold text-text-secondary">Fator de Anomalia</p>
+                    <span className="text-xs font-bold text-text-primary">
+                      {(() => {
+                        const val = threat.fator_anomalia;
+                        const f = typeof val === 'string' ? parseFloat(val) : val;
+                        return (f !== null && f !== undefined && !isNaN(f)) ? `${f.toFixed(1)}x acima` : '—';
+                      })()}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-bg-secondary rounded-full overflow-hidden border border-border">
+                    <div 
+                      className={clsx(
+                        "h-full transition-all duration-500",
+                        (Number(threat.fator_anomalia) || 0) >= 5 ? "bg-red-500" : "bg-blue-500"
+                      )}
+                      style={{ width: `${Math.min(((Number(threat.fator_anomalia) || 0) / 10) * 100, 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-text-secondary leading-relaxed italic">
+                    * Este IP está recebendo {(() => {
+                      const val = threat.fator_anomalia;
+                      const f = typeof val === 'string' ? parseFloat(val) : val;
+                      return (f !== null && f !== undefined && !isNaN(f)) ? f.toFixed(1) : '—';
+                    })()}x mais tráfego que o normal para este horário.
+                  </p>
+                </div>
+              )}
+              {isBeh && (
+                <p className="text-[10px] text-text-secondary leading-relaxed italic">
+                  * Este ataque foi detectado por padrões comportamentais suspeitos.
+                </p>
+              )}
             </div>
           </section>
 
