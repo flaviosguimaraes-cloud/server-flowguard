@@ -103,7 +103,7 @@ export default function Threats() {
 
       <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden">
         <Table>
-          <TableHeader><TableRow><TableHead>IP</TableHead><TableHead>Tipo</TableHead><TableHead>Protocolo/Porta</TableHead><TableHead>Confiança</TableHead><TableHead>Severidade</TableHead><TableHead>Persistência</TableHead><TableHead>Status</TableHead><TableHead>Ações</TableHead></TableRow></TableHeader>
+          <TableHeader><TableRow><TableHead>IP</TableHead><TableHead>Tipo</TableHead><TableHead>Protocolo/Porta</TableHead><TableHead>Confiança</TableHead><TableHead>Severidade</TableHead><TableHead>Persistência</TableHead><TableHead>Status</TableHead><TableHead>Detectada</TableHead><TableHead>Ações</TableHead></TableRow></TableHeader>
           <TableBody>
             {threatsLoading ? [...Array(5)].map((_, i) => <TableRow key={i}><TableCell colSpan={7}><Skeleton className="h-10 w-full" /></TableCell></TableRow>) : threats?.map((t: any) => (
               <TableRow key={t.id} className={`cursor-pointer hover:bg-bg-primary transition-colors ${t.severity === 'critical' ? 'border-l-4 border-l-red-500' : ''}`} onClick={() => setSelectedThreat(t)}>
