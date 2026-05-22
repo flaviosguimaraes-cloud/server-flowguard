@@ -351,10 +351,11 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
   threat: any, 
   onClose: () => void, 
   onStatusChange: (id: number, status: string) => void,
-  formatMbps: (v: number | null | undefined) => string,
+  formatMbps: (v: any) => string,
   getSeverityBadge: (s: string) => any,
-  getFatorBadge: (f: number | null | undefined) => any
+  getFatorBadge: (f: any) => any
 }) {
+
   if (!threat) return null;
 
   const isDownload = threat.attack_type === 'ANOMALIA_DOWNLOAD';
