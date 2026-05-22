@@ -328,16 +328,18 @@ function ThreatTable({
   getSeverityBadge, 
   getStatusBadge, 
   getAttackTypeBadge,
+  isBehavioral,
   timeAgo 
 }: { 
   threats: any[], 
   onSelect: (t: any) => void, 
   type: 'download' | 'upload',
   formatMbps: (v: any) => string,
-  getFatorBadge: (v: any) => any,
+  getFatorBadge: (v: any, t: string) => any,
   getSeverityBadge: (s: string) => any,
   getStatusBadge: (s: string) => any,
   getAttackTypeBadge: (t: string) => any,
+  isBehavioral: (t: string) => boolean,
   timeAgo: (d: string) => string
 }) {
 
