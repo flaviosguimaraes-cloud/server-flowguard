@@ -414,9 +414,10 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
                   <div 
                     className={clsx(
                       "h-full transition-all duration-500",
-                      (Number(threat.fator_anomalia) || 0) >= 5 ? "bg-red-500" : "bg-blue-500"
+                      (Number(threat.fator_anomalia ?? threat.fator ?? threat.factor) || 0) >= 5 ? "bg-red-500" : "bg-blue-500"
                     )}
-                    style={{ width: `${Math.min(((Number(threat.fator_anomalia) || 0) / 10) * 100, 100)}%` }}
+                    style={{ width: `${Math.min(((Number(threat.fator_anomalia ?? threat.fator ?? threat.factor) || 0) / 10) * 100, 100)}%` }}
+
                   />
                 </div>
                 <p className="text-[10px] text-text-secondary leading-relaxed italic">
