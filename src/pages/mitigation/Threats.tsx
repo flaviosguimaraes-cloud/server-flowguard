@@ -36,48 +36,50 @@ export default function Threats() {
     refetchInterval: 30000 
   });
   
-  const { data: threatsData, isLoading: threatsLoading, refetch } = useQuery({
-    queryKey: ['threats-active'],
-    queryFn: () => api.get('/api/threats?active_only=true').then(r => r.data),
+  const getItems = (data: any) => {
+    if (!data) return [];
+    if (Array.isArray(data)) return data;
+    return data.items || data.threats || data.data || [];
+  };
+
+  const { data: downloadData, isLoading: downloadLoading, refetch: refetchDownload } = useQuery({
+    queryKey: ['threats', 'ANOMALIA_DOWNLOAD'],
+    queryFn: () => api.get('/api/threats?active_only=true&attack_type=ANOMALIA_DOWNLOAD').then(r => r.data),
     refetchInterval: 30000,
   });
 
-  const threats = useMemo(() => {
-    if (!threatsData) return [];
-    const items = Array.isArray(threatsData) ? threatsData : (threatsData.items || []);
-    return items.filter((t: any) => 
-      t.attack_type === 'ANOMALIA_DOWNLOAD' || t.attack_type === 'ANOMALIA_UPLOAD'
-    );
-  }, [threatsData]);
+  const { data: uploadData, isLoading: uploadLoading, refetch: refetchUpload } = useQuery({
+    queryKey: ['threats', 'ANOMALIA_UPLOAD'],
+    queryFn: () => api.get('/api/threats?active_only=true&attack_type=ANOMALIA_UPLOAD').then(r => r.data),
+    refetchInterval: 30000,
+  });
 
   const downloadThreats = useMemo(() => 
-    threats.filter((t: any) => t.attack_type === 'ANOMALIA_DOWNLOAD')
-      .sort((a: any, b: any) => b.fator_anomalia - a.fator_anomalia), 
-  [threats]);
+    getItems(downloadData).sort((a: any, b: any) => b.fator_anomalia - a.fator_anomalia), 
+  [downloadData]);
 
   const uploadThreats = useMemo(() => 
-    threats.filter((t: any) => t.attack_type === 'ANOMALIA_UPLOAD')
-      .sort((a: any, b: any) => b.fator_anomalia - a.fator_anomalia), 
-  [threats]);
+    getItems(uploadData).sort((a: any, b: any) => b.fator_anomalia - a.fator_anomalia), 
+  [uploadData]);
 
   // Define a aba ativa inicial baseada na contagem
   useEffect(() => {
-    if (!activeTab && threats.length > 0) {
+    if (!activeTab && (downloadThreats.length > 0 || uploadThreats.length > 0)) {
       if (uploadThreats.length > downloadThreats.length) {
         setActiveTab('upload');
       } else {
         setActiveTab('download');
       }
-    } else if (!activeTab && !threatsLoading && threatsData) {
+    } else if (!activeTab && !downloadLoading && !uploadLoading && (downloadData || uploadData)) {
       setActiveTab('download');
     }
-  }, [threats.length, downloadThreats.length, uploadThreats.length, activeTab, threatsLoading, threatsData]);
+  }, [downloadThreats.length, uploadThreats.length, activeTab, downloadLoading, uploadLoading, downloadData, uploadData]);
 
   const updateStatus = useMutation({
     mutationFn: (data: { id: number, status: string }) => api.patch(`/api/threats/${data.id}/status`, { status: data.status }),
     onSuccess: () => { 
       toast.success('Status atualizado'); 
-      queryClient.invalidateQueries({ queryKey: ['threats-active'] }); 
+      queryClient.invalidateQueries({ queryKey: ['threats'] }); 
       queryClient.invalidateQueries({ queryKey: ['threats-summary'] });
       setSelectedThreat(null); 
     }
@@ -137,8 +139,8 @@ export default function Threats() {
           <h1 className="text-2xl font-bold tracking-tight">Ameaças</h1>
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-bold uppercase text-[10px]">Detector v2</Badge>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
-          <RefreshCw size={16} className={clsx("mr-2", threatsLoading && "animate-spin")} /> Atualizar
+        <Button variant="outline" size="sm" onClick={() => { refetchDownload(); refetchUpload(); queryClient.invalidateQueries({ queryKey: ['threats-summary'] }); }}>
+          <RefreshCw size={16} className={clsx("mr-2", (downloadLoading || uploadLoading) && "animate-spin")} /> Atualizar
         </Button>
       </div>
 
