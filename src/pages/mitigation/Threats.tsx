@@ -56,8 +56,8 @@ export default function Threats() {
   });
 
   const sortByFator = (a: any, b: any) => {
-    const fa = Number(a.fator_anomalia ?? a.fator ?? a.factor) || 0;
-    const fb = Number(b.fator_anomalia ?? b.fator ?? b.factor) || 0;
+    const fa = Number(a.fator_anomalia) || 0;
+    const fb = Number(b.fator_anomalia) || 0;
     return fb - fa;
   };
 
@@ -315,22 +315,22 @@ function ThreatTable({
                 key={t.id} 
                 className={clsx(
                   "cursor-pointer hover:bg-bg-primary transition-colors group",
-                  (t.fator_anomalia || 0) >= 5 ? "border-l-4 border-l-red-500" : 
-                  (t.fator_anomalia || 0) >= 3 ? "border-l-4 border-l-yellow-500" : "",
+                  (Number(t.fator_anomalia) || 0) >= 5 ? "border-l-4 border-l-red-500" : 
+                  (Number(t.fator_anomalia) || 0) >= 3 ? "border-l-4 border-l-yellow-500" : "",
                   t.status === 'ignored' && "opacity-50"
                 )}
                 onClick={() => onSelect(t)}
               >
                 <TableCell className="font-mono font-bold text-text-primary">{t.ip || '—'}</TableCell>
-                <TableCell className="font-medium">{formatMbps(t.mbps_atual ?? t.mbps)}</TableCell>
-                <TableCell>{getFatorBadge(t.fator_anomalia ?? t.fator ?? t.factor)}</TableCell>
+                <TableCell className="font-medium">{formatMbps(t.mbps_atual)}</TableCell>
+                <TableCell>{getFatorBadge(t.fator_anomalia)}</TableCell>
 
                 <TableCell>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span className="text-text-secondary border-b border-dotted border-border cursor-help">
-                          {formatMbps(t.p95_mbps ?? t.p95)}
+                          {formatMbps(t.p95_mbps)}
                         </span>
 
                       </TooltipTrigger>
@@ -395,12 +395,11 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
                   <p className="text-[10px] uppercase font-semibold text-text-secondary">Volume Atual</p>
-                  <p className="text-lg font-bold text-text-primary">{formatMbps(threat.mbps_atual ?? threat.mbps)}</p>
+                  <p className="text-lg font-bold text-text-primary">{formatMbps(threat.mbps_atual)}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-[10px] uppercase font-semibold text-text-secondary">Normal (P95)</p>
-                  <p className="text-lg font-bold text-text-primary">{formatMbps(threat.p95_mbps ?? threat.p95)}</p>
-
+                  <p className="text-lg font-bold text-text-primary">{formatMbps(threat.p95_mbps)}</p>
                 </div>
               </div>
               <div className="space-y-2">
@@ -408,7 +407,7 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
                   <p className="text-[10px] uppercase font-semibold text-text-secondary">Fator de Anomalia</p>
                   <span className="text-xs font-bold text-text-primary">
                     {(() => {
-                      const val = threat.fator_anomalia ?? threat.fator ?? threat.factor;
+                      const val = threat.fator_anomalia;
                       const f = typeof val === 'string' ? parseFloat(val) : val;
                       return (f !== null && f !== undefined && !isNaN(f)) ? `${f.toFixed(1)}x acima` : '—';
                     })()}
@@ -419,15 +418,15 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
                   <div 
                     className={clsx(
                       "h-full transition-all duration-500",
-                      (Number(threat.fator_anomalia ?? threat.fator ?? threat.factor) || 0) >= 5 ? "bg-red-500" : "bg-blue-500"
+                      (Number(threat.fator_anomalia) || 0) >= 5 ? "bg-red-500" : "bg-blue-500"
                     )}
-                    style={{ width: `${Math.min(((Number(threat.fator_anomalia ?? threat.fator ?? threat.factor) || 0) / 10) * 100, 100)}%` }}
+                    style={{ width: `${Math.min(((Number(threat.fator_anomalia) || 0) / 10) * 100, 100)}%` }}
 
                   />
                 </div>
                 <p className="text-[10px] text-text-secondary leading-relaxed italic">
                   * Este IP está recebendo {(() => {
-                    const val = threat.fator_anomalia ?? threat.fator ?? threat.factor;
+                    const val = threat.fator_anomalia;
                     const f = typeof val === 'string' ? parseFloat(val) : val;
                     return (f !== null && f !== undefined && !isNaN(f)) ? f.toFixed(1) : '—';
                   })()}x mais tráfego que o normal para este horário.
