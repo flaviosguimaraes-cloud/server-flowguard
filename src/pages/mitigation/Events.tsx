@@ -123,10 +123,10 @@ function SectionDivider({ title }: { title: string }) {
       const normalizedDir = String(direction || '').toLowerCase().trim();
 
       // Action Type Badges
-      if (normalizedAction === 'blackhole' || normalizedAction === 'blackhole_flowspec') {
+      if (normalizedAction === 'blackhole' || normalizedAction === 'blackhole_flowspec' || normalizedAction === 'blacklist') {
         badges.push(
           <span key="bh" className="px-2 py-0.5 bg-danger/10 text-danger border border-danger/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
-            Blackhole /32
+            {normalizedAction === 'blacklist' ? 'Blacklist' : 'Blackhole /32'}
           </span>
         );
       }
@@ -521,7 +521,7 @@ function SectionDivider({ title }: { title: string }) {
                           />
                         </td>
                         <td className="px-6 py-3.5 text-center">
-                          {(item.triggered_by === 'detector' || item.triggered_by === 'auto-detector' || item.created_by === 'auto-detector' || item.created_by === 'detector') ? (
+                          {(item.triggered_by === 'detector' || item.triggered_by === 'auto-detector' || item.created_by === 'auto-detector' || item.created_by === 'detector' || item.source === 'mitigation') ? (
                             <span className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
                               Automático
                             </span>
@@ -809,7 +809,7 @@ function SectionDivider({ title }: { title: string }) {
 
 
                     <td className="px-6 py-3.5 text-center">
-                      {(event.triggered_by === 'detector' || event.triggered_by === 'auto-detector' || event.created_by === 'auto-detector' || event.created_by === 'detector') ? (
+                      {(event.triggered_by === 'detector' || event.triggered_by === 'auto-detector' || event.created_by === 'auto-detector' || event.created_by === 'detector' || event.source === 'mitigation') ? (
                         <span className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
                           Automático
                         </span>
