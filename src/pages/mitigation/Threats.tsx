@@ -84,30 +84,38 @@ export default function Threats() {
     }
   });
 
-  const formatMbps = (mbps: number | null | undefined) => {
-    if (mbps === null || mbps === undefined) return '—';
-    if (mbps >= 1000) return `${(mbps / 1000).toFixed(1)} Gbps`;
-    return `${mbps.toFixed(1)} Mbps`;
+  const formatMbps = (value: any) => {
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    if (num === null || num === undefined || isNaN(num)) return '—';
+    if (num >= 1000) return `${(num / 1000).toFixed(1)} Gbps`;
+    return `${num.toFixed(1)} Mbps`;
   };
 
   const timeAgo = (date: string) => {
     if (!date) return '—';
-    const diff = Date.now() - new Date(date).getTime();
-    const secs = Math.floor(diff / 1000);
-    if (secs < 60) return `há ${secs}s`;
-    const mins = Math.floor(secs / 60);
-    if (mins < 60) return `há ${mins}m`;
-    const hrs = Math.floor(mins / 60);
-    return `há ${hrs}h`;
+    try {
+      const diff = Date.now() - new Date(date).getTime();
+      const secs = Math.floor(diff / 1000);
+      if (isNaN(secs)) return '—';
+      if (secs < 60) return `há ${secs}s`;
+      const mins = Math.floor(secs / 60);
+      if (mins < 60) return `há ${mins}m`;
+      const hrs = Math.floor(mins / 60);
+      return `há ${hrs}h`;
+    } catch {
+      return '—';
+    }
   };
 
-  const getFatorBadge = (fator: number | null | undefined) => {
-    if (fator === null || fator === undefined) return <Badge variant="outline">—</Badge>;
-    const color = fator >= 5 ? 'text-red-500 border-red-500/20 bg-red-500/5' : 
-                  fator >= 3 ? 'text-yellow-600 border-yellow-600/20 bg-yellow-600/5' : 
+  const getFatorBadge = (value: any) => {
+    const num = typeof value === 'string' ? parseFloat(value) : value;
+    if (num === null || num === undefined || isNaN(num)) return <Badge variant="outline">—</Badge>;
+    const color = num >= 5 ? 'text-red-500 border-red-500/20 bg-red-500/5' : 
+                  num >= 3 ? 'text-yellow-600 border-yellow-600/20 bg-yellow-600/5' : 
                   'text-blue-500 border-blue-500/20 bg-blue-500/5';
-    return <Badge variant="outline" className={clsx("font-mono", color)}>{fator.toFixed(1)}x</Badge>;
+    return <Badge variant="outline" className={clsx("font-mono", color)}>{num.toFixed(1)}x</Badge>;
   };
+
 
   const getSeverityBadge = (sev: string) => {
     const colors: any = {
