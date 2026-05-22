@@ -383,15 +383,17 @@ function ThreatTable({
               >
                 <TableCell className="font-mono font-bold text-text-primary">{t.ip || '—'}</TableCell>
                 <TableCell>{getAttackTypeBadge(t.attack_type)}</TableCell>
-                <TableCell className="font-medium">{formatMbps(t.mbps_atual)}</TableCell>
-                <TableCell>{getFatorBadge(t.fator_anomalia)}</TableCell>
+                <TableCell className="font-medium">
+                  {isBehavioral(t.attack_type) ? '—' : formatMbps(t.mbps_atual)}
+                </TableCell>
+                <TableCell>{getFatorBadge(t.fator_anomalia, t.attack_type)}</TableCell>
 
                 <TableCell>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span className="text-text-secondary border-b border-dotted border-border cursor-help">
-                          {formatMbps(t.p95_mbps)}
+                          {isBehavioral(t.attack_type) ? '—' : formatMbps(t.p95_mbps)}
                         </span>
 
                       </TooltipTrigger>
