@@ -462,8 +462,14 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
                       </div>
                       <div className="flex justify-between">
                         <span className="text-text-secondary">Volume:</span>
-                        <span className="font-mono text-text-primary">{item.mbps?.toFixed(1) ?? '—'} Mbps</span>
+                        <span className="font-mono text-text-primary">
+                          {(() => {
+                            const m = typeof item.mbps === 'string' ? parseFloat(item.mbps) : item.mbps;
+                            return (m !== null && m !== undefined && !isNaN(m)) ? m.toFixed(1) : '—';
+                          })()} Mbps
+                        </span>
                       </div>
+
                       <div className="flex justify-between">
                         <span className="text-text-secondary">PPS:</span>
                         <span className="font-mono text-text-primary">{item.pps?.toLocaleString() ?? '—'}</span>
