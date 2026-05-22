@@ -426,7 +426,7 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
                 </div>
                 <p className="text-[10px] text-text-secondary leading-relaxed italic">
                   * Este IP está recebendo {(() => {
-                    const val = threat.fator_anomalia ?? threat.fator ?? threat.factor;
+                    const val = threat.fator_anomalia;
                     const f = typeof val === 'string' ? parseFloat(val) : val;
                     return (f !== null && f !== undefined && !isNaN(f)) ? f.toFixed(1) : '—';
                   })()}x mais tráfego que o normal para este horário.
