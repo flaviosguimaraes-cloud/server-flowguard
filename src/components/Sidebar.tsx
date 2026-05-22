@@ -31,8 +31,17 @@ import { useUI } from '../contexts/UIContext';
     staleTime: 60000,
     enabled: !!localStorage.getItem('access_token'),
   });
+   const { data: threatsSummary } = useQuery({
+    queryKey: ['threats-summary'],
+    queryFn: () => api.get('/api/threats/summary').then(r => r.data),
+    refetchInterval: 30000,
+    enabled: !!localStorage.getItem('access_token'),
+  });
+
+  const activeThreats = threatsSummary?.active_total || 0;
 
   const downServices = useMemo(() => {
+
     const services = sysStatus?.services || {};
     return Object.entries(services).filter(([_, status]) => status !== 'active');
   }, [sysStatus?.services]);
