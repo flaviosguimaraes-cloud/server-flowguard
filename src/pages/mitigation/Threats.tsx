@@ -407,7 +407,7 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
                   <p className="text-[10px] uppercase font-semibold text-text-secondary">Fator de Anomalia</p>
                   <span className="text-xs font-bold text-text-primary">
                     {(() => {
-                      const val = threat.fator_anomalia ?? threat.fator ?? threat.factor;
+                      const val = threat.fator_anomalia;
                       const f = typeof val === 'string' ? parseFloat(val) : val;
                       return (f !== null && f !== undefined && !isNaN(f)) ? `${f.toFixed(1)}x acima` : '—';
                     })()}
