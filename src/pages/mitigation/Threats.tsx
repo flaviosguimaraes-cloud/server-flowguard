@@ -112,7 +112,23 @@ export default function Threats() {
                 <TableCell className="font-mono text-xs uppercase">{t.protocol} / {t.dst_port}</TableCell>
                 <TableCell className="w-32"><div className="space-y-1"><div className="w-full bg-border rounded-full h-1.5 overflow-hidden"><div className={`h-full ${getConfidenceColor(t.confidence)}`} style={{ width: `${t.confidence * 100}%` }} /></div><span className="text-[10px] text-text-secondary">{(t.confidence * 100).toFixed(0)}%</span></div></TableCell>
                 <TableCell><Badge variant="outline" className={t.severity === 'critical' ? 'text-red-500 border-red-500/20' : t.severity === 'high' ? 'text-orange-500 border-orange-500/20' : ''}>{t.severity}</Badge></TableCell>
+                <TableCell>
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <div className="flex items-center gap-1.5 text-text-secondary text-xs">
+                          <LayoutGrid size={14} />
+                          {t.persistence_windows} janelas
+                        </div>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Detectado em {t.persistence_windows} ciclos consecutivos de 60s</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                </TableCell>
                 <TableCell><Badge variant="outline">{t.status}</Badge></TableCell>
+
                 <TableCell onClick={e => e.stopPropagation()} className="space-x-2">
                   {(t.status === 'new' || t.status === 'acknowledged') && t.action === 'flowspec' && <Button size="sm" className="bg-purple-600 hover:bg-purple-700 h-8" onClick={() => setConfirmModal(t)}><Zap size={14} className="mr-1" /> Aplicar</Button>}
                 </TableCell>
