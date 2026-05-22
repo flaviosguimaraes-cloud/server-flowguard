@@ -197,7 +197,7 @@ export default function Threats() {
             <div className="p-3 bg-gray-500/10 text-gray-500 rounded-xl"><Activity size={24} /></div>
             <div>
               <p className="text-[10px] font-bold uppercase text-text-secondary tracking-wider">Anomalias Ativas</p>
-              <p className="text-2xl font-bold text-text-primary">{summary?.active_total || 0}</p>
+              <p className="text-2xl font-bold text-text-primary">{allThreats.length}</p>
             </div>
           </CardContent>
         </Card>
@@ -206,7 +206,9 @@ export default function Threats() {
             <div className="p-3 bg-red-500/10 text-red-500 rounded-xl"><Flame size={24} /></div>
             <div>
               <p className="text-[10px] font-bold uppercase text-red-500 tracking-wider">Alta / Crítica</p>
-              <p className="text-2xl font-bold text-red-500">{(summary?.high_count || 0) + (summary?.critical_count || 0)}</p>
+              <p className="text-2xl font-bold text-red-500">
+                {allThreats.filter((t: any) => t.severity === 'high' || t.severity === 'critical').length}
+              </p>
             </div>
           </CardContent>
         </Card>
