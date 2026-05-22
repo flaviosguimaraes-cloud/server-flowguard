@@ -194,13 +194,21 @@ import { useUI } from '../contexts/UIContext';
                         key={child.path} 
                         to={child.path} 
                         className={clsx(
-                          "flex items-center gap-3 py-1.5 px-3 transition-all duration-150 rounded-lg text-sm font-medium",
+                          "flex items-center justify-between py-1.5 px-3 transition-all duration-150 rounded-lg text-sm font-medium",
                           isActive(child.path) ? "text-primary bg-primary/5" : "text-text-secondary hover:text-text-primary hover:bg-bg-primary/50"
                         )}
                       >
-                        <child.icon size={14} />
-                        <span>{child.label}</span>
+                        <div className="flex items-center gap-3">
+                          <child.icon size={14} />
+                          <span>{child.label}</span>
+                        </div>
+                        {child.path === '/mitigation/threats' && activeThreats > 0 && (
+                          <span className="flex items-center justify-center text-[10px] font-bold text-white bg-danger rounded-full min-w-[16px] h-[16px] px-1">
+                            {activeThreats}
+                          </span>
+                        )}
                       </Link>
+
                     ))}
                   </div>
                 )}
