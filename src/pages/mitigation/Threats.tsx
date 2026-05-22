@@ -55,7 +55,12 @@ export default function Threats() {
     refetchInterval: 30000,
   });
 
-  const sortByFator = (a: any, b: any) => (b.fator_anomalia || 0) - (a.fator_anomalia || 0);
+  const sortByFator = (a: any, b: any) => {
+    const fa = Number(a.fator_anomalia ?? a.fator ?? a.factor) || 0;
+    const fb = Number(b.fator_anomalia ?? b.fator ?? b.factor) || 0;
+    return fb - fa;
+  };
+
 
   const downloadThreats = useMemo(() => 
     getItems(downloadData).sort(sortByFator), 
