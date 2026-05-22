@@ -139,8 +139,8 @@ export default function Threats() {
           <h1 className="text-2xl font-bold tracking-tight">Ameaças</h1>
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-bold uppercase text-[10px]">Detector v2</Badge>
         </div>
-        <Button variant="outline" size="sm" onClick={() => refetch()}>
-          <RefreshCw size={16} className={clsx("mr-2", threatsLoading && "animate-spin")} /> Atualizar
+        <Button variant="outline" size="sm" onClick={() => { refetchDownload(); refetchUpload(); queryClient.invalidateQueries({ queryKey: ['threats-summary'] }); }}>
+          <RefreshCw size={16} className={clsx("mr-2", (downloadLoading || uploadLoading) && "animate-spin")} /> Atualizar
         </Button>
       </div>
 
