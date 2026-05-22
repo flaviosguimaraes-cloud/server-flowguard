@@ -156,12 +156,22 @@ export default function Threats() {
   };
 
   const getSeverityBadge = (sev: string) => {
-// ... keep existing code
+    const colors: any = {
+      critical: 'text-red-600 border-red-600/20 bg-red-600/10',
+      high: 'text-orange-600 border-orange-600/20 bg-orange-600/10',
+      medium: 'text-yellow-600 border-yellow-600/20 bg-yellow-600/10',
+      low: 'text-blue-600 border-blue-600/20 bg-blue-600/10'
+    };
     return <Badge variant="outline" className={clsx("uppercase text-[10px] font-bold", colors[sev] || 'text-gray-500 border-gray-500/20')}>{sev || 'unknown'}</Badge>;
   };
 
   const getStatusBadge = (status: string) => {
-// ... keep existing code
+    const labels: any = {
+      new: { label: 'Nova', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
+      acknowledged: { label: 'Analisando', color: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' },
+      ignored: { label: 'Ignorada', color: 'bg-gray-500/10 text-gray-500 border-gray-500/20' }
+    };
+    const s = labels[status] || { label: status, color: 'bg-gray-500/10 text-gray-500' };
     return <Badge className={clsx(s.color, "text-[10px]")}>{s.label}</Badge>;
   };
 
