@@ -28,7 +28,7 @@ export default function Threats() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedThreat, setSelectedThreat] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<string>('download');
 
   const { data: summary } = useQuery({ 
     queryKey: ['threats-summary'], 
@@ -39,41 +39,40 @@ export default function Threats() {
   const getItems = (data: any) => {
     if (!data) return [];
     if (Array.isArray(data)) return data;
-    return data.items || data.threats || data.data || [];
+    return data.items || data.threats || data.data || data.results || data.records || [];
   };
 
   const { data: downloadData, isLoading: downloadLoading, refetch: refetchDownload } = useQuery({
     queryKey: ['threats', 'ANOMALIA_DOWNLOAD'],
-    queryFn: () => api.get('/api/threats?active_only=true&attack_type=ANOMALIA_DOWNLOAD').then(r => r.data),
+    queryFn: () => api.get('/api/threats/?active_only=true&attack_type=ANOMALIA_DOWNLOAD').then(r => r.data),
     refetchInterval: 30000,
   });
 
   const { data: uploadData, isLoading: uploadLoading, refetch: refetchUpload } = useQuery({
     queryKey: ['threats', 'ANOMALIA_UPLOAD'],
-    queryFn: () => api.get('/api/threats?active_only=true&attack_type=ANOMALIA_UPLOAD').then(r => r.data),
+    queryFn: () => api.get('/api/threats/?active_only=true&attack_type=ANOMALIA_UPLOAD').then(r => r.data),
+
     refetchInterval: 30000,
   });
 
+  const sortByFator = (a: any, b: any) => (b.fator_anomalia || 0) - (a.fator_anomalia || 0);
+
   const downloadThreats = useMemo(() => 
-    getItems(downloadData).sort((a: any, b: any) => b.fator_anomalia - a.fator_anomalia), 
+    getItems(downloadData).sort(sortByFator), 
   [downloadData]);
 
   const uploadThreats = useMemo(() => 
-    getItems(uploadData).sort((a: any, b: any) => b.fator_anomalia - a.fator_anomalia), 
+    getItems(uploadData).sort(sortByFator), 
   [uploadData]);
 
-  // Define a aba ativa inicial baseada na contagem
+  // Define a aba ativa inicial baseada na contagem apenas no primeiro carregamento
   useEffect(() => {
-    if (!activeTab && (downloadThreats.length > 0 || uploadThreats.length > 0)) {
-      if (uploadThreats.length > downloadThreats.length) {
+    if (downloadThreats.length > 0 || uploadThreats.length > 0) {
+      if (uploadThreats.length > downloadThreats.length && activeTab === 'download') {
         setActiveTab('upload');
-      } else {
-        setActiveTab('download');
       }
-    } else if (!activeTab && !downloadLoading && !uploadLoading && (downloadData || uploadData)) {
-      setActiveTab('download');
     }
-  }, [downloadThreats.length, uploadThreats.length, activeTab, downloadLoading, uploadLoading, downloadData, uploadData]);
+  }, [downloadThreats.length, uploadThreats.length]);
 
   const updateStatus = useMutation({
     mutationFn: (data: { id: number, status: string }) => api.patch(`/api/threats/${data.id}/status`, { status: data.status }),
@@ -85,10 +84,10 @@ export default function Threats() {
     }
   });
 
-  const formatMbps = (mbps: number) => {
-    if (!mbps) return '0 Mbps';
+  const formatMbps = (mbps: number | null | undefined) => {
+    if (mbps === null || mbps === undefined) return '—';
     if (mbps >= 1000) return `${(mbps / 1000).toFixed(1)} Gbps`;
-    return `${mbps.toFixed(0)} Mbps`;
+    return `${mbps.toFixed(1)} Mbps`;
   };
 
   const timeAgo = (date: string) => {
@@ -102,7 +101,8 @@ export default function Threats() {
     return `há ${hrs}h`;
   };
 
-  const getFatorBadge = (fator: number) => {
+  const getFatorBadge = (fator: number | null | undefined) => {
+    if (fator === null || fator === undefined) return <Badge variant="outline">—</Badge>;
     const color = fator >= 5 ? 'text-red-500 border-red-500/20 bg-red-500/5' : 
                   fator >= 3 ? 'text-yellow-600 border-yellow-600/20 bg-yellow-600/5' : 
                   'text-blue-500 border-blue-500/20 bg-blue-500/5';
@@ -116,7 +116,7 @@ export default function Threats() {
       medium: 'text-yellow-600 border-yellow-600/20 bg-yellow-600/10',
       low: 'text-blue-600 border-blue-600/20 bg-blue-600/10'
     };
-    return <Badge variant="outline" className={clsx("uppercase text-[10px] font-bold", colors[sev] || 'text-gray-500 border-gray-500/20')}>{sev}</Badge>;
+    return <Badge variant="outline" className={clsx("uppercase text-[10px] font-bold", colors[sev] || 'text-gray-500 border-gray-500/20')}>{sev || 'unknown'}</Badge>;
   };
 
   const getStatusBadge = (status: string) => {
@@ -125,12 +125,13 @@ export default function Threats() {
       acknowledged: { label: 'Analisando', color: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' },
       ignored: { label: 'Ignorada', color: 'bg-gray-500/10 text-gray-500 border-gray-500/20' }
     };
-    const s = labels[status] || { label: status, color: '' };
+    const s = labels[status] || { label: status, color: 'bg-gray-500/10 text-gray-500' };
     return <Badge className={clsx(s.color, "text-[10px]")}>{s.label}</Badge>;
   };
 
-  const filteredDownload = downloadThreats.filter((t: any) => t.ip.includes(searchTerm));
-  const filteredUpload = uploadThreats.filter((t: any) => t.ip.includes(searchTerm));
+  const filteredDownload = downloadThreats.filter((t: any) => t.ip?.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredUpload = uploadThreats.filter((t: any) => t.ip?.toLowerCase().includes(searchTerm.toLowerCase()));
+
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -210,7 +211,16 @@ export default function Threats() {
             <h3 className="text-sm font-semibold text-text-primary">Download Anômalo</h3>
             <p className="text-xs text-text-secondary">Possíveis ataques vindos da internet para nossos clientes</p>
           </div>
-          <ThreatTable threats={filteredDownload} onSelect={setSelectedThreat} type="download" />
+          <ThreatTable 
+            threats={filteredDownload} 
+            onSelect={setSelectedThreat} 
+            type="download" 
+            formatMbps={formatMbps}
+            getFatorBadge={getFatorBadge}
+            getSeverityBadge={getSeverityBadge}
+            getStatusBadge={getStatusBadge}
+            timeAgo={timeAgo}
+          />
         </TabsContent>
 
         <TabsContent value="upload" className="mt-4 space-y-4">
@@ -218,7 +228,17 @@ export default function Threats() {
             <h3 className="text-sm font-semibold text-text-primary">Upload Anômalo</h3>
             <p className="text-xs text-text-secondary">Possíveis clientes infectados gerando tráfego para a internet</p>
           </div>
-          <ThreatTable threats={filteredUpload} onSelect={setSelectedThreat} type="upload" />
+          <ThreatTable 
+            threats={filteredUpload} 
+            onSelect={setSelectedThreat} 
+            type="upload" 
+            formatMbps={formatMbps}
+            getFatorBadge={getFatorBadge}
+            getSeverityBadge={getSeverityBadge}
+            getStatusBadge={getStatusBadge}
+            timeAgo={timeAgo}
+          />
+
         </TabsContent>
       </Tabs>
 
@@ -234,51 +254,25 @@ export default function Threats() {
   );
 }
 
-function ThreatTable({ threats, onSelect, type }: { threats: any[], onSelect: (t: any) => void, type: 'download' | 'upload' }) {
-  const formatMbps = (mbps: number) => {
-    if (!mbps) return '0 Mbps';
-    if (mbps >= 1000) return `${(mbps / 1000).toFixed(1)} Gbps`;
-    return `${mbps.toFixed(0)} Mbps`;
-  };
-
-  const getFatorBadge = (fator: number) => {
-    const color = fator >= 5 ? 'text-red-500 border-red-500/20 bg-red-500/5' : 
-                  fator >= 3 ? 'text-yellow-600 border-yellow-600/20 bg-yellow-600/5' : 
-                  'text-blue-500 border-blue-500/20 bg-blue-500/5';
-    return <Badge variant="outline" className={clsx("font-mono", color)}>{fator.toFixed(1)}x</Badge>;
-  };
-
-  const getSeverityBadge = (sev: string) => {
-    const colors: any = {
-      critical: 'text-red-600 border-red-600/20 bg-red-600/10',
-      high: 'text-orange-600 border-orange-600/20 bg-orange-600/10',
-      medium: 'text-yellow-600 border-yellow-600/20 bg-yellow-600/10',
-      low: 'text-blue-600 border-blue-600/20 bg-blue-600/10'
-    };
-    return <Badge variant="outline" className={clsx("uppercase text-[10px] font-bold", colors[sev] || 'text-gray-500 border-gray-500/20')}>{sev}</Badge>;
-  };
-
-  const getStatusBadge = (status: string) => {
-    const labels: any = {
-      new: { label: 'Nova', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
-      acknowledged: { label: 'Analisando', color: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' },
-      ignored: { label: 'Ignorada', color: 'bg-gray-500/10 text-gray-500 border-gray-500/20' }
-    };
-    const s = labels[status] || { label: status, color: '' };
-    return <Badge className={clsx(s.color, "text-[10px]")}>{s.label}</Badge>;
-  };
-
-  const timeAgo = (date: string) => {
-    if (!date) return '—';
-    const diff = Date.now() - new Date(date).getTime();
-    const secs = Math.floor(diff / 1000);
-    if (secs < 60) return `há ${secs}s`;
-    const mins = Math.floor(secs / 60);
-    if (mins < 60) return `há ${mins}m`;
-    const hrs = Math.floor(mins / 60);
-    return `há ${hrs}h`;
-  };
-
+function ThreatTable({ 
+  threats, 
+  onSelect, 
+  type, 
+  formatMbps, 
+  getFatorBadge, 
+  getSeverityBadge, 
+  getStatusBadge, 
+  timeAgo 
+}: { 
+  threats: any[], 
+  onSelect: (t: any) => void, 
+  type: 'download' | 'upload',
+  formatMbps: (v: number | null | undefined) => string,
+  getFatorBadge: (v: number | null | undefined) => any,
+  getSeverityBadge: (s: string) => any,
+  getStatusBadge: (s: string) => any,
+  timeAgo: (d: string) => string
+}) {
   return (
     <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden shadow-sm">
       <Table>
@@ -307,13 +301,13 @@ function ThreatTable({ threats, onSelect, type }: { threats: any[], onSelect: (t
                 key={t.id} 
                 className={clsx(
                   "cursor-pointer hover:bg-bg-primary transition-colors group",
-                  t.fator_anomalia >= 5 ? "border-l-4 border-l-red-500" : 
-                  t.fator_anomalia >= 3 ? "border-l-4 border-l-yellow-500" : "",
+                  (t.fator_anomalia || 0) >= 5 ? "border-l-4 border-l-red-500" : 
+                  (t.fator_anomalia || 0) >= 3 ? "border-l-4 border-l-yellow-500" : "",
                   t.status === 'ignored' && "opacity-50"
                 )}
                 onClick={() => onSelect(t)}
               >
-                <TableCell className="font-mono font-bold text-text-primary">{t.ip}</TableCell>
+                <TableCell className="font-mono font-bold text-text-primary">{t.ip || '—'}</TableCell>
                 <TableCell className="font-medium">{formatMbps(t.mbps_atual)}</TableCell>
                 <TableCell>{getFatorBadge(t.fator_anomalia)}</TableCell>
                 <TableCell>
@@ -343,13 +337,14 @@ function ThreatTable({ threats, onSelect, type }: { threats: any[], onSelect: (t
   );
 }
 
+
 function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverityBadge, getFatorBadge }: { 
   threat: any, 
   onClose: () => void, 
   onStatusChange: (id: number, status: string) => void,
-  formatMbps: (v: number) => string,
+  formatMbps: (v: number | null | undefined) => string,
   getSeverityBadge: (s: string) => any,
-  getFatorBadge: (f: number) => any
+  getFatorBadge: (f: number | null | undefined) => any
 }) {
   if (!threat) return null;
 
@@ -369,7 +364,7 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
             </Badge>
             {getSeverityBadge(threat.severity)}
           </div>
-          <SheetTitle className="text-2xl font-mono">{threat.ip}</SheetTitle>
+          <SheetTitle className="text-2xl font-mono">{threat.ip || '—'}</SheetTitle>
           <SheetDescription className="hidden">Detalhes da anomalia detectada</SheetDescription>
         </SheetHeader>
 
@@ -393,19 +388,19 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
               <div className="space-y-2">
                 <div className="flex justify-between items-end">
                   <p className="text-[10px] uppercase font-semibold text-text-secondary">Fator de Anomalia</p>
-                  <span className="text-xs font-bold text-text-primary">{threat.fator_anomalia.toFixed(1)}x acima</span>
+                  <span className="text-xs font-bold text-text-primary">{threat.fator_anomalia?.toFixed(1) ?? '—'}x acima</span>
                 </div>
                 <div className="h-2 bg-bg-secondary rounded-full overflow-hidden border border-border">
                   <div 
                     className={clsx(
                       "h-full transition-all duration-500",
-                      threat.fator_anomalia >= 5 ? "bg-red-500" : "bg-blue-500"
+                      (threat.fator_anomalia || 0) >= 5 ? "bg-red-500" : "bg-blue-500"
                     )}
-                    style={{ width: `${Math.min((threat.fator_anomalia / 10) * 100, 100)}%` }}
+                    style={{ width: `${Math.min(((threat.fator_anomalia || 0) / 10) * 100, 100)}%` }}
                   />
                 </div>
                 <p className="text-[10px] text-text-secondary leading-relaxed italic">
-                  * Este IP está recebendo {threat.fator_anomalia.toFixed(1)}x mais tráfego que o normal para este horário.
+                  * Este IP está recebendo {threat.fator_anomalia?.toFixed(1) ?? '—'}x mais tráfego que o normal para este horário.
                 </p>
               </div>
             </div>
@@ -448,22 +443,22 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
                       </div>
                       <div className="flex justify-between">
                         <span className="text-text-secondary">Volume:</span>
-                        <span className="font-mono text-text-primary">{item.mbps.toFixed(1)} Mbps</span>
+                        <span className="font-mono text-text-primary">{item.mbps?.toFixed(1) ?? '—'} Mbps</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-text-secondary">PPS:</span>
-                        <span className="font-mono text-text-primary">{item.pps.toLocaleString()}</span>
+                        <span className="font-mono text-text-primary">{item.pps?.toLocaleString() ?? '—'}</span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-text-secondary">BPP:</span>
-                        <span className="font-mono text-text-primary">{item.bpp} bytes</span>
+                        <span className="font-mono text-text-primary">{item.bpp || '—'} bytes</span>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between text-[10px] text-text-secondary opacity-70">
-                      <div className="flex items-center gap-1"><Clock size={10} /> {item.primeira_vez}</div>
+                      <div className="flex items-center gap-1"><Clock size={10} /> {item.primeira_vez || '—'}</div>
                       <ArrowRight size={10} />
-                      <div className="flex items-center gap-1">{item.ultima_vez}</div>
+                      <div className="flex items-center gap-1">{item.ultima_vez || '—'}</div>
                     </div>
                   </div>
                 ))
@@ -499,3 +494,4 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
     </Sheet>
   );
 }
+
