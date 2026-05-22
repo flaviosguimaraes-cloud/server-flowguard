@@ -123,10 +123,10 @@ function SectionDivider({ title }: { title: string }) {
       const normalizedDir = String(direction || '').toLowerCase().trim();
 
       // Action Type Badges
-      if (normalizedAction === 'blackhole' || normalizedAction === 'blackhole_flowspec') {
+      if (normalizedAction === 'blackhole' || normalizedAction === 'blackhole_flowspec' || normalizedAction === 'blacklist') {
         badges.push(
           <span key="bh" className="px-2 py-0.5 bg-danger/10 text-danger border border-danger/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
-            Blackhole /32
+            {normalizedAction === 'blacklist' ? 'Blacklist' : 'Blackhole /32'}
           </span>
         );
       }
