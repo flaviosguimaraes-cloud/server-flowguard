@@ -394,18 +394,30 @@ function ThreatTable({
 }
 
 
-function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverityBadge, getFatorBadge }: { 
+function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverityBadge, getFatorBadge, getAttackTypeBadge }: { 
   threat: any, 
   onClose: () => void, 
   onStatusChange: (id: number, status: string) => void,
   formatMbps: (v: any) => string,
   getSeverityBadge: (s: string) => any,
-  getFatorBadge: (f: any) => any
+  getFatorBadge: (f: any) => any,
+  getAttackTypeBadge: (t: string) => any
 }) {
 
   if (!threat) return null;
 
-  const isDownload = threat.attack_type === 'ANOMALIA_DOWNLOAD';
+  const isDownloadThreat = (type: string) => {
+    const t = type?.toUpperCase() || '';
+    return t.startsWith('ANOMALIA_DOWNLOAD') || 
+           t.startsWith('CONNECTION_FLOOD') || 
+           t.startsWith('SYN_FLOOD') || 
+           t.startsWith('LOW_PACKET_FLOOD') || 
+           t.startsWith('UDP_AMPLIFICATION') || 
+           t.startsWith('SLOWLORIS') || 
+           t.startsWith('PORT_SCAN');
+  };
+
+  const isDownload = isDownloadThreat(threat.attack_type);
   const evidence = Array.isArray(threat.evidence) ? threat.evidence : [];
 
   return (
@@ -413,12 +425,15 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
       <SheetContent className="sm:max-w-lg overflow-y-auto">
         <SheetHeader className="space-y-4">
           <div className="flex items-center justify-between mt-2">
-            <Badge className={clsx(
-              "font-black uppercase tracking-widest text-[10px] px-2 py-0.5",
-              isDownload ? "bg-blue-500 text-white" : "bg-orange-500 text-white"
-            )}>
-              {isDownload ? 'Download' : 'Upload'}
-            </Badge>
+            <div className="flex gap-2">
+              <Badge className={clsx(
+                "font-black uppercase tracking-widest text-[10px] px-2 py-0.5",
+                isDownload ? "bg-blue-500 text-white" : "bg-orange-500 text-white"
+              )}>
+                {isDownload ? 'Download' : 'Upload'}
+              </Badge>
+              {getAttackTypeBadge(threat.attack_type)}
+            </div>
             {getSeverityBadge(threat.severity)}
           </div>
           <SheetTitle className="text-2xl font-mono">{threat.ip || '—'}</SheetTitle>
