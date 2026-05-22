@@ -131,17 +131,31 @@ export default function Threats() {
     }
   };
 
-  const getFatorBadge = (value: any) => {
+  const isBehavioral = (type: string) => {
+    const t = type?.toUpperCase() || '';
+    return !t.startsWith('ANOMALIA_') && !t.startsWith('UDP_AMPLIFICATION');
+  };
+
+  const getFatorBadge = (value: any, type: string) => {
+    const isBeh = isBehavioral(type);
     const num = typeof value === 'string' ? parseFloat(value) : value;
     if (num === null || num === undefined || isNaN(num)) return <Badge variant="outline">—</Badge>;
     const color = num >= 5 ? 'text-red-500 border-red-500/20 bg-red-500/5' : 
                   num >= 3 ? 'text-yellow-600 border-yellow-600/20 bg-yellow-600/5' : 
                   'text-blue-500 border-blue-500/20 bg-blue-500/5';
-    return <Badge variant="outline" className={clsx("font-mono", color)}>{num.toFixed(1)}x</Badge>;
+    
+    const label = isBeh ? `${(num * 10).toFixed(0)}%` : `${num.toFixed(1)}x`;
+    return <Badge variant="outline" className={clsx("font-mono", color)}>{label}</Badge>;
   };
 
   const getAttackTypeBadge = (type: string) => {
     const t = type?.toUpperCase() || '';
+    let display = t;
+    if (t.startsWith('OUTGOING_SCAN_')) display = 'OUTGOING_SCAN';
+    if (t.startsWith('UDP_AMPLIFICATION_')) display = 'UDP_AMPLIFICATION';
+    
+    if (display.length > 20) display = display.substring(0, 17) + '...';
+
     let color = 'bg-gray-500/10 text-gray-500 border-gray-500/20';
     
     if (t.startsWith('ANOMALIA_DOWNLOAD')) color = 'bg-blue-500/10 text-blue-500 border-blue-500/20';
@@ -152,7 +166,7 @@ export default function Threats() {
     else if (t.startsWith('SLOWLORIS')) color = 'bg-yellow-500/10 text-yellow-600 border-yellow-600/20';
     else if (t.startsWith('OUTGOING_SCAN')) color = 'bg-red-900/10 text-red-800 border-red-800/20';
     
-    return <Badge variant="outline" className={clsx("text-[10px] font-bold", color)}>{t}</Badge>;
+    return <Badge variant="outline" className={clsx("text-[10px] font-bold", color)}>{display}</Badge>;
   };
 
   const getSeverityBadge = (sev: string) => {
