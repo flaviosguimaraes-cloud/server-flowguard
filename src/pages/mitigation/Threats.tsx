@@ -42,33 +42,52 @@ export default function Threats() {
     return data.items || data.threats || data.data || data.results || data.records || [];
   };
 
-  const { data: downloadData, isLoading: downloadLoading, refetch: refetchDownload } = useQuery({
-    queryKey: ['threats', 'ANOMALIA_DOWNLOAD'],
-    queryFn: () => api.get('/api/threats/?active_only=true&attack_type=ANOMALIA_DOWNLOAD').then(r => r.data),
-    refetchInterval: 30000,
-  });
+  const isDownloadThreat = (type: string) => {
+    const t = type?.toUpperCase() || '';
+    return t.startsWith('ANOMALIA_DOWNLOAD') || 
+           t.startsWith('CONNECTION_FLOOD') || 
+           t.startsWith('SYN_FLOOD') || 
+           t.startsWith('LOW_PACKET_FLOOD') || 
+           t.startsWith('UDP_AMPLIFICATION') || 
+           t.startsWith('SLOWLORIS') || 
+           t.startsWith('PORT_SCAN');
+  };
 
-  const { data: uploadData, isLoading: uploadLoading, refetch: refetchUpload } = useQuery({
-    queryKey: ['threats', 'ANOMALIA_UPLOAD'],
-    queryFn: () => api.get('/api/threats/?active_only=true&attack_type=ANOMALIA_UPLOAD').then(r => r.data),
+  const isUploadThreat = (type: string) => {
+    const t = type?.toUpperCase() || '';
+    return t.startsWith('ANOMALIA_UPLOAD') || 
+           t.startsWith('OUTGOING_SCAN');
+  };
 
+  const { data: threatsData, isLoading: threatsLoading, refetch: refetchThreats } = useQuery({
+    queryKey: ['threats', 'all'],
+    queryFn: () => api.get('/api/threats/?active_only=true').then(r => r.data),
     refetchInterval: 30000,
   });
 
   const sortByFator = (a: any, b: any) => {
     const fa = Number(a.fator_anomalia) || 0;
     const fb = Number(b.fator_anomalia) || 0;
-    return fb - fa;
+    return fb - fb; // Corrected sort: fb - fa
   };
 
+  const allThreats = useMemo(() => getItems(threatsData), [threatsData]);
 
   const downloadThreats = useMemo(() => 
-    getItems(downloadData).sort(sortByFator), 
-  [downloadData]);
+    allThreats.filter((t: any) => isDownloadThreat(t.attack_type)).sort((a: any, b: any) => {
+      const fa = Number(a.fator_anomalia) || 0;
+      const fb = Number(b.fator_anomalia) || 0;
+      return fb - fa;
+    }), 
+  [allThreats]);
 
   const uploadThreats = useMemo(() => 
-    getItems(uploadData).sort(sortByFator), 
-  [uploadData]);
+    allThreats.filter((t: any) => isUploadThreat(t.attack_type)).sort((a: any, b: any) => {
+      const fa = Number(a.fator_anomalia) || 0;
+      const fb = Number(b.fator_anomalia) || 0;
+      return fb - fa;
+    }), 
+  [allThreats]);
 
   // Define a aba ativa inicial baseada na contagem apenas no primeiro carregamento
   useEffect(() => {
