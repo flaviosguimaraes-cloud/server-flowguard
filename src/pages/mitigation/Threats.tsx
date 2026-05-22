@@ -210,7 +210,16 @@ export default function Threats() {
             <h3 className="text-sm font-semibold text-text-primary">Download Anômalo</h3>
             <p className="text-xs text-text-secondary">Possíveis ataques vindos da internet para nossos clientes</p>
           </div>
-          <ThreatTable threats={filteredDownload} onSelect={setSelectedThreat} type="download" />
+          <ThreatTable 
+            threats={filteredDownload} 
+            onSelect={setSelectedThreat} 
+            type="download" 
+            formatMbps={formatMbps}
+            getFatorBadge={getFatorBadge}
+            getSeverityBadge={getSeverityBadge}
+            getStatusBadge={getStatusBadge}
+            timeAgo={timeAgo}
+          />
         </TabsContent>
 
         <TabsContent value="upload" className="mt-4 space-y-4">
@@ -218,7 +227,17 @@ export default function Threats() {
             <h3 className="text-sm font-semibold text-text-primary">Upload Anômalo</h3>
             <p className="text-xs text-text-secondary">Possíveis clientes infectados gerando tráfego para a internet</p>
           </div>
-          <ThreatTable threats={filteredUpload} onSelect={setSelectedThreat} type="upload" />
+          <ThreatTable 
+            threats={filteredUpload} 
+            onSelect={setSelectedThreat} 
+            type="upload" 
+            formatMbps={formatMbps}
+            getFatorBadge={getFatorBadge}
+            getSeverityBadge={getSeverityBadge}
+            getStatusBadge={getStatusBadge}
+            timeAgo={timeAgo}
+          />
+
         </TabsContent>
       </Tabs>
 
