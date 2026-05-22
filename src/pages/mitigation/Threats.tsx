@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import { useTranslation } from '../../hooks/useTranslation';
-import { Shield, Flame, Bolt, ShieldCheck, RefreshCw, AlertTriangle, Search, Clock, Zap, X, Info, Settings2, LayoutGrid } from 'lucide-react';
+import { Shield, Flame, Bolt, ShieldCheck, RefreshCw, AlertTriangle, Search, Clock, Zap, X, Info, Settings2, LayoutGrid, ArrowRight, MousePointer2, ExternalLink, MapPin, Target, CheckCircle, XCircle } from 'lucide-react';
 import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
@@ -10,7 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Input } from '../../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Skeleton } from '../../components/Skeleton';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '../../components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '../../components/ui/sheet';
 import { Separator } from '../../components/ui/separator';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../../components/ui/dialog';
@@ -18,6 +18,7 @@ import { Switch } from "../../components/ui/switch";
 import { Label } from "../../components/ui/label";
 import { Slider } from "../../components/ui/slider";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "../../components/ui/tooltip";
+import { Progress } from "../../components/ui/progress";
 
 export default function Threats() {
   const { t } = useTranslation();
@@ -28,41 +29,81 @@ export default function Threats() {
   const [showConfig, setShowConfig] = useState(false);
   const [config, setConfig] = useState<any>(null);
 
-  const { data: summary } = useQuery({ queryKey: ['threats-summary'], queryFn: () => api.get('/api/threats/summary').then(r => r.data), refetchInterval: 30000 });
+  const { data: summary } = useQuery({ 
+    queryKey: ['threats-summary'], 
+    queryFn: () => api.get('/api/threats/summary').then(r => r.data), 
+    refetchInterval: 30000 
+  });
   
-  const { data: threats, isLoading: threatsLoading, refetch } = useQuery({
+  const { data: threatsData, isLoading: threatsLoading, refetch } = useQuery({
     queryKey: ['threats', filters],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (filters.status !== 'all') params.append('status', filters.status);
+      
+      // Mapeamento de status para active_only se necessário
+      if (filters.status === 'active') {
+        params.append('active_only', 'true');
+      } else if (filters.status !== 'all') {
+        params.append('status', filters.status);
+      }
+      
       if (filters.severity !== 'all') params.append('severity', filters.severity);
       if (filters.attackType !== 'all') params.append('attack_type', filters.attackType);
       if (filters.search) params.append('ip', filters.search);
+      
       const r = await api.get('/api/threats?' + params.toString());
       return r.data;
     },
     refetchInterval: 30000,
   });
 
-  const { data: detectorConfig } = useQuery({ queryKey: ['detector-config'], queryFn: () => api.get('/api/threats/config/detector').then(r => r.data), enabled: showConfig });
-  useEffect(() => { if (detectorConfig) setConfig(detectorConfig); }, [detectorConfig]);
+  // Garantir que temos um array de ameaças, independente da estrutura da API
+  const threats = useMemo(() => {
+    if (!threatsData) return [];
+    if (Array.isArray(threatsData)) return threatsData;
+    return threatsData.items || threatsData.threats || threatsData.data || [];
+  }, [threatsData]);
+
+  const { data: detectorConfig } = useQuery({ 
+    queryKey: ['detector-config'], 
+    queryFn: () => api.get('/api/threats/config/detector').then(r => r.data), 
+    enabled: showConfig 
+  });
+
+  useEffect(() => { 
+    if (detectorConfig) setConfig(detectorConfig); 
+  }, [detectorConfig]);
 
   const updateStatus = useMutation({
     mutationFn: (data: { id: number, status: string }) => api.patch(`/api/threats/${data.id}/status`, { status: data.status }),
-    onSuccess: () => { toast.success('Status atualizado'); queryClient.invalidateQueries({ queryKey: ['threats'] }); setSelectedThreat(null); }
+    onSuccess: () => { 
+      toast.success('Status atualizado'); 
+      queryClient.invalidateQueries({ queryKey: ['threats'] }); 
+      setSelectedThreat(null); 
+    }
   });
 
   const applyMitigation = useMutation({
     mutationFn: (data: any) => api.post(`/api/threats/${data.id}/apply`, data),
-    onSuccess: () => { toast.success('FlowSpec aplicado com sucesso'); queryClient.invalidateQueries({ queryKey: ['threats'] }); setConfirmModal(null); setSelectedThreat(null); }
+    onSuccess: () => { 
+      toast.success('FlowSpec aplicado com sucesso'); 
+      queryClient.invalidateQueries({ queryKey: ['threats'] }); 
+      setConfirmModal(null); 
+      setSelectedThreat(null); 
+    }
   });
 
   const saveConfig = useMutation({
     mutationFn: (c: any) => api.put('/api/threats/config/detector', c),
-    onSuccess: () => { toast.success('Configuração salva'); setShowConfig(false); }
+    onSuccess: () => { 
+      toast.success('Configuração salva'); 
+      setShowConfig(false); 
+      queryClient.invalidateQueries({ queryKey: ['detector-config'] });
+    }
   });
 
   const getAttackTypeBadge = (type: string) => {
+    if (!type) return null;
     const attackType = type.toUpperCase();
     let color = "bg-gray-500/10 text-gray-500 border-gray-500/20";
     if (attackType.includes('ACK_FLOOD')) color = "bg-purple-500/10 text-purple-500 border-purple-500/20";
@@ -70,6 +111,7 @@ export default function Threats() {
     else if (attackType.includes('UDP_FLOOD') || attackType.includes('UDP_AMPLIFICATION')) color = "bg-orange-500/10 text-orange-500 border-orange-500/20";
     else if (attackType.includes('PORT_SCAN')) color = "bg-blue-500/10 text-blue-500 border-blue-500/20";
     else if (attackType.includes('BRUTE_FORCE')) color = "bg-yellow-500/10 text-yellow-500 border-yellow-500/20";
+    else if (attackType.includes('LOW_VOLUME_PROBE')) color = "bg-gray-500/10 text-gray-500 border-gray-500/20";
     return <Badge className={color}>{type}</Badge>;
   };
 
@@ -103,7 +145,10 @@ export default function Threats() {
   return (
     <div className="space-y-6">
       <div className="flex items-center justify-between">
-        <h1 className="text-2xl font-bold tracking-tight">Ameaças</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold tracking-tight">Ameaças</h1>
+          <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-bold uppercase text-[10px]">Detector v3</Badge>
+        </div>
         <Button variant="outline" size="sm" onClick={() => setShowConfig(true)}>
           <Settings2 size={16} className="mr-2" /> Configuração
         </Button>
@@ -123,7 +168,7 @@ export default function Threats() {
         </Select>
         <Select value={filters.severity} onValueChange={(v) => setFilters(f => ({ ...f, severity: v }))}>
           <SelectTrigger className="w-[150px] bg-bg-secondary"><SelectValue /></SelectTrigger>
-          <SelectContent><SelectItem value="all">Todas</SelectItem><SelectItem value="critical">Critical</SelectItem><SelectItem value="high">High</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="low">Low</SelectItem></SelectContent>
+          <SelectContent><SelectItem value="all">Todas Severidades</SelectItem><SelectItem value="critical">Critical</SelectItem><SelectItem value="high">High</SelectItem><SelectItem value="medium">Medium</SelectItem><SelectItem value="low">Low</SelectItem></SelectContent>
         </Select>
         <Input placeholder="Buscar IP..." className="w-[200px] bg-bg-secondary" value={filters.search} onChange={e => setFilters(f => ({...f, search: e.target.value}))} />
         <Button variant="outline" size="icon" onClick={() => refetch()}><RefreshCw size={16} /></Button>
@@ -133,18 +178,18 @@ export default function Threats() {
         <Table>
           <TableHeader><TableRow><TableHead>IP</TableHead><TableHead>Tipo</TableHead><TableHead>Protocolo/Porta</TableHead><TableHead>Confiança</TableHead><TableHead>Severidade</TableHead><TableHead>Persistência</TableHead><TableHead>Status</TableHead><TableHead>Detectada</TableHead><TableHead>Ações</TableHead></TableRow></TableHeader>
           <TableBody>
-            {threatsLoading ? [...Array(5)].map((_, i) => <TableRow key={i}><TableCell colSpan={9}><Skeleton className="h-10 w-full" /></TableCell></TableRow>) : threats?.map((t: any) => {
+            {threatsLoading ? [...Array(5)].map((_, i) => <TableRow key={i}><TableCell colSpan={9}><Skeleton className="h-10 w-full" /></TableCell></TableRow>) : 
+              threats.length === 0 ? <TableRow><TableCell colSpan={9} className="text-center py-10 text-text-secondary">Nenhuma ameaça encontrada</TableCell></TableRow> :
+              threats.map((t: any) => {
               const status = getStatusLabel(t.status);
               return (
                 <TableRow key={t.id} className={`cursor-pointer hover:bg-bg-primary transition-colors ${t.severity === 'critical' ? 'border-l-4 border-l-red-500' : ''} ${t.status === 'applied' || t.status === 'expired' ? 'opacity-60' : ''}`} onClick={() => setSelectedThreat(t)}>
                   <TableCell className="font-mono font-medium">{t.ip}</TableCell>
                   <TableCell>{getAttackTypeBadge(t.attack_type)}</TableCell>
-                  <TableCell className="font-mono text-[10px] uppercase text-text-secondary">{t.protocol} / {t.dst_port}</TableCell>
+                  <TableCell className="font-mono text-[10px] uppercase text-text-secondary">{t.protocol} / {t.dst_port || 'múltiplas'}</TableCell>
                   <TableCell className="w-28">
                     <div className="space-y-1">
-                      <div className="w-full bg-border rounded-full h-1 overflow-hidden">
-                        <div className={`h-full ${getConfidenceColor(t.confidence)}`} style={{ width: `${t.confidence * 100}%` }} />
-                      </div>
+                      <Progress value={t.confidence * 100} className="h-1" />
                       <span className="text-[10px] text-text-secondary">{(t.confidence * 100).toFixed(0)}%</span>
                     </div>
                   </TableCell>
@@ -152,8 +197,8 @@ export default function Threats() {
                   <TableCell>
                     <TooltipProvider>
                       <Tooltip>
-                        <TooltipTrigger asChild><div className="flex items-center gap-1.5 text-text-secondary text-[11px]"><LayoutGrid size={12} />{t.persistence_windows} janelas</div></TooltipTrigger>
-                        <TooltipContent><p className="text-[11px]">Detectado em {t.persistence_windows} ciclos consecutivos de 60s</p></TooltipContent>
+                        <TooltipTrigger asChild><div className="flex items-center gap-1.5 text-text-secondary text-[11px]"><LayoutGrid size={12} />{t.persistence_windows || 1} janelas</div></TooltipTrigger>
+                        <TooltipContent><p className="text-[11px]">Detectado em {t.persistence_windows || 1} ciclos consecutivos de 60s</p></TooltipContent>
                       </Tooltip>
                     </TooltipProvider>
                   </TableCell>
@@ -181,7 +226,7 @@ export default function Threats() {
                   <div key={k} className="p-2 bg-bg-primary/50 border border-border/40 rounded flex justify-between"><span className="text-text-secondary">{k}</span><span className="font-mono font-medium">{typeof v === 'number' ? v.toFixed(k.includes('ratio') ? 4 : 0) : String(v)}</span></div>
                 ))}
               </div>
-              <div className="flex items-center gap-2 text-xs text-text-secondary px-1"><Clock size={14} /> Detectado em {selectedThreat?.persistence_windows} janelas consecutivas de 60s</div>
+              <div className="flex items-center gap-2 text-xs text-text-secondary px-1"><Clock size={14} /> Detectado em {selectedThreat?.persistence_windows || 1} janelas consecutivas de 60s</div>
             </div>
             
             {selectedThreat?.flowspec_suggestion && (
@@ -190,12 +235,12 @@ export default function Threats() {
                 <div className="space-y-3">
                   <h4 className="text-sm font-semibold flex items-center gap-2 text-purple-500"><Zap size={16} /> Regra FlowSpec sugerida</h4>
                   <div className="text-xs space-y-2 p-4 bg-purple-500/5 border border-purple-500/10 rounded-lg shadow-inner">
-                    <div className="flex justify-between"><span>Destino:</span><span className="font-mono font-medium">{selectedThreat.flowspec_suggestion.match.destination}</span></div>
-                    <div className="flex justify-between uppercase"><span>Protocolo:</span><span className="font-mono font-medium">{selectedThreat.flowspec_suggestion.match.protocol}</span></div>
-                    <div className="flex justify-between uppercase"><span>Porta destino:</span><span className="font-mono font-medium">{selectedThreat.flowspec_suggestion.match.destination_port}</span></div>
-                    {selectedThreat.flowspec_suggestion.match.tcp_flags && <div className="flex justify-between uppercase"><span>Flags TCP:</span><span className="font-mono font-medium">{selectedThreat.flowspec_suggestion.match.tcp_flags}</span></div>}
-                    <div className="flex justify-between"><span>Ação:</span><span className="font-mono font-medium">Rate-limit {(selectedThreat.flowspec_suggestion.then.rate_limit_bps / 1e6).toFixed(0)} Mbps</span></div>
-                    <div className="flex justify-between"><span>TTL sugerido:</span><span className="font-mono font-medium">{Math.floor(selectedThreat.flowspec_suggestion.ttl_seconds / 60)} minutos</span></div>
+                    <div className="flex justify-between"><span>Destino:</span><span className="font-mono font-medium">{selectedThreat.flowspec_suggestion.match?.destination}</span></div>
+                    <div className="flex justify-between uppercase"><span>Protocolo:</span><span className="font-mono font-medium">{selectedThreat.flowspec_suggestion.match?.protocol}</span></div>
+                    <div className="flex justify-between uppercase"><span>Porta destino:</span><span className="font-mono font-medium">{selectedThreat.flowspec_suggestion.match?.destination_port || 'múltiplas'}</span></div>
+                    {selectedThreat.flowspec_suggestion.match?.tcp_flags && <div className="flex justify-between uppercase"><span>Flags TCP:</span><span className="font-mono font-medium">{selectedThreat.flowspec_suggestion.match.tcp_flags}</span></div>}
+                    <div className="flex justify-between"><span>Ação:</span><span className="font-mono font-medium">Rate-limit {(selectedThreat.flowspec_suggestion.then?.rate_limit_bps / 1e6).toFixed(0)} Mbps</span></div>
+                    <div className="flex justify-between"><span>TTL sugerido:</span><span className="font-mono font-medium">{Math.floor((selectedThreat.flowspec_suggestion.ttl_seconds || 600) / 60)} minutos</span></div>
                   </div>
                   <div className="flex items-start gap-2 p-2 bg-amber-500/5 border border-amber-500/10 rounded text-[10px] text-amber-600 dark:text-amber-500">
                     <AlertTriangle size={14} className="shrink-0 mt-0.5" /> Sugestão do detector. Valide o impacto antes de aplicar.
@@ -276,7 +321,7 @@ export default function Threats() {
                 <span className="text-text-secondary">Destino:</span><span className="font-mono font-bold text-right">{confirmModal?.flowspec_suggestion?.match?.destination}</span>
                 <span className="text-text-secondary">Ação:</span><span className="font-mono font-bold text-right uppercase text-purple-600 dark:text-purple-400">Rate-limit</span>
                 <span className="text-text-secondary">Banda limite:</span><span className="font-mono font-bold text-right">{(confirmModal?.flowspec_suggestion?.then?.rate_limit_bps / 1e6).toFixed(0)} Mbps</span>
-                <span className="text-text-secondary">TTL (Expiração):</span><span className="font-mono font-bold text-right">{Math.floor(confirmModal?.flowspec_suggestion?.ttl_seconds / 60)} min</span>
+                <span className="text-text-secondary">TTL (Expiração):</span><span className="font-mono font-bold text-right">{Math.floor((confirmModal?.flowspec_suggestion?.ttl_seconds || 600) / 60)} min</span>
               </div>
             </div>
             <div className="flex items-start gap-3 p-3 bg-blue-50 dark:bg-blue-900/10 rounded-lg border border-blue-100 dark:border-blue-900/30">
@@ -286,7 +331,7 @@ export default function Threats() {
           </div>
           <DialogFooter className="gap-2 sm:gap-0">
             <Button variant="outline" className="flex-1" onClick={() => setConfirmModal(null)}>Cancelar</Button>
-            <Button className="flex-1 bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/20" onClick={() => applyMitigation.mutate({ id: confirmModal.id, action: 'rate-limit', rate_limit_kbps: confirmModal.flowspec_suggestion.then.rate_limit_bps/1000, ttl_minutes: Math.floor(confirmModal.flowspec_suggestion.ttl_seconds / 60) })}>Aplicar mitigação</Button>
+            <Button className="flex-1 bg-purple-600 hover:bg-purple-700 shadow-lg shadow-purple-500/20" onClick={() => applyMitigation.mutate({ id: confirmModal.id, action: 'rate-limit', rate_limit_kbps: (confirmModal.flowspec_suggestion?.then?.rate_limit_bps || 0)/1000, ttl_minutes: Math.floor((confirmModal.flowspec_suggestion?.ttl_seconds || 600) / 60) })}>Aplicar mitigação</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
