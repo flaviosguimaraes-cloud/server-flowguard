@@ -68,8 +68,10 @@ export default function Threats() {
       } else {
         setActiveTab('download');
       }
+    } else if (!activeTab && !threatsLoading && threatsData) {
+      setActiveTab('download');
     }
-  }, [threats.length, downloadThreats.length, uploadThreats.length, activeTab]);
+  }, [threats.length, downloadThreats.length, uploadThreats.length, activeTab, threatsLoading, threatsData]);
 
   const updateStatus = useMutation({
     mutationFn: (data: { id: number, status: string }) => api.patch(`/api/threats/${data.id}/status`, { status: data.status }),
