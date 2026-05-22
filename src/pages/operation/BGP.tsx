@@ -24,6 +24,55 @@ import { Badge } from "../../components/ui/badge";
 import { Button } from "../../components/ui/button";
 import { Separator } from "../../components/ui/separator";
 
+
+const EventBadges = ({ actionType, direction }: { actionType: string, direction?: string }) => {
+  const badges = [];
+  const normalizedAction = String(actionType || '').toLowerCase().trim();
+  const normalizedDir = String(direction || '').toLowerCase().trim();
+
+  // Action Type Badges
+  if (normalizedAction === 'blackhole' || normalizedAction === 'blackhole_flowspec' || normalizedAction === 'blacklist') {
+    badges.push(
+      <span key="bh" className="px-2 py-0.5 bg-danger/10 text-danger border border-danger/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
+        {normalizedAction === 'blacklist' ? 'Blacklist' : 'Blackhole /32'}
+      </span>
+    );
+  }
+  
+  if (normalizedAction === 'flowspec' || normalizedAction === 'blackhole_flowspec') {
+    badges.push(
+      <span key="fs" className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
+        FlowSpec
+      </span>
+    );
+  } else if (normalizedAction === 'external') {
+    badges.push(
+      <span key="ext" className="px-2 py-0.5 bg-orange-500/10 text-orange-600 dark:text-orange-400 border border-orange-500/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
+        Externo /24
+      </span>
+    );
+  }
+
+  // Direction Badges (if provided)
+  if (normalizedDir === 'incoming' || normalizedDir === 'inbound') {
+    badges.push(
+      <span key="dir" className="px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[10px] font-bold rounded uppercase flex items-center gap-1 whitespace-nowrap">
+        <i className="ti-arrow-down" /> Download
+      </span>
+    );
+  } else if (normalizedDir === 'outgoing' || normalizedDir === 'outbound') {
+    badges.push(
+      <span key="dir" className="px-2 py-0.5 bg-green-500/10 text-green-600 dark:text-green-400 border border-green-500/20 text-[10px] font-bold rounded uppercase flex items-center gap-1 whitespace-nowrap">
+        <i className="ti-arrow-up" /> Upload
+      </span>
+    );
+  }
+
+  if (badges.length === 0) return <span>—</span>;
+
+  return <div className="flex flex-wrap gap-1 items-center justify-center">{badges}</div>;
+};
+
 export default function BGP() {
   const queryClient = useQueryClient();
   const [selectedRoute, setSelectedRoute] = useState<any>(null);
@@ -433,40 +482,26 @@ export default function BGP() {
                           </div>
                         </td>
 
-                        <td className="px-4 py-3">
-                          <span className={clsx(
-                            "px-2 py-0.5 rounded text-[10px] font-bold uppercase border",
-                            type === 'blackhole' && "bg-danger/10 text-danger border-danger/20",
-                            type === 'blacklist' && "bg-red-900/10 text-[#991b1b] border-[#991b1b]/20",
-                            type === 'external' && "bg-warning/10 text-warning border-warning/20",
-                            "transition-all"
-                          )}
-                          style={type === 'flowspec' ? {
-                            background: '#7c3aed20',
-                            color: '#7c3aed',
-                            border: '1px solid #7c3aed40'
-                          } : undefined}
-                          >
-                            {type === 'blackhole' ? 'Blackhole' : 
-                             type === 'blacklist' ? 'Blacklist' :
-                             type === 'external' ? 'Ext. Mitigação' : 
-                             type === 'flowspec' ? 'FlowSpec' : (route.type || 'Standard')}
-                          </span>
+                        <td className="px-4 py-3 text-center">
+                          <EventBadges 
+                            actionType={route.action_type || route.type} 
+                            direction={route.direction || route.flow_direction} 
+                          />
                         </td>
 
                         <td className="px-4 py-3 text-xs text-text-primary">
                           {getFormattedAction()}
                         </td>
 
-                        <td className="px-4 py-3">
-                          {(route.triggered_by === 'detector' || route.triggered_by === 'auto-detector' || route.created_by === 'auto-detector' || route.created_by === 'detector') ? (
-                            <Badge variant="outline" className="bg-purple-500/10 text-purple-400 border-purple-500/20 font-bold text-[10px]">
+                        <td className="px-4 py-3 text-center">
+                          {(route.triggered_by === 'detector' || route.triggered_by === 'auto-detector' || route.created_by === 'auto-detector' || route.created_by === 'detector' || route.source === 'mitigation') ? (
+                            <span className="px-2 py-0.5 bg-purple-500/10 text-purple-600 dark:text-purple-400 border border-purple-500/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
                               Automático
-                            </Badge>
+                            </span>
                           ) : (
-                            <Badge variant="outline" className="bg-blue-500/10 text-blue-400 border-blue-500/20 font-bold text-[10px]">
+                            <span className="px-2 py-0.5 bg-blue-500/10 text-blue-600 dark:text-blue-400 border border-blue-500/20 text-[10px] font-bold rounded uppercase whitespace-nowrap">
                               Manual
-                            </Badge>
+                            </span>
                           )}
                         </td>
                         <td className="px-4 py-3 text-xs">
