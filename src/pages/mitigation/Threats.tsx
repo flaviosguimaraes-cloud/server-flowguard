@@ -140,24 +140,28 @@ export default function Threats() {
     return <Badge variant="outline" className={clsx("font-mono", color)}>{num.toFixed(1)}x</Badge>;
   };
 
+  const getAttackTypeBadge = (type: string) => {
+    const t = type?.toUpperCase() || '';
+    let color = 'bg-gray-500/10 text-gray-500 border-gray-500/20';
+    
+    if (t.startsWith('ANOMALIA_DOWNLOAD')) color = 'bg-blue-500/10 text-blue-500 border-blue-500/20';
+    else if (t.startsWith('ANOMALIA_UPLOAD')) color = 'bg-orange-500/10 text-orange-500 border-orange-500/20';
+    else if (t.startsWith('PORT_SCAN')) color = 'bg-purple-500/10 text-purple-500 border-purple-500/20';
+    else if (t.startsWith('SYN_FLOOD') || t.startsWith('CONNECTION_FLOOD') || t.startsWith('LOW_PACKET_FLOOD')) color = 'bg-red-500/10 text-red-500 border-red-500/20';
+    else if (t.startsWith('UDP_AMPLIFICATION')) color = 'bg-orange-500/10 text-orange-500 border-orange-500/20';
+    else if (t.startsWith('SLOWLORIS')) color = 'bg-yellow-500/10 text-yellow-600 border-yellow-600/20';
+    else if (t.startsWith('OUTGOING_SCAN')) color = 'bg-red-900/10 text-red-800 border-red-800/20';
+    
+    return <Badge variant="outline" className={clsx("text-[10px] font-bold", color)}>{t}</Badge>;
+  };
 
   const getSeverityBadge = (sev: string) => {
-    const colors: any = {
-      critical: 'text-red-600 border-red-600/20 bg-red-600/10',
-      high: 'text-orange-600 border-orange-600/20 bg-orange-600/10',
-      medium: 'text-yellow-600 border-yellow-600/20 bg-yellow-600/10',
-      low: 'text-blue-600 border-blue-600/20 bg-blue-600/10'
-    };
+// ... keep existing code
     return <Badge variant="outline" className={clsx("uppercase text-[10px] font-bold", colors[sev] || 'text-gray-500 border-gray-500/20')}>{sev || 'unknown'}</Badge>;
   };
 
   const getStatusBadge = (status: string) => {
-    const labels: any = {
-      new: { label: 'Nova', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
-      acknowledged: { label: 'Analisando', color: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' },
-      ignored: { label: 'Ignorada', color: 'bg-gray-500/10 text-gray-500 border-gray-500/20' }
-    };
-    const s = labels[status] || { label: status, color: 'bg-gray-500/10 text-gray-500' };
+// ... keep existing code
     return <Badge className={clsx(s.color, "text-[10px]")}>{s.label}</Badge>;
   };
 
@@ -172,8 +176,8 @@ export default function Threats() {
           <h1 className="text-2xl font-bold tracking-tight">Ameaças</h1>
           <Badge variant="outline" className="bg-primary/5 text-primary border-primary/20 font-bold uppercase text-[10px]">Detector v2</Badge>
         </div>
-        <Button variant="outline" size="sm" onClick={() => { refetchDownload(); refetchUpload(); queryClient.invalidateQueries({ queryKey: ['threats-summary'] }); }}>
-          <RefreshCw size={16} className={clsx("mr-2", (downloadLoading || uploadLoading) && "animate-spin")} /> Atualizar
+        <Button variant="outline" size="sm" onClick={() => { refetchThreats(); queryClient.invalidateQueries({ queryKey: ['threats-summary'] }); }}>
+          <RefreshCw size={16} className={clsx("mr-2", threatsLoading && "animate-spin")} /> Atualizar
         </Button>
       </div>
 
