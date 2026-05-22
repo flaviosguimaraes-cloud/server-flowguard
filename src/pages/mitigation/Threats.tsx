@@ -265,6 +265,7 @@ export default function Threats() {
             getFatorBadge={getFatorBadge}
             getSeverityBadge={getSeverityBadge}
             getStatusBadge={getStatusBadge}
+            getAttackTypeBadge={getAttackTypeBadge}
             timeAgo={timeAgo}
           />
         </TabsContent>
@@ -282,6 +283,7 @@ export default function Threats() {
             getFatorBadge={getFatorBadge}
             getSeverityBadge={getSeverityBadge}
             getStatusBadge={getStatusBadge}
+            getAttackTypeBadge={getAttackTypeBadge}
             timeAgo={timeAgo}
           />
 
