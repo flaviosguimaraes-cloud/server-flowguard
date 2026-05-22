@@ -325,8 +325,9 @@ function ThreatTable({
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span className="text-text-secondary border-b border-dotted border-border cursor-help">
-                          {formatMbps(t.p95_mbps)}
+                          {formatMbps(t.p95_mbps ?? t.p95)}
                         </span>
+
                       </TooltipTrigger>
                       <TooltipContent><p className="text-xs">Volume normal deste IP (P95 das últimas 24h)</p></TooltipContent>
                     </Tooltip>
