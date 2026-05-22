@@ -275,12 +275,13 @@ function ThreatTable({
   threats: any[], 
   onSelect: (t: any) => void, 
   type: 'download' | 'upload',
-  formatMbps: (v: number | null | undefined) => string,
-  getFatorBadge: (v: number | null | undefined) => any,
+  formatMbps: (v: any) => string,
+  getFatorBadge: (v: any) => any,
   getSeverityBadge: (s: string) => any,
   getStatusBadge: (s: string) => any,
   timeAgo: (d: string) => string
 }) {
+
   return (
     <div className="bg-bg-secondary border border-border rounded-xl overflow-hidden shadow-sm">
       <Table>
