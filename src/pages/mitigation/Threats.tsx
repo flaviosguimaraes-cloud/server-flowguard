@@ -297,6 +297,7 @@ export default function Threats() {
         formatMbps={formatMbps}
         getSeverityBadge={getSeverityBadge}
         getFatorBadge={getFatorBadge}
+        getAttackTypeBadge={getAttackTypeBadge}
       />
     </div>
   );
