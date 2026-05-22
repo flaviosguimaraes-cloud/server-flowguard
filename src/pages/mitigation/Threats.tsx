@@ -131,17 +131,31 @@ export default function Threats() {
     }
   };
 
-  const getFatorBadge = (value: any) => {
+  const isBehavioral = (type: string) => {
+    const t = type?.toUpperCase() || '';
+    return !t.startsWith('ANOMALIA_') && !t.startsWith('UDP_AMPLIFICATION');
+  };
+
+  const getFatorBadge = (value: any, type: string) => {
+    const isBeh = isBehavioral(type);
     const num = typeof value === 'string' ? parseFloat(value) : value;
     if (num === null || num === undefined || isNaN(num)) return <Badge variant="outline">—</Badge>;
     const color = num >= 5 ? 'text-red-500 border-red-500/20 bg-red-500/5' : 
                   num >= 3 ? 'text-yellow-600 border-yellow-600/20 bg-yellow-600/5' : 
                   'text-blue-500 border-blue-500/20 bg-blue-500/5';
-    return <Badge variant="outline" className={clsx("font-mono", color)}>{num.toFixed(1)}x</Badge>;
+    
+    const label = isBeh ? `${(num * 10).toFixed(0)}%` : `${num.toFixed(1)}x`;
+    return <Badge variant="outline" className={clsx("font-mono", color)}>{label}</Badge>;
   };
 
   const getAttackTypeBadge = (type: string) => {
     const t = type?.toUpperCase() || '';
+    let display = t;
+    if (t.startsWith('OUTGOING_SCAN_')) display = 'OUTGOING_SCAN';
+    if (t.startsWith('UDP_AMPLIFICATION_')) display = 'UDP_AMPLIFICATION';
+    
+    if (display.length > 20) display = display.substring(0, 17) + '...';
+
     let color = 'bg-gray-500/10 text-gray-500 border-gray-500/20';
     
     if (t.startsWith('ANOMALIA_DOWNLOAD')) color = 'bg-blue-500/10 text-blue-500 border-blue-500/20';
@@ -152,7 +166,7 @@ export default function Threats() {
     else if (t.startsWith('SLOWLORIS')) color = 'bg-yellow-500/10 text-yellow-600 border-yellow-600/20';
     else if (t.startsWith('OUTGOING_SCAN')) color = 'bg-red-900/10 text-red-800 border-red-800/20';
     
-    return <Badge variant="outline" className={clsx("text-[10px] font-bold", color)}>{t}</Badge>;
+    return <Badge variant="outline" className={clsx("text-[10px] font-bold", color)}>{display}</Badge>;
   };
 
   const getSeverityBadge = (sev: string) => {
@@ -268,6 +282,7 @@ export default function Threats() {
             getSeverityBadge={getSeverityBadge}
             getStatusBadge={getStatusBadge}
             getAttackTypeBadge={getAttackTypeBadge}
+            isBehavioral={isBehavioral}
             timeAgo={timeAgo}
           />
         </TabsContent>
@@ -286,6 +301,7 @@ export default function Threats() {
             getSeverityBadge={getSeverityBadge}
             getStatusBadge={getStatusBadge}
             getAttackTypeBadge={getAttackTypeBadge}
+            isBehavioral={isBehavioral}
             timeAgo={timeAgo}
           />
 
@@ -300,6 +316,7 @@ export default function Threats() {
         getSeverityBadge={getSeverityBadge}
         getFatorBadge={getFatorBadge}
         getAttackTypeBadge={getAttackTypeBadge}
+        isBehavioral={isBehavioral}
       />
     </div>
   );
@@ -314,16 +331,18 @@ function ThreatTable({
   getSeverityBadge, 
   getStatusBadge, 
   getAttackTypeBadge,
+  isBehavioral,
   timeAgo 
 }: { 
   threats: any[], 
   onSelect: (t: any) => void, 
   type: 'download' | 'upload',
   formatMbps: (v: any) => string,
-  getFatorBadge: (v: any) => any,
+  getFatorBadge: (v: any, t: string) => any,
   getSeverityBadge: (s: string) => any,
   getStatusBadge: (s: string) => any,
   getAttackTypeBadge: (t: string) => any,
+  isBehavioral: (t: string) => boolean,
   timeAgo: (d: string) => string
 }) {
 
@@ -364,15 +383,17 @@ function ThreatTable({
               >
                 <TableCell className="font-mono font-bold text-text-primary">{t.ip || '—'}</TableCell>
                 <TableCell>{getAttackTypeBadge(t.attack_type)}</TableCell>
-                <TableCell className="font-medium">{formatMbps(t.mbps_atual)}</TableCell>
-                <TableCell>{getFatorBadge(t.fator_anomalia)}</TableCell>
+                <TableCell className="font-medium">
+                  {isBehavioral(t.attack_type) ? '—' : formatMbps(t.mbps_atual)}
+                </TableCell>
+                <TableCell>{getFatorBadge(t.fator_anomalia, t.attack_type)}</TableCell>
 
                 <TableCell>
                   <TooltipProvider>
                     <Tooltip>
                       <TooltipTrigger asChild>
                         <span className="text-text-secondary border-b border-dotted border-border cursor-help">
-                          {formatMbps(t.p95_mbps)}
+                          {isBehavioral(t.attack_type) ? '—' : formatMbps(t.p95_mbps)}
                         </span>
 
                       </TooltipTrigger>
@@ -396,14 +417,15 @@ function ThreatTable({
 }
 
 
-function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverityBadge, getFatorBadge, getAttackTypeBadge }: { 
+function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverityBadge, getFatorBadge, getAttackTypeBadge, isBehavioral }: { 
   threat: any, 
   onClose: () => void, 
   onStatusChange: (id: number, status: string) => void,
   formatMbps: (v: any) => string,
   getSeverityBadge: (s: string) => any,
-  getFatorBadge: (f: any) => any,
-  getAttackTypeBadge: (t: string) => any
+  getFatorBadge: (f: any, t: string) => any,
+  getAttackTypeBadge: (t: string) => any,
+  isBehavioral: (t: string) => boolean
 }) {
 
   if (!threat) return null;
@@ -420,6 +442,7 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
   };
 
   const isDownload = isDownloadThreat(threat.attack_type);
+  const isBeh = isBehavioral(threat.attack_type);
   const evidence = Array.isArray(threat.evidence) ? threat.evidence : [];
 
   return (
@@ -451,46 +474,61 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
             <div className="p-4 bg-bg-primary border border-border rounded-xl space-y-4 shadow-inner">
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-1">
-                  <p className="text-[10px] uppercase font-semibold text-text-secondary">Volume Atual</p>
-                  <p className="text-lg font-bold text-text-primary">{formatMbps(threat.mbps_atual)}</p>
-                </div>
-                <div className="space-y-1">
-                  <p className="text-[10px] uppercase font-semibold text-text-secondary">Normal (P95)</p>
-                  <p className="text-lg font-bold text-text-primary">{formatMbps(threat.p95_mbps)}</p>
-                </div>
-              </div>
-              <div className="space-y-2">
-                <div className="flex justify-between items-end">
-                  <p className="text-[10px] uppercase font-semibold text-text-secondary">Fator de Anomalia</p>
-                  <span className="text-xs font-bold text-text-primary">
-                    {(() => {
+                  <p className="text-[10px] uppercase font-semibold text-text-secondary">
+                    {isBeh ? 'Confiança' : 'Volume Atual'}
+                  </p>
+                  <p className="text-lg font-bold text-text-primary">
+                    {isBeh ? (() => {
                       const val = threat.fator_anomalia;
                       const f = typeof val === 'string' ? parseFloat(val) : val;
-                      return (f !== null && f !== undefined && !isNaN(f)) ? `${f.toFixed(1)}x acima` : '—';
-                    })()}
-                  </span>
-
+                      return (f !== null && f !== undefined && !isNaN(f)) ? `${(f * 10).toFixed(0)}%` : '—';
+                    })() : formatMbps(threat.mbps_atual)}
+                  </p>
                 </div>
-                <div className="h-2 bg-bg-secondary rounded-full overflow-hidden border border-border">
-                  <div 
-                    className={clsx(
-                      "h-full transition-all duration-500",
-                      (Number(threat.fator_anomalia) || 0) >= 5 ? "bg-red-500" : "bg-blue-500"
-                    )}
-                    style={{ width: `${Math.min(((Number(threat.fator_anomalia) || 0) / 10) * 100, 100)}%` }}
-
-                  />
+                <div className="space-y-1">
+                  <p className="text-[10px] uppercase font-semibold text-text-secondary">
+                    {isBeh ? 'Fator' : 'Normal (P95)'}
+                  </p>
+                  <p className="text-lg font-bold text-text-primary">
+                    {isBeh ? getFatorBadge(threat.fator_anomalia, threat.attack_type) : formatMbps(threat.p95_mbps)}
+                  </p>
                 </div>
-                <p className="text-[10px] text-text-secondary leading-relaxed italic">
-                  * Este IP está recebendo {(() => {
-                    const val = threat.fator_anomalia;
-                    const f = typeof val === 'string' ? parseFloat(val) : val;
-                    return (f !== null && f !== undefined && !isNaN(f)) ? f.toFixed(1) : '—';
-                  })()}x mais tráfego que o normal para este horário.
-                </p>
-
-
               </div>
+              {!isBeh && (
+                <div className="space-y-2">
+                  <div className="flex justify-between items-end">
+                    <p className="text-[10px] uppercase font-semibold text-text-secondary">Fator de Anomalia</p>
+                    <span className="text-xs font-bold text-text-primary">
+                      {(() => {
+                        const val = threat.fator_anomalia;
+                        const f = typeof val === 'string' ? parseFloat(val) : val;
+                        return (f !== null && f !== undefined && !isNaN(f)) ? `${f.toFixed(1)}x acima` : '—';
+                      })()}
+                    </span>
+                  </div>
+                  <div className="h-2 bg-bg-secondary rounded-full overflow-hidden border border-border">
+                    <div 
+                      className={clsx(
+                        "h-full transition-all duration-500",
+                        (Number(threat.fator_anomalia) || 0) >= 5 ? "bg-red-500" : "bg-blue-500"
+                      )}
+                      style={{ width: `${Math.min(((Number(threat.fator_anomalia) || 0) / 10) * 100, 100)}%` }}
+                    />
+                  </div>
+                  <p className="text-[10px] text-text-secondary leading-relaxed italic">
+                    * Este IP está recebendo {(() => {
+                      const val = threat.fator_anomalia;
+                      const f = typeof val === 'string' ? parseFloat(val) : val;
+                      return (f !== null && f !== undefined && !isNaN(f)) ? f.toFixed(1) : '—';
+                    })()}x mais tráfego que o normal para este horário.
+                  </p>
+                </div>
+              )}
+              {isBeh && (
+                <p className="text-[10px] text-text-secondary leading-relaxed italic">
+                  * Este ataque foi detectado por padrões comportamentais suspeitos.
+                </p>
+              )}
             </div>
           </section>
 
