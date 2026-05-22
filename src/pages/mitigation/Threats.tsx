@@ -44,13 +44,14 @@ export default function Threats() {
 
   const { data: downloadData, isLoading: downloadLoading, refetch: refetchDownload } = useQuery({
     queryKey: ['threats', 'ANOMALIA_DOWNLOAD'],
-    queryFn: () => api.get('/api/threats?active_only=true&attack_type=ANOMALIA_DOWNLOAD').then(r => r.data),
+    queryFn: () => api.get('/api/threats/?active_only=true&attack_type=ANOMALIA_DOWNLOAD').then(r => r.data),
     refetchInterval: 30000,
   });
 
   const { data: uploadData, isLoading: uploadLoading, refetch: refetchUpload } = useQuery({
     queryKey: ['threats', 'ANOMALIA_UPLOAD'],
-    queryFn: () => api.get('/api/threats?active_only=true&attack_type=ANOMALIA_UPLOAD').then(r => r.data),
+    queryFn: () => api.get('/api/threats/?active_only=true&attack_type=ANOMALIA_UPLOAD').then(r => r.data),
+
     refetchInterval: 30000,
   });
 
