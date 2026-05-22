@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
 import { useTranslation } from '../../hooks/useTranslation';
-import { Shield, Flame, Bolt, ShieldCheck, RefreshCw, AlertTriangle, Search, Clock, Zap, X, Info } from 'lucide-react';
+import { Shield, Flame, Bolt, ShieldCheck, RefreshCw, AlertTriangle, Search, Clock, Zap, X, Info, Settings2, Trash2, ArrowRight, MousePointer2, ExternalLink, MapPin, Target, CheckCircle, XCircle } from 'lucide-react';
 import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
 import { Button } from '../../components/ui/button';
@@ -10,10 +10,14 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '.
 import { Input } from '../../components/ui/input';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '../../components/ui/table';
 import { Skeleton } from '../../components/Skeleton';
-import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from '../../components/ui/sheet';
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription, SheetFooter } from '../../components/ui/sheet';
 import { Separator } from '../../components/ui/separator';
 import { toast } from 'sonner';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from '../../components/ui/dialog';
+import { Slider } from "../../components/ui/slider";
+import { Switch } from "../../components/ui/switch";
+import { Label } from "../../components/ui/label";
+import { Checkbox } from "../../components/ui/checkbox";
 
 export default function Threats() {
   const { t } = useTranslation();
@@ -21,6 +25,9 @@ export default function Threats() {
   const [filters, setFilters] = useState({ status: 'active', severity: 'all', attackType: 'all', search: '' });
   const [selectedThreat, setSelectedThreat] = useState<any>(null);
   const [confirmModal, setConfirmModal] = useState<any>(null);
+  const [showConfig, setShowConfig] = useState(false);
+  const [config, setConfig] = useState<any>(null);
+
 
   const { data: summary } = useQuery({
     queryKey: ['threats-summary'],
