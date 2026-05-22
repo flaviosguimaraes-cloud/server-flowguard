@@ -125,8 +125,8 @@ export default function Threats() {
     return <Badge className={clsx(s.color, "text-[10px]")}>{s.label}</Badge>;
   };
 
-  const filteredDownload = downloadThreats.filter(t => t.ip.includes(searchTerm));
-  const filteredUpload = uploadThreats.filter(t => t.ip.includes(searchTerm));
+  const filteredDownload = downloadThreats.filter((t: any) => t.ip.includes(searchTerm));
+  const filteredUpload = uploadThreats.filter((t: any) => t.ip.includes(searchTerm));
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
