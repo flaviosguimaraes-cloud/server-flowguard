@@ -28,7 +28,7 @@ export default function Threats() {
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedThreat, setSelectedThreat] = useState<any>(null);
-  const [activeTab, setActiveTab] = useState<string>('');
+  const [activeTab, setActiveTab] = useState<string>('download');
 
   const { data: summary } = useQuery({ 
     queryKey: ['threats-summary'], 
@@ -39,7 +39,7 @@ export default function Threats() {
   const getItems = (data: any) => {
     if (!data) return [];
     if (Array.isArray(data)) return data;
-    return data.items || data.threats || data.data || [];
+    return data.items || data.threats || data.data || data.results || data.records || [];
   };
 
   const { data: downloadData, isLoading: downloadLoading, refetch: refetchDownload } = useQuery({
@@ -54,26 +54,24 @@ export default function Threats() {
     refetchInterval: 30000,
   });
 
+  const sortByFator = (a: any, b: any) => (b.fator_anomalia || 0) - (a.fator_anomalia || 0);
+
   const downloadThreats = useMemo(() => 
-    getItems(downloadData).sort((a: any, b: any) => b.fator_anomalia - a.fator_anomalia), 
+    getItems(downloadData).sort(sortByFator), 
   [downloadData]);
 
   const uploadThreats = useMemo(() => 
-    getItems(uploadData).sort((a: any, b: any) => b.fator_anomalia - a.fator_anomalia), 
+    getItems(uploadData).sort(sortByFator), 
   [uploadData]);
 
-  // Define a aba ativa inicial baseada na contagem
+  // Define a aba ativa inicial baseada na contagem apenas no primeiro carregamento
   useEffect(() => {
-    if (!activeTab && (downloadThreats.length > 0 || uploadThreats.length > 0)) {
-      if (uploadThreats.length > downloadThreats.length) {
+    if (downloadThreats.length > 0 || uploadThreats.length > 0) {
+      if (uploadThreats.length > downloadThreats.length && activeTab === 'download') {
         setActiveTab('upload');
-      } else {
-        setActiveTab('download');
       }
-    } else if (!activeTab && !downloadLoading && !uploadLoading && (downloadData || uploadData)) {
-      setActiveTab('download');
     }
-  }, [downloadThreats.length, uploadThreats.length, activeTab, downloadLoading, uploadLoading, downloadData, uploadData]);
+  }, [downloadThreats.length, uploadThreats.length]);
 
   const updateStatus = useMutation({
     mutationFn: (data: { id: number, status: string }) => api.patch(`/api/threats/${data.id}/status`, { status: data.status }),
@@ -85,10 +83,10 @@ export default function Threats() {
     }
   });
 
-  const formatMbps = (mbps: number) => {
-    if (!mbps) return '0 Mbps';
+  const formatMbps = (mbps: number | null | undefined) => {
+    if (mbps === null || mbps === undefined) return '—';
     if (mbps >= 1000) return `${(mbps / 1000).toFixed(1)} Gbps`;
-    return `${mbps.toFixed(0)} Mbps`;
+    return `${mbps.toFixed(1)} Mbps`;
   };
 
   const timeAgo = (date: string) => {
@@ -102,7 +100,8 @@ export default function Threats() {
     return `há ${hrs}h`;
   };
 
-  const getFatorBadge = (fator: number) => {
+  const getFatorBadge = (fator: number | null | undefined) => {
+    if (fator === null || fator === undefined) return <Badge variant="outline">—</Badge>;
     const color = fator >= 5 ? 'text-red-500 border-red-500/20 bg-red-500/5' : 
                   fator >= 3 ? 'text-yellow-600 border-yellow-600/20 bg-yellow-600/5' : 
                   'text-blue-500 border-blue-500/20 bg-blue-500/5';
@@ -116,7 +115,7 @@ export default function Threats() {
       medium: 'text-yellow-600 border-yellow-600/20 bg-yellow-600/10',
       low: 'text-blue-600 border-blue-600/20 bg-blue-600/10'
     };
-    return <Badge variant="outline" className={clsx("uppercase text-[10px] font-bold", colors[sev] || 'text-gray-500 border-gray-500/20')}>{sev}</Badge>;
+    return <Badge variant="outline" className={clsx("uppercase text-[10px] font-bold", colors[sev] || 'text-gray-500 border-gray-500/20')}>{sev || 'unknown'}</Badge>;
   };
 
   const getStatusBadge = (status: string) => {
@@ -125,12 +124,13 @@ export default function Threats() {
       acknowledged: { label: 'Analisando', color: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' },
       ignored: { label: 'Ignorada', color: 'bg-gray-500/10 text-gray-500 border-gray-500/20' }
     };
-    const s = labels[status] || { label: status, color: '' };
+    const s = labels[status] || { label: status, color: 'bg-gray-500/10 text-gray-500' };
     return <Badge className={clsx(s.color, "text-[10px]")}>{s.label}</Badge>;
   };
 
-  const filteredDownload = downloadThreats.filter((t: any) => t.ip.includes(searchTerm));
-  const filteredUpload = uploadThreats.filter((t: any) => t.ip.includes(searchTerm));
+  const filteredDownload = downloadThreats.filter((t: any) => t.ip?.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredUpload = uploadThreats.filter((t: any) => t.ip?.toLowerCase().includes(searchTerm.toLowerCase()));
+
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
