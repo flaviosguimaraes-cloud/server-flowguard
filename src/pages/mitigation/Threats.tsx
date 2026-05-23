@@ -6,7 +6,8 @@ import {
   Shield, Flame, Download, Upload, Clock, 
   ExternalLink, Zap, X, Info, Settings2, 
   ArrowRight, MapPin, Activity, Filter, 
-  Search, RefreshCw, AlertTriangle, ChevronRight
+  Search, RefreshCw, AlertTriangle, ChevronRight,
+  History, Calendar, CheckCircle2
 } from 'lucide-react';
 import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
@@ -24,6 +25,7 @@ import { Flag } from '../../components/Flag';
 import { clsx } from 'clsx';
 
 export default function Threats() {
+
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
