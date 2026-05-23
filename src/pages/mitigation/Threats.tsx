@@ -511,7 +511,7 @@ function ThreatDrawer({
 
   const isDownload = isDownloadThreat(threat.attack_type);
   const isBeh = isBehavioral(threat.attack_type);
-  const evidence = Array.isArray(threat.evidence) ? threat.evidence : [];
+  const evidence = threat.evidence;
 
   return (
     <Sheet open={!!threat} onOpenChange={(open) => !open && onClose()}>
