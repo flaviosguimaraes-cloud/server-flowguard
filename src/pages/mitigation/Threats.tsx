@@ -362,7 +362,9 @@ export default function Threats() {
         getFatorBadge={getFatorBadge}
         getAttackTypeBadge={getAttackTypeBadge}
         isBehavioral={isBehavioral}
+        timeAgo={timeAgo}
       />
+
     </div>
   );
 }
