@@ -145,7 +145,9 @@ export default function Threats() {
       const mins = Math.floor(secs / 60);
       if (mins < 60) return `há ${mins}m`;
       const hrs = Math.floor(mins / 60);
-      return `há ${hrs}h`;
+      if (hrs < 24) return `há ${hrs}h`;
+      const days = Math.floor(hrs / 24);
+      return `há ${days}d`;
     } catch {
       return '—';
     }
@@ -166,6 +168,24 @@ export default function Threats() {
     
     const label = isBeh ? `${(num * 10).toFixed(0)}%` : `${num.toFixed(1)}x`;
     return <Badge variant="outline" className={clsx("font-mono", color)}>{label}</Badge>;
+  };
+
+  const getReincidenciaBadge = (count: number) => {
+    if (!count || count <= 1) return null;
+    
+    let color = 'bg-gray-500/10 text-gray-500 border-gray-500/20';
+    let label = `${count}x`;
+    
+    if (count >= 10) {
+      color = 'bg-red-500/10 text-red-500 border-red-500/20';
+      label = `${count}x ⚠`;
+    } else if (count >= 5) {
+      color = 'bg-orange-500/10 text-orange-500 border-orange-500/20';
+    } else if (count >= 2) {
+      color = 'bg-yellow-500/10 text-yellow-600 border-yellow-600/20';
+    }
+    
+    return <Badge variant="outline" className={clsx("text-[10px] font-bold h-5 px-1.5", color)}>{label}</Badge>;
   };
 
   const getAttackTypeBadge = (type: string) => {
@@ -203,7 +223,8 @@ export default function Threats() {
     const labels: any = {
       new: { label: 'Nova', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
       acknowledged: { label: 'Analisando', color: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' },
-      ignored: { label: 'Ignorada', color: 'bg-gray-500/10 text-gray-500 border-gray-500/20' }
+      ignored: { label: 'Ignorada', color: 'bg-gray-500/10 text-gray-500 border-gray-500/20' },
+      resolved: { label: 'Resolvido', color: 'bg-green-500/10 text-green-600 border-green-500/20' }
     };
     const s = labels[status] || { label: status, color: 'bg-gray-500/10 text-gray-500' };
     return <Badge className={clsx(s.color, "text-[10px]")}>{s.label}</Badge>;
@@ -211,6 +232,7 @@ export default function Threats() {
 
   const filteredDownload = downloadThreats.filter((t: any) => t.ip?.toLowerCase().includes(searchTerm.toLowerCase()));
   const filteredUpload = uploadThreats.filter((t: any) => t.ip?.toLowerCase().includes(searchTerm.toLowerCase()));
+
 
 
   return (
