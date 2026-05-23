@@ -709,11 +709,31 @@ function ThreatDrawer({
                             {(evidence.pais || evidence.atacante_pais) || '—'} / {(evidence.org || evidence.atacante_org) || '—'}
                           </span>
                         </div>
-                        <div className="flex items-center justify-between text-xs">
-                          <span className="text-text-secondary flex items-center gap-2"><Hash size={12} /> Portas varridas:</span>
-                          <span className="font-mono text-text-primary font-bold">
-                            {evidence.portas_unicas || evidence.portas_varridas || '—'} portas únicas
-                          </span>
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center justify-between text-xs">
+                            <span className="text-text-secondary flex items-center gap-2"><Hash size={12} /> Portas varridas:</span>
+                            <span className="font-mono text-text-primary font-bold">
+                              {evidence.portas_unicas || evidence.portas_varridas || (evidence.sample_ports?.length) || '—'} portas únicas
+                            </span>
+                          </div>
+                          {evidence.sample_ports && Array.isArray(evidence.sample_ports) && evidence.sample_ports.length > 0 && (
+                            <div className="flex flex-wrap gap-1 pt-1">
+                              {evidence.sample_ports.slice(0, 20).map((port: number) => (
+                                <Badge 
+                                  key={port} 
+                                  variant="secondary" 
+                                  className="bg-bg-secondary border-border text-text-secondary hover:bg-border transition-colors cursor-pointer text-[9px] px-1.5 py-0 h-4 min-w-0"
+                                >
+                                  {port}
+                                </Badge>
+                              ))}
+                              {evidence.sample_ports.length > 20 && (
+                                <Badge variant="outline" className="text-[9px] px-1.5 py-0 h-4 border-dashed text-text-secondary">
+                                  +{evidence.sample_ports.length - 20} mais
+                                </Badge>
+                              )}
+                            </div>
+                          )}
                         </div>
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-text-secondary flex items-center gap-2"><Activity size={12} /> Protocolo / Flows:</span>
