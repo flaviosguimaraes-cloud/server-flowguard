@@ -769,12 +769,19 @@ function ThreatDrawer({
 
                 // Caso 3: ANOMALIA (Lista ou Objeto genérico tratado como lista)
                 const evidenceList = Array.isArray(evidence) ? evidence : [evidence];
+                const formatTime = (ts: string) => {
+                  if (!ts) return '—';
+                  try {
+                    const date = new Date(ts);
+                    return isNaN(date.getTime()) ? ts : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                  } catch { return ts; }
+                };
                 
                 return evidenceList.map((item: any, idx: number) => (
                   <div key={idx} className="p-4 bg-bg-primary border border-border rounded-xl space-y-3 shadow-sm hover:border-primary/20 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Flag code={isDownload ? item.atacante_pais : item.destino_pais} size={16} />
+                        <Flag code={isDownload ? (item.pais || item.atacante_pais) : (item.pais || item.destino_pais)} size={16} />
                         <span className="font-mono text-sm font-bold text-text-primary">
                           {isDownload ? (item.atacante_ip || item.ip_origem || '—') : (item.destino_ip || item.ip_destino || '—')}
                         </span>
@@ -786,7 +793,7 @@ function ThreatDrawer({
                     
                     <div className="flex items-center gap-2 text-xs text-text-secondary">
                       <MapPin size={12} className="shrink-0" />
-                      <span className="truncate">{isDownload ? item.atacante_org : item.destino_org}</span>
+                      <span className="truncate">{isDownload ? (item.org || item.atacante_org) : (item.org || item.destino_org)}</span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 text-[11px] p-2 bg-bg-secondary/50 rounded-lg border border-border/40">
@@ -802,7 +809,7 @@ function ThreatDrawer({
                         <span className="text-text-secondary">Volume:</span>
                         <span className="font-mono text-text-primary">
                           {(() => {
-                            const m = typeof item.mbps === 'string' ? parseFloat(item.mbps) : (item.mbps || item.volume_mbps);
+                            const m = typeof item.mbps === 'string' ? parseFloat(item.mbps) : (item.mbps || item.volume_mbps || item.mbps_atual);
                             return (m !== null && m !== undefined && !isNaN(m)) ? Number(m).toFixed(1) : '—';
                           })()} Mbps
                         </span>
@@ -819,9 +826,13 @@ function ThreatDrawer({
                     </div>
 
                     <div className="flex items-center justify-between text-[10px] text-text-secondary opacity-70">
-                      <div className="flex items-center gap-1"><Clock size={10} /> {item.primeira_vez || item.inicio || '—'}</div>
+                      <div className="flex items-center gap-1">
+                        <Clock size={10} /> {formatTime(item.primeira_vez || item.inicio)}
+                      </div>
                       <ArrowRight size={10} />
-                      <div className="flex items-center gap-1">{item.ultima_vez || item.fim || '—'}</div>
+                      <div className="flex items-center gap-1">
+                        {formatTime(item.ultima_vez || item.fim)}
+                      </div>
                     </div>
                   </div>
                 ));
