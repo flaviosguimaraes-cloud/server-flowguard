@@ -6,7 +6,8 @@ import {
   Shield, Flame, Download, Upload, Clock, 
   ExternalLink, Zap, X, Info, Settings2, 
   ArrowRight, MapPin, Activity, Filter, 
-  Search, RefreshCw, AlertTriangle, ChevronRight
+  Search, RefreshCw, AlertTriangle, ChevronRight,
+  History, Calendar, CheckCircle2
 } from 'lucide-react';
 import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
@@ -24,11 +25,19 @@ import { Flag } from '../../components/Flag';
 import { clsx } from 'clsx';
 
 export default function Threats() {
+
   const { t } = useTranslation();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedThreat, setSelectedThreat] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<string>('download');
+  const [now, setNow] = useState(Date.now());
+
+  // Atualiza o "agora" a cada 30s para o filtro de resolved
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(timer);
+  }, []);
 
   const { data: summary } = useQuery({ 
     queryKey: ['threats-summary'], 
@@ -65,13 +74,23 @@ export default function Threats() {
     refetchInterval: 30000,
   });
 
-  const sortByFator = (a: any, b: any) => {
-    const fa = Number(a.fator_anomalia) || 0;
-    const fb = Number(b.fator_anomalia) || 0;
-    return fb - fa;
-  };
+  const allThreatsRaw = useMemo(() => getItems(threatsData), [threatsData]);
 
-  const allThreats = useMemo(() => getItems(threatsData), [threatsData]);
+  const allThreats = useMemo(() => {
+    return allThreatsRaw.filter((t: any) => {
+      // Não mostrar status expired nunca
+      if (t.status === 'expired') return false;
+      
+      // Detecções com status resolved somem da tela após 5 minutos
+      if (t.status === 'resolved' && t.resolved_at) {
+        const resolvedAt = new Date(t.resolved_at).getTime();
+        const fiveMinutes = 5 * 60 * 1000;
+        if (now - resolvedAt > fiveMinutes) return false;
+      }
+      
+      return true;
+    });
+  }, [allThreatsRaw, now]);
 
   const downloadThreats = useMemo(() => 
     allThreats.filter((t: any) => isDownloadThreat(t.attack_type)).sort((a: any, b: any) => {
@@ -115,6 +134,7 @@ export default function Threats() {
     return `${num.toFixed(1)} Mbps`;
   };
 
+
   const timeAgo = (date: string) => {
     if (!date) return '—';
     try {
@@ -125,7 +145,9 @@ export default function Threats() {
       const mins = Math.floor(secs / 60);
       if (mins < 60) return `há ${mins}m`;
       const hrs = Math.floor(mins / 60);
-      return `há ${hrs}h`;
+      if (hrs < 24) return `há ${hrs}h`;
+      const days = Math.floor(hrs / 24);
+      return `há ${days}d`;
     } catch {
       return '—';
     }
@@ -146,6 +168,24 @@ export default function Threats() {
     
     const label = isBeh ? `${(num * 10).toFixed(0)}%` : `${num.toFixed(1)}x`;
     return <Badge variant="outline" className={clsx("font-mono", color)}>{label}</Badge>;
+  };
+
+  const getReincidenciaBadge = (count: number) => {
+    if (!count || count <= 1) return null;
+    
+    let color = 'bg-gray-500/10 text-gray-500 border-gray-500/20';
+    let label = `${count}x`;
+    
+    if (count >= 10) {
+      color = 'bg-red-500/10 text-red-500 border-red-500/20';
+      label = `${count}x ⚠`;
+    } else if (count >= 5) {
+      color = 'bg-orange-500/10 text-orange-500 border-orange-500/20';
+    } else if (count >= 2) {
+      color = 'bg-yellow-500/10 text-yellow-600 border-yellow-600/20';
+    }
+    
+    return <Badge variant="outline" className={clsx("text-[10px] font-bold h-5 px-1.5", color)}>{label}</Badge>;
   };
 
   const getAttackTypeBadge = (type: string) => {
@@ -183,7 +223,8 @@ export default function Threats() {
     const labels: any = {
       new: { label: 'Nova', color: 'bg-blue-500/10 text-blue-500 border-blue-500/20' },
       acknowledged: { label: 'Analisando', color: 'bg-yellow-500/10 text-yellow-500 border-yellow-500/20' },
-      ignored: { label: 'Ignorada', color: 'bg-gray-500/10 text-gray-500 border-gray-500/20' }
+      ignored: { label: 'Ignorada', color: 'bg-gray-500/10 text-gray-500 border-gray-500/20' },
+      resolved: { label: 'Resolvido', color: 'bg-green-500/10 text-green-600 border-green-500/20' }
     };
     const s = labels[status] || { label: status, color: 'bg-gray-500/10 text-gray-500' };
     return <Badge className={clsx(s.color, "text-[10px]")}>{s.label}</Badge>;
@@ -191,6 +232,7 @@ export default function Threats() {
 
   const filteredDownload = downloadThreats.filter((t: any) => t.ip?.toLowerCase().includes(searchTerm.toLowerCase()));
   const filteredUpload = uploadThreats.filter((t: any) => t.ip?.toLowerCase().includes(searchTerm.toLowerCase()));
+
 
 
   return (
@@ -282,6 +324,7 @@ export default function Threats() {
             getSeverityBadge={getSeverityBadge}
             getStatusBadge={getStatusBadge}
             getAttackTypeBadge={getAttackTypeBadge}
+            getReincidenciaBadge={getReincidenciaBadge}
             isBehavioral={isBehavioral}
             timeAgo={timeAgo}
           />
@@ -301,9 +344,11 @@ export default function Threats() {
             getSeverityBadge={getSeverityBadge}
             getStatusBadge={getStatusBadge}
             getAttackTypeBadge={getAttackTypeBadge}
+            getReincidenciaBadge={getReincidenciaBadge}
             isBehavioral={isBehavioral}
             timeAgo={timeAgo}
           />
+
 
         </TabsContent>
       </Tabs>
@@ -317,7 +362,9 @@ export default function Threats() {
         getFatorBadge={getFatorBadge}
         getAttackTypeBadge={getAttackTypeBadge}
         isBehavioral={isBehavioral}
+        timeAgo={timeAgo}
       />
+
     </div>
   );
 }
@@ -331,6 +378,7 @@ function ThreatTable({
   getSeverityBadge, 
   getStatusBadge, 
   getAttackTypeBadge,
+  getReincidenciaBadge,
   isBehavioral,
   timeAgo 
 }: { 
@@ -342,6 +390,7 @@ function ThreatTable({
   getSeverityBadge: (s: string) => any,
   getStatusBadge: (s: string) => any,
   getAttackTypeBadge: (t: string) => any,
+  getReincidenciaBadge: (c: number) => any,
   isBehavioral: (t: string) => boolean,
   timeAgo: (d: string) => string
 }) {
@@ -356,8 +405,9 @@ function ThreatTable({
             <TableHead>Volume Atual</TableHead>
             <TableHead>Fator</TableHead>
             <TableHead>P95 Normal</TableHead>
-            <TableHead>Severidade</TableHead>
-            <TableHead>Detectada</TableHead>
+            <TableHead>Reincidências</TableHead>
+            <TableHead>Primeira Vez</TableHead>
+            <TableHead>Último Sinal</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="w-[80px]"></TableHead>
           </TableRow>
@@ -365,7 +415,7 @@ function ThreatTable({
         <TableBody>
           {threats.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={9} className="text-center py-10 text-text-secondary italic">
+              <TableCell colSpan={10} className="text-center py-10 text-text-secondary italic">
                 Nenhuma anomalia encontrada
               </TableCell>
             </TableRow>
@@ -377,7 +427,7 @@ function ThreatTable({
                   "cursor-pointer hover:bg-bg-primary transition-colors group",
                   (Number(t.fator_anomalia) || 0) >= 5 ? "border-l-4 border-l-red-500" : 
                   (Number(t.fator_anomalia) || 0) >= 3 ? "border-l-4 border-l-yellow-500" : "",
-                  t.status === 'ignored' && "opacity-50"
+                  (t.status === 'ignored' || t.status === 'resolved') && "opacity-60"
                 )}
                 onClick={() => onSelect(t)}
               >
@@ -395,14 +445,18 @@ function ThreatTable({
                         <span className="text-text-secondary border-b border-dotted border-border cursor-help">
                           {isBehavioral(t.attack_type) ? '—' : formatMbps(t.p95_mbps)}
                         </span>
-
                       </TooltipTrigger>
                       <TooltipContent><p className="text-xs">Volume normal deste IP (P95 das últimas 24h)</p></TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </TableCell>
-                <TableCell>{getSeverityBadge(t.severity)}</TableCell>
-                <TableCell className="text-[11px] text-text-secondary">{timeAgo(t.created_at)}</TableCell>
+                <TableCell>{getReincidenciaBadge(t.ocorrencias_24h)}</TableCell>
+                <TableCell className="text-[10px] text-text-secondary font-mono">
+                  {t.primeira_vez_24h ? new Date(t.primeira_vez_24h).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                </TableCell>
+                <TableCell className="text-[10px] text-text-secondary font-mono">
+                  {timeAgo(t.ultimo_sinal)}
+                </TableCell>
                 <TableCell>{getStatusBadge(t.status)}</TableCell>
                 <TableCell>
                   <ChevronRight size={16} className="text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -417,7 +471,18 @@ function ThreatTable({
 }
 
 
-function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverityBadge, getFatorBadge, getAttackTypeBadge, isBehavioral }: { 
+
+function ThreatDrawer({ 
+  threat, 
+  onClose, 
+  onStatusChange, 
+  formatMbps, 
+  getSeverityBadge, 
+  getFatorBadge, 
+  getAttackTypeBadge, 
+  isBehavioral,
+  timeAgo 
+}: { 
   threat: any, 
   onClose: () => void, 
   onStatusChange: (id: number, status: string) => void,
@@ -425,8 +490,10 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
   getSeverityBadge: (s: string) => any,
   getFatorBadge: (f: any, t: string) => any,
   getAttackTypeBadge: (t: string) => any,
-  isBehavioral: (t: string) => boolean
+  isBehavioral: (t: string) => boolean,
+  timeAgo: (d: string) => string
 }) {
+
 
   if (!threat) return null;
 
@@ -532,11 +599,78 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
             </div>
           </section>
 
+          {/* Seção Janela de Atividade */}
+          <section className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary flex items-center gap-2">
+              <Calendar size={14} /> Janela de Atividade
+            </h4>
+            <div className="p-4 bg-bg-primary border border-border rounded-xl space-y-4 shadow-inner">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <p className="text-[10px] uppercase font-semibold text-text-secondary">Primeira vez hoje</p>
+                  <p className="text-xs font-mono text-text-primary">
+                    {threat.primeira_vez_24h ? new Date(threat.primeira_vez_24h).toLocaleString() : '—'}
+                  </p>
+                </div>
+                <div className="flex justify-between items-center">
+                  <p className="text-[10px] uppercase font-semibold text-text-secondary">Último sinal confirmado</p>
+                  <div className="text-right">
+                    <p className="text-xs font-mono text-text-primary">
+                      {threat.ultimo_sinal ? new Date(threat.ultimo_sinal).toLocaleString() : '—'}
+                    </p>
+                    <p className="text-[10px] text-text-secondary">{timeAgo(threat.ultimo_sinal)}</p>
+                  </div>
+                </div>
+                {threat.resolved_at && (
+                  <div className="flex justify-between items-center p-2 bg-green-500/5 border border-green-500/10 rounded-lg">
+                    <p className="text-[10px] uppercase font-semibold text-green-600 flex items-center gap-1">
+                      <CheckCircle2 size={10} /> Resolvido em
+                    </p>
+                    <p className="text-xs font-mono text-green-600 font-bold">
+                      {new Date(threat.resolved_at).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* Seção Histórico de Ocorrências */}
+          <section className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <History size={14} /> Histórico de Ocorrências
+              </div>
+              <span className="text-[10px] normal-case font-medium">Detectado {threat.ocorrencias_24h || 1}x nas últimas 24h</span>
+            </h4>
+            <div className="p-4 bg-bg-primary border border-border rounded-xl space-y-4 shadow-inner relative overflow-hidden">
+              {Array.isArray(threat.historico_horarios) && threat.historico_horarios.length > 0 ? (
+                <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                  {threat.historico_horarios.map((ts: string, idx: number) => (
+                    <div key={idx} className="flex items-center gap-3 relative">
+                      {idx !== threat.historico_horarios.length - 1 && (
+                        <div className="absolute left-[5px] top-4 bottom-[-12px] w-[1px] bg-border" />
+                      )}
+                      <div className="w-2.5 h-2.5 rounded-full bg-primary/40 border border-primary/20 shrink-0" />
+                      <div className="flex-1 flex justify-between items-center text-xs">
+                        <span className="text-text-primary font-mono">{new Date(ts).toLocaleDateString([], { day: '2-digit', month: '2-digit' })}</span>
+                        <span className="text-text-primary font-bold font-mono">{new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-text-secondary italic text-center py-2">Sem histórico detalhado</p>
+              )}
+            </div>
+          </section>
+
           {/* Seção Evidências / Origens ou Destinos */}
           <section className="space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary flex items-center gap-2">
               <Info size={14} /> {isDownload ? 'Origens do tráfego' : 'Destinos do tráfego'}
             </h4>
+
             <div className="space-y-3">
               {evidence.length === 0 ? (
                 <p className="text-xs text-text-secondary italic text-center py-4">Sem evidências detalhadas disponíveis</p>
