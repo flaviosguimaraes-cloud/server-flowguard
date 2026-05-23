@@ -682,23 +682,38 @@ function ThreatDrawer({
 
                 // Caso 1: PORT_SCAN (Objeto)
                 if (attackType.startsWith('PORT_SCAN') && !Array.isArray(evidence)) {
+                  const formatTime = (ts: string) => {
+                    if (!ts) return '—';
+                    try {
+                      const date = new Date(ts);
+                      return isNaN(date.getTime()) ? ts : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                    } catch { return ts; }
+                  };
+
+                  const pktsFlow = evidence.pkts_por_flow || evidence.pkts_flow;
+                  const formattedPktsFlow = pktsFlow ? `${Number(pktsFlow).toLocaleString(undefined, { minimumFractionDigits: 0, maximumFractionDigits: 3 })} pkts/flow` : '—';
+
                   return (
                     <div className="p-4 bg-bg-primary border border-border rounded-xl space-y-4 shadow-sm">
                       <div className="grid grid-cols-1 gap-3">
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-text-secondary flex items-center gap-2"><Shield size={12} /> Atacante:</span>
                           <div className="flex items-center gap-2 font-mono font-bold">
-                            <Flag code={evidence.atacante_pais} size={14} />
+                            <Flag code={evidence.pais || evidence.atacante_pais} size={14} />
                             {evidence.atacante_ip}
                           </div>
                         </div>
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-text-secondary flex items-center gap-2"><Globe size={12} /> Localização:</span>
-                          <span className="text-text-primary text-right">{evidence.atacante_pais || '—'} / {evidence.atacante_org || '—'}</span>
+                          <span className="text-text-primary text-right">
+                            {(evidence.pais || evidence.atacante_pais) || '—'} / {(evidence.org || evidence.atacante_org) || '—'}
+                          </span>
                         </div>
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-text-secondary flex items-center gap-2"><Hash size={12} /> Portas varridas:</span>
-                          <span className="font-mono text-text-primary font-bold">{evidence.portas_varridas || '—'} únicas</span>
+                          <span className="font-mono text-text-primary font-bold">
+                            {evidence.portas_unicas || evidence.portas_varridas || '—'} portas únicas
+                          </span>
                         </div>
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-text-secondary flex items-center gap-2"><Activity size={12} /> Protocolo / Flows:</span>
@@ -706,12 +721,16 @@ function ThreatDrawer({
                         </div>
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-text-secondary flex items-center gap-2"><Zap size={12} /> Pkts/flow:</span>
-                          <span className="font-mono text-text-primary">{evidence.pkts_flow || '—'}</span>
+                          <span className="font-mono text-text-primary">{formattedPktsFlow}</span>
                         </div>
                         <div className="flex items-center justify-between text-[10px] text-text-secondary pt-2 border-t border-border/50">
-                          <div className="flex items-center gap-1"><Clock size={10} /> {evidence.periodo_inicio || '—'}</div>
+                          <div className="flex items-center gap-1">
+                            <Clock size={10} /> {formatTime(evidence.primeira_vez || evidence.periodo_inicio)}
+                          </div>
                           <ArrowRight size={10} />
-                          <div className="flex items-center gap-1">{evidence.periodo_fim || '—'}</div>
+                          <div className="flex items-center gap-1">
+                            {formatTime(evidence.ultima_vez || evidence.periodo_fim)}
+                          </div>
                         </div>
                       </div>
                     </div>
@@ -750,12 +769,19 @@ function ThreatDrawer({
 
                 // Caso 3: ANOMALIA (Lista ou Objeto genérico tratado como lista)
                 const evidenceList = Array.isArray(evidence) ? evidence : [evidence];
+                const formatTime = (ts: string) => {
+                  if (!ts) return '—';
+                  try {
+                    const date = new Date(ts);
+                    return isNaN(date.getTime()) ? ts : date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+                  } catch { return ts; }
+                };
                 
                 return evidenceList.map((item: any, idx: number) => (
                   <div key={idx} className="p-4 bg-bg-primary border border-border rounded-xl space-y-3 shadow-sm hover:border-primary/20 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                        <Flag code={isDownload ? item.atacante_pais : item.destino_pais} size={16} />
+                        <Flag code={isDownload ? (item.pais || item.atacante_pais) : (item.pais || item.destino_pais)} size={16} />
                         <span className="font-mono text-sm font-bold text-text-primary">
                           {isDownload ? (item.atacante_ip || item.ip_origem || '—') : (item.destino_ip || item.ip_destino || '—')}
                         </span>
@@ -767,7 +793,7 @@ function ThreatDrawer({
                     
                     <div className="flex items-center gap-2 text-xs text-text-secondary">
                       <MapPin size={12} className="shrink-0" />
-                      <span className="truncate">{isDownload ? item.atacante_org : item.destino_org}</span>
+                      <span className="truncate">{isDownload ? (item.org || item.atacante_org) : (item.org || item.destino_org)}</span>
                     </div>
 
                     <div className="grid grid-cols-2 gap-2 text-[11px] p-2 bg-bg-secondary/50 rounded-lg border border-border/40">
@@ -783,7 +809,7 @@ function ThreatDrawer({
                         <span className="text-text-secondary">Volume:</span>
                         <span className="font-mono text-text-primary">
                           {(() => {
-                            const m = typeof item.mbps === 'string' ? parseFloat(item.mbps) : (item.mbps || item.volume_mbps);
+                            const m = typeof item.mbps === 'string' ? parseFloat(item.mbps) : (item.mbps || item.volume_mbps || item.mbps_atual);
                             return (m !== null && m !== undefined && !isNaN(m)) ? Number(m).toFixed(1) : '—';
                           })()} Mbps
                         </span>
@@ -800,9 +826,13 @@ function ThreatDrawer({
                     </div>
 
                     <div className="flex items-center justify-between text-[10px] text-text-secondary opacity-70">
-                      <div className="flex items-center gap-1"><Clock size={10} /> {item.primeira_vez || item.inicio || '—'}</div>
+                      <div className="flex items-center gap-1">
+                        <Clock size={10} /> {formatTime(item.primeira_vez || item.inicio)}
+                      </div>
                       <ArrowRight size={10} />
-                      <div className="flex items-center gap-1">{item.ultima_vez || item.fim || '—'}</div>
+                      <div className="flex items-center gap-1">
+                        {formatTime(item.ultima_vez || item.fim)}
+                      </div>
                     </div>
                   </div>
                 ));
