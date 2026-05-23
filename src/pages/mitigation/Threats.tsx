@@ -31,6 +31,13 @@ export default function Threats() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedThreat, setSelectedThreat] = useState<any>(null);
   const [activeTab, setActiveTab] = useState<string>('download');
+  const [now, setNow] = useState(Date.now());
+
+  // Atualiza o "agora" a cada 30s para o filtro de resolved
+  useEffect(() => {
+    const timer = setInterval(() => setNow(Date.now()), 30000);
+    return () => clearInterval(timer);
+  }, []);
 
   const { data: summary } = useQuery({ 
     queryKey: ['threats-summary'], 
@@ -67,13 +74,23 @@ export default function Threats() {
     refetchInterval: 30000,
   });
 
-  const sortByFator = (a: any, b: any) => {
-    const fa = Number(a.fator_anomalia) || 0;
-    const fb = Number(b.fator_anomalia) || 0;
-    return fb - fa;
-  };
+  const allThreatsRaw = useMemo(() => getItems(threatsData), [threatsData]);
 
-  const allThreats = useMemo(() => getItems(threatsData), [threatsData]);
+  const allThreats = useMemo(() => {
+    return allThreatsRaw.filter((t: any) => {
+      // Não mostrar status expired nunca
+      if (t.status === 'expired') return false;
+      
+      // Detecções com status resolved somem da tela após 5 minutos
+      if (t.status === 'resolved' && t.resolved_at) {
+        const resolvedAt = new Date(t.resolved_at).getTime();
+        const fiveMinutes = 5 * 60 * 1000;
+        if (now - resolvedAt > fiveMinutes) return false;
+      }
+      
+      return true;
+    });
+  }, [allThreatsRaw, now]);
 
   const downloadThreats = useMemo(() => 
     allThreats.filter((t: any) => isDownloadThreat(t.attack_type)).sort((a: any, b: any) => {
@@ -116,6 +133,7 @@ export default function Threats() {
     if (num >= 1000) return `${(num / 1000).toFixed(1)} Gbps`;
     return `${num.toFixed(1)} Mbps`;
   };
+
 
   const timeAgo = (date: string) => {
     if (!date) return '—';
