@@ -472,7 +472,17 @@ function ThreatTable({
 
 
 
-function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverityBadge, getFatorBadge, getAttackTypeBadge, isBehavioral }: { 
+function ThreatDrawer({ 
+  threat, 
+  onClose, 
+  onStatusChange, 
+  formatMbps, 
+  getSeverityBadge, 
+  getFatorBadge, 
+  getAttackTypeBadge, 
+  isBehavioral,
+  timeAgo 
+}: { 
   threat: any, 
   onClose: () => void, 
   onStatusChange: (id: number, status: string) => void,
@@ -480,8 +490,10 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
   getSeverityBadge: (s: string) => any,
   getFatorBadge: (f: any, t: string) => any,
   getAttackTypeBadge: (t: string) => any,
-  isBehavioral: (t: string) => boolean
+  isBehavioral: (t: string) => boolean,
+  timeAgo: (d: string) => string
 }) {
+
 
   if (!threat) return null;
 
