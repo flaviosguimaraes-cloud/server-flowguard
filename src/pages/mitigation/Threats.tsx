@@ -7,7 +7,8 @@ import {
   ExternalLink, Zap, X, Info, Settings2, 
   ArrowRight, MapPin, Activity, Filter, 
   Search, RefreshCw, AlertTriangle, ChevronRight,
-  History, Calendar, CheckCircle2
+  History, Calendar, CheckCircle2, Globe, Hash,
+  Monitor, Users
 } from 'lucide-react';
 import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
@@ -510,7 +511,7 @@ function ThreatDrawer({
 
   const isDownload = isDownloadThreat(threat.attack_type);
   const isBeh = isBehavioral(threat.attack_type);
-  const evidence = Array.isArray(threat.evidence) ? threat.evidence : [];
+  const evidence = threat.evidence;
 
   return (
     <Sheet open={!!threat} onOpenChange={(open) => !open && onClose()}>
@@ -672,20 +673,95 @@ function ThreatDrawer({
             </h4>
 
             <div className="space-y-3">
-              {evidence.length === 0 ? (
-                <p className="text-xs text-text-secondary italic text-center py-4">Sem evidências detalhadas disponíveis</p>
-              ) : (
-                evidence.map((item: any, idx: number) => (
+              {(() => {
+                if (!evidence || (Array.isArray(evidence) && evidence.length === 0) || (typeof evidence === 'object' && Object.keys(evidence).length === 0)) {
+                  return <p className="text-xs text-text-secondary italic text-center py-4">Sem evidências detalhadas disponíveis</p>;
+                }
+
+                const attackType = threat.attack_type?.toUpperCase() || '';
+
+                // Caso 1: PORT_SCAN (Objeto)
+                if (attackType.startsWith('PORT_SCAN') && !Array.isArray(evidence)) {
+                  return (
+                    <div className="p-4 bg-bg-primary border border-border rounded-xl space-y-4 shadow-sm">
+                      <div className="grid grid-cols-1 gap-3">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-text-secondary flex items-center gap-2"><Shield size={12} /> Atacante:</span>
+                          <div className="flex items-center gap-2 font-mono font-bold">
+                            <Flag code={evidence.atacante_pais} size={14} />
+                            {evidence.atacante_ip}
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-text-secondary flex items-center gap-2"><Globe size={12} /> Localização:</span>
+                          <span className="text-text-primary text-right">{evidence.atacante_pais || '—'} / {evidence.atacante_org || '—'}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-text-secondary flex items-center gap-2"><Hash size={12} /> Portas varridas:</span>
+                          <span className="font-mono text-text-primary font-bold">{evidence.portas_varridas || '—'} únicas</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-text-secondary flex items-center gap-2"><Activity size={12} /> Protocolo / Flows:</span>
+                          <span className="font-mono text-text-primary">{evidence.protocolo || '—'} | {evidence.flows || '—'} fluxos</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-text-secondary flex items-center gap-2"><Zap size={12} /> Pkts/flow:</span>
+                          <span className="font-mono text-text-primary">{evidence.pkts_flow || '—'}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-[10px] text-text-secondary pt-2 border-t border-border/50">
+                          <div className="flex items-center gap-1"><Clock size={10} /> {evidence.periodo_inicio || '—'}</div>
+                          <ArrowRight size={10} />
+                          <div className="flex items-center gap-1">{evidence.periodo_fim || '—'}</div>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Caso 2: OUTGOING_SCAN (Objeto)
+                if (attackType.startsWith('OUTGOING_SCAN') && !Array.isArray(evidence)) {
+                  return (
+                    <div className="p-4 bg-bg-primary border border-border rounded-xl space-y-4 shadow-sm">
+                      <div className="grid grid-cols-1 gap-3">
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-text-secondary flex items-center gap-2"><Monitor size={12} /> Cliente:</span>
+                          <span className="font-mono font-bold text-text-primary">{evidence.cliente_ip || threat.ip}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-text-secondary flex items-center gap-2"><Hash size={12} /> Porta alvo:</span>
+                          <span className="font-mono text-text-primary font-bold">{evidence.porta_alvo || '—'}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-text-secondary flex items-center gap-2"><Users size={12} /> Destinos:</span>
+                          <span className="font-mono text-text-primary font-bold">{evidence.destinos || '—'} IPs diferentes</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-text-secondary flex items-center gap-2"><Activity size={12} /> Protocolo:</span>
+                          <span className="font-mono text-text-primary">{evidence.protocolo || '—'}</span>
+                        </div>
+                        <div className="flex items-center justify-between text-xs">
+                          <span className="text-text-secondary flex items-center gap-2"><Zap size={12} /> Volume:</span>
+                          <span className="font-mono text-text-primary font-bold">{evidence.volume || '—'} Mbps</span>
+                        </div>
+                      </div>
+                    </div>
+                  );
+                }
+
+                // Caso 3: ANOMALIA (Lista ou Objeto genérico tratado como lista)
+                const evidenceList = Array.isArray(evidence) ? evidence : [evidence];
+                
+                return evidenceList.map((item: any, idx: number) => (
                   <div key={idx} className="p-4 bg-bg-primary border border-border rounded-xl space-y-3 shadow-sm hover:border-primary/20 transition-colors">
                     <div className="flex items-center justify-between">
                       <div className="flex items-center gap-2">
                         <Flag code={isDownload ? item.atacante_pais : item.destino_pais} size={16} />
                         <span className="font-mono text-sm font-bold text-text-primary">
-                          {isDownload ? item.atacante_ip : item.destino_ip}
+                          {isDownload ? (item.atacante_ip || item.ip_origem || '—') : (item.destino_ip || item.ip_destino || '—')}
                         </span>
                       </div>
                       <Badge variant="secondary" className="text-[10px] font-mono">
-                        {item.protocolo} {item.tcp_flags !== '-' && `[${item.tcp_flags}]`}
+                        {item.protocolo} {item.tcp_flags && item.tcp_flags !== '-' && `[${item.tcp_flags}]`}
                       </Badge>
                     </div>
                     
@@ -698,37 +774,39 @@ function ThreatDrawer({
                       <div className="flex justify-between">
                         <span className="text-text-secondary">Portas:</span>
                         <span className="font-mono text-text-primary">
-                          {isDownload ? `${item.atacante_porta} → ${item.vitima_porta}` : `${item.cliente_porta} → ${item.destino_porta}`}
+                          {isDownload 
+                            ? `${item.atacante_porta || item.porta_origem || 'any'} → ${item.vitima_porta || item.porta_destino || 'any'}` 
+                            : `${item.cliente_porta || item.porta_origem || 'any'} → ${item.destino_porta || item.porta_destino || 'any'}`}
                         </span>
                       </div>
                       <div className="flex justify-between">
                         <span className="text-text-secondary">Volume:</span>
                         <span className="font-mono text-text-primary">
                           {(() => {
-                            const m = typeof item.mbps === 'string' ? parseFloat(item.mbps) : item.mbps;
-                            return (m !== null && m !== undefined && !isNaN(m)) ? m.toFixed(1) : '—';
+                            const m = typeof item.mbps === 'string' ? parseFloat(item.mbps) : (item.mbps || item.volume_mbps);
+                            return (m !== null && m !== undefined && !isNaN(m)) ? Number(m).toFixed(1) : '—';
                           })()} Mbps
                         </span>
                       </div>
 
                       <div className="flex justify-between">
-                        <span className="text-text-secondary">PPS:</span>
-                        <span className="font-mono text-text-primary">{item.pps?.toLocaleString() ?? '—'}</span>
-                      </div>
-                      <div className="flex justify-between">
                         <span className="text-text-secondary">BPP:</span>
                         <span className="font-mono text-text-primary">{item.bpp || '—'} bytes</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-text-secondary">PPS:</span>
+                        <span className="font-mono text-text-primary">{item.pps?.toLocaleString() ?? '—'}</span>
                       </div>
                     </div>
 
                     <div className="flex items-center justify-between text-[10px] text-text-secondary opacity-70">
-                      <div className="flex items-center gap-1"><Clock size={10} /> {item.primeira_vez || '—'}</div>
+                      <div className="flex items-center gap-1"><Clock size={10} /> {item.primeira_vez || item.inicio || '—'}</div>
                       <ArrowRight size={10} />
-                      <div className="flex items-center gap-1">{item.ultima_vez || '—'}</div>
+                      <div className="flex items-center gap-1">{item.ultima_vez || item.fim || '—'}</div>
                     </div>
                   </div>
-                ))
-              )}
+                ));
+              })()}
             </div>
           </section>
         </div>
