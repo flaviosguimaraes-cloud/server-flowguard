@@ -585,11 +585,78 @@ function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverity
             </div>
           </section>
 
+          {/* Seção Janela de Atividade */}
+          <section className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary flex items-center gap-2">
+              <Calendar size={14} /> Janela de Atividade
+            </h4>
+            <div className="p-4 bg-bg-primary border border-border rounded-xl space-y-4 shadow-inner">
+              <div className="space-y-3">
+                <div className="flex justify-between items-center">
+                  <p className="text-[10px] uppercase font-semibold text-text-secondary">Primeira vez hoje</p>
+                  <p className="text-xs font-mono text-text-primary">
+                    {threat.primeira_vez_24h ? new Date(threat.primeira_vez_24h).toLocaleString() : '—'}
+                  </p>
+                </div>
+                <div className="flex justify-between items-center">
+                  <p className="text-[10px] uppercase font-semibold text-text-secondary">Último sinal confirmado</p>
+                  <div className="text-right">
+                    <p className="text-xs font-mono text-text-primary">
+                      {threat.ultimo_sinal ? new Date(threat.ultimo_sinal).toLocaleString() : '—'}
+                    </p>
+                    <p className="text-[10px] text-text-secondary">{timeAgo(threat.ultimo_sinal)}</p>
+                  </div>
+                </div>
+                {threat.resolved_at && (
+                  <div className="flex justify-between items-center p-2 bg-green-500/5 border border-green-500/10 rounded-lg">
+                    <p className="text-[10px] uppercase font-semibold text-green-600 flex items-center gap-1">
+                      <CheckCircle2 size={10} /> Resolvido em
+                    </p>
+                    <p className="text-xs font-mono text-green-600 font-bold">
+                      {new Date(threat.resolved_at).toLocaleString()}
+                    </p>
+                  </div>
+                )}
+              </div>
+            </div>
+          </section>
+
+          {/* Seção Histórico de Ocorrências */}
+          <section className="space-y-4">
+            <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <History size={14} /> Histórico de Ocorrências
+              </div>
+              <span className="text-[10px] normal-case font-medium">Detectado {threat.ocorrencias_24h || 1}x nas últimas 24h</span>
+            </h4>
+            <div className="p-4 bg-bg-primary border border-border rounded-xl space-y-4 shadow-inner relative overflow-hidden">
+              {Array.isArray(threat.historico_horarios) && threat.historico_horarios.length > 0 ? (
+                <div className="space-y-3 max-h-48 overflow-y-auto pr-2 custom-scrollbar">
+                  {threat.historico_horarios.map((ts: string, idx: number) => (
+                    <div key={idx} className="flex items-center gap-3 relative">
+                      {idx !== threat.historico_horarios.length - 1 && (
+                        <div className="absolute left-[5px] top-4 bottom-[-12px] w-[1px] bg-border" />
+                      )}
+                      <div className="w-2.5 h-2.5 rounded-full bg-primary/40 border border-primary/20 shrink-0" />
+                      <div className="flex-1 flex justify-between items-center text-xs">
+                        <span className="text-text-primary font-mono">{new Date(ts).toLocaleDateString([], { day: '2-digit', month: '2-digit' })}</span>
+                        <span className="text-text-primary font-bold font-mono">{new Date(ts).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              ) : (
+                <p className="text-xs text-text-secondary italic text-center py-2">Sem histórico detalhado</p>
+              )}
+            </div>
+          </section>
+
           {/* Seção Evidências / Origens ou Destinos */}
           <section className="space-y-4">
             <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary flex items-center gap-2">
               <Info size={14} /> {isDownload ? 'Origens do tráfego' : 'Destinos do tráfego'}
             </h4>
+
             <div className="space-y-3">
               {evidence.length === 0 ? (
                 <p className="text-xs text-text-secondary italic text-center py-4">Sem evidências detalhadas disponíveis</p>
