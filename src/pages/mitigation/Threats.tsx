@@ -7,7 +7,8 @@ import {
   ExternalLink, Zap, X, Info, Settings2, 
   ArrowRight, MapPin, Activity, Filter, 
   Search, RefreshCw, AlertTriangle, ChevronRight,
-  History, Calendar, CheckCircle2
+  History, Calendar, CheckCircle2, Globe, Hash,
+  Monitor, Users
 } from 'lucide-react';
 import { Card, CardContent } from '../../components/ui/card';
 import { Badge } from '../../components/ui/badge';
