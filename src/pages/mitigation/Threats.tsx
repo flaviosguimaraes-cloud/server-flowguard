@@ -376,6 +376,7 @@ function ThreatTable({
   getSeverityBadge, 
   getStatusBadge, 
   getAttackTypeBadge,
+  getReincidenciaBadge,
   isBehavioral,
   timeAgo 
 }: { 
@@ -387,6 +388,7 @@ function ThreatTable({
   getSeverityBadge: (s: string) => any,
   getStatusBadge: (s: string) => any,
   getAttackTypeBadge: (t: string) => any,
+  getReincidenciaBadge: (c: number) => any,
   isBehavioral: (t: string) => boolean,
   timeAgo: (d: string) => string
 }) {
@@ -401,8 +403,9 @@ function ThreatTable({
             <TableHead>Volume Atual</TableHead>
             <TableHead>Fator</TableHead>
             <TableHead>P95 Normal</TableHead>
-            <TableHead>Severidade</TableHead>
-            <TableHead>Detectada</TableHead>
+            <TableHead>Reincidências</TableHead>
+            <TableHead>Primeira Vez</TableHead>
+            <TableHead>Último Sinal</TableHead>
             <TableHead>Status</TableHead>
             <TableHead className="w-[80px]"></TableHead>
           </TableRow>
@@ -410,7 +413,7 @@ function ThreatTable({
         <TableBody>
           {threats.length === 0 ? (
             <TableRow>
-              <TableCell colSpan={9} className="text-center py-10 text-text-secondary italic">
+              <TableCell colSpan={10} className="text-center py-10 text-text-secondary italic">
                 Nenhuma anomalia encontrada
               </TableCell>
             </TableRow>
@@ -422,7 +425,7 @@ function ThreatTable({
                   "cursor-pointer hover:bg-bg-primary transition-colors group",
                   (Number(t.fator_anomalia) || 0) >= 5 ? "border-l-4 border-l-red-500" : 
                   (Number(t.fator_anomalia) || 0) >= 3 ? "border-l-4 border-l-yellow-500" : "",
-                  t.status === 'ignored' && "opacity-50"
+                  (t.status === 'ignored' || t.status === 'resolved') && "opacity-60"
                 )}
                 onClick={() => onSelect(t)}
               >
@@ -440,14 +443,18 @@ function ThreatTable({
                         <span className="text-text-secondary border-b border-dotted border-border cursor-help">
                           {isBehavioral(t.attack_type) ? '—' : formatMbps(t.p95_mbps)}
                         </span>
-
                       </TooltipTrigger>
                       <TooltipContent><p className="text-xs">Volume normal deste IP (P95 das últimas 24h)</p></TooltipContent>
                     </Tooltip>
                   </TooltipProvider>
                 </TableCell>
-                <TableCell>{getSeverityBadge(t.severity)}</TableCell>
-                <TableCell className="text-[11px] text-text-secondary">{timeAgo(t.created_at)}</TableCell>
+                <TableCell>{getReincidenciaBadge(t.ocorrencias_24h)}</TableCell>
+                <TableCell className="text-[10px] text-text-secondary font-mono">
+                  {t.primeira_vez_24h ? new Date(t.primeira_vez_24h).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '—'}
+                </TableCell>
+                <TableCell className="text-[10px] text-text-secondary font-mono">
+                  {timeAgo(t.ultimo_sinal)}
+                </TableCell>
                 <TableCell>{getStatusBadge(t.status)}</TableCell>
                 <TableCell>
                   <ChevronRight size={16} className="text-text-secondary opacity-0 group-hover:opacity-100 transition-opacity" />
@@ -460,6 +467,7 @@ function ThreatTable({
     </div>
   );
 }
+
 
 
 function ThreatDrawer({ threat, onClose, onStatusChange, formatMbps, getSeverityBadge, getFatorBadge, getAttackTypeBadge, isBehavioral }: { 
