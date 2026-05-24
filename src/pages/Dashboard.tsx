@@ -379,8 +379,8 @@ export default function Dashboard() {
        console.log('Buscando histórico:', selectedCollector, selectedIfaces, selectedMinutes);
 
       const results = await Promise.all(
-        selectedIfaces.map(async ifName => {
-          const url = `/api/collectors/${selectedCollector}/metrics/history?minutes=${selectedMinutes}&if_name=${encodeURIComponent(ifName)}`;
+         selectedIfaces.map(async ifName => {
+           const url = `/api/snmp/${selectedCollector}/metrics/history?minutes=${selectedMinutes}&if_name=${encodeURIComponent(ifName)}`;
           console.log('URL:', url);
           const r = await api.get(url);
           console.log('Resultado:', ifName, r.data);
