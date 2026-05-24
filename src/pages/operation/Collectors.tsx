@@ -436,8 +436,9 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: an
     };
  
     const isValidCIDR = (cidr: string) => {
-      const regex = /^([0-9]{1,3}\.){3}[0-9]{1,3}\/([0-9]|[1-2][0-9]|3[0-2])$/;
-      return regex.test(cidr);
+      const ipv4Regex = /^([0-9]{1,3}\.){3}[0-9]{1,3}\/([0-9]|[1-2][0-9]|3[0-2])$/;
+      const ipv6Regex = /^([0-9a-fA-F]{0,4}:){1,7}[0-9a-fA-F]{0,4}\/([0-9]|[1-9][0-9]|1[0-1][0-9]|12[0-8])$/;
+      return ipv4Regex.test(cidr) || ipv6Regex.test(cidr);
     };
 
     const handleSubmit = (e: React.FormEvent) => {
