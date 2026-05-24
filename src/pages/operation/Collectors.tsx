@@ -70,7 +70,10 @@ export default function Collectors() {
     mode: 'add'
   });
   const [deleteConfirm, setDeleteConfirm] = useState<any | null>(null);
-  const [openIfaces, setOpenIfaces] = useState<any | null>(null);
+  const [detailsSheet, setDetailsSheet] = useState<{ open: boolean; collector: any | null }>({
+    open: false,
+    collector: null
+  });
 
   const { data, isLoading } = useQuery({
     queryKey: ['collectors'],
