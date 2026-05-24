@@ -89,6 +89,7 @@ import { useUI } from '../contexts/UIContext';
       icon: Lock,
       children: [
         { path: '/operation/collectors', label: t('collectors'), icon: Server },
+        { path: '/admin/ip-groups', label: 'Grupos de IP', icon: Network },
         { path: '/notifications', label: t('notifications'), icon: Bell },
         { path: '/audit', label: t('audit'), icon: ClipboardList },
         { path: '/settings', label: t('settings'), icon: Settings },

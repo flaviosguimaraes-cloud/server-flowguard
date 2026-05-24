@@ -33,6 +33,7 @@ import { Route as MitigationBlacklistRouteImport } from './routes/mitigation/bla
 import { Route as MitigationBgpRouteImport } from './routes/mitigation/bgp'
 import { Route as MitigationActiveRouteImport } from './routes/mitigation/active'
 import { Route as AdminUsersRouteImport } from './routes/admin/users'
+import { Route as AdminIpGroupsRouteImport } from './routes/admin/ip-groups'
 
 const SystemRoute = SystemRouteImport.update({
   id: '/system',
@@ -154,6 +155,11 @@ const AdminUsersRoute = AdminUsersRouteImport.update({
   path: '/admin/users',
   getParentRoute: () => rootRouteImport,
 } as any)
+const AdminIpGroupsRoute = AdminIpGroupsRouteImport.update({
+  id: '/admin/ip-groups',
+  path: '/admin/ip-groups',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -167,6 +173,7 @@ export interface FileRoutesByFullPath {
   '/notifications': typeof NotificationsRoute
   '/settings': typeof SettingsRoute
   '/system': typeof SystemRoute
+  '/admin/ip-groups': typeof AdminIpGroupsRoute
   '/admin/users': typeof AdminUsersRoute
   '/mitigation/active': typeof MitigationActiveRoute
   '/mitigation/bgp': typeof MitigationBgpRoute
@@ -193,6 +200,7 @@ export interface FileRoutesByTo {
   '/notifications': typeof NotificationsRoute
   '/settings': typeof SettingsRoute
   '/system': typeof SystemRoute
+  '/admin/ip-groups': typeof AdminIpGroupsRoute
   '/admin/users': typeof AdminUsersRoute
   '/mitigation/active': typeof MitigationActiveRoute
   '/mitigation/bgp': typeof MitigationBgpRoute
@@ -220,6 +228,7 @@ export interface FileRoutesById {
   '/notifications': typeof NotificationsRoute
   '/settings': typeof SettingsRoute
   '/system': typeof SystemRoute
+  '/admin/ip-groups': typeof AdminIpGroupsRoute
   '/admin/users': typeof AdminUsersRoute
   '/mitigation/active': typeof MitigationActiveRoute
   '/mitigation/bgp': typeof MitigationBgpRoute
@@ -248,6 +257,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/settings'
     | '/system'
+    | '/admin/ip-groups'
     | '/admin/users'
     | '/mitigation/active'
     | '/mitigation/bgp'
@@ -274,6 +284,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/settings'
     | '/system'
+    | '/admin/ip-groups'
     | '/admin/users'
     | '/mitigation/active'
     | '/mitigation/bgp'
@@ -300,6 +311,7 @@ export interface FileRouteTypes {
     | '/notifications'
     | '/settings'
     | '/system'
+    | '/admin/ip-groups'
     | '/admin/users'
     | '/mitigation/active'
     | '/mitigation/bgp'
@@ -327,6 +339,7 @@ export interface RootRouteChildren {
   NotificationsRoute: typeof NotificationsRoute
   SettingsRoute: typeof SettingsRoute
   SystemRoute: typeof SystemRoute
+  AdminIpGroupsRoute: typeof AdminIpGroupsRoute
   AdminUsersRoute: typeof AdminUsersRoute
   MitigationActiveRoute: typeof MitigationActiveRoute
   MitigationBgpRoute: typeof MitigationBgpRoute
@@ -512,6 +525,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AdminUsersRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/admin/ip-groups': {
+      id: '/admin/ip-groups'
+      path: '/admin/ip-groups'
+      fullPath: '/admin/ip-groups'
+      preLoaderRoute: typeof AdminIpGroupsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -527,6 +547,7 @@ const rootRouteChildren: RootRouteChildren = {
   NotificationsRoute: NotificationsRoute,
   SettingsRoute: SettingsRoute,
   SystemRoute: SystemRoute,
+  AdminIpGroupsRoute: AdminIpGroupsRoute,
   AdminUsersRoute: AdminUsersRoute,
   MitigationActiveRoute: MitigationActiveRoute,
   MitigationBgpRoute: MitigationBgpRoute,

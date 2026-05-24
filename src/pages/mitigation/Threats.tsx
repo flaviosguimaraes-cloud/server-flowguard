@@ -231,8 +231,8 @@ export default function Threats() {
     return <Badge className={clsx(s.color, "text-[10px]")}>{s.label}</Badge>;
   };
 
-  const filteredDownload = downloadThreats.filter((t: any) => t.ip?.toLowerCase().includes(searchTerm.toLowerCase()));
-  const filteredUpload = uploadThreats.filter((t: any) => t.ip?.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredDownload = downloadThreats.filter((t: any) => (t.target_ip || t.ip || '').toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredUpload = uploadThreats.filter((t: any) => (t.target_ip || t.ip || '').toLowerCase().includes(searchTerm.toLowerCase()));
 
 
 
@@ -432,7 +432,22 @@ function ThreatTable({
                 )}
                 onClick={() => onSelect(t)}
               >
-                <TableCell className="font-mono font-bold text-text-primary">{t.ip || '—'}</TableCell>
+                <TableCell className="font-mono font-bold text-text-primary">
+                  <div className="flex flex-col gap-1">
+                    <span>{t.target_ip || t.ip || '—'}</span>
+                    {t.group_id && (
+                      <div className="flex">
+                        {t.is_cgnat ? (
+                          <Badge variant="outline" className="text-[9px] h-4 px-1 bg-orange-500/10 text-orange-500 border-orange-500/20">CGNAT</Badge>
+                        ) : t.is_infrastructure ? (
+                          <Badge variant="outline" className="text-[9px] h-4 px-1 bg-blue-500/10 text-blue-500 border-blue-500/20">INFRA</Badge>
+                        ) : t.is_vip ? (
+                          <Badge variant="outline" className="text-[9px] h-4 px-1 bg-yellow-500/10 text-yellow-500 border-yellow-500/20">VIP</Badge>
+                        ) : null}
+                      </div>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell>{getAttackTypeBadge(t.attack_type)}</TableCell>
                 <TableCell className="font-medium">
                   {isBehavioral(t.attack_type) ? '—' : formatMbps(t.mbps_atual)}
@@ -529,7 +544,7 @@ function ThreatDrawer({
             </div>
             {getSeverityBadge(threat.severity)}
           </div>
-          <SheetTitle className="text-2xl font-mono">{threat.ip || '—'}</SheetTitle>
+          <SheetTitle className="text-2xl font-mono">{threat.target_ip || threat.ip || '—'}</SheetTitle>
           <SheetDescription className="hidden">Detalhes da anomalia detectada</SheetDescription>
         </SheetHeader>
 
@@ -764,7 +779,7 @@ function ThreatDrawer({
                       <div className="grid grid-cols-1 gap-3">
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-text-secondary flex items-center gap-2"><Monitor size={12} /> Cliente:</span>
-                          <span className="font-mono font-bold text-text-primary">{evidence.cliente_ip || threat.ip}</span>
+                          <span className="font-mono font-bold text-text-primary">{evidence.cliente_ip || threat.target_ip || threat.ip}</span>
                         </div>
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-text-secondary flex items-center gap-2"><Hash size={12} /> Porta alvo:</span>
