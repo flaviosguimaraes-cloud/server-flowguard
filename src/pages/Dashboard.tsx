@@ -1489,7 +1489,7 @@ export default function Dashboard() {
                             )}
                           </div>
                           <div className="text-[10px] text-text-secondary flex gap-3 mt-0.5">
-                            {iface.if_alias && iface.if_alias !== name && <span className="opacity-60">{iface.if_name}</span>}
+                            {iface.if_alias && iface.if_alias !== iface.if_name && <span className="opacity-60">{iface.if_name}</span>}
                             <span>RX: <span className="text-accent font-bold">{fmtBps(iface.in_bps)}</span></span>
                             <span>TX: <span className="text-success font-bold">{fmtBps(iface.out_bps)}</span></span>
                           </div>
