@@ -544,7 +544,7 @@ function ThreatDrawer({
             </div>
             {getSeverityBadge(threat.severity)}
           </div>
-          <SheetTitle className="text-2xl font-mono">{threat.ip || '—'}</SheetTitle>
+          <SheetTitle className="text-2xl font-mono">{threat.target_ip || threat.ip || '—'}</SheetTitle>
           <SheetDescription className="hidden">Detalhes da anomalia detectada</SheetDescription>
         </SheetHeader>
 
