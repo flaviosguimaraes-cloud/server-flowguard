@@ -1391,7 +1391,7 @@ export default function Dashboard() {
              <div className="flex gap-2 mb-4">
                <button 
                  onClick={() => {
-                   const all = (Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
+                   const all = (Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []))
                     .filter((i: any) => {
                       const n = (i.display_name || i.if_name || '').toLowerCase();
                       return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
