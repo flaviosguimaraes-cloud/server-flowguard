@@ -287,11 +287,17 @@ export default function Collectors() {
    );
  }
 
-  function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: any) {
-    const [snmpIpTouched, setSnmpIpTouched] = useState(false);
-    const [bgpLocalIpTouched, setBgpLocalIpTouched] = useState(false);
+function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: any) {
+  const [snmpIpTouched, setSnmpIpTouched] = useState(false);
+  const [bgpLocalIpTouched, setBgpLocalIpTouched] = useState(false);
 
-    const normalizeSnmpVersion = (v: any) => {
+  const { data: upstreamIfaces } = useQuery({
+    queryKey: ['collector-upstream-interfaces', data?.id],
+    queryFn: () => api.get(`/api/snmp/${data.id}/interfaces?role=upstream`).then(r => r.data).catch(() => []),
+    enabled: isOpen && mode === 'edit' && !!data?.id,
+  });
+
+  const normalizeSnmpVersion = (v: any) => {
       if (!v) return '2c';
       return v.toString().replace(/^v/, '');
     };
