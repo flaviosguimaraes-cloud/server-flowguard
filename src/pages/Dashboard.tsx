@@ -444,7 +444,7 @@ export default function Dashboard() {
     }, [timeline]);
 
     const selectedIfaceData = useMemo(() => {
-      const list = Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [];
+      const list = Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []);
       return list.filter((i: any) => selectedIfaces.includes(i.display_name || i.if_name));
     }, [interfaces, selectedIfaces]);
 
