@@ -455,7 +455,7 @@ export default function Dashboard() {
 
      const ifaceMap = useMemo(() => {
        const map: Record<string, string> = {};
-       const list = Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [];
+       const list = Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []);
        list.forEach((i: any) => {
          map[i.if_name] = i.display_name || i.if_name;
        });
