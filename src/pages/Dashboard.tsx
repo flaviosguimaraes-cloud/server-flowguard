@@ -446,7 +446,7 @@ export default function Dashboard() {
 
     const selectedIfaceData = useMemo(() => {
       const list = Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []);
-      return list.filter((i: any) => selectedIfaces.includes(i.display_name || i.if_name));
+      return list.filter((i: any) => selectedIfaces.includes(i.if_alias || i.display_name || i.if_name));
     }, [interfaces, selectedIfaces]);
 
     const timePoints = useMemo(() => {
