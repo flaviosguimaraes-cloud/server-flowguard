@@ -286,7 +286,7 @@ export default function Dashboard() {
 
   const { data: collectorDetailedInfo } = useQuery({
     queryKey: ['collector-detail', selectedCollector],
-    queryFn: () => api.get(`/api/collectors/${selectedCollector}/interfaces`).then(r => r.data),
+    queryFn: () => api.get(`/api/snmp/${selectedCollector}/interfaces`).then(r => r.data),
     enabled: isAuthenticated && !!selectedCollector,
   });
 
@@ -350,7 +350,7 @@ export default function Dashboard() {
     queryKey: ['interfaces', selectedCollector],
     queryFn: async () => {
       if (!selectedCollector) return null;
-      const r = await api.get(`/api/collectors/${selectedCollector}/interfaces/summary`);
+      const r = await api.get(`/api/snmp/${selectedCollector}/interfaces`);
       return r.data;
     },
     staleTime: 0,
@@ -444,7 +444,7 @@ export default function Dashboard() {
     }, [timeline]);
 
     const selectedIfaceData = useMemo(() => {
-      const list = Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [];
+      const list = Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []);
       return list.filter((i: any) => selectedIfaces.includes(i.display_name || i.if_name));
     }, [interfaces, selectedIfaces]);
 
@@ -455,7 +455,7 @@ export default function Dashboard() {
 
      const ifaceMap = useMemo(() => {
        const map: Record<string, string> = {};
-       const list = Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [];
+       const list = Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []);
        list.forEach((i: any) => {
          map[i.if_name] = i.display_name || i.if_name;
        });
@@ -1391,7 +1391,7 @@ export default function Dashboard() {
              <div className="flex gap-2 mb-4">
                <button 
                  onClick={() => {
-                   const all = (Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
+                   const all = (Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []))
                     .filter((i: any) => {
                       const n = (i.display_name || i.if_name || '').toLowerCase();
                       return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
@@ -1415,7 +1415,7 @@ export default function Dashboard() {
              </div>
              
              <div style={{ overflowY: 'auto', flex: 1 }} className="pr-2 custom-scrollbar">
-               {(Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
+               {(Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []))
                  .filter((i: any) => {
                    const n = (i.display_name || i.if_name || '').toLowerCase();
                    return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
