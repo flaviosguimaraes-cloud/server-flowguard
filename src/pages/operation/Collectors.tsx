@@ -474,27 +474,27 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: an
  
    return (
      <Dialog open={isOpen} onOpenChange={onClose}>
-       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
-         <DialogHeader>
-           <DialogTitle>{mode === 'add' ? 'Novo Coletor' : 'Editar Coletor'}</DialogTitle>
-         </DialogHeader>
-         
-         <form onSubmit={handleSubmit} className="space-y-8 py-4">
-           {/* SEÇÃO 1 — Identificação */}
-           <section className="space-y-4">
-             <div className="flex items-center gap-2 text-primary">
-               <Server size={18} />
-               <h3 className="font-bold text-sm uppercase tracking-wider">Identificação</h3>
-             </div>
-             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-               <div className="space-y-2">
-                 <Label htmlFor="name">Nome *</Label>
-                 <Input id="name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="router-core-01" required />
-               </div>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto custom-scrollbar">
+          <DialogHeader>
+            <DialogTitle>{mode === 'add' ? 'Novo Coletor' : 'Editar Coletor'}</DialogTitle>
+          </DialogHeader>
+          
+          <form onSubmit={handleSubmit} className="space-y-8 py-4">
+            {/* SEÇÃO 1 — Identificação */}
+            <section className="space-y-4">
+              <div className="flex items-center gap-2 text-primary">
+                <Server size={18} />
+                <h3 className="font-bold text-sm uppercase tracking-wider">Identificação</h3>
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="host">IP *</Label>
-                  <Input id="host" value={formData.host} onChange={e => setFormData({ ...formData, host: e.target.value })} placeholder="Ex: 192.168.1.1" required />
+                  <Label htmlFor="name">Nome *</Label>
+                  <Input id="name" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} placeholder="router-core-01" required />
                 </div>
+                 <div className="space-y-2">
+                   <Label htmlFor="host">IP de Gerência *</Label>
+                   <Input id="host" value={formData.host} onChange={e => setFormData({ ...formData, host: e.target.value })} placeholder="Ex: 192.168.1.1" required />
+                 </div>
                <div className="space-y-2 md:col-span-2">
                  <Label htmlFor="brand">Marca *</Label>
                  <Select value={formData.brand} onValueChange={handleBrandChange}>
