@@ -458,7 +458,7 @@ export default function Dashboard() {
        const map: Record<string, string> = {};
        const list = Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []);
        list.forEach((i: any) => {
-         map[i.if_name] = i.if_alias || i.display_name || i.if_name;
+          map[i.if_name] = i.if_alias || i.display_name || i.if_name;
        });
        return map;
      }, [interfaces]);
