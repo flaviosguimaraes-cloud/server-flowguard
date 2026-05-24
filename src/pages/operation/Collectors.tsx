@@ -804,7 +804,7 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: an
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {upstreamIfaces?.map((iface: any) => (
+                  {upstreamIfaces.map((iface: any) => (
                     <div key={iface.if_index} className="flex items-center justify-between p-2 bg-bg-primary/50 rounded border border-border/50">
                       <div className="flex flex-col">
                         <span className="text-xs font-mono font-bold">{iface.if_name}</span>
