@@ -4,8 +4,10 @@ import api from '../../services/api';
 import { 
   Server, Eye, X, Clock, Plus, Edit2, Trash2, Power, 
   PowerOff, Shield, Check, Info, Activity, Network, 
-  Globe, Zap, Search, Sliders, List, CheckCircle2, AlertCircle
+  Globe, Zap, Search, Sliders, List, CheckCircle2, AlertCircle,
+  ArrowRight
 } from 'lucide-react';
+import { Link } from '@tanstack/react-router';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
