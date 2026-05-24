@@ -572,77 +572,238 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: an
              </div>
            </section>
  
-           {/* SEÇÃO 4 — BGP */}
-           <section className="space-y-4 border-t border-border pt-6">
-             <div className="flex items-center justify-between">
-               <div className="flex items-center gap-2 text-primary">
-                 <Shield size={18} />
-                 <h3 className="font-bold text-sm uppercase tracking-wider">BGP</h3>
-               </div>
-               <div className="flex items-center gap-2">
-                 <Switch checked={formData.bgp_enabled} onCheckedChange={v => setFormData({ ...formData, bgp_enabled: v })} />
-                 <Label className="text-xs font-bold uppercase">Habilitar BGP</Label>
-               </div>
-             </div>
- 
-             <AnimatePresence>
-               {formData.bgp_enabled && (
-                 <motion.div 
-                   initial={{ height: 0, opacity: 0 }}
-                   animate={{ height: 'auto', opacity: 1 }}
-                   exit={{ height: 0, opacity: 0 }}
-                   className="overflow-hidden"
-                 >
-                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-2">
-                      <div className="space-y-2">
-                        <Label htmlFor="bgp_remote_ip">IP Remoto (Roteador)</Label>
-                        <Input id="bgp_remote_ip" value={formData.bgp_remote_ip} onChange={e => setFormData({ ...formData, bgp_remote_ip: e.target.value })} placeholder="Ex: 192.168.1.1" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="bgp_remote_asn">ASN Remoto</Label>
-                        <Input id="bgp_remote_asn" type="number" value={formData.bgp_remote_asn} onChange={e => setFormData({ ...formData, bgp_remote_asn: e.target.value })} placeholder="Ex: 65001" />
-                      </div>
-                      <div className="space-y-2">
-                        <Label htmlFor="bgp_local_ip">IP Local</Label>
-                        <Input 
-                          id="bgp_local_ip" 
-                          value={formData.bgp_local_ip} 
-                          onFocus={() => setBgpLocalIpTouched(true)}
-                          onChange={e => setFormData({ ...formData, bgp_local_ip: e.target.value })} 
-                          placeholder={formData.host || "Ex: 192.168.1.2"} 
-                        />
-                        <p className="text-[10px] text-text-secondary">IP local do servidor FlowGuard</p>
-                      </div>
-                     <div className="space-y-2">
-                       <Label htmlFor="bgp_local_asn">ASN Local</Label>
-                       <Input id="bgp_local_asn" type="number" value={formData.bgp_local_asn} onChange={e => setFormData({ ...formData, bgp_local_asn: e.target.value })} placeholder="Ex: 65000" />
-                     </div>
-                     <div className="md:col-span-2 space-y-3">
-                       <Label>Famílias</Label>
-                       <div className="flex gap-6">
-                          <div className="flex items-center space-x-2">
-                            <Checkbox 
-                              id="unicast" 
-                              checked={formData.bgp_ipv4_unicast === true} 
-                              onCheckedChange={v => setFormData({ ...formData, bgp_ipv4_unicast: v === true })} 
-                            />
-                            <label htmlFor="unicast" className="text-sm font-medium leading-none cursor-pointer">IPv4 Unicast</label>
-                          </div>
-                          <div className="flex items-center space-x-2">
-                            <Checkbox 
-                              id="flowspec" 
-                              checked={formData.bgp_flowspec === true} 
-                              onCheckedChange={v => setFormData({ ...formData, bgp_flowspec: v === true })} 
-                            />
-                            <label htmlFor="flowspec" className="text-sm font-medium leading-none cursor-pointer">IPv4 FlowSpec</label>
-                          </div>
+            {/* SEÇÃO 4 — BGP */}
+            <section className="space-y-4 border-t border-border pt-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-primary">
+                  <Shield size={18} />
+                  <h3 className="font-bold text-sm uppercase tracking-wider">BGP</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch checked={formData.bgp_enabled} onCheckedChange={v => setFormData({ ...formData, bgp_enabled: v })} />
+                  <Label className="text-xs font-bold uppercase">Habilitar BGP</Label>
+                </div>
+              </div>
+
+              <AnimatePresence>
+                {formData.bgp_enabled && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-2">
+                       <div className="space-y-2">
+                         <Label htmlFor="bgp_remote_ip">IP Remoto (Roteador)</Label>
+                         <Input id="bgp_remote_ip" value={formData.bgp_remote_ip} onChange={e => setFormData({ ...formData, bgp_remote_ip: e.target.value })} placeholder="Ex: 192.168.1.1" />
                        </div>
-                     </div>
-                   </div>
-                 </motion.div>
-               )}
-             </AnimatePresence>
-           </section>
+                       <div className="space-y-2">
+                         <Label htmlFor="bgp_remote_asn">ASN Remoto</Label>
+                         <Input id="bgp_remote_asn" type="number" value={formData.bgp_remote_asn} onChange={e => setFormData({ ...formData, bgp_remote_asn: e.target.value })} placeholder="Ex: 65001" />
+                       </div>
+                       <div className="space-y-2">
+                         <Label htmlFor="bgp_local_ip">IP Local</Label>
+                         <Input 
+                           id="bgp_local_ip" 
+                           value={formData.bgp_local_ip} 
+                           onFocus={() => setBgpLocalIpTouched(true)}
+                           onChange={e => setFormData({ ...formData, bgp_local_ip: e.target.value })} 
+                           placeholder={formData.host || "Ex: 192.168.1.2"} 
+                         />
+                         <p className="text-[10px] text-text-secondary">IP local do servidor FlowGuard</p>
+                       </div>
+                      <div className="space-y-2">
+                        <Label htmlFor="bgp_local_asn">ASN Local</Label>
+                        <Input id="bgp_local_asn" type="number" value={formData.bgp_local_asn} onChange={e => setFormData({ ...formData, bgp_local_asn: e.target.value })} placeholder="Ex: 65000" />
+                      </div>
+                      <div className="md:col-span-2 space-y-3">
+                        <Label>Famílias IPv4</Label>
+                        <div className="flex gap-6">
+                           <div className="flex items-center space-x-2">
+                             <Checkbox 
+                               id="unicast" 
+                               checked={formData.bgp_ipv4_enabled === true} 
+                               onCheckedChange={v => setFormData({ ...formData, bgp_ipv4_enabled: v === true })} 
+                             />
+                             <label htmlFor="unicast" className="text-sm font-medium leading-none cursor-pointer">IPv4 Unicast</label>
+                           </div>
+                           <div className="flex items-center space-x-2">
+                             <Checkbox 
+                               id="flowspec" 
+                               checked={formData.flowspec_ipv4_enabled === true} 
+                               onCheckedChange={v => setFormData({ ...formData, flowspec_ipv4_enabled: v === true })} 
+                             />
+                             <label htmlFor="flowspec" className="text-sm font-medium leading-none cursor-pointer">IPv4 FlowSpec</label>
+                           </div>
+                        </div>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </section>
+
+            {/* SEÇÃO 5 — IPv6 */}
+            <section className="space-y-4 border-t border-border pt-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-primary">
+                  <Globe size={18} />
+                  <h3 className="font-bold text-sm uppercase tracking-wider">IPv6</h3>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Switch checked={formData.ipv6_enabled} onCheckedChange={v => setFormData({ ...formData, ipv6_enabled: v })} />
+                  <Label className="text-xs font-bold uppercase">Habilitar IPv6</Label>
+                </div>
+              </div>
+
+              <AnimatePresence>
+                {formData.ipv6_enabled && (
+                  <motion.div 
+                    initial={{ height: 0, opacity: 0 }}
+                    animate={{ height: 'auto', opacity: 1 }}
+                    exit={{ height: 0, opacity: 0 }}
+                    className="overflow-hidden"
+                  >
+                    <div className="flex gap-6 pb-2">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="bgp_ipv6_unicast" 
+                          checked={formData.bgp_ipv6_enabled === true} 
+                          onCheckedChange={v => setFormData({ ...formData, bgp_ipv6_enabled: v === true })} 
+                        />
+                        <label htmlFor="bgp_ipv6_unicast" className="text-sm font-medium leading-none cursor-pointer">BGP IPv6 Unicast</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id="flowspec_ipv6" 
+                          checked={formData.flowspec_ipv6_enabled === true} 
+                          onCheckedChange={v => setFormData({ ...formData, flowspec_ipv6_enabled: v === true })} 
+                        />
+                        <label htmlFor="flowspec_ipv6" className="text-sm font-medium leading-none cursor-pointer">IPv6 FlowSpec</label>
+                      </div>
+                    </div>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+            </section>
+
+            {/* SEÇÃO 6 — Redes Monitoradas */}
+            <section className="space-y-4 border-t border-border pt-6">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2 text-primary">
+                  <Network size={18} />
+                  <h3 className="font-bold text-sm uppercase tracking-wider">Redes Monitoradas</h3>
+                </div>
+                <Button type="button" variant="outline" size="sm" onClick={handleAddNetwork} className="gap-2">
+                  <Plus size={14} /> Adicionar Rede
+                </Button>
+              </div>
+
+              <div className="space-y-3">
+                {formData.monitored_networks.map((net, index) => (
+                  <div key={index} className="p-3 bg-bg-primary/50 rounded-lg border border-border space-y-3 relative group">
+                    <button 
+                      type="button"
+                      onClick={() => handleRemoveNetwork(index)}
+                      className="absolute top-2 right-2 text-text-secondary hover:text-destructive p-1"
+                    >
+                      <X size={14} />
+                    </button>
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pr-6">
+                      <div className="space-y-1">
+                        <Label className="text-[10px] uppercase">CIDR</Label>
+                        <Input 
+                          placeholder="Ex: 45.175.50.0/24" 
+                          value={net.cidr} 
+                          onChange={e => handleUpdateNetwork(index, 'cidr', e.target.value)}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <Label className="text-[10px] uppercase">Tipo</Label>
+                        <Select value={net.type} onValueChange={v => handleUpdateNetwork(index, 'type', v)}>
+                          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="own">Própria</SelectItem>
+                            <SelectItem value="client">Cliente</SelectItem>
+                            <SelectItem value="transit">Trânsito</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="md:col-span-2 space-y-1">
+                        <Label className="text-[10px] uppercase">Label</Label>
+                        <Input 
+                          placeholder="Ex: UAY Internet" 
+                          value={net.label} 
+                          onChange={e => handleUpdateNetwork(index, 'label', e.target.value)}
+                          className="h-8 text-xs"
+                        />
+                      </div>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`bh-${index}`} 
+                          checked={net.allow_blackhole} 
+                          onCheckedChange={v => handleUpdateNetwork(index, 'allow_blackhole', v === true)}
+                        />
+                        <label htmlFor={`bh-${index}`} className="text-[10px] font-medium leading-none cursor-pointer uppercase">Blackhole permitido</label>
+                      </div>
+                      <div className="flex items-center space-x-2">
+                        <Checkbox 
+                          id={`fs-${index}`} 
+                          checked={net.allow_flowspec} 
+                          onCheckedChange={v => handleUpdateNetwork(index, 'allow_flowspec', v === true)}
+                        />
+                        <label htmlFor={`fs-${index}`} className="text-[10px] font-medium leading-none cursor-pointer uppercase">FlowSpec permitido</label>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {formData.monitored_networks.length === 0 && (
+                  <p className="text-center text-xs text-text-secondary italic py-4">Nenhuma rede configurada</p>
+                )}
+              </div>
+            </section>
+
+            {/* SEÇÃO 7 — Interfaces de Upstream */}
+            {mode === 'edit' && (
+              <section className="space-y-4 border-t border-border pt-6">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2 text-primary">
+                    <List size={18} />
+                    <h3 className="font-bold text-sm uppercase tracking-wider">Interfaces de Upstream</h3>
+                  </div>
+                  <Link 
+                    to="/operation/collectors"
+                    className="text-[11px] text-primary hover:underline flex items-center gap-1"
+                    onClick={() => {
+                      onClose();
+                    }}
+                  >
+                    Gerenciar interfaces <ArrowRight size={12} />
+                  </Link>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                  {upstreamIfaces?.map((iface: any) => (
+                    <div key={iface.if_index} className="flex items-center justify-between p-2 bg-bg-primary/50 rounded border border-border/50">
+                      <div className="flex flex-col">
+                        <span className="text-xs font-mono font-bold">{iface.if_name}</span>
+                        <span className="text-[10px] text-text-secondary truncate max-w-[150px]">{iface.if_alias || 'Sem alias'}</span>
+                      </div>
+                      <Badge variant="outline" className="text-[9px] uppercase font-bold py-0 h-4">Upstream</Badge>
+                    </div>
+                  ))}
+                  {(!upstreamIfaces || upstreamIfaces.length === 0) && (
+                    <p className="col-span-2 text-center text-xs text-text-secondary italic">Nenhuma interface classificada como Upstream</p>
+                  )}
+                </div>
+              </section>
+            )}
  
            <div className="flex items-center gap-2 border-t border-border pt-6">
              <Switch checked={formData.active} onCheckedChange={v => setFormData({ ...formData, active: v })} />
