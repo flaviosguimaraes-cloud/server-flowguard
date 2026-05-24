@@ -779,7 +779,7 @@ function ThreatDrawer({
                       <div className="grid grid-cols-1 gap-3">
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-text-secondary flex items-center gap-2"><Monitor size={12} /> Cliente:</span>
-                          <span className="font-mono font-bold text-text-primary">{evidence.cliente_ip || threat.ip}</span>
+                          <span className="font-mono font-bold text-text-primary">{evidence.cliente_ip || threat.target_ip || threat.ip}</span>
                         </div>
                         <div className="flex items-center justify-between text-xs">
                           <span className="text-text-secondary flex items-center gap-2"><Hash size={12} /> Porta alvo:</span>
