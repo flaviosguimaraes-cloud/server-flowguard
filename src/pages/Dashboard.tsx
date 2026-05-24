@@ -164,6 +164,7 @@ export default function Dashboard() {
     return saved ? parseInt(saved) : 30;
   });
   const [showIfaceSelector, setShowIfaceSelector] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
 
   const [periodASN, setPeriodASN] = useState(60);
   const [periodCDN, setPeriodCDN] = useState(60);
@@ -445,7 +446,7 @@ export default function Dashboard() {
 
     const selectedIfaceData = useMemo(() => {
       const list = Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []);
-      return list.filter((i: any) => selectedIfaces.includes(i.display_name || i.if_name));
+      return list.filter((i: any) => selectedIfaces.includes(i.if_name));
     }, [interfaces, selectedIfaces]);
 
     const timePoints = useMemo(() => {
@@ -457,7 +458,7 @@ export default function Dashboard() {
        const map: Record<string, string> = {};
        const list = Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []);
        list.forEach((i: any) => {
-         map[i.if_name] = i.display_name || i.if_name;
+          map[i.if_name] = i.if_alias || i.display_name || i.if_name;
        });
        return map;
      }, [interfaces]);
@@ -1388,80 +1389,115 @@ export default function Dashboard() {
                </button>
              </div>
 
-             <div className="flex gap-2 mb-4">
-               <button 
-                 onClick={() => {
-                   const all = (Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []))
-                    .filter((i: any) => {
-                      const n = (i.display_name || i.if_name || '').toLowerCase();
-                      return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
-                    })
-                    .map((i: any) => i.display_name || i.if_name);
-                   setSelectedIfaces(all);
-                 }}
-                 className="text-[10px] font-bold uppercase px-3 py-1.5 bg-bg-primary border border-border rounded hover:bg-bg-secondary"
-               >
-                 Selecionar todas
-               </button>
-                <button 
-                  onClick={() => {
-                    setSelectedIfaces([]);
-                    localStorage.setItem('fg_ifaces', JSON.stringify([]));
-                  }}
-                  className="text-[10px] font-bold uppercase px-3 py-1.5 bg-bg-primary border border-border rounded hover:bg-bg-secondary"
-                >
-                  Limpar
-                </button>
-             </div>
-             
-             <div style={{ overflowY: 'auto', flex: 1 }} className="pr-2 custom-scrollbar">
-               {(Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []))
-                 .filter((i: any) => {
-                   const n = (i.display_name || i.if_name || '').toLowerCase();
-                   return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
-                 })
-                 .sort((a: any, b: any) => ((b.in_bps || 0) + (b.out_bps || 0)) - ((a.in_bps || 0) + (a.out_bps || 0)))
-                 .map((iface: any) => {
-                   const name = iface.display_name || iface.if_name;
-                   const isSelected = selectedIfaces.includes(name);
-                   return (
-                     <label 
-                       key={name}
-                       style={{
-                         display: 'flex',
-                         alignItems: 'center',
-                         padding: '10px 12px',
-                         borderRadius: 8,
-                         cursor: 'pointer',
-                         marginBottom: 4,
-                         background: isSelected ? (isDark ? 'rgba(59, 130, 246, 0.1)' : '#eff6ff') : 'transparent',
-                         border: `1px solid ${isSelected ? (isDark ? 'rgba(59, 130, 246, 0.2)' : '#bfdbfe') : 'transparent'}`
-                       }}
-                       className="hover:bg-bg-primary/50 transition-all"
-                     >
-                       <input 
-                         type="checkbox"
-                         checked={isSelected}
-                         onChange={() => {
-                           setSelectedIfaces(prev =>
-                             prev.includes(name)
-                               ? prev.filter(n => n !== name)
-                               : [...prev, name]
-                           );
-                         }}
-                         className="mr-3 w-4 h-4 rounded border-border text-primary focus:ring-primary"
-                       />
-                       <div style={{ flex: 1 }}>
-                         <div className="text-sm font-bold text-text-primary">{name}</div>
-                         <div className="text-[10px] text-text-secondary flex gap-3 mt-0.5">
-                           <span>RX: <span className="text-accent font-bold">{fmtBps(iface.in_bps)}</span></span>
-                           <span>TX: <span className="text-success font-bold">{fmtBps(iface.out_bps)}</span></span>
-                         </div>
-                       </div>
-                     </label>
-                   );
-                 })}
-             </div>
+              <div className="flex flex-col gap-3 mb-4">
+                <div className="flex gap-2">
+                  <button 
+                    onClick={() => {
+                      const list = (Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []));
+                      const filtered = list.filter((i: any) => {
+                        const n = (i.if_alias || i.display_name || i.if_name || '').toLowerCase();
+                        const isTechnical = n.includes('null') || n.includes('loopback') || n.includes('virtual') || n.includes('template');
+                        if (isTechnical) return false;
+                        
+                        if (showInactive) return true;
+                        const hasTraffic = (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0;
+                        const hasSpeed = (i.if_speed || 0) > 0;
+                        return hasSpeed && hasTraffic;
+                      });
+                      const all = filtered.map((i: any) => i.if_name);
+                      setSelectedIfaces(all);
+                    }}
+                    className="text-[10px] font-bold uppercase px-3 py-1.5 bg-bg-primary border border-border rounded hover:bg-bg-secondary"
+                  >
+                    Selecionar visíveis
+                  </button>
+                  <button 
+                    onClick={() => {
+                      setSelectedIfaces([]);
+                      localStorage.setItem('fg_ifaces', JSON.stringify([]));
+                    }}
+                    className="text-[10px] font-bold uppercase px-3 py-1.5 bg-bg-primary border border-border rounded hover:bg-bg-secondary"
+                  >
+                    Limpar
+                  </button>
+                </div>
+                
+                <label className="flex items-center gap-2 cursor-pointer group">
+                  <div className="relative inline-flex items-center cursor-pointer">
+                    <input 
+                      type="checkbox" 
+                      className="sr-only peer"
+                      checked={showInactive}
+                      onChange={e => setShowInactive(e.target.checked)}
+                    />
+                    <div className="w-8 h-4 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary"></div>
+                  </div>
+                  <span className="text-xs text-text-secondary group-hover:text-text-primary transition-colors">Mostrar todas as interfaces (incluir inativas)</span>
+                </label>
+              </div>
+              
+              <div style={{ overflowY: 'auto', flex: 1 }} className="pr-2 custom-scrollbar">
+                {(Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []))
+                  .filter((i: any) => {
+                    const n = (i.if_alias || i.display_name || i.if_name || '').toLowerCase();
+                    const isTechnical = n.includes('null') || n.includes('loopback') || n.includes('virtual') || n.includes('template');
+                    if (isTechnical) return false;
+
+                    if (showInactive) return true;
+                    const hasTraffic = (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0;
+                    const hasSpeed = (i.if_speed || 0) > 0;
+                    return hasSpeed && hasTraffic;
+                  })
+                  .sort((a: any, b: any) => (b.if_speed || 0) - (a.if_speed || 0))
+                  .map((iface: any) => {
+                    const displayName = iface.if_alias || iface.display_name || iface.if_name;
+                    const isSelected = selectedIfaces.includes(iface.if_name);
+                    return (
+                      <label 
+                        key={iface.if_index || iface.if_name}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          padding: '10px 12px',
+                          borderRadius: 8,
+                          cursor: 'pointer',
+                          marginBottom: 4,
+                          background: isSelected ? (isDark ? 'rgba(59, 130, 246, 0.1)' : '#eff6ff') : 'transparent',
+                          border: `1px solid ${isSelected ? (isDark ? 'rgba(59, 130, 246, 0.2)' : '#bfdbfe') : 'transparent'}`
+                        }}
+                        className="hover:bg-bg-primary/50 transition-all"
+                      >
+                        <input 
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => {
+                            setSelectedIfaces(prev =>
+                              prev.includes(iface.if_name)
+                                ? prev.filter(n => n !== iface.if_name)
+                                : [...prev, iface.if_name]
+                            );
+                          }}
+                          className="mr-3 w-4 h-4 rounded border-border text-primary focus:ring-primary"
+                        />
+                        <div style={{ flex: 1 }}>
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm font-bold text-text-primary">{displayName}</div>
+                            {iface.if_speed > 0 && (
+                              <div className="text-[10px] px-1.5 py-0.5 rounded bg-bg-primary border border-border text-text-secondary font-mono">
+                                {fmtBps(iface.if_speed)}
+                              </div>
+                            )}
+                          </div>
+                          <div className="text-[10px] text-text-secondary flex gap-3 mt-0.5">
+                            {iface.if_alias && iface.if_alias !== iface.if_name && <span className="opacity-60">{iface.if_name}</span>}
+                            <span>RX: <span className="text-accent font-bold">{fmtBps(iface.in_bps)}</span></span>
+                            <span>TX: <span className="text-success font-bold">{fmtBps(iface.out_bps)}</span></span>
+                          </div>
+                        </div>
+                      </label>
+                    );
+                  })}
+              </div>
 
              <button 
                onClick={() => setShowIfaceSelector(false)}
