@@ -1404,7 +1404,7 @@ export default function Dashboard() {
                         const hasSpeed = (i.if_speed || 0) > 0;
                         return hasSpeed && hasTraffic;
                       });
-                      const all = filtered.map((i: any) => i.if_alias || i.display_name || i.if_name);
+                      const all = filtered.map((i: any) => i.if_name);
                       setSelectedIfaces(all);
                     }}
                     className="text-[10px] font-bold uppercase px-3 py-1.5 bg-bg-primary border border-border rounded hover:bg-bg-secondary"
