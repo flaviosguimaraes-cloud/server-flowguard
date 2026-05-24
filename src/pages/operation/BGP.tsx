@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
-import { Link as LinkIcon, Activity, Clock, Network, RefreshCw, Trash2, Shield, AlertCircle, Info, User, Calendar } from 'lucide-react';
+import { Link as LinkIcon, Activity, Clock, Network, RefreshCw, Trash2, Shield, AlertCircle, Info, User, Calendar, History as HistoryIcon } from 'lucide-react';
 import { clsx } from 'clsx';
 import { toast } from 'sonner';
 import {
@@ -369,7 +369,7 @@ export default function BGP() {
             onClick={() => setShowHistory(!showHistory)}
             className="text-text-secondary hover:text-text-primary gap-2 transition-colors"
           >
-            <History size={16} />
+            <HistoryIcon size={16} />
             {showHistory ? 'Ocultar Histórico' : 'Mostrar Histórico'}
           </Button>
         </div>
