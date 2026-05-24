@@ -916,30 +916,45 @@ function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
     }
   }, [collector]);
 
-  const handleAddNetwork = () => {
-    setFormData({
-      ...formData,
-      monitored_networks: [
-        ...formData.monitored_networks,
-        { cidr: '', type: 'own', label: '', allow_blackhole: true, allow_flowspec: true }
-      ]
+  const handleToggle = (field: string, value: boolean) => {
+    const newData = { ...formData, [field]: value };
+    setFormData(newData);
+    
+    // Save immediately for simple toggles
+    onSave({
+      ...collector,
+      ipv6_enabled: field === 'ipv6_enabled' ? value : formData.ipv6_enabled,
+      bgp_ipv4_enabled: field === 'bgp_ipv4_enabled' ? value : formData.bgp_ipv4_enabled,
+      flowspec_ipv4_enabled: field === 'bgp_ipv4_flowspec_enabled' ? value : formData.bgp_ipv4_flowspec_enabled,
+      bgp_ipv6_enabled: field === 'bgp_ipv6_enabled' ? value : formData.bgp_ipv6_enabled,
+      flowspec_ipv6_enabled: field === 'bgp_ipv6_flowspec_enabled' ? value : formData.bgp_ipv6_flowspec_enabled,
     });
+  };
+
+  const handleAddNetwork = () => {
+    const newNetwork = { cidr: '', type: 'own', label: '', allow_blackhole: true, allow_flowspec: true };
+    const updated = [...formData.monitored_networks, newNetwork];
+    setFormData({ ...formData, monitored_networks: updated });
   };
 
   const handleUpdateNetwork = (index: number, field: string, value: any) => {
     const updated = [...formData.monitored_networks];
     updated[index] = { ...updated[index], [field]: value };
     setFormData({ ...formData, monitored_networks: updated });
+    
+    // If it's a toggle in the network, save immediately
+    if (typeof value === 'boolean') {
+      onSave({ ...collector, monitored_networks: updated });
+    }
   };
 
   const handleRemoveNetwork = (index: number) => {
-    setFormData({
-      ...formData,
-      monitored_networks: formData.monitored_networks.filter((_, i) => i !== index)
-    });
+    const updated = formData.monitored_networks.filter((_, i) => i !== index);
+    setFormData({ ...formData, monitored_networks: updated });
+    onSave({ ...collector, monitored_networks: updated });
   };
 
-  const handleSave = () => {
+  const handleSaveAll = () => {
     onSave({
       ...collector,
       ipv6_enabled: formData.ipv6_enabled,
@@ -970,12 +985,17 @@ function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
               </button>
               <div className="space-y-1.5">
                 <Label className="text-[10px] uppercase font-bold text-text-secondary">CIDR</Label>
-                <Input value={net.cidr} onChange={e => handleUpdateNetwork(i, 'cidr', e.target.value)} placeholder="45.175.50.0/24" />
+                <Input 
+                  value={net.cidr} 
+                  onChange={e => handleUpdateNetwork(i, 'cidr', e.target.value)} 
+                  onBlur={() => onSave({ ...collector, monitored_networks: formData.monitored_networks })}
+                  placeholder="45.175.50.0/24" 
+                />
               </div>
               <div className="space-y-1.5">
                 <Label className="text-[10px] uppercase font-bold text-text-secondary">Tipo</Label>
-                <Select value={net.type} onValueChange={v => handleUpdateNetwork(i, 'type', v)}>
-                  <SelectTrigger><SelectValue /></SelectTrigger>
+                <Select value={net.type} onValueChange={v => { handleUpdateNetwork(i, 'type', v); onSave({ ...collector, monitored_networks: formData.monitored_networks }); }}>
+                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="own">Própria</SelectItem>
                     <SelectItem value="client">Cliente</SelectItem>
@@ -985,9 +1005,14 @@ function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
               </div>
               <div className="space-y-1.5">
                 <Label className="text-[10px] uppercase font-bold text-text-secondary">Label</Label>
-                <Input value={net.label} onChange={e => handleUpdateNetwork(i, 'label', e.target.value)} placeholder="Nome do cliente/link" />
+                <Input 
+                  value={net.label} 
+                  onChange={e => handleUpdateNetwork(i, 'label', e.target.value)} 
+                  onBlur={() => onSave({ ...collector, monitored_networks: formData.monitored_networks })}
+                  placeholder="Nome do cliente/link" 
+                />
               </div>
-              <div className="flex items-center gap-4 h-10 pb-1">
+              <div className="flex items-center gap-4 h-9 pb-0.5">
                 <div className="flex items-center gap-2">
                   <Checkbox checked={net.allow_blackhole} onCheckedChange={v => handleUpdateNetwork(i, 'allow_blackhole', v)} />
                   <span className="text-[10px] font-bold uppercase text-text-secondary">BH</span>
@@ -999,7 +1024,7 @@ function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
               </div>
             </div>
           ))}
-          <Button variant="outline" className="w-full border-dashed gap-2" onClick={handleAddNetwork}>
+          <Button variant="outline" className="w-full border-dashed gap-2 h-10" onClick={handleAddNetwork}>
             <Plus size={14} /> Adicionar Rede
           </Button>
         </div>
@@ -1013,12 +1038,17 @@ function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
         <div className="bg-bg-primary p-4 rounded-xl border border-border space-y-4">
           <div className="flex items-center justify-between">
             <Label>IPv6 Habilitado</Label>
-            <Switch checked={formData.ipv6_enabled} onCheckedChange={v => setFormData({ ...formData, ipv6_enabled: v })} />
+            <Switch checked={formData.ipv6_enabled} onCheckedChange={v => handleToggle('ipv6_enabled', v)} />
           </div>
           {formData.ipv6_enabled && (
             <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
               <Label>CIDR IPv6</Label>
-              <Input value={formData.ipv6_cidr} onChange={e => setFormData({ ...formData, ipv6_cidr: e.target.value })} placeholder="2804::/32" />
+              <Input 
+                value={formData.ipv6_cidr} 
+                onChange={e => setFormData({ ...formData, ipv6_cidr: e.target.value })} 
+                onBlur={() => onSave({ ...collector, ipv6_cidr: formData.ipv6_cidr })}
+                placeholder="2804::/32" 
+              />
             </div>
           )}
         </div>
@@ -1034,30 +1064,30 @@ function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
             <h4 className="text-xs font-bold uppercase text-text-secondary border-b border-border pb-2">IPv4</h4>
             <div className="flex items-center justify-between">
               <span className="text-sm">BGP IPv4 Unicast</span>
-              <Switch checked={formData.bgp_ipv4_enabled} onCheckedChange={v => setFormData({ ...formData, bgp_ipv4_enabled: v })} />
+              <Switch checked={formData.bgp_ipv4_enabled} onCheckedChange={v => handleToggle('bgp_ipv4_enabled', v)} />
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">BGP IPv4 FlowSpec</span>
-              <Switch checked={formData.bgp_ipv4_flowspec_enabled} onCheckedChange={v => setFormData({ ...formData, bgp_ipv4_flowspec_enabled: v })} />
+              <Switch checked={formData.bgp_ipv4_flowspec_enabled} onCheckedChange={v => handleToggle('bgp_ipv4_flowspec_enabled', v)} />
             </div>
           </div>
           <div className="bg-bg-primary p-4 rounded-xl border border-border space-y-3">
             <h4 className="text-xs font-bold uppercase text-text-secondary border-b border-border pb-2">IPv6</h4>
             <div className="flex items-center justify-between">
               <span className="text-sm">BGP IPv6 Unicast</span>
-              <Switch checked={formData.bgp_ipv6_enabled} onCheckedChange={v => setFormData({ ...formData, bgp_ipv6_enabled: v })} />
+              <Switch checked={formData.bgp_ipv6_enabled} onCheckedChange={v => handleToggle('bgp_ipv6_enabled', v)} />
             </div>
             <div className="flex items-center justify-between">
               <span className="text-sm">BGP IPv6 FlowSpec</span>
-              <Switch checked={formData.bgp_ipv6_flowspec_enabled} onCheckedChange={v => setFormData({ ...formData, bgp_ipv6_flowspec_enabled: v })} />
+              <Switch checked={formData.bgp_ipv6_flowspec_enabled} onCheckedChange={v => handleToggle('bgp_ipv6_flowspec_enabled', v)} />
             </div>
           </div>
         </div>
       </section>
 
       <div className="pt-4 border-t border-border flex justify-end">
-        <Button onClick={handleSave} disabled={isLoading} className="gap-2">
-          {isLoading ? 'Salvando...' : <><Check size={16} /> Salvar Configurações</>}
+        <Button onClick={handleSaveAll} disabled={isLoading} className="gap-2">
+          {isLoading ? 'Salvando...' : <><Check size={16} /> Salvar Tudo</>}
         </Button>
       </div>
     </div>
