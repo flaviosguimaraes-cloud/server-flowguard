@@ -293,11 +293,13 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: an
   const [snmpIpTouched, setSnmpIpTouched] = useState(false);
   const [bgpLocalIpTouched, setBgpLocalIpTouched] = useState(false);
 
-  const { data: upstreamIfaces } = useQuery({
+  const { data: upstreamIfacesData } = useQuery({
     queryKey: ['collector-upstream-interfaces', data?.id],
-    queryFn: () => api.get(`/api/snmp/${data.id}/interfaces?role=upstream`).then(r => r.data).catch(() => []),
+    queryFn: () => api.get(`/api/snmp/${data.id}/interfaces?role=upstream`).then(r => (Array.isArray(r.data) ? r.data : [])).catch(() => []),
     enabled: isOpen && mode === 'edit' && !!data?.id,
   });
+
+  const upstreamIfaces = Array.isArray(upstreamIfacesData) ? upstreamIfacesData : [];
 
   const normalizeSnmpVersion = (v: any) => {
       if (!v) return '2c';
