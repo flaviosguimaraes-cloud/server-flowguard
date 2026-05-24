@@ -231,8 +231,8 @@ export default function Threats() {
     return <Badge className={clsx(s.color, "text-[10px]")}>{s.label}</Badge>;
   };
 
-  const filteredDownload = downloadThreats.filter((t: any) => t.ip?.toLowerCase().includes(searchTerm.toLowerCase()));
-  const filteredUpload = uploadThreats.filter((t: any) => t.ip?.toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredDownload = downloadThreats.filter((t: any) => (t.target_ip || t.ip || '').toLowerCase().includes(searchTerm.toLowerCase()));
+  const filteredUpload = uploadThreats.filter((t: any) => (t.target_ip || t.ip || '').toLowerCase().includes(searchTerm.toLowerCase()));
 
 
 
