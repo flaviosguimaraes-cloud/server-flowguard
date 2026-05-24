@@ -1,7 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
- import { Server, Eye, X, Clock, Plus, Edit2, Trash2, Power, PowerOff, Shield, Check, Info, Activity } from 'lucide-react';
+import { 
+  Server, Eye, X, Clock, Plus, Edit2, Trash2, Power, 
+  PowerOff, Shield, Check, Info, Activity, Network, 
+  Globe, Zap, Search, Sliders, List, CheckCircle2, AlertCircle
+} from 'lucide-react';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetDescription } from "@/components/ui/sheet";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Badge } from "@/components/ui/badge";
  import { motion, AnimatePresence } from 'framer-motion';
  const BRAND_DEFAULTS: Record<string, { protocol: string, port: number }> = {
    huawei: { protocol: 'netflow_v9', port: 2055 },
