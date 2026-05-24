@@ -323,53 +323,61 @@ export default function Collectors() {
  
    useEffect(() => {
      if (isOpen) {
-        if (mode === 'edit' && data) {
+         if (mode === 'edit' && data) {
+           setFormData({
+             name: data.name || '',
+             comment: data.comment || '',
+             host: data.host || '',
+             brand: data.brand || 'huawei',
+             flow_protocol: data.flow_protocol || 'netflow_v9',
+             flow_port: data.flow_port?.toString() || '2055',
+             snmp_community: data.snmp_community || 'public',
+             snmp_version: normalizeSnmpVersion(data.snmp_version),
+             snmp_port: data.snmp_port?.toString() || '161',
+             snmp_ip: data.snmp_ip || data.host || '',
+             active: data.active !== false,
+             bgp_enabled: data.bgp_enabled || false,
+             bgp_remote_ip: data.bgp_remote_ip || '',
+             bgp_remote_asn: data.bgp_remote_asn?.toString() || '',
+             bgp_local_ip: data.bgp_local_ip || '',
+             bgp_local_asn: data.bgp_local_asn?.toString() || '65000',
+             bgp_ipv4_enabled: data.bgp_ipv4_enabled !== false,
+             flowspec_ipv4_enabled: data.flowspec_ipv4_enabled || data.bgp_flowspec || false,
+             ipv6_enabled: data.ipv6_enabled || false,
+             bgp_ipv6_enabled: data.bgp_ipv6_enabled || false,
+             flowspec_ipv6_enabled: data.flowspec_ipv6_enabled || false,
+             monitored_networks: data.monitored_networks || []
+           });
+           setSnmpIpTouched(true);
+           setBgpLocalIpTouched(true);
+         } else {
           setFormData({
-            name: data.name || '',
-            comment: data.comment || '',
-            host: data.host || '',
-            brand: data.brand || 'huawei',
-            flow_protocol: data.flow_protocol || 'netflow_v9',
-            flow_port: data.flow_port?.toString() || '2055',
-            snmp_community: data.snmp_community || 'public',
-            snmp_version: normalizeSnmpVersion(data.snmp_version),
-            snmp_port: data.snmp_port?.toString() || '161',
-            snmp_ip: data.snmp_ip || data.host || '',
-            active: data.active !== false,
-            bgp_enabled: data.bgp_enabled || false,
-            bgp_remote_ip: data.bgp_remote_ip || '',
-            bgp_remote_asn: data.bgp_remote_asn?.toString() || '',
-            bgp_local_ip: data.bgp_local_ip || '',
-            bgp_local_asn: data.bgp_local_asn?.toString() || '65000',
-            bgp_ipv4_unicast: data.bgp_ipv4_unicast !== false,
-            bgp_flowspec: data.bgp_flowspec === true
-          });
-          setSnmpIpTouched(true);
-          setBgpLocalIpTouched(true);
-        } else {
-         setFormData({
-           name: '',
-           comment: '',
-           host: '',
-           brand: 'huawei',
-           flow_protocol: 'netflow_v9',
+            name: '',
+            comment: '',
+            host: '',
+            brand: 'huawei',
+            flow_protocol: 'netflow_v9',
             flow_port: '2055',
-           snmp_community: 'public',
-           snmp_version: '2c',
+            snmp_community: 'public',
+            snmp_version: '2c',
             snmp_port: '161',
-           snmp_ip: '',
-           active: true,
-           bgp_enabled: false,
-           bgp_remote_ip: '',
-           bgp_remote_asn: '',
-           bgp_local_ip: '',
+            snmp_ip: '',
+            active: true,
+            bgp_enabled: false,
+            bgp_remote_ip: '',
+            bgp_remote_asn: '',
+            bgp_local_ip: '',
             bgp_local_asn: '65000',
-            bgp_ipv4_unicast: true,
-            bgp_flowspec: false
+            bgp_ipv4_enabled: true,
+            flowspec_ipv4_enabled: false,
+            ipv6_enabled: false,
+            bgp_ipv6_enabled: false,
+            flowspec_ipv6_enabled: false,
+            monitored_networks: []
           });
-          setSnmpIpTouched(false);
-          setBgpLocalIpTouched(false);
-        }
+           setSnmpIpTouched(false);
+           setBgpLocalIpTouched(false);
+         }
      }
    }, [isOpen, mode, data]);
  
