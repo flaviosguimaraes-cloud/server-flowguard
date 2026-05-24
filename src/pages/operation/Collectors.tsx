@@ -142,7 +142,7 @@ export default function Collectors() {
                 onEdit={() => setModal({ open: true, mode: 'edit', data: c })}
                 onDelete={() => setDeleteConfirm(c)}
                 onToggle={(active: boolean) => updateMutation.mutate({ id: c.id, data: { ...c, active } })}
-                onViewIfaces={(name: string, ifaces: any[]) => setOpenIfaces({ name, ifaces })}
+                onViewDetails={() => setDetailsSheet({ open: true, collector: c })}
               />
             );
           })}
