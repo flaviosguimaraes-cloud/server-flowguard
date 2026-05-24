@@ -614,5 +614,453 @@ export default function Collectors() {
          </form>
        </DialogContent>
      </Dialog>
-   );
- }
+  );
+}
+
+function CollectorDetailsSheet({ isOpen, onClose, collector }: any) {
+  const queryClient = useQueryClient();
+  const [activeTab, setActiveTab] = useState('overview');
+
+  const { data: ifacesData, isLoading: loadingIfaces } = useQuery({
+    queryKey: ['collector-interfaces', collector?.id],
+    queryFn: () => api.get(`/api/snmp/${collector.id}/interfaces`).then(r => r.data).catch(() => []),
+    enabled: !!collector?.id && isOpen,
+  });
+
+  const ifaces = Array.isArray(ifacesData) ? ifacesData : [];
+
+  const updateIfaceMutation = useMutation({
+    mutationFn: ({ ifIndex, data }: { ifIndex: number; data: any }) => 
+      api.put(`/api/snmp/${collector.id}/interfaces/${ifIndex}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['collector-interfaces', collector.id] });
+      toast.success('Interface atualizada');
+    }
+  });
+
+  const updateCollectorMutation = useMutation({
+    mutationFn: (data: any) => api.put(`/api/collectors/${collector.id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['collectors'] });
+      toast.success('Configurações salvas');
+    }
+  });
+
+  if (!collector) return null;
+
+  return (
+    <Sheet open={isOpen} onOpenChange={onClose}>
+      <SheetContent className="sm:max-w-4xl overflow-y-auto bg-bg-secondary p-0">
+        <div className="h-full flex flex-col">
+          <SheetHeader className="px-6 py-4 border-b border-border bg-bg-secondary sticky top-0 z-10">
+            <div className="flex items-center gap-3">
+              <Server className="text-primary" size={20} />
+              <SheetTitle className="text-xl font-bold">{collector.name}</SheetTitle>
+            </div>
+            <SheetDescription>
+              {collector.host} · {collector.brand}
+            </SheetDescription>
+          </SheetHeader>
+
+          <Tabs value={activeTab} onValueChange={setActiveTab} className="flex-1 flex flex-col">
+            <div className="px-6 border-b border-border bg-bg-secondary sticky top-[73px] z-10">
+              <TabsList className="bg-transparent border-none p-0 h-12">
+                <TabsTrigger value="overview" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4">Visão Geral</TabsTrigger>
+                <TabsTrigger value="interfaces" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4">Interfaces</TabsTrigger>
+                <TabsTrigger value="advanced" className="data-[state=active]:bg-transparent data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-4">Configuração Avançada</TabsTrigger>
+              </TabsList>
+            </div>
+
+            <div className="p-6 flex-1">
+              <TabsContent value="overview" className="mt-0 space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  <div className="bg-bg-primary p-4 rounded-xl border border-border">
+                    <p className="text-[10px] text-text-secondary font-bold uppercase">Status</p>
+                    <div className="flex items-center gap-2 mt-1">
+                      <div className={clsx("w-2 h-2 rounded-full", collector.active !== false ? "bg-success" : "bg-destructive")} />
+                      <span className="font-bold">{collector.active !== false ? 'Ativo' : 'Inativo'}</span>
+                    </div>
+                  </div>
+                  <div className="bg-bg-primary p-4 rounded-xl border border-border">
+                    <p className="text-[10px] text-text-secondary font-bold uppercase">Interfaces</p>
+                    <p className="text-lg font-bold mt-1">{loadingIfaces ? '...' : ifaces.length}</p>
+                  </div>
+                  <div className="bg-bg-primary p-4 rounded-xl border border-border">
+                    <p className="text-[10px] text-text-secondary font-bold uppercase">Protocolo</p>
+                    <p className="text-lg font-bold mt-1 uppercase">{collector.flow_protocol}</p>
+                  </div>
+                </div>
+
+                <div className="space-y-4">
+                  <h4 className="text-sm font-bold text-text-primary uppercase tracking-wider">Informações Técnicas</h4>
+                  <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm">
+                    <div className="flex justify-between border-b border-border/50 pb-1">
+                      <span className="text-text-secondary">Host</span>
+                      <span className="font-mono">{collector.host}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-border/50 pb-1">
+                      <span className="text-text-secondary">Porta Flow</span>
+                      <span className="font-mono">{collector.flow_port}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-border/50 pb-1">
+                      <span className="text-text-secondary">Versão SNMP</span>
+                      <span className="font-mono">v{collector.snmp_version}</span>
+                    </div>
+                    <div className="flex justify-between border-b border-border/50 pb-1">
+                      <span className="text-text-secondary">Porta SNMP</span>
+                      <span className="font-mono">{collector.snmp_port}</span>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="interfaces" className="mt-0 space-y-6">
+                <InterfacesTab 
+                  collectorId={collector.id} 
+                  interfaces={ifaces} 
+                  isLoading={loadingIfaces}
+                  onUpdate={(ifIndex: number, data: any) => updateIfaceMutation.mutate({ ifIndex, data })}
+                />
+              </TabsContent>
+
+              <TabsContent value="advanced" className="mt-0 space-y-6">
+                <AdvancedConfigTab 
+                  collector={collector}
+                  onSave={(data: any) => updateCollectorMutation.mutate(data)}
+                  isLoading={updateCollectorMutation.isPending}
+                />
+              </TabsContent>
+            </div>
+          </Tabs>
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+function InterfacesTab({ collectorId, interfaces, isLoading, onUpdate }: any) {
+  const [searchTerm, setSearchTerm] = useState('');
+  const [roleFilter, setRoleFilter] = useState('all');
+
+  const formatSpeed = (speed: number) => {
+    if (!speed) return '0';
+    if (speed >= 1e12) return (speed / 1e12).toFixed(1) + ' Tbps';
+    if (speed >= 1e9) return (speed / 1e9).toFixed(0) + ' Gbps';
+    if (speed >= 1e6) return (speed / 1e6).toFixed(0) + ' Mbps';
+    return (speed / 1e3).toFixed(0) + ' Kbps';
+  };
+
+  const filteredIfaces = useMemo(() => {
+    return interfaces.filter((iface: any) => {
+      const matchesSearch = (iface.if_name || '').toLowerCase().includes(searchTerm.toLowerCase()) || 
+                           (iface.if_alias || '').toLowerCase().includes(searchTerm.toLowerCase());
+      const matchesRole = roleFilter === 'all' || iface.role === roleFilter;
+      return matchesSearch && matchesRole;
+    });
+  }, [interfaces, searchTerm, roleFilter]);
+
+  const stats = useMemo(() => {
+    return {
+      upstream: interfaces.filter((i: any) => i.role === 'upstream').length,
+      unclassified: interfaces.filter((i: any) => !i.role || i.role === 'unknown').length
+    };
+  }, [interfaces]);
+
+  const handleAutoClassify = () => {
+    const promises = interfaces.map((iface: any) => {
+      let role = iface.role;
+      let isUpstream = iface.is_upstream;
+      const alias = (iface.if_alias || '').toUpperCase();
+      const name = (iface.if_name || '').toUpperCase();
+
+      if (alias.includes('IP-')) {
+        role = 'upstream';
+        isUpstream = true;
+      } else if (alias.includes('PPPOE') || alias.includes('CGNAT') || alias.includes('WAN')) {
+        role = 'access';
+        isUpstream = false;
+      } else if (alias.includes('GERENCIA') || alias.includes('SERVIDOR') || name.startsWith('LOOPBACK')) {
+        role = 'internal';
+        isUpstream = false;
+      }
+
+      if (role !== iface.role) {
+        return onUpdate(iface.if_index, { role, is_upstream: isUpstream });
+      }
+      return null;
+    }).filter(Boolean);
+
+    if (promises.length > 0) {
+      toast.info(`Classificando ${promises.length} interfaces...`);
+    } else {
+      toast.info('Nenhuma interface nova para classificar.');
+    }
+  };
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-4 flex-1">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={14} />
+            <Input 
+              placeholder="Buscar interface..." 
+              className="pl-9 h-9" 
+              value={searchTerm}
+              onChange={e => setSearchTerm(e.target.value)}
+            />
+          </div>
+          <Select value={roleFilter} onValueChange={setRoleFilter}>
+            <SelectTrigger className="w-40 h-9">
+              <SelectValue placeholder="Tipo" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="all">Todos</SelectItem>
+              <SelectItem value="upstream">Upstream</SelectItem>
+              <SelectItem value="access">Acesso</SelectItem>
+              <SelectItem value="internal">Interno</SelectItem>
+              <SelectItem value="unknown">Não classificado</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
+        <Button size="sm" variant="outline" className="gap-2" onClick={handleAutoClassify}>
+          <Zap size={14} className="text-amber-500" /> Classificação Automática
+        </Button>
+      </div>
+
+      <div className="flex items-center gap-6 p-3 bg-bg-primary rounded-lg border border-border text-xs">
+        <div className="flex items-center gap-2">
+          <CheckCircle2 size={14} className="text-success" />
+          <span className="font-bold text-text-primary">{stats.upstream}</span> interfaces upstream classificadas
+        </div>
+        <div className="flex items-center gap-2">
+          <AlertCircle size={14} className="text-amber-500" />
+          <span className="font-bold text-text-primary">{stats.unclassified}</span> interfaces não classificadas
+        </div>
+      </div>
+
+      <div className="border border-border rounded-xl overflow-hidden">
+        <Table>
+          <TableHeader>
+            <TableRow className="bg-bg-primary/50">
+              <TableHead className="w-[200px]">Interface</TableHead>
+              <TableHead>Alias/Label</TableHead>
+              <TableHead>Velocidade</TableHead>
+              <TableHead>Tipo</TableHead>
+              <TableHead>Upstream</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isLoading ? (
+              <TableRow><TableCell colSpan={5} className="text-center py-8 text-text-secondary">Carregando interfaces...</TableCell></TableRow>
+            ) : filteredIfaces.length === 0 ? (
+              <TableRow><TableCell colSpan={5} className="text-center py-8 text-text-secondary">Nenhuma interface encontrada</TableCell></TableRow>
+            ) : filteredIfaces.map((iface: any) => (
+              <TableRow key={iface.if_index} className="group">
+                <TableCell className="font-mono text-xs font-bold text-text-primary">{iface.if_name}</TableCell>
+                <TableCell className="text-xs text-text-secondary">{iface.if_alias || '—'}</TableCell>
+                <TableCell className="text-xs font-mono">{formatSpeed(iface.if_speed)}</TableCell>
+                <TableCell>
+                  <Select 
+                    value={iface.role || 'unknown'} 
+                    onValueChange={(val) => onUpdate(iface.if_index, { role: val, is_upstream: val === 'upstream' })}
+                  >
+                    <SelectTrigger className="h-7 w-32 text-[10px] font-bold uppercase">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="unknown">?</SelectItem>
+                      <SelectItem value="upstream">Upstream</SelectItem>
+                      <SelectItem value="access">Acesso</SelectItem>
+                      <SelectItem value="internal">Interno</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </TableCell>
+                <TableCell>
+                  <Switch 
+                    checked={iface.is_upstream} 
+                    onCheckedChange={(val) => onUpdate(iface.if_index, { is_upstream: val })}
+                  />
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+    </div>
+  );
+}
+
+function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
+  const [formData, setFormData] = useState({
+    ipv6_enabled: false,
+    ipv6_cidr: '',
+    bgp_ipv4_enabled: true,
+    bgp_ipv4_flowspec_enabled: false,
+    bgp_ipv6_enabled: false,
+    bgp_ipv6_flowspec_enabled: false,
+    monitored_networks: [] as any[]
+  });
+
+  useEffect(() => {
+    if (collector) {
+      setFormData({
+        ipv6_enabled: collector.ipv6_enabled || false,
+        ipv6_cidr: collector.ipv6_cidr || '',
+        bgp_ipv4_enabled: collector.bgp_ipv4_enabled !== false,
+        bgp_ipv4_flowspec_enabled: collector.flowspec_ipv4_enabled || false,
+        bgp_ipv6_enabled: collector.bgp_ipv6_enabled || false,
+        bgp_ipv6_flowspec_enabled: collector.flowspec_ipv6_enabled || false,
+        monitored_networks: collector.monitored_networks || []
+      });
+    }
+  }, [collector]);
+
+  const handleAddNetwork = () => {
+    setFormData({
+      ...formData,
+      monitored_networks: [
+        ...formData.monitored_networks,
+        { cidr: '', type: 'own', label: '', allow_blackhole: true, allow_flowspec: true }
+      ]
+    });
+  };
+
+  const handleUpdateNetwork = (index: number, field: string, value: any) => {
+    const updated = [...formData.monitored_networks];
+    updated[index] = { ...updated[index], [field]: value };
+    setFormData({ ...formData, monitored_networks: updated });
+  };
+
+  const handleRemoveNetwork = (index: number) => {
+    setFormData({
+      ...formData,
+      monitored_networks: formData.monitored_networks.filter((_, i) => i !== index)
+    });
+  };
+
+  const handleSave = () => {
+    onSave({
+      ...collector,
+      ipv6_enabled: formData.ipv6_enabled,
+      ipv6_cidr: formData.ipv6_cidr,
+      bgp_ipv4_enabled: formData.bgp_ipv4_enabled,
+      flowspec_ipv4_enabled: formData.bgp_ipv4_flowspec_enabled,
+      bgp_ipv6_enabled: formData.bgp_ipv6_enabled,
+      flowspec_ipv6_enabled: formData.bgp_ipv6_flowspec_enabled,
+      monitored_networks: formData.monitored_networks
+    });
+  };
+
+  return (
+    <div className="space-y-8">
+      <section className="space-y-4">
+        <div className="flex items-center gap-2 text-primary">
+          <Globe size={18} />
+          <h3 className="font-bold text-sm uppercase tracking-wider">Redes Monitoradas</h3>
+        </div>
+        <div className="space-y-3">
+          {formData.monitored_networks.map((net, i) => (
+            <div key={i} className="bg-bg-primary p-4 rounded-xl border border-border grid grid-cols-1 md:grid-cols-4 gap-4 items-end relative group">
+              <button 
+                onClick={() => handleRemoveNetwork(i)}
+                className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
+              >
+                <X size={12} />
+              </button>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] uppercase font-bold text-text-secondary">CIDR</Label>
+                <Input value={net.cidr} onChange={e => handleUpdateNetwork(i, 'cidr', e.target.value)} placeholder="45.175.50.0/24" />
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] uppercase font-bold text-text-secondary">Tipo</Label>
+                <Select value={net.type} onValueChange={v => handleUpdateNetwork(i, 'type', v)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="own">Própria</SelectItem>
+                    <SelectItem value="client">Cliente</SelectItem>
+                    <SelectItem value="transit">Trânsito</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-1.5">
+                <Label className="text-[10px] uppercase font-bold text-text-secondary">Label</Label>
+                <Input value={net.label} onChange={e => handleUpdateNetwork(i, 'label', e.target.value)} placeholder="Nome do cliente/link" />
+              </div>
+              <div className="flex items-center gap-4 h-10 pb-1">
+                <div className="flex items-center gap-2">
+                  <Checkbox checked={net.allow_blackhole} onCheckedChange={v => handleUpdateNetwork(i, 'allow_blackhole', v)} />
+                  <span className="text-[10px] font-bold uppercase text-text-secondary">BH</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox checked={net.allow_flowspec} onCheckedChange={v => handleUpdateNetwork(i, 'allow_flowspec', v)} />
+                  <span className="text-[10px] font-bold uppercase text-text-secondary">FS</span>
+                </div>
+              </div>
+            </div>
+          ))}
+          <Button variant="outline" className="w-full border-dashed gap-2" onClick={handleAddNetwork}>
+            <Plus size={14} /> Adicionar Rede
+          </Button>
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-center gap-2 text-primary">
+          <Globe size={18} />
+          <h3 className="font-bold text-sm uppercase tracking-wider">IPv6</h3>
+        </div>
+        <div className="bg-bg-primary p-4 rounded-xl border border-border space-y-4">
+          <div className="flex items-center justify-between">
+            <Label>IPv6 Habilitado</Label>
+            <Switch checked={formData.ipv6_enabled} onCheckedChange={v => setFormData({ ...formData, ipv6_enabled: v })} />
+          </div>
+          {formData.ipv6_enabled && (
+            <div className="space-y-2 animate-in slide-in-from-top-2 duration-200">
+              <Label>CIDR IPv6</Label>
+              <Input value={formData.ipv6_cidr} onChange={e => setFormData({ ...formData, ipv6_cidr: e.target.value })} placeholder="2804::/32" />
+            </div>
+          )}
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="flex items-center gap-2 text-primary">
+          <Shield size={18} />
+          <h3 className="font-bold text-sm uppercase tracking-wider">Configuração BGP</h3>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div className="bg-bg-primary p-4 rounded-xl border border-border space-y-3">
+            <h4 className="text-xs font-bold uppercase text-text-secondary border-b border-border pb-2">IPv4</h4>
+            <div className="flex items-center justify-between">
+              <span className="text-sm">BGP IPv4 Unicast</span>
+              <Switch checked={formData.bgp_ipv4_enabled} onCheckedChange={v => setFormData({ ...formData, bgp_ipv4_enabled: v })} />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm">BGP IPv4 FlowSpec</span>
+              <Switch checked={formData.bgp_ipv4_flowspec_enabled} onCheckedChange={v => setFormData({ ...formData, bgp_ipv4_flowspec_enabled: v })} />
+            </div>
+          </div>
+          <div className="bg-bg-primary p-4 rounded-xl border border-border space-y-3">
+            <h4 className="text-xs font-bold uppercase text-text-secondary border-b border-border pb-2">IPv6</h4>
+            <div className="flex items-center justify-between">
+              <span className="text-sm">BGP IPv6 Unicast</span>
+              <Switch checked={formData.bgp_ipv6_enabled} onCheckedChange={v => setFormData({ ...formData, bgp_ipv6_enabled: v })} />
+            </div>
+            <div className="flex items-center justify-between">
+              <span className="text-sm">BGP IPv6 FlowSpec</span>
+              <Switch checked={formData.bgp_ipv6_flowspec_enabled} onCheckedChange={v => setFormData({ ...formData, bgp_ipv6_flowspec_enabled: v })} />
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div className="pt-4 border-t border-border flex justify-end">
+        <Button onClick={handleSave} disabled={isLoading} className="gap-2">
+          {isLoading ? 'Salvando...' : <><Check size={16} /> Salvar Configurações</>}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
