@@ -296,26 +296,30 @@ export default function Collectors() {
       return v.toString().replace(/^v/, '');
     };
 
-   const [formData, setFormData] = useState({
-     name: '',
-     comment: '',
-     host: '',
-     brand: 'huawei',
-     flow_protocol: 'netflow_v9',
+    const [formData, setFormData] = useState({
+      name: '',
+      comment: '',
+      host: '',
+      brand: 'huawei',
+      flow_protocol: 'netflow_v9',
       flow_port: '2055',
-     snmp_community: 'public',
-     snmp_version: '2c',
+      snmp_community: 'public',
+      snmp_version: '2c',
       snmp_port: '161',
-     snmp_ip: '',
-     active: true,
-     bgp_enabled: false,
-     bgp_remote_ip: '',
-     bgp_remote_asn: '',
-     bgp_local_ip: '',
-     bgp_local_asn: '65000',
-     bgp_ipv4_unicast: true,
-     bgp_flowspec: false
-   });
+      snmp_ip: '',
+      active: true,
+      bgp_enabled: false,
+      bgp_remote_ip: '',
+      bgp_remote_asn: '',
+      bgp_local_ip: '',
+      bgp_local_asn: '65000',
+      bgp_ipv4_enabled: true,
+      flowspec_ipv4_enabled: false,
+      ipv6_enabled: false,
+      bgp_ipv6_enabled: false,
+      flowspec_ipv6_enabled: false,
+      monitored_networks: [] as any[]
+    });
  
    useEffect(() => {
      if (isOpen) {
