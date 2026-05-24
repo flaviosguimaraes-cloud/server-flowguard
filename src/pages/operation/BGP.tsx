@@ -78,6 +78,7 @@ export default function BGP() {
   const [selectedRoute, setSelectedRoute] = useState<any>(null);
   const [routeToDelete, setRouteToDelete] = useState<any>(null);
   const [isDeleting, setIsDeleting] = useState(false);
+  const [showHistory, setShowHistory] = useState(false);
   
   const { data: sessionsData, isLoading: loadingSessions, isRefetching: refetchingSessions, refetch: refetchSessions } = useQuery({
     queryKey: ['bgp-sessions'],
@@ -357,9 +358,20 @@ export default function BGP() {
 
       {/* Section 2: Announced Routes */}
       <div className="space-y-4">
-        <div className="flex items-center gap-2 px-1">
-          <Activity className="text-primary" size={18} />
-          <h2 className="text-lg font-bold text-text-primary">Rotas Anunciadas</h2>
+        <div className="flex items-center justify-between px-1">
+          <div className="flex items-center gap-2">
+            <Activity className="text-primary" size={18} />
+            <h2 className="text-lg font-bold text-text-primary">Rotas Anunciadas</h2>
+          </div>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => setShowHistory(!showHistory)}
+            className="text-text-secondary hover:text-text-primary gap-2 transition-colors"
+          >
+            <History size={16} />
+            {showHistory ? 'Ocultar Histórico' : 'Mostrar Histórico'}
+          </Button>
         </div>
 
         <div className="bg-bg-secondary rounded-xl border border-border overflow-hidden shadow-sm">
@@ -398,7 +410,41 @@ export default function BGP() {
                   </tr>
                 ) : (() => {
                   const rules = flowspecData?.rules || flowspecData?.items || [];
-                  return routes.map((route: any, i: number) => {
+                  
+                  const displayedRoutes = routes.filter((r: any) => {
+                    if (showHistory) return true;
+                    const rule = rules.find((f: any) => 
+                      f.dst_prefix === r.prefix || f.src_prefix === r.prefix
+                    );
+                    const expiryStr = r.expires_at || rule?.expires_at;
+                    if (!expiryStr) return true;
+                    return new Date(expiryStr.replace(' ', 'T')).getTime() > now.getTime();
+                  });
+
+                  if (displayedRoutes.length === 0) {
+                    return (
+                      <tr>
+                        <td colSpan={9} className="px-4 py-10 text-center text-text-secondary font-medium">
+                          <div className="flex flex-col items-center gap-2">
+                            <p className="italic">Nenhuma mitigação BGP ativa no momento.</p>
+                            {showHistory && <p className="text-[10px] opacity-70">O histórico está vazio.</p>}
+                            {!showHistory && routes.length > 0 && (
+                              <Button 
+                                variant="link" 
+                                size="sm" 
+                                onClick={() => setShowHistory(true)}
+                                className="text-primary text-[10px]"
+                              >
+                                Ver {routes.length} rotas no histórico
+                              </Button>
+                            )}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+                  }
+
+                  return displayedRoutes.map((route: any, i: number) => {
                     const type = (route.type || '').toLowerCase();
                     const source = (route.source || '').toLowerCase();
                     const action = (route.action || '').toLowerCase();
@@ -407,6 +453,9 @@ export default function BGP() {
                     const rule = rules.find((r: any) => 
                       r.dst_prefix === route.prefix || r.src_prefix === route.prefix
                     );
+
+                    const isExpired = (route.expires_at || rule?.expires_at) && 
+                      new Date((route.expires_at || rule?.expires_at).replace(' ', 'T')).getTime() <= now.getTime();
 
                     const getFormattedAction = () => {
                       if (type === 'blackhole' || type === 'blacklist') {
@@ -459,7 +508,10 @@ export default function BGP() {
                     return (
                       <tr 
                         key={i} 
-                        className="hover:bg-bg-primary/30 transition-colors group cursor-pointer"
+                        className={clsx(
+                          "hover:bg-bg-primary/30 transition-colors group cursor-pointer",
+                          isExpired && "opacity-50"
+                        )}
                         onClick={() => setSelectedRoute(route)}
                       >
                         <td className="px-4 py-3 font-mono text-sm text-text-primary font-bold group-hover:text-primary transition-colors">
