@@ -77,12 +77,12 @@ export default function Collectors() {
     collector: null
   });
 
-  const { data, isLoading } = useQuery({
+  const { data: collectorsData, isLoading } = useQuery({
     queryKey: ['collectors'],
-    queryFn: () => api.get('/api/collectors').then(r => r.data).catch(() => ({ items: [] })),
+    queryFn: () => api.get('/api/collectors').then(r => (Array.isArray(r.data) ? r.data : [])).catch(() => []),
     refetchInterval: 30000,
   });
-  const items = data?.items || data?.data || (Array.isArray(data) ? data : []);
+  const items = Array.isArray(collectorsData) ? collectorsData : [];
 
   // Mutations
   const createMutation = useMutation({
