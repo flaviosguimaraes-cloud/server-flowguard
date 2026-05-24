@@ -195,7 +195,7 @@ export default function Collectors() {
  function CollectorCard({ collector, isAdmin, onEdit, onDelete, onToggle, onViewIfaces }: any) {
    const { data: ifacesData, isLoading: loadingIfaces } = useQuery({
      queryKey: ['collector-interfaces', collector.id],
-     queryFn: () => api.get(`/api/collectors/${collector.id}/interfaces`).then(r => r.data).catch(() => []),
+     queryFn: () => api.get(`/api/snmp/${collector.id}/interfaces`).then(r => r.data).catch(() => []),
      refetchInterval: 60000
    });
  
