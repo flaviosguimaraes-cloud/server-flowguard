@@ -1400,7 +1400,7 @@ export default function Dashboard() {
                         if (isTechnical) return false;
                         
                         if (showInactive) return true;
-                        const hasTraffic = (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0;
+                        const hasTraffic = (i.rx_bps || i.in_bps || 0) > 0 || (i.tx_bps || i.out_bps || 0) > 0;
                         const hasSpeed = (i.if_speed || 0) > 0;
                         return hasSpeed && hasTraffic;
                       });
