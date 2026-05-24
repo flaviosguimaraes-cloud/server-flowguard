@@ -1415,7 +1415,7 @@ export default function Dashboard() {
              </div>
              
              <div style={{ overflowY: 'auto', flex: 1 }} className="pr-2 custom-scrollbar">
-               {(Array.isArray(interfaces?.interfaces) ? interfaces.interfaces : [])
+               {(Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []))
                  .filter((i: any) => {
                    const n = (i.display_name || i.if_name || '').toLowerCase();
                    return !n.includes('null') && !n.includes('loopback') && !n.includes('virtual') && !n.includes('template');
