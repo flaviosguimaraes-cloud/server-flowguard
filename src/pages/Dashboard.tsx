@@ -348,10 +348,10 @@ export default function Dashboard() {
   });
 
   const { data: interfaces } = useQuery({
-    queryKey: ['interfaces', selectedCollector],
+    queryKey: ['interfaces-summary', selectedCollector],
     queryFn: async () => {
       if (!selectedCollector) return null;
-      const r = await api.get(`/api/snmp/${selectedCollector}/interfaces`);
+      const r = await api.get(`/api/snmp/${selectedCollector}/interfaces/summary`);
       return r.data;
     },
     staleTime: 0,
