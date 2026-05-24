@@ -435,42 +435,54 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: an
       }));
     };
  
-   const handleSubmit = (e: React.FormEvent) => {
-     e.preventDefault();
-     
-     // Validation
-     if (!formData.name) return toast.error('Nome é obrigatório');
-     if (!formData.host) return toast.error('IP de Gerência é obrigatório');
-     
-     const flowPort = Number(formData.flow_port);
-     if (isNaN(flowPort) || flowPort < 1 || flowPort > 65535) return toast.error('Porta Flow inválida (1-65535)');
-     
-     const snmpPort = Number(formData.snmp_port);
-     if (isNaN(snmpPort) || snmpPort < 1 || snmpPort > 65535) return toast.error('Porta SNMP inválida (1-65535)');
- 
-     if (formData.bgp_enabled) {
-       if (!formData.bgp_remote_ip && !formData.host) return toast.error('IP Remoto BGP é obrigatório');
-       if (!formData.bgp_remote_asn) return toast.error('ASN Remoto BGP é obrigatório');
-       
-       const rasn = Number(formData.bgp_remote_asn);
-       if (isNaN(rasn) || rasn < 1 || rasn > 4294967295) return toast.error('ASN Remoto inválido');
-       
-       const lasn = Number(formData.bgp_local_asn);
-       if (isNaN(lasn) || lasn < 1 || lasn > 4294967295) return toast.error('ASN Local inválido');
-     }
- 
-     const submission = {
-       ...formData,
-       snmp_ip: formData.snmp_ip || formData.host,
-       bgp_remote_ip: formData.bgp_remote_ip || formData.host,
-       flow_port: Number(formData.flow_port),
-       snmp_port: Number(formData.snmp_port),
-       bgp_remote_asn: Number(formData.bgp_remote_asn),
-       bgp_local_asn: Number(formData.bgp_local_asn)
-     };
- 
-     onSubmit(submission);
-   };
+    const isValidCIDR = (cidr: string) => {
+      const regex = /^([0-9]{1,3}\.){3}[0-9]{1,3}\/([0-9]|[1-2][0-9]|3[0-2])$/;
+      return regex.test(cidr);
+    };
+
+    const handleSubmit = (e: React.FormEvent) => {
+      e.preventDefault();
+      
+      // Validation
+      if (!formData.name) return toast.error('Nome é obrigatório');
+      if (!formData.host) return toast.error('IP de Gerência é obrigatório');
+
+      for (const net of formData.monitored_networks) {
+        if (!net.cidr) continue;
+        if (!isValidCIDR(net.cidr)) {
+          return toast.error(`CIDR inválido: ${net.cidr}`);
+        }
+      }
+      
+      const flowPort = Number(formData.flow_port);
+      if (isNaN(flowPort) || flowPort < 1 || flowPort > 65535) return toast.error('Porta Flow inválida (1-65535)');
+      
+      const snmpPort = Number(formData.snmp_port);
+      if (isNaN(snmpPort) || snmpPort < 1 || snmpPort > 65535) return toast.error('Porta SNMP inválida (1-65535)');
+  
+      if (formData.bgp_enabled) {
+        if (!formData.bgp_remote_ip && !formData.host) return toast.error('IP Remoto BGP é obrigatório');
+        if (!formData.bgp_remote_asn) return toast.error('ASN Remoto BGP é obrigatório');
+        
+        const rasn = Number(formData.bgp_remote_asn);
+        if (isNaN(rasn) || rasn < 1 || rasn > 4294967295) return toast.error('ASN Remoto inválido');
+        
+        const lasn = Number(formData.bgp_local_asn);
+        if (isNaN(lasn) || lasn < 1 || lasn > 4294967295) return toast.error('ASN Local inválido');
+      }
+  
+      const submission = {
+        ...formData,
+        snmp_ip: formData.snmp_ip || formData.host,
+        bgp_remote_ip: formData.bgp_remote_ip || formData.host,
+        flow_port: Number(formData.flow_port),
+        snmp_port: Number(formData.snmp_port),
+        bgp_remote_asn: Number(formData.bgp_remote_asn),
+        bgp_local_asn: Number(formData.bgp_local_asn)
+      };
+  
+      onSubmit(submission);
+    };
  
    return (
      <Dialog open={isOpen} onOpenChange={onClose}>
