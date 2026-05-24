@@ -407,7 +407,31 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: an
        flow_protocol: defaults.protocol,
         flow_port: defaults.port.toString()
      }));
-   };
+    };
+
+    const handleAddNetwork = () => {
+      setFormData(prev => ({
+        ...prev,
+        monitored_networks: [
+          ...prev.monitored_networks,
+          { cidr: '', type: 'own', label: '', allow_blackhole: true, allow_flowspec: true }
+        ]
+      }));
+    };
+
+    const handleRemoveNetwork = (index: number) => {
+      setFormData(prev => ({
+        ...prev,
+        monitored_networks: prev.monitored_networks.filter((_, i) => i !== index)
+      }));
+    };
+
+    const handleUpdateNetwork = (index: number, field: string, value: any) => {
+      setFormData(prev => ({
+        ...prev,
+        monitored_networks: prev.monitored_networks.map((n, i) => i === index ? { ...n, [field]: value } : n)
+      }));
+    };
  
    const handleSubmit = (e: React.FormEvent) => {
      e.preventDefault();
