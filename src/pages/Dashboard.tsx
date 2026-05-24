@@ -286,7 +286,7 @@ export default function Dashboard() {
 
   const { data: collectorDetailedInfo } = useQuery({
     queryKey: ['collector-detail', selectedCollector],
-    queryFn: () => api.get(`/api/collectors/${selectedCollector}/interfaces`).then(r => r.data),
+    queryFn: () => api.get(`/api/snmp/${selectedCollector}/interfaces`).then(r => r.data),
     enabled: isAuthenticated && !!selectedCollector,
   });
 
