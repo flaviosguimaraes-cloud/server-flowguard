@@ -278,11 +278,11 @@ export default function Collectors() {
          </div>
        )}
  
-       {ifaces.length > 0 && (
-         <button onClick={() => onViewIfaces(collector.name, ifaces)} className="w-full text-center text-[10px] text-text-secondary hover:text-primary transition-colors">
-           Visualizar {ifaces.length} interfaces
-         </button>
-       )}
+        {ifaces.length > 0 && (
+          <button onClick={onViewDetails} className="w-full text-center text-[10px] text-text-secondary hover:text-primary transition-colors">
+            Visualizar {ifaces.length} interfaces e configurações
+          </button>
+        )}
      </div>
    );
  }
