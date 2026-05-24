@@ -432,7 +432,22 @@ function ThreatTable({
                 )}
                 onClick={() => onSelect(t)}
               >
-                <TableCell className="font-mono font-bold text-text-primary">{t.ip || '—'}</TableCell>
+                <TableCell className="font-mono font-bold text-text-primary">
+                  <div className="flex flex-col gap-1">
+                    <span>{t.target_ip || t.ip || '—'}</span>
+                    {t.group_id && (
+                      <div className="flex">
+                        {t.is_cgnat ? (
+                          <Badge variant="outline" className="text-[9px] h-4 px-1 bg-orange-500/10 text-orange-500 border-orange-500/20">CGNAT</Badge>
+                        ) : t.is_infrastructure ? (
+                          <Badge variant="outline" className="text-[9px] h-4 px-1 bg-blue-500/10 text-blue-500 border-blue-500/20">INFRA</Badge>
+                        ) : t.is_vip ? (
+                          <Badge variant="outline" className="text-[9px] h-4 px-1 bg-yellow-500/10 text-yellow-500 border-yellow-500/20">VIP</Badge>
+                        ) : null}
+                      </div>
+                    )}
+                  </div>
+                </TableCell>
                 <TableCell>{getAttackTypeBadge(t.attack_type)}</TableCell>
                 <TableCell className="font-medium">
                   {isBehavioral(t.attack_type) ? '—' : formatMbps(t.mbps_atual)}
