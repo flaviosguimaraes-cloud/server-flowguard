@@ -77,12 +77,12 @@ export default function Collectors() {
     collector: null
   });
 
-  const { data, isLoading } = useQuery({
+  const { data: collectorsData, isLoading } = useQuery({
     queryKey: ['collectors'],
-    queryFn: () => api.get('/api/collectors').then(r => r.data).catch(() => ({ items: [] })),
+    queryFn: () => api.get('/api/collectors').then(r => (Array.isArray(r.data) ? r.data : [])).catch(() => []),
     refetchInterval: 30000,
   });
-  const items = data?.items || data?.data || (Array.isArray(data) ? data : []);
+  const items = Array.isArray(collectorsData) ? collectorsData : [];
 
   // Mutations
   const createMutation = useMutation({
@@ -293,11 +293,13 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: an
   const [snmpIpTouched, setSnmpIpTouched] = useState(false);
   const [bgpLocalIpTouched, setBgpLocalIpTouched] = useState(false);
 
-  const { data: upstreamIfaces } = useQuery({
+  const { data: upstreamIfacesData } = useQuery({
     queryKey: ['collector-upstream-interfaces', data?.id],
-    queryFn: () => api.get(`/api/snmp/${data.id}/interfaces?role=upstream`).then(r => r.data).catch(() => []),
+    queryFn: () => api.get(`/api/snmp/${data.id}/interfaces?role=upstream`).then(r => (Array.isArray(r.data) ? r.data : [])).catch(() => []),
     enabled: isOpen && mode === 'edit' && !!data?.id,
   });
+
+  const upstreamIfaces = Array.isArray(upstreamIfacesData) ? upstreamIfacesData : [];
 
   const normalizeSnmpVersion = (v: any) => {
       if (!v) return '2c';
@@ -802,7 +804,7 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: an
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                  {upstreamIfaces?.map((iface: any) => (
+                  {upstreamIfaces.map((iface: any) => (
                     <div key={iface.if_index} className="flex items-center justify-between p-2 bg-bg-primary/50 rounded border border-border/50">
                       <div className="flex flex-col">
                         <span className="text-xs font-mono font-bold">{iface.if_name}</span>
