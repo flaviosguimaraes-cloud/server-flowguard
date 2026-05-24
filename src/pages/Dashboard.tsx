@@ -1450,11 +1450,11 @@ export default function Dashboard() {
                   })
                   .sort((a: any, b: any) => (b.if_speed || 0) - (a.if_speed || 0))
                   .map((iface: any) => {
-                    const name = iface.if_alias || iface.display_name || iface.if_name;
-                    const isSelected = selectedIfaces.includes(name);
+                    const displayName = iface.if_alias || iface.display_name || iface.if_name;
+                    const isSelected = selectedIfaces.includes(iface.if_name);
                     return (
                       <label 
-                        key={iface.if_index || name}
+                        key={iface.if_index || iface.if_name}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -1472,16 +1472,16 @@ export default function Dashboard() {
                           checked={isSelected}
                           onChange={() => {
                             setSelectedIfaces(prev =>
-                              prev.includes(name)
-                                ? prev.filter(n => n !== name)
-                                : [...prev, name]
+                              prev.includes(iface.if_name)
+                                ? prev.filter(n => n !== iface.if_name)
+                                : [...prev, iface.if_name]
                             );
                           }}
                           className="mr-3 w-4 h-4 rounded border-border text-primary focus:ring-primary"
                         />
                         <div style={{ flex: 1 }}>
                           <div className="flex items-center justify-between">
-                            <div className="text-sm font-bold text-text-primary">{name}</div>
+                            <div className="text-sm font-bold text-text-primary">{displayName}</div>
                             {iface.if_speed > 0 && (
                               <div className="text-[10px] px-1.5 py-0.5 rounded bg-bg-primary border border-border text-text-secondary font-mono">
                                 {fmtBps(iface.if_speed)}
