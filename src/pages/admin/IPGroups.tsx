@@ -237,7 +237,7 @@ export default function IPGroups() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         data={editingGroup}
-        onSubmit={(data) => {
+        onSubmit={(data: any) => {
           if (editingGroup) updateMutation.mutate({ id: editingGroup.id, data });
           else createMutation.mutate(data);
         }}
