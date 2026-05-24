@@ -164,6 +164,7 @@ export default function Dashboard() {
     return saved ? parseInt(saved) : 30;
   });
   const [showIfaceSelector, setShowIfaceSelector] = useState(false);
+  const [showInactive, setShowInactive] = useState(false);
 
   const [periodASN, setPeriodASN] = useState(60);
   const [periodCDN, setPeriodCDN] = useState(60);
