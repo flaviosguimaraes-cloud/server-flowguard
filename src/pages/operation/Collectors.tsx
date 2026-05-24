@@ -188,7 +188,7 @@ export default function Collectors() {
   );
 }
 
- function CollectorCard({ collector, isAdmin, onEdit, onDelete, onToggle, onViewIfaces }: any) {
+ function CollectorCard({ collector, isAdmin, onEdit, onDelete, onToggle, onViewDetails }: any) {
    const { data: ifacesData, isLoading: loadingIfaces } = useQuery({
      queryKey: ['collector-interfaces', collector.id],
      queryFn: () => api.get(`/api/snmp/${collector.id}/interfaces`).then(r => r.data).catch(() => []),
