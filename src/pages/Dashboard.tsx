@@ -348,10 +348,10 @@ export default function Dashboard() {
   });
 
   const { data: interfaces } = useQuery({
-    queryKey: ['interfaces', selectedCollector],
+    queryKey: ['interfaces-summary', selectedCollector],
     queryFn: async () => {
       if (!selectedCollector) return null;
-      const r = await api.get(`/api/snmp/${selectedCollector}/interfaces`);
+      const r = await api.get(`/api/snmp/${selectedCollector}/interfaces/summary`);
       return r.data;
     },
     staleTime: 0,
@@ -379,8 +379,8 @@ export default function Dashboard() {
        console.log('Buscando histórico:', selectedCollector, selectedIfaces, selectedMinutes);
 
       const results = await Promise.all(
-        selectedIfaces.map(async ifName => {
-          const url = `/api/collectors/${selectedCollector}/metrics/history?minutes=${selectedMinutes}&if_name=${encodeURIComponent(ifName)}`;
+         selectedIfaces.map(async ifName => {
+           const url = `/api/snmp/${selectedCollector}/metrics/history?minutes=${selectedMinutes}&if_name=${encodeURIComponent(ifName)}`;
           console.log('URL:', url);
           const r = await api.get(url);
           console.log('Resultado:', ifName, r.data);
@@ -1400,7 +1400,7 @@ export default function Dashboard() {
                         if (isTechnical) return false;
                         
                         if (showInactive) return true;
-                        const hasTraffic = (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0;
+                        const hasTraffic = (i.rx_bps || i.in_bps || 0) > 0 || (i.tx_bps || i.out_bps || 0) > 0;
                         const hasSpeed = (i.if_speed || 0) > 0;
                         return hasSpeed && hasTraffic;
                       });
@@ -1444,7 +1444,7 @@ export default function Dashboard() {
                     if (isTechnical) return false;
 
                     if (showInactive) return true;
-                    const hasTraffic = (i.in_bps || 0) > 0 || (i.out_bps || 0) > 0;
+                    const hasTraffic = (i.rx_bps || i.in_bps || 0) > 0 || (i.tx_bps || i.out_bps || 0) > 0;
                     const hasSpeed = (i.if_speed || 0) > 0;
                     return hasSpeed && hasTraffic;
                   })
@@ -1490,8 +1490,8 @@ export default function Dashboard() {
                           </div>
                           <div className="text-[10px] text-text-secondary flex gap-3 mt-0.5">
                             {iface.if_alias && iface.if_alias !== iface.if_name && <span className="opacity-60">{iface.if_name}</span>}
-                            <span>RX: <span className="text-accent font-bold">{fmtBps(iface.in_bps)}</span></span>
-                            <span>TX: <span className="text-success font-bold">{fmtBps(iface.out_bps)}</span></span>
+                            <span>RX: <span className="text-accent font-bold">{fmtBps(iface.rx_bps || iface.in_bps)}</span></span>
+                            <span>TX: <span className="text-success font-bold">{fmtBps(iface.tx_bps || iface.out_bps)}</span></span>
                           </div>
                         </div>
                       </label>
