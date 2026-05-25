@@ -747,22 +747,23 @@ function IPGroupDrawer({ isOpen, onClose, group, onEdit, onSave, onDelete, isLoa
           </div>
 
           <div className="bg-bg-primary p-5 rounded-xl border border-border space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary">Limiares de Detecção</h4>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="p-3 bg-bg-secondary rounded-lg border border-border">
-                <p className="text-[10px] text-text-secondary font-bold uppercase mb-1">Mbps</p>
-                <p className="text-lg font-bold text-text-primary">{group.fnm_threshold_mbps || 'Global'}</p>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary">Perfil de Mitigação</h4>
+            <div className="p-4 bg-bg-secondary rounded-lg border border-border space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-lg font-bold text-text-primary">{group.profile?.name || 'Padrão Global'}</p>
+                <Badge variant="outline" className="capitalize">
+                  {group.profile?.action === 'flowspec' ? 'FlowSpec' : 
+                   group.profile?.action === 'blackhole' ? 'Blackhole' :
+                   group.profile?.action === 'blackhole_flowspec' ? 'Blackhole+FS' :
+                   group.profile?.action === 'none' ? 'Sem Ação' : 'Global'}
+                </Badge>
               </div>
-              <div className="p-3 bg-bg-secondary rounded-lg border border-border">
-                <p className="text-[10px] text-text-secondary font-bold uppercase mb-1">PPS</p>
-                <p className="text-lg font-bold text-text-primary">{group.fnm_threshold_pps || 'Global'}</p>
-              </div>
-              <div className="p-3 bg-bg-secondary rounded-lg border border-border">
-                <p className="text-[10px] text-text-secondary font-bold uppercase mb-1">Flows</p>
-                <p className="text-lg font-bold text-text-primary">{group.fnm_threshold_flows || '—'}</p>
-              </div>
+              {group.profile?.description && (
+                <p className="text-xs text-text-secondary italic">{group.profile.description}</p>
+              )}
             </div>
           </div>
+
 
           <div className="space-y-3 pt-6 border-t border-border">
             <Button className="w-full h-11" onClick={onEdit}>
