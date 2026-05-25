@@ -28,5 +28,3 @@ export const Flag = ({ code, size = 20, className }: FlagProps) => {
 };
 
 export default Flag;
- 
- export default Flag;
