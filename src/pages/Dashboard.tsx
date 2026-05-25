@@ -1376,7 +1376,7 @@ export default function Dashboard() {
              border: `1px solid ${isDark ? '#2a2d3e' : '#e2e8f0'}`,
              borderRadius: 12,
              padding: 24,
-             width: 450,
+             width: 480,
              maxHeight: '85vh',
              display: 'flex',
              flexDirection: 'column',
@@ -1397,7 +1397,24 @@ export default function Dashboard() {
                </button>
              </div>
 
-              <div className="flex flex-col gap-3 mb-4">
+              <div className="flex flex-col gap-4 mb-4">
+                <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
+                  {(['all', 'upstream', 'access', 'internal'] as const).map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setRoleFilter(r)}
+                      className={clsx(
+                        "flex-1 py-1.5 text-[10px] font-bold uppercase rounded transition-all",
+                        roleFilter === r 
+                          ? "bg-white dark:bg-bg-secondary text-primary shadow-sm" 
+                          : "text-text-secondary hover:text-text-primary"
+                      )}
+                    >
+                      {r === 'all' ? 'Todas' : r === 'upstream' ? 'Upstream' : r === 'access' ? 'Access' : 'Internal'}
+                    </button>
+                  ))}
+                </div>
+
                 <div className="flex gap-2">
                   <button 
                     onClick={() => {
@@ -1407,41 +1424,29 @@ export default function Dashboard() {
                         const isTechnical = n.includes('null') || n.includes('loopback') || n.includes('virtual') || n.includes('template');
                         if (isTechnical) return false;
                         
-                        if (showInactive) return true;
-                        const hasTraffic = (i.rx_bps || i.in_bps || 0) > 0 || (i.tx_bps || i.out_bps || 0) > 0;
-                        const hasSpeed = (i.if_speed || 0) > 0;
-                        return hasSpeed && hasTraffic;
+                        if (roleFilter === 'all') {
+                          const hasTraffic = (i.rx_bps || i.in_bps || 0) > 0 || (i.tx_bps || i.out_bps || 0) > 0;
+                          const hasSpeed = (i.if_speed || 0) > 0;
+                          return hasSpeed && hasTraffic;
+                        }
+                        return i.role === roleFilter || (roleFilter === 'upstream' && i.is_upstream);
                       });
-                      const all = filtered.map((i: any) => i.if_name);
+                      const all = filtered.map((i: any) => i.if_index);
                       setSelectedIfaces(all);
                     }}
-                    className="text-[10px] font-bold uppercase px-3 py-1.5 bg-bg-primary border border-border rounded hover:bg-bg-secondary"
+                    className="text-[10px] font-bold uppercase px-3 py-1.5 bg-bg-primary border border-border rounded hover:bg-bg-secondary flex-1"
                   >
                     Selecionar visíveis
                   </button>
                   <button 
                     onClick={() => {
                       setSelectedIfaces([]);
-                      localStorage.setItem('fg_ifaces', JSON.stringify([]));
                     }}
-                    className="text-[10px] font-bold uppercase px-3 py-1.5 bg-bg-primary border border-border rounded hover:bg-bg-secondary"
+                    className="text-[10px] font-bold uppercase px-3 py-1.5 bg-bg-primary border border-border rounded hover:bg-bg-secondary flex-1"
                   >
                     Limpar
                   </button>
                 </div>
-                
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <div className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      className="sr-only peer"
-                      checked={showInactive}
-                      onChange={e => setShowInactive(e.target.checked)}
-                    />
-                    <div className="w-8 h-4 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary"></div>
-                  </div>
-                  <span className="text-xs text-text-secondary group-hover:text-text-primary transition-colors">Mostrar todas as interfaces (incluir inativas)</span>
-                </label>
               </div>
               
               <div style={{ overflowY: 'auto', flex: 1 }} className="pr-2 custom-scrollbar">
@@ -1451,18 +1456,20 @@ export default function Dashboard() {
                     const isTechnical = n.includes('null') || n.includes('loopback') || n.includes('virtual') || n.includes('template');
                     if (isTechnical) return false;
 
-                    if (showInactive) return true;
-                    const hasTraffic = (i.rx_bps || i.in_bps || 0) > 0 || (i.tx_bps || i.out_bps || 0) > 0;
-                    const hasSpeed = (i.if_speed || 0) > 0;
-                    return hasSpeed && hasTraffic;
+                    if (roleFilter === 'all') {
+                      const hasTraffic = (i.rx_bps || i.in_bps || 0) > 0 || (i.tx_bps || i.out_bps || 0) > 0;
+                      const hasSpeed = (i.if_speed || 0) > 0;
+                      return hasSpeed && hasTraffic;
+                    }
+                    return i.role === roleFilter || (roleFilter === 'upstream' && i.is_upstream);
                   })
                   .sort((a: any, b: any) => (b.if_speed || 0) - (a.if_speed || 0))
                   .map((iface: any) => {
                     const displayName = iface.if_alias || iface.display_name || iface.if_name;
-                    const isSelected = selectedIfaces.includes(iface.if_name);
+                    const isSelected = selectedIfaces.includes(iface.if_index);
                     return (
                       <label 
-                        key={iface.if_index || iface.if_name}
+                        key={iface.if_index}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -1480,16 +1487,16 @@ export default function Dashboard() {
                           checked={isSelected}
                           onChange={() => {
                             setSelectedIfaces(prev =>
-                              prev.includes(iface.if_name)
-                                ? prev.filter(n => n !== iface.if_name)
-                                : [...prev, iface.if_name]
+                              prev.includes(iface.if_index)
+                                ? prev.filter(id => id !== iface.if_index)
+                                : [...prev, iface.if_index]
                             );
                           }}
                           className="mr-3 w-4 h-4 rounded border-border text-primary focus:ring-primary"
                         />
                         <div style={{ flex: 1 }}>
                           <div className="flex items-center justify-between">
-                            <div className="text-sm font-bold text-text-primary">{displayName}</div>
+                            <div className="text-sm font-bold text-text-primary truncate max-w-[200px]">{displayName}</div>
                             {iface.if_speed > 0 && (
                               <div className="text-[10px] px-1.5 py-0.5 rounded bg-bg-primary border border-border text-text-secondary font-mono">
                                 {fmtBps(iface.if_speed)}
@@ -1497,7 +1504,7 @@ export default function Dashboard() {
                             )}
                           </div>
                           <div className="text-[10px] text-text-secondary flex gap-3 mt-0.5">
-                            {iface.if_alias && iface.if_alias !== iface.if_name && <span className="opacity-60">{iface.if_name}</span>}
+                            <span className="opacity-60 font-mono">idx: {iface.if_index}</span>
                             <span>RX: <span className="text-accent font-bold">{fmtBps(iface.rx_bps || iface.in_bps)}</span></span>
                             <span>TX: <span className="text-success font-bold">{fmtBps(iface.tx_bps || iface.out_bps)}</span></span>
                           </div>
@@ -1505,6 +1512,18 @@ export default function Dashboard() {
                       </label>
                     );
                   })}
+                {/* Fallback when no interfaces found */}
+                {(Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []))
+                  .filter((i: any) => {
+                    if (roleFilter === 'all') {
+                      const hasTraffic = (i.rx_bps || i.in_bps || 0) > 0 || (i.tx_bps || i.out_bps || 0) > 0;
+                      const hasSpeed = (i.if_speed || 0) > 0;
+                      return hasSpeed && hasTraffic;
+                    }
+                    return i.role === roleFilter || (roleFilter === 'upstream' && i.is_upstream);
+                  }).length === 0 && (
+                    <div className="py-8 text-center text-xs text-text-secondary italic">Nenhuma interface encontrada com este filtro</div>
+                  )}
               </div>
 
              <button 
@@ -1516,6 +1535,7 @@ export default function Dashboard() {
            </div>
          </div>
         )}
+
 
         </div>
         </TooltipProvider>
