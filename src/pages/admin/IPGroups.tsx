@@ -628,100 +628,36 @@ function IPGroupModal({ isOpen, onClose, data, profiles, onSubmit, isLoading }: 
 
           <hr className="border-border" />
 
-          {/* SEÇÃO 4 — Configuração de Detecção */}
+          <hr className="border-border" />
+
+          {/* SEÇÃO 4 — Perfil de Mitigação */}
           <div className="space-y-4">
-            <h3 className="text-sm font-bold text-text-primary">Configuração de Detecção</h3>
-            
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label className="text-xs">Threshold Mbps</Label>
-                <Input 
-                  type="number"
-                  disabled={!formData.fnm_ban_for_bandwidth}
-                  value={formData.fnm_threshold_mbps} 
-                  onChange={e => setFormData({ ...formData, fnm_threshold_mbps: e.target.value })} 
-                  placeholder="Padrão global (1000)"
-                  className={clsx(!formData.fnm_ban_for_bandwidth && "opacity-50")}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs">Threshold PPS</Label>
-                <Input 
-                  type="number"
-                  disabled={!formData.fnm_ban_for_pps}
-                  value={formData.fnm_threshold_pps} 
-                  onChange={e => setFormData({ ...formData, fnm_threshold_pps: e.target.value })} 
-                  placeholder="Padrão global (100000)"
-                  className={clsx(!formData.fnm_ban_for_pps && "opacity-50")}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs">Threshold Flows</Label>
-                <Input 
-                  type="number"
-                  disabled={!formData.fnm_ban_for_flows}
-                  value={formData.fnm_threshold_flows} 
-                  onChange={e => setFormData({ ...formData, fnm_threshold_flows: e.target.value })} 
-                  placeholder="3500"
-                  className={clsx(!formData.fnm_ban_for_flows && "opacity-50")}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-bg-primary rounded-lg border border-border space-y-4">
-                <Label className="text-xs font-bold uppercase text-text-secondary tracking-wider">Gatilhos Ativos</Label>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Banda</span>
-                    <Switch 
-                      checked={formData.fnm_ban_for_bandwidth} 
-                      onCheckedChange={checked => setFormData({ ...formData, fnm_ban_for_bandwidth: checked })}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">PPS</span>
-                    <Switch 
-                      checked={formData.fnm_ban_for_pps} 
-                      onCheckedChange={checked => setFormData({ ...formData, fnm_ban_for_pps: checked })}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Flows</span>
-                    <Switch 
-                      checked={formData.fnm_ban_for_flows} 
-                      onCheckedChange={checked => setFormData({ ...formData, fnm_ban_for_flows: checked })}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 bg-bg-primary rounded-lg border border-border space-y-3">
-                <Label className="text-xs font-bold uppercase text-text-secondary tracking-wider">Ação ao detectar</Label>
-                <Select 
-                  value={formData.fnm_action || 'global'} 
-                  onValueChange={v => setFormData({ ...formData, fnm_action: v === 'global' ? null : v })}
-                >
-                  <SelectTrigger className="bg-bg-secondary">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="global">Política Global</SelectItem>
-                    <SelectItem value="flowspec">Apenas FlowSpec</SelectItem>
-                    <SelectItem value="blackhole">Blackhole</SelectItem>
-                    <SelectItem value="blackhole_flowspec">Blackhole + FlowSpec</SelectItem>
-                    <SelectItem value="none">Sem Ação / Monitorar</SelectItem>
-                  </SelectContent>
-                </Select>
-                <div className="flex items-start gap-2 pt-1">
-                  <Info size={12} className="text-text-secondary mt-0.5" />
-                  <p className="text-[10px] text-text-secondary leading-tight italic">
-                    Blackhole usa /32 para IPv4 e /128 para IPv6 automaticamente.
-                  </p>
-                </div>
-              </div>
+            <div className="space-y-2">
+              <Label>Perfil de Mitigação</Label>
+              <Select 
+                value={formData.profile_id.toString()} 
+                onValueChange={v => setFormData({ ...formData, profile_id: v })}
+                required
+              >
+                <SelectTrigger className="bg-bg-primary h-12">
+                  <SelectValue placeholder="Selecione um perfil..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {profiles?.map((profile: any) => (
+                    <SelectItem key={profile.id} value={profile.id.toString()}>
+                      <div className="flex flex-col items-start">
+                        <span className="font-bold">{profile.name} {profile.is_default && '(Padrão Global)'}</span>
+                        {profile.description && (
+                          <span className="text-[10px] text-text-secondary italic line-clamp-1">{profile.description}</span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
+
 
           <DialogFooter className="mt-6 pt-2 border-t border-border">
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
