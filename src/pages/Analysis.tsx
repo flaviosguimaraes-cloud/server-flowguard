@@ -55,7 +55,7 @@ const COUNTRIES = [
   { code: 'OM', name: 'Omã' },
 ];
 
-function MetricCardComponent({ title, value, icon, colorClass, bgColorClass }: any) {
+function MetricCard({ title, value, icon, colorClass, bgColorClass }: any) {
   return (
     <div className="metric-card">
       <div className="flex justify-between items-start">
