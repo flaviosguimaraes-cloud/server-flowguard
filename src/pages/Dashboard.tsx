@@ -532,50 +532,50 @@ export default function Dashboard() {
      return (bps / 1e3).toFixed(0) + ' Kbps';
    };
 
-   const periodStats = useMemo(() => {
-     const getStats = (values: number[]) => {
-       if (!values.length) return { last: 0, min: 0, avg: 0, max: 0 };
-       return {
-         last: values[values.length - 1],
-         min: Math.min(...values),
-         avg: values.reduce((a, b) => a + b, 0) / values.length,
-         max: Math.max(...values),
-       };
-     };
-
-     if (!metricsHistory?.length) {
-       return {
-          rx: getStats([]),
-          tx: getStats([]),
-          label: selectedMinutes + ' minutos'
+    const periodStats = useMemo(() => {
+      const getStats = (values: number[]) => {
+        if (!values.length) return { last: 0, min: 0, avg: 0, max: 0 };
+        return {
+          last: values[values.length - 1],
+          min: Math.min(...values),
+          avg: values.reduce((a, b) => a + b, 0) / values.length,
+          max: Math.max(...values),
         };
-     }
+      };
 
-     const timeMap: Record<string, { rx: number, tx: number }> = {};
-     metricsHistory.forEach(({ data }) => {
-       data.forEach((p: any) => {
-         const t = p.time_bucket;
-         if (!timeMap[t]) timeMap[t] = { rx: 0, tx: 0 };
-         timeMap[t].rx += p.in_bps || 0;
-         timeMap[t].tx += p.out_bps || 0;
-       });
-     });
+      const historyArr = metricsHistory?.history || [];
+      if (historyArr.length === 0) {
+        return {
+           rx: getStats([]),
+           tx: getStats([]),
+           label: selectedMinutes + ' minutos'
+         };
+      }
 
-     const sorted = Object.keys(timeMap).sort();
-     const rxValues = sorted.map(t => timeMap[t].rx);
-     const txValues = sorted.map(t => timeMap[t].tx);
+      const timeMap: Record<string, { rx: number, tx: number }> = {};
+      historyArr.forEach((p: any) => {
+        const t = p.time_bucket;
+        if (!timeMap[t]) timeMap[t] = { rx: 0, tx: 0 };
+        timeMap[t].rx += p.in_bps || 0;
+        timeMap[t].tx += p.out_bps || 0;
+      });
 
-       return {
-         rx: getStats(rxValues),
-         tx: getStats(txValues),
-         label: selectedMinutes === 30 ? '30 minutos' :
-                selectedMinutes === 60 ? '1 hora' :
-                selectedMinutes === 360 ? '6 horas' : 
-                selectedMinutes === 720 ? '12 horas' :
-                selectedMinutes === 1440 ? '24 horas' : 
-                selectedMinutes === 2880 ? '48 horas' : selectedMinutes + ' minutos'
-       };
-    }, [selectedMinutes, metricsHistory, history, selectedIfaces]);
+      const sorted = Object.keys(timeMap).sort();
+      const rxValues = sorted.map(t => timeMap[t].rx);
+      const txValues = sorted.map(t => timeMap[t].tx);
+
+        return {
+          rx: getStats(rxValues),
+          tx: getStats(txValues),
+          label: selectedMinutes === 30 ? '30 minutos' :
+                 selectedMinutes === 60 ? '1 hora' :
+                 selectedMinutes === 360 ? '6 horas' : 
+                 selectedMinutes === 720 ? '12 horas' :
+                 selectedMinutes === 1440 ? '24 horas' : 
+                 selectedMinutes === 2880 ? '48 horas' : selectedMinutes + ' minutos'
+        };
+     }, [selectedMinutes, metricsHistory]);
+
 
 
 
