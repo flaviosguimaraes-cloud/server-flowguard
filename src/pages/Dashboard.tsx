@@ -1049,21 +1049,25 @@ export default function Dashboard() {
         {/* SEÇÃO 3 — O que consome a rede */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* TOP ASNs */}
-          <div className="bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm">
-            <div className="flex items-center justify-between mb-4">
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
-                <Users className="text-primary" size={18} />
-                <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Top ASNs</h2>
-                <FlowBadge />
+                <div className="p-1.5 bg-blue-500/10 rounded-lg text-blue-500">
+                  <Users size={18} />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Top ASNs</h2>
+                  <p className="text-[10px] text-text-secondary font-medium">Tráfego por Sistema Autônomo</p>
+                </div>
               </div>
-              <div className="flex bg-bg-primary p-0.5 rounded-lg border border-border">
+              <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
                 {[30, 60, 360, 1440].map((m) => (
                   <button
                     key={m}
                     onClick={() => setPeriodASN(m)}
                     className={clsx(
-                      "px-2 py-1 text-[9px] font-bold rounded",
-                      periodASN === m ? "bg-white dark:bg-bg-secondary text-primary shadow-sm" : "text-text-secondary"
+                      "px-2.5 py-1 text-[10px] font-bold rounded-md transition-all",
+                      periodASN === m ? "bg-bg-secondary text-primary shadow-sm border border-border/50" : "text-text-secondary hover:text-text-primary"
                     )}
                   >
                     {m >= 60 ? `${m/60}h` : `${m}m`}
@@ -1071,43 +1075,51 @@ export default function Dashboard() {
                 ))}
               </div>
             </div>
-            <div className="space-y-4">
+            
+            <div className="space-y-5">
               {asnStats?.items?.slice(0, 5).map((item: any, i: number) => (
-                <div key={i} className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
-                    <span className="text-text-primary">{cleanOrg(item.org)}</span>
-                    <span className="text-text-secondary">{formatBpsRaw(item.bytes)} · {item.percent}%</span>
+                <div key={i} className="space-y-2">
+                  <div className="flex justify-between text-[11px] font-bold">
+                    <span className="text-text-primary truncate max-w-[70%]">{cleanOrg(item.org)}</span>
+                    <span className="text-text-secondary tabular-nums">{formatBpsRaw(item.bytes)} · {item.percent}%</span>
                   </div>
-                  <div className="h-1.5 bg-bg-primary rounded-full overflow-hidden border border-border/10">
+                  <div className="h-2 bg-bg-primary rounded-full overflow-hidden border border-border/10">
                     <div 
-                      className="h-full bg-blue-500 rounded-full transition-all duration-1000"
+                      className="h-full bg-blue-500 rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(59,130,246,0.3)]"
                       style={{ width: `${item.percent}%` }}
                     />
                   </div>
                 </div>
               ))}
               {(!asnStats?.items || asnStats.items.length === 0) && (
-                <div className="py-4 text-center text-xs text-text-secondary italic">Nenhum dado disponível</div>
+                <div className="py-10 text-center flex flex-col items-center gap-2 text-text-secondary opacity-40">
+                  <Users size={24} strokeWidth={1} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">Aguardando dados de ASNs</span>
+                </div>
               )}
             </div>
           </div>
 
           {/* TOP CDNs */}
-          <div className="bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm">
-            <div className="flex items-center justify-between mb-4">
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-6">
               <div className="flex items-center gap-2">
-                <Globe className="text-accent" size={18} />
-                <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Top CDNs</h2>
-                <FlowBadge />
+                <div className="p-1.5 bg-accent/10 rounded-lg text-accent">
+                  <Globe size={18} />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Top Conteúdo</h2>
+                  <p className="text-[10px] text-text-secondary font-medium">Tráfego por CDNs e Serviços</p>
+                </div>
               </div>
-              <div className="flex bg-bg-primary p-0.5 rounded-lg border border-border">
+              <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
                 {[30, 60, 360, 1440].map((m) => (
                   <button
                     key={m}
                     onClick={() => setPeriodCDN(m)}
                     className={clsx(
-                      "px-2 py-1 text-[9px] font-bold rounded",
-                      periodCDN === m ? "bg-white dark:bg-bg-secondary text-accent shadow-sm" : "text-text-secondary"
+                      "px-2.5 py-1 text-[10px] font-bold rounded-md transition-all",
+                      periodCDN === m ? "bg-bg-secondary text-accent shadow-sm border border-border/50" : "text-text-secondary hover:text-text-primary"
                     )}
                   >
                     {m >= 60 ? `${m/60}h` : `${m}m`}
@@ -1115,16 +1127,17 @@ export default function Dashboard() {
                 ))}
               </div>
             </div>
-            <div className="space-y-4">
+
+            <div className="space-y-5">
               {cdnStats?.items?.slice(0, 5).map((item: any, i: number) => (
-                <div key={i} className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                <div key={i} className="space-y-2">
+                  <div className="flex justify-between text-[11px] font-bold">
                     <span className="text-text-primary">{item.cdn}</span>
-                    <span className="text-text-secondary">{formatBpsRaw(item.bytes)} · {item.percent}%</span>
+                    <span className="text-text-secondary tabular-nums">{formatBpsRaw(item.bytes)} · {item.percent}%</span>
                   </div>
-                  <div className="h-1.5 bg-bg-primary rounded-full overflow-hidden border border-border/10">
+                  <div className="h-2 bg-bg-primary rounded-full overflow-hidden border border-border/10">
                     <div 
-                      className="h-full rounded-full transition-all duration-1000"
+                      className="h-full rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(var(--accent-rgb),0.3)]"
                       style={{ 
                         width: `${item.percent}%`,
                         backgroundColor: CDN_COLORS[item.cdn] || '#8892a4'
@@ -1134,203 +1147,194 @@ export default function Dashboard() {
                 </div>
               ))}
                {(!cdnStats?.items || cdnStats.items.length === 0) && (
-                <div className="py-4 text-center text-xs text-text-secondary italic">Nenhum dado disponível</div>
+                <div className="py-10 text-center flex flex-col items-center gap-2 text-text-secondary opacity-40">
+                  <Globe size={24} strokeWidth={1} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">Aguardando dados de CDNs</span>
+                </div>
               )}
             </div>
           </div>
         </div>
 
-        {/* SEÇÃO 4 — Segurança */}
+        {/* SEÇÃO 4 — Segurança e Tráfego Global */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* ÚLTIMAS ANOMALIAS */}
-          <div className="bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <Shield className="text-danger" size={18} />
-              <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Últimas Anomalias</h2>
-              <FlowBadge />
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-danger/10 rounded-lg text-danger">
+                  <Shield size={18} />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Últimas Anomalias</h2>
+                  <p className="text-[10px] text-text-secondary font-medium">Eventos de segurança detectados</p>
+                </div>
+              </div>
+              <button
+                onClick={() => navigate({ to: '/mitigation/events' })}
+                className="text-[10px] font-bold text-primary hover:underline uppercase tracking-widest"
+              >
+                Ver Histórico
+              </button>
             </div>
+
             <div className="space-y-3">
               {eventsHistory?.items?.slice(0, 5).map((event: any, i: number) => (
-                <div key={i} className="flex items-center justify-between p-3 bg-bg-primary/50 rounded-lg border border-border/50 hover:border-primary/30 transition-all group cursor-default">
-                  <div className="flex items-center gap-3">
+                <div key={i} className="flex items-center justify-between p-3 bg-bg-primary/40 rounded-xl border border-border/50 hover:border-primary/30 transition-all group cursor-pointer" onClick={() => navigate({ to: '/mitigation/events' })}>
+                  <div className="flex items-center gap-4">
                     <div className={clsx(
-                      "w-2 h-2 rounded-full",
-                      event.status === 'active' ? "bg-danger animate-pulse shadow-[0_0_8px_rgba(239,68,68,0.5)]" : "bg-text-secondary/30"
+                      "w-2.5 h-2.5 rounded-full",
+                      event.status === 'active' ? "bg-danger animate-pulse shadow-[0_0_10px_rgba(239,68,68,0.5)]" : "bg-text-secondary/20"
                     )} />
                     <div>
-                       <div className="text-xs font-mono font-bold text-text-primary">{event.ip}</div>
-                       <div className="text-[10px] text-text-secondary font-medium uppercase tracking-tighter opacity-70">
-                         {formatEventTime(event.started_at)} · {event.peak_pps ? `${(event.peak_pps/1000).toFixed(1)}k pps` : ''} 
+                       <div className="text-sm font-bold text-text-primary tabular-nums">{event.ip}</div>
+                       <div className="text-[10px] text-text-secondary font-bold uppercase tracking-tight opacity-60 flex items-center gap-1.5 mt-0.5">
+                         {formatEventTime(event.started_at)} 
+                         <span className="w-1 h-1 rounded-full bg-border" />
+                         {event.peak_pps ? `${(event.peak_pps/1000).toFixed(1)}k PPS` : ''} 
                          {event.peak_mbps ? ` · ${event.peak_mbps} Mbps` : ''}
                        </div>
                      </div>
                    </div>
-                   <div className="flex flex-col items-end gap-1">
+                   <div className="flex flex-col items-end gap-1.5">
                       <span className={clsx(
-                        "text-[9px] font-black px-1.5 py-0.5 rounded border",
+                        "text-[9px] font-black px-2 py-0.5 rounded-full border",
                         event.status === 'active' ? "bg-danger/10 text-danger border-danger/20" : "bg-bg-primary text-text-secondary border-border"
                       )}>
-                        {event.status === 'active' ? 'ACTIVE' : 'REMOVED'}
+                        {event.status === 'active' ? 'BLOQUEADO' : 'LIMPO'}
                       </span>
-                      <div className="hidden group-hover:block text-[9px] text-text-secondary animate-in fade-in slide-in-from-right-1">
-                        {fmtDuration(event.duration_seconds)} · {event.direction === 'incoming' ? 'Download' : 'Upload'}
+                      <div className="text-[9px] font-bold text-text-secondary/50 uppercase tracking-tighter">
+                        {fmtDuration(event.duration_seconds)} · {event.direction === 'incoming' ? 'Entrada' : 'Saída'}
                       </div>
                    </div>
                  </div>
                ))}
                 {(!eventsHistory?.items || eventsHistory.items.length === 0) && (
-                 <div className="py-8 text-center text-xs text-text-secondary italic">Histórico limpo</div>
+                 <div className="py-12 text-center flex flex-col items-center gap-2 text-text-secondary opacity-30">
+                   <CheckCircle size={32} strokeWidth={1} />
+                   <span className="text-[10px] font-bold uppercase tracking-widest">Nenhuma ameaça ativa</span>
+                 </div>
                )}
-               <button
-                 onClick={() => navigate({ to: '/mitigation/events' })}
-                 style={{
-                   width: '100%',
-                   marginTop: 12,
-                   padding: '6px',
-                   fontSize: 12,
-                   background: 'transparent',
-                   border: '0.5px solid var(--color-border-tertiary)',
-                   borderRadius: 'var(--border-radius-md)',
-                   cursor: 'pointer',
-                   color: 'var(--color-text-secondary)'
-                 }}>
-                 Ver todos os eventos →
-               </button>
              </div>
           </div>
 
           {/* PAÍSES COM MAIOR TRÁFEGO */}
-          <div className="bg-bg-secondary p-5 rounded-2xl border border-border shadow-sm">
-            <div className="flex items-center gap-2 mb-4">
-              <MapPin className="text-primary" size={18} />
-              <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Países com maior tráfego</h2>
-              <FlowBadge />
+          <div className="card p-6">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-2">
+                <div className="p-1.5 bg-primary/10 rounded-lg text-primary">
+                  <MapPin size={18} />
+                </div>
+                <div>
+                  <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Origem de Tráfego</h2>
+                  <p className="text-[10px] text-text-secondary font-medium">Distribuição geográfica global</p>
+                </div>
+              </div>
+              <div className="p-1 bg-bg-primary rounded-lg border border-border text-[9px] font-bold text-text-secondary uppercase px-2">
+                Últimas 24h
+              </div>
             </div>
-            <div className="space-y-4">
+
+            <div className="space-y-5">
               {attackCountries?.items?.slice(0, 5).map((item: any, i: number) => (
-                <div key={i} className="space-y-1.5">
-                  <div className="flex justify-between text-[10px] font-bold uppercase tracking-wider">
+                <div key={i} className="space-y-2">
+                  <div className="flex justify-between text-[11px] font-bold">
                     <div className="flex items-center gap-2">
-                      <Flag code={item.country} size={16} />
+                      <Flag code={item.country} size={16} className="rounded-sm" />
                       <span className="text-text-primary">{item.country_name || item.country}</span>
                     </div>
-                    <span className="text-text-secondary">{item.percent}%</span>
+                    <span className="text-text-secondary tabular-nums">{item.percent}%</span>
                   </div>
-                  <div className="h-1.5 bg-bg-primary rounded-full overflow-hidden border border-border/10">
+                  <div className="h-2 bg-bg-primary rounded-full overflow-hidden border border-border/10">
                     <div 
-                      className="h-full bg-primary rounded-full transition-all duration-1000"
+                      className="h-full bg-primary rounded-full transition-all duration-1000 shadow-[0_0_8px_rgba(var(--primary-rgb),0.3)]"
                       style={{ width: `${item.percent}%` }}
                     />
                   </div>
                 </div>
               ))}
                {(!attackCountries?.items || attackCountries.items.length === 0) && (
-                <div className="py-4 text-center text-xs text-text-secondary italic">Nenhum dado disponível</div>
+                <div className="py-10 text-center flex flex-col items-center gap-2 text-text-secondary opacity-40">
+                  <MapPin size={24} strokeWidth={1} />
+                  <span className="text-[10px] font-bold uppercase tracking-widest">Aguardando dados geográficos</span>
+                </div>
               )}
             </div>
           </div>
         </div>
 
         {/* SEÇÃO 5 — Saúde do sistema */}
-        <div className="bg-bg-secondary p-4 rounded-2xl border border-border shadow-sm">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            {/* Linha 1: Recursos */}
-            <div className="grid grid-cols-3 gap-2">
-              {[
-                { label: 'CPU', value: sysStatus?.cpu_percent || 0, unit: '%' },
-                { label: 'RAM', value: sysStatus?.ram_percent || 0, unit: '%' },
-                { label: 'Disco', value: sysStatus?.disk_percent || 0, unit: '%' },
-              ].map((item) => (
-                <div key={item.label} className="bg-bg-primary/40 p-2 rounded-lg border border-border/40">
-                  <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60 mb-1">{item.label}</div>
-                  <div className={clsx("text-xs font-black", item.value > 80 ? "text-danger" : "text-text-primary")}>
-                    {item.value.toFixed(item.label === 'Disco' ? 0 : 1)}{item.unit}
+        <div className="card p-5 bg-bg-secondary/50">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            {/* Status dos Serviços */}
+            <div className="lg:col-span-1 space-y-3">
+              <div className="text-[10px] font-black text-text-secondary uppercase tracking-widest opacity-50 mb-4">Serviços do Núcleo</div>
+              <div className="grid grid-cols-2 gap-2">
+                {[
+                  { label: 'Detecção', status: sysStatus?.services?.detection_engine },
+                  { label: 'API', status: sysStatus?.services?.api },
+                  { label: 'BGP', status: sysStatus?.services?.bgp_engine },
+                  { label: 'DB', status: sysStatus?.services?.flow_database },
+                ].map((s) => (
+                  <div key={s.label} className="flex items-center gap-2 p-2 bg-bg-primary/50 rounded-lg border border-border/50">
+                    <div className={clsx(
+                      "w-2 h-2 rounded-full",
+                      s.status === 'active' ? "bg-success shadow-[0_0_6px_rgba(16,185,129,0.5)]" : "bg-danger shadow-[0_0_6px_rgba(239,68,68,0.5)]"
+                    )} />
+                    <span className="text-[10px] font-bold text-text-primary uppercase">{s.label}</span>
                   </div>
-                  <div className="h-1 bg-bg-primary rounded-full mt-1.5 overflow-hidden">
+                ))}
+              </div>
+            </div>
+
+            {/* Recursos Hardware */}
+            <div className="lg:col-span-3 grid grid-cols-3 gap-4">
+              {[
+                { label: 'CPU Load', value: sysStatus?.cpu_percent || 0, color: 'primary' },
+                { label: 'RAM Usage', value: sysStatus?.ram_percent || 0, color: 'primary' },
+                { label: 'Storage', value: sysStatus?.disk_percent || 0, color: 'primary' },
+              ].map((item) => (
+                <div key={item.label} className="space-y-2">
+                  <div className="flex justify-between items-end">
+                    <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-50">{item.label}</span>
+                    <span className={clsx("text-xs font-black tabular-nums", item.value > 85 ? "text-danger" : "text-text-primary")}>
+                      {item.value.toFixed(1)}%
+                    </span>
+                  </div>
+                  <div className="h-1.5 bg-bg-primary rounded-full overflow-hidden border border-border/10">
                     <div 
-                      className="h-full rounded-full transition-all duration-500"
+                      className="h-full rounded-full transition-all duration-1000"
                       style={{ 
                         width: `${item.value}%`,
-                        backgroundColor: item.value > 80 ? '#E24B4A' : item.value > 60 ? '#EF9F27' : '#1D9E75'
+                        backgroundColor: item.value > 85 ? '#EF4444' : item.value > 70 ? '#F59E0B' : '#2563EB'
                       }}
                     />
                   </div>
                 </div>
               ))}
             </div>
-
-            {/* Linha 2: Status */}
-            <div className="grid grid-cols-3 gap-2">
-              <div className="bg-bg-primary/40 p-2 rounded-lg border border-border/40 flex flex-col justify-center">
-                <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60 mb-1">Uptime</div>
-                <div className="text-xs font-black text-text-primary truncate">{sysStatus?.uptime || '—'}</div>
-              </div>
-              <div className="bg-bg-primary/40 p-2 rounded-lg border border-border/40 flex flex-col justify-center">
-                <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60 mb-1">BGP</div>
-                <div>
-                  <span className={clsx(
-                    "text-[9px] font-black px-1.5 py-0.5 rounded border",
-                    sysStatus?.services?.bgp_engine === 'active' ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"
-                  )}>
-                    {sysStatus?.services?.bgp_engine === 'active' ? 'OK' : 'OFFLINE'}
-                  </span>
-                </div>
-              </div>
-              <div className="bg-bg-primary/40 p-2 rounded-lg border border-border/40 flex flex-col justify-center">
-                <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-60 mb-1">Detector</div>
-                <div>
-                  <span className={clsx(
-                    "text-[9px] font-black px-1.5 py-0.5 rounded border",
-                    sysStatus?.services?.detection_engine === 'active' ? "bg-success/10 text-success border-success/20" : "bg-danger/10 text-danger border-danger/20"
-                  )}>
-                    {sysStatus?.services?.detection_engine === 'active' ? 'OK' : 'OFFLINE'}
-                  </span>
-                </div>
-              </div>
-            </div>
           </div>
         </div>
 
-
+        {/* Interface Selector Modal */}
         {showIfaceSelector && (
-         <div style={{
-           position: 'fixed',
-           top: 0, left: 0,
-           width: '100%', height: '100%',
-           background: 'rgba(0,0,0,0.5)',
-           zIndex: 1000,
-           display: 'flex',
-           alignItems: 'center',
-           justifyContent: 'center',
-           backdropFilter: 'blur(4px)',
-         }}>
-           <div style={{
-             background: isDark ? '#1e2130' : '#ffffff',
-             border: `1px solid ${isDark ? '#2a2d3e' : '#e2e8f0'}`,
-             borderRadius: 12,
-             padding: 24,
-             width: 480,
-             maxHeight: '85vh',
-             display: 'flex',
-             flexDirection: 'column',
-             boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-           }}>
-             <div style={{
-               display: 'flex',
-               justifyContent: 'space-between',
-               alignItems: 'center',
-               marginBottom: 20
-             }}>
-               <h3 className="text-lg font-bold text-text-primary">Selecionar Interfaces</h3>
-               <button 
-                 onClick={() => setShowIfaceSelector(false)}
-                 className="p-2 hover:bg-bg-primary rounded-full transition-colors"
-               >
-                 ✕
-               </button>
-             </div>
+          <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+            <div 
+              className="absolute inset-0 bg-black/60 backdrop-blur-sm transition-opacity" 
+              onClick={() => setShowIfaceSelector(false)}
+            />
+            <div className="card w-full max-w-lg max-h-[85vh] flex flex-col z-10 animate-in zoom-in-95 duration-200">
+              <div className="flex items-center justify-between p-6 border-b border-border">
+                <h3 className="text-lg font-bold text-text-primary tracking-tight">Telemetria SNMP</h3>
+                <button 
+                  onClick={() => setShowIfaceSelector(false)}
+                  className="header-action !p-1.5"
+                >
+                  <XCircle size={20} />
+                </button>
+              </div>
 
-              <div className="flex flex-col gap-4 mb-4">
+              <div className="p-6 flex flex-col gap-4 overflow-hidden">
                 <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
                   {(['all', 'upstream', 'access', 'internal'] as const).map((r) => (
                     <button
@@ -1339,7 +1343,7 @@ export default function Dashboard() {
                       className={clsx(
                         "flex-1 py-1.5 text-[10px] font-bold uppercase rounded transition-all",
                         roleFilter === r 
-                          ? "bg-white dark:bg-bg-secondary text-primary shadow-sm" 
+                          ? "bg-bg-secondary text-primary shadow-sm border border-border/50" 
                           : "text-text-secondary hover:text-text-primary"
                       )}
                     >
@@ -1356,122 +1360,91 @@ export default function Dashboard() {
                         const n = (i.if_alias || i.display_name || i.if_name || '').toLowerCase();
                         const isTechnical = n.includes('null') || n.includes('loopback') || n.includes('virtual') || n.includes('template');
                         if (isTechnical) return false;
-                        
-                        if (roleFilter === 'all') {
-                          const hasTraffic = (i.rx_bps || i.in_bps || 0) > 0 || (i.tx_bps || i.out_bps || 0) > 0;
-                          const hasSpeed = (i.if_speed || 0) > 0;
-                          return hasSpeed && hasTraffic;
-                        }
+                        if (roleFilter === 'all') return (i.rx_bps || i.in_bps || 0) > 0 || (i.tx_bps || i.out_bps || 0) > 0;
                         return i.role === roleFilter || (roleFilter === 'upstream' && i.is_upstream);
                       });
-                      const all = filtered.map((i: any) => i.if_index);
-                      setSelectedIfaces(all);
+                      setSelectedIfaces(filtered.map((i: any) => i.if_index));
                     }}
-                    className="text-[10px] font-bold uppercase px-3 py-1.5 bg-bg-primary border border-border rounded hover:bg-bg-secondary flex-1"
+                    className="secondary-button !text-[10px] !py-1.5 flex-1"
                   >
-                    Selecionar visíveis
+                    Marcar Visíveis
                   </button>
                   <button 
-                    onClick={() => {
-                      setSelectedIfaces([]);
-                    }}
-                    className="text-[10px] font-bold uppercase px-3 py-1.5 bg-bg-primary border border-border rounded hover:bg-bg-secondary flex-1"
+                    onClick={() => setSelectedIfaces([])}
+                    className="secondary-button !text-[10px] !py-1.5 flex-1"
                   >
-                    Limpar
+                    Limpar Tudo
                   </button>
                 </div>
-              </div>
-              
-              <div style={{ overflowY: 'auto', flex: 1 }} className="pr-2 custom-scrollbar">
-                {(Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []))
-                  .filter((i: any) => {
-                    const n = (i.if_alias || i.display_name || i.if_name || '').toLowerCase();
-                    const isTechnical = n.includes('null') || n.includes('loopback') || n.includes('virtual') || n.includes('template');
-                    if (isTechnical) return false;
-
-                    if (roleFilter === 'all') {
-                      const hasTraffic = (i.rx_bps || i.in_bps || 0) > 0 || (i.tx_bps || i.out_bps || 0) > 0;
-                      const hasSpeed = (i.if_speed || 0) > 0;
-                      return hasSpeed && hasTraffic;
-                    }
-                    return i.role === roleFilter || (roleFilter === 'upstream' && i.is_upstream);
-                  })
-                  .sort((a: any, b: any) => (b.if_speed || 0) - (a.if_speed || 0))
-                  .map((iface: any) => {
-                    const displayName = iface.if_alias || iface.display_name || iface.if_name;
-                    const isSelected = selectedIfaces.includes(iface.if_index);
-                    return (
-                      <label 
-                        key={iface.if_index}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          padding: '10px 12px',
-                          borderRadius: 8,
-                          cursor: 'pointer',
-                          marginBottom: 4,
-                          background: isSelected ? (isDark ? 'rgba(59, 130, 246, 0.1)' : '#eff6ff') : 'transparent',
-                          border: `1px solid ${isSelected ? (isDark ? 'rgba(59, 130, 246, 0.2)' : '#bfdbfe') : 'transparent'}`
-                        }}
-                        className="hover:bg-bg-primary/50 transition-all"
-                      >
-                        <input 
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => {
-                            setSelectedIfaces(prev =>
-                              prev.includes(iface.if_index)
-                                ? prev.filter(id => id !== iface.if_index)
-                                : [...prev, iface.if_index]
-                            );
-                          }}
-                          className="mr-3 w-4 h-4 rounded border-border text-primary focus:ring-primary"
-                        />
-                        <div style={{ flex: 1 }}>
-                          <div className="flex items-center justify-between">
-                            <div className="text-sm font-bold text-text-primary truncate max-w-[200px]">{displayName}</div>
-                            {iface.if_speed > 0 && (
-                              <div className="text-[10px] px-1.5 py-0.5 rounded bg-bg-primary border border-border text-text-secondary font-mono">
+                
+                <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar space-y-2 py-2">
+                  {(Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []))
+                    .filter((i: any) => {
+                      const n = (i.if_alias || i.display_name || i.if_name || '').toLowerCase();
+                      const isTechnical = n.includes('null') || n.includes('loopback') || n.includes('virtual') || n.includes('template');
+                      if (isTechnical) return false;
+                      if (roleFilter === 'all') return (i.rx_bps || i.in_bps || 0) > 0 || (i.tx_bps || i.out_bps || 0) > 0;
+                      return i.role === roleFilter || (roleFilter === 'upstream' && i.is_upstream);
+                    })
+                    .sort((a: any, b: any) => (b.if_speed || 0) - (a.if_speed || 0))
+                    .map((iface: any) => {
+                      const isSelected = selectedIfaces.includes(iface.if_index);
+                      return (
+                        <label 
+                          key={iface.if_index}
+                          className={clsx(
+                            "flex items-center p-3 rounded-xl cursor-pointer transition-all border",
+                            isSelected ? "bg-primary/5 border-primary/20" : "bg-bg-primary/20 border-transparent hover:bg-bg-primary/40"
+                          )}
+                        >
+                          <input 
+                            type="checkbox"
+                            checked={isSelected}
+                            onChange={() => {
+                              setSelectedIfaces(prev =>
+                                prev.includes(iface.if_index)
+                                  ? prev.filter(id => id !== iface.if_index)
+                                  : [...prev, iface.if_index]
+                              );
+                            }}
+                            className="mr-4 w-4 h-4 rounded-md border-border text-primary focus:ring-primary bg-bg-secondary"
+                          />
+                          <div className="flex-1 min-w-0">
+                            <div className="flex items-center justify-between gap-2">
+                              <span className="text-sm font-bold text-text-primary truncate">{iface.if_alias || iface.display_name || iface.if_name}</span>
+                              <span className="text-[10px] px-1.5 py-0.5 rounded bg-bg-primary border border-border text-text-secondary font-mono font-bold">
                                 {fmtBps(iface.if_speed)}
+                              </span>
+                            </div>
+                            <div className="flex items-center gap-3 mt-1">
+                              <span className="text-[10px] font-bold text-text-secondary/50 uppercase">idx: {iface.if_index}</span>
+                              <div className="flex items-center gap-1.5">
+                                <ArrowDown size={10} className="text-blue-500" />
+                                <span className="text-[10px] font-bold text-text-primary tabular-nums">{fmtBps(iface.rx_bps || iface.in_bps)}</span>
                               </div>
-                            )}
+                              <div className="flex items-center gap-1.5">
+                                <ArrowUp size={10} className="text-green-500" />
+                                <span className="text-[10px] font-bold text-text-primary tabular-nums">{fmtBps(iface.tx_bps || iface.out_bps)}</span>
+                              </div>
+                            </div>
                           </div>
-                          <div className="text-[10px] text-text-secondary flex gap-3 mt-0.5">
-                            <span className="opacity-60 font-mono">idx: {iface.if_index}</span>
-                            <span>RX: <span className="text-accent font-bold">{fmtBps(iface.rx_bps || iface.in_bps)}</span></span>
-                            <span>TX: <span className="text-success font-bold">{fmtBps(iface.tx_bps || iface.out_bps)}</span></span>
-                          </div>
-                        </div>
-                      </label>
-                    );
-                  })}
-                {/* Fallback when no interfaces found */}
-                {(Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []))
-                  .filter((i: any) => {
-                    if (roleFilter === 'all') {
-                      const hasTraffic = (i.rx_bps || i.in_bps || 0) > 0 || (i.tx_bps || i.out_bps || 0) > 0;
-                      const hasSpeed = (i.if_speed || 0) > 0;
-                      return hasSpeed && hasTraffic;
-                    }
-                    return i.role === roleFilter || (roleFilter === 'upstream' && i.is_upstream);
-                  }).length === 0 && (
-                    <div className="py-8 text-center text-xs text-text-secondary italic">Nenhuma interface encontrada com este filtro</div>
-                  )}
+                        </label>
+                      );
+                    })}
+                </div>
+
+                <button 
+                  onClick={() => setShowIfaceSelector(false)}
+                  className="primary-button !py-3 !w-full"
+                >
+                  Aplicar Filtros
+                </button>
               </div>
-
-             <button 
-               onClick={() => setShowIfaceSelector(false)}
-               className="mt-6 w-full py-3 bg-primary text-white font-bold rounded-xl hover:bg-primary/90 transition-all shadow-lg shadow-primary/20"
-             >
-               Aplicar Seleção
-             </button>
-           </div>
-         </div>
+            </div>
+          </div>
         )}
-
-
-        </div>
-        </TooltipProvider>
-     );
-   }
+      </div>
+    </TooltipProvider>
+  );
+}
 
