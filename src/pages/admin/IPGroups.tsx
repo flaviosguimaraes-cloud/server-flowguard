@@ -744,7 +744,7 @@ function IPGroupDrawer({ isOpen, onClose, group, onEdit, onSave, onDelete, isLoa
           </div>
 
           <div className="space-y-3 pt-4 border-t border-border">
-            <Button className="w-full" onClick={() => { onClose(); /* Logic to open modal for editing */ }}>
+            <Button className="w-full" onClick={onEdit}>
               Editar Configurações
             </Button>
             <Button variant="ghost" className="w-full text-destructive hover:bg-destructive/10" onClick={onDelete}>
