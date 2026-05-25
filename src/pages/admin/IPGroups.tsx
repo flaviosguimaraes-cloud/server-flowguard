@@ -628,7 +628,6 @@ function IPGroupModal({ isOpen, onClose, data, profiles, onSubmit, isLoading }: 
 
           <hr className="border-border" />
 
-          <hr className="border-border" />
 
           {/* SEÇÃO 4 — Perfil de Mitigação */}
           <div className="space-y-4">
