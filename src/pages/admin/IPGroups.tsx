@@ -293,31 +293,20 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
     name: '',
     description: '',
     type: 'standard',
-    prefixes: '',
-    prefixes_v6: '',
+    prefixes: [],
     anomaly_factor: 1.0,
     anomaly_min_mbps: '',
     allow_blackhole: false,
     allow_flowspec: true,
     auto_mitigate: false,
     
-    // IPv4 specific
     fnm_threshold_mbps: '',
     fnm_threshold_pps: '',
     fnm_threshold_flows: 3500,
     fnm_ban_for_bandwidth: true,
     fnm_ban_for_pps: true,
     fnm_ban_for_flows: false,
-    fnm_action: 'global' as string | null,
-
-    // IPv6 specific
-    fnm_ipv6_threshold_mbps: '',
-    fnm_ipv6_threshold_pps: '',
-    fnm_ipv6_threshold_flows: 3500,
-    fnm_ipv6_ban_for_bandwidth: true,
-    fnm_ipv6_ban_for_pps: true,
-    fnm_ipv6_ban_for_flows: false,
-    fnm_ipv6_action: 'global' as string | null,
+    fnm_action: null as string | null,
   });
 
   useMemo(() => {
