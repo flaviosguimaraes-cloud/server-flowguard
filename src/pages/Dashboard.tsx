@@ -647,9 +647,9 @@ export default function Dashboard() {
        pointHoverRadius: 0,
        tension: 0.4,
      },
-     ...selectedIfaces.map((ifName, idx) => ({
-       label: '__iface_down__' + ifName,
-       data: chartData.map(d => d[`${ifName}_rx`]),
+     ...selectedIfaces.map((ifIndex, idx) => ({
+       label: '__iface_down__' + (ifaceMap[ifIndex] || ifIndex),
+       data: chartData.map(d => d[`${ifIndex}_rx`]),
        borderColor: blueShades[idx % 5],
        borderWidth: 1,
        fill: false,
@@ -668,9 +668,9 @@ export default function Dashboard() {
        pointHoverRadius: 0,
        tension: 0.4,
      },
-     ...selectedIfaces.map((ifName, idx) => ({
-       label: '__iface_up__' + ifName,
-       data: chartData.map(d => d[`${ifName}_tx`]),
+     ...selectedIfaces.map((ifIndex, idx) => ({
+       label: '__iface_up__' + (ifaceMap[ifIndex] || ifIndex),
+       data: chartData.map(d => d[`${ifIndex}_tx`]),
        borderColor: greenShades[idx % 5],
        borderWidth: 1,
        fill: false,
@@ -678,7 +678,7 @@ export default function Dashboard() {
        pointHoverRadius: 0,
        tension: 0.4,
      }))
-   ], [chartData, selectedIfaces]);
+   ], [chartData, selectedIfaces, ifaceMap]);
  
     const chartOptions = useMemo(() => ({
       responsive: true,
@@ -724,19 +724,19 @@ export default function Dashboard() {
              direction = '▲';
              color = '#16a34a';
            } else if (label.startsWith('__iface_down__')) {
-             name = label.replace('__iface_down__', '');
+             name = label.replace('__iface_down__', '') + ' - Download';
              direction = '▼';
            } else if (label.startsWith('__iface_up__')) {
-             name = label.replace('__iface_up__', '');
+             name = label.replace('__iface_up__', '') + ' - Upload';
              direction = '▲';
            }
  
-           const numVal = dp.parsed.y;
+           const numVal = dp.parsed.y; // numVal is in Mbps
            let formatted = '';
-           if (numVal >= 1) {
-             formatted = numVal.toFixed(2) + ' Gbps';
+           if (numVal >= 1000) {
+             formatted = (numVal / 1000).toFixed(2) + ' Gbps';
            } else {
-             formatted = (numVal * 1000).toFixed(0) + ' Mbps';
+             formatted = numVal.toFixed(1) + ' Mbps';
            }
  
            tip.innerHTML = `
@@ -750,6 +750,7 @@ export default function Dashboard() {
                ${direction} ${formatted}
              </div>
            `;
+
  
            tip.style.display = 'block';
  
