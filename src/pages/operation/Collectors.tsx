@@ -870,7 +870,7 @@ function CollectorDetailsSheet({ isOpen, onClose, collector }: any) {
 
   const { data: ifacesData, isLoading: loadingIfaces } = useQuery({
     queryKey: ['collector-interfaces', collector?.id],
-    queryFn: () => api.get(`/api/snmp/${collector.id}/interfaces`).then(r => r.data).catch(() => []),
+    queryFn: () => api.get(`/api/snmp/${collector.id}/interfaces`).then(r => r.data.interfaces || []).catch(() => []),
     enabled: !!collector?.id && isOpen,
   });
 
