@@ -437,31 +437,32 @@ export default function Dashboard() {
 
     const selectedIfaceData = useMemo(() => {
       const list = Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []);
-      return list.filter((i: any) => selectedIfaces.includes(i.if_name));
+      return list.filter((i: any) => selectedIfaces.includes(i.if_index));
     }, [interfaces, selectedIfaces]);
 
     const timePoints = useMemo(() => {
-      const firstSelected = selectedIfaces[0];
-      return history[firstSelected]?.map(p => p.time) || [];
-    }, [history, selectedIfaces]);
+      const historyArr = metricsHistory?.history || [];
+      const allTimes = new Set<string>();
+      historyArr.forEach((p: any) => allTimes.add(p.time_bucket));
+      return Array.from(allTimes).sort();
+    }, [metricsHistory]);
 
      const ifaceMap = useMemo(() => {
-       const map: Record<string, string> = {};
+       const map: Record<number, string> = {};
        const list = Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []);
        list.forEach((i: any) => {
-          map[i.if_name] = i.if_alias || i.display_name || i.if_name;
+          map[i.if_index] = i.if_alias || i.display_name || i.if_name;
        });
        return map;
      }, [interfaces]);
  
   const historicalChartData = useMemo(() => {
-    if (!metricsHistory?.length) return [];
+    const historyArr = metricsHistory?.history || [];
+    if (historyArr.length === 0) return [];
 
     // Coletar todos os timestamps únicos
     const allTimes = new Set<string>();
-    metricsHistory.forEach(({data}) => {
-      data.forEach((p: any) => allTimes.add(p.time_bucket));
-    });
+    historyArr.forEach((p: any) => allTimes.add(p.time_bucket));
 
     // Montar pontos do gráfico
     const fullData = Array.from(allTimes)
@@ -473,17 +474,18 @@ export default function Dashboard() {
         };
         let totalRx = 0;
         let totalTx = 0;
-        metricsHistory.forEach(({ifName, data}) => {
-          const found = data.find((p: any) => p.time_bucket === time);
-           const rxGbps = found ? (found.in_bps / 1e9) : 0;
-           const txGbps = found ? (found.out_bps / 1e9) : 0;
-           point[`${ifName}_rx`] = rxGbps;
-           point[`${ifName}_tx`] = txGbps;
-           totalRx += rxGbps;
-           totalTx += txGbps;
+        
+        selectedIfaces.forEach(ifIndex => {
+          const found = historyArr.find((p: any) => p.time_bucket === time && p.if_index === ifIndex);
+           const rxMbps = found ? (found.in_bps / 1e6) : 0;
+           const txMbps = found ? (found.out_bps / 1e6) : 0;
+           point[`${ifIndex}_rx`] = rxMbps;
+           point[`${ifIndex}_tx`] = txMbps;
+           totalRx += rxMbps;
+           totalTx += txMbps;
         });
-         point['__total_rx'] = Number(totalRx.toFixed(4));
-         point['__total_tx'] = Number(totalTx.toFixed(4));
+         point['__total_rx'] = Number(totalRx.toFixed(2));
+         point['__total_tx'] = Number(totalTx.toFixed(2));
         return point;
       });
 
@@ -498,14 +500,14 @@ export default function Dashboard() {
         const next = arr[i+1]?.[key] || 0;
         const avg = (prev + next) / 2;
         
-        // Use threshold adapted to Gbps (0.0001 Gbps = 100 Kbps)
-        if (val === 0 && avg > 0.0001) {
-          sanitized[key] = Number(avg.toFixed(4));
+        if (val === 0 && avg > 0.1) { // 0.1 Mbps = 100 Kbps
+          sanitized[key] = Number(avg.toFixed(2));
         }
       });
       return sanitized;
     });
-  }, [metricsHistory]);
+  }, [metricsHistory, selectedIfaces]);
+
 
   const chartData = useMemo(() => sampleData(historicalChartData), [historicalChartData]);
 
