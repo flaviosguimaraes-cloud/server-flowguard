@@ -425,29 +425,17 @@ export default function IPGroups() {
   );
 }
 
-function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
+function IPGroupModal({ isOpen, onClose, data, profiles, onSubmit, isLoading }: any) {
   const [formData, setFormData] = useState<{
     name: string;
     description: string;
     prefixes: string[];
-    fnm_threshold_mbps: string | number;
-    fnm_threshold_pps: string | number;
-    fnm_threshold_flows: string | number;
-    fnm_ban_for_bandwidth: boolean;
-    fnm_ban_for_pps: boolean;
-    fnm_ban_for_flows: boolean;
-    fnm_action: string | null;
+    profile_id: string | number;
   }>({
     name: '',
     description: '',
     prefixes: [],
-    fnm_threshold_mbps: '',
-    fnm_threshold_pps: '',
-    fnm_threshold_flows: 3500,
-    fnm_ban_for_bandwidth: true,
-    fnm_ban_for_pps: true,
-    fnm_ban_for_flows: false,
-    fnm_action: null,
+    profile_id: '',
   });
 
   const [addressType, setAddressType] = useState<'ipv4' | 'ipv6' | null>(null);
@@ -459,16 +447,9 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
         name: data.name || '',
         description: data.description || '',
         prefixes: data.prefixes || [],
-        fnm_threshold_mbps: data.fnm_threshold_mbps || '',
-        fnm_threshold_pps: data.fnm_threshold_pps || '',
-        fnm_threshold_flows: data.fnm_threshold_flows ?? 3500,
-        fnm_ban_for_bandwidth: data.fnm_ban_for_bandwidth ?? true,
-        fnm_ban_for_pps: data.fnm_ban_for_pps ?? true,
-        fnm_ban_for_flows: data.fnm_ban_for_flows ?? false,
-        fnm_action: data.fnm_action || null,
+        profile_id: data.profile_id || '',
       });
       
-      // Determine address type from first prefix
       if (data.prefixes && data.prefixes.length > 0) {
         setAddressType(data.prefixes[0].includes(':') ? 'ipv6' : 'ipv4');
       } else {
@@ -479,26 +460,18 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
         name: '',
         description: '',
         prefixes: [],
-        fnm_threshold_mbps: '',
-        fnm_threshold_pps: '',
-        fnm_threshold_flows: 3500,
-        fnm_ban_for_bandwidth: true,
-        fnm_ban_for_pps: true,
-        fnm_ban_for_flows: false,
-        fnm_action: null,
+        profile_id: profiles?.find((p: any) => p.is_default)?.id || '',
       });
       setAddressType(null);
     }
     setNewPrefix('');
-  }, [data, isOpen]);
+  }, [data, isOpen, profiles]);
 
   const addPrefix = () => {
     if (!newPrefix || !addressType) return;
-    
     const cleanPrefix = newPrefix.trim();
     if (!cleanPrefix) return;
 
-    // Validation
     if (addressType === 'ipv4' && cleanPrefix.includes(':')) {
       toast.error('Este grupo aceita apenas prefixos IPv4');
       return;
@@ -520,19 +493,17 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (formData.prefixes.length === 0) {
       toast.error('Adicione pelo menos um prefixo');
       return;
     }
-
-    onSubmit({
-      ...formData,
-      fnm_threshold_mbps: formData.fnm_threshold_mbps ? Number(formData.fnm_threshold_mbps) : null,
-      fnm_threshold_pps: formData.fnm_threshold_pps ? Number(formData.fnm_threshold_pps) : null,
-      fnm_threshold_flows: formData.fnm_threshold_flows ? Number(formData.fnm_threshold_flows) : null,
-    });
+    if (!formData.profile_id) {
+      toast.error('Selecione um perfil de mitigação');
+      return;
+    }
+    onSubmit(formData);
   };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
