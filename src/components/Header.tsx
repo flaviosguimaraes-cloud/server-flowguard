@@ -59,39 +59,37 @@ export const Header = () => {
 
   return (
     <header className="h-[72px] bg-bg-secondary/80 backdrop-blur-md border-b border-border flex items-center justify-between px-6 sticky top-0 z-40 transition-all duration-200 shadow-sm">
-      <style>{`
-        @keyframes spin-custom {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      `}</style>
       <div className="flex items-center gap-4">
         <button 
           onClick={toggleSidebar}
-          className="p-2 hover:bg-bg-primary rounded-lg text-text-secondary hover:text-text-primary transition-all duration-200 border border-transparent hover:border-border active:scale-95"
+          className="header-action"
         >
           <Menu size={20} />
         </button>
       </div>
 
-      <div className="flex items-center gap-4">
+      <div className="flex items-center gap-3">
+        {/* Auto Refresh */}
         <button
           onClick={handleRefresh}
-          title="Atualizar dados"
           className={clsx(
             "flex items-center gap-2 px-3 py-1.5 rounded-lg border border-border bg-bg-secondary transition-all duration-200 hover:bg-bg-primary active:scale-95 group",
-            isRefreshing ? "text-primary border-primary/20 bg-primary/5" : "text-text-secondary"
+            isRefreshing ? "text-primary border-primary/20 bg-primary/5 shadow-[0_0_15px_rgba(37,99,235,0.1)]" : "text-text-secondary"
           )}
         >
           <RefreshCw 
             size={14}
-            className={clsx(isRefreshing ? "animate-spin" : "transition-transform duration-500")}
+            className={clsx(isRefreshing ? "animate-spin" : "text-text-secondary group-hover:text-primary transition-colors")}
           />
-          <span className="font-mono tabular-nums text-[11px] font-semibold">{countdown}s</span>
+          <div className="flex flex-col items-start leading-none">
+            <span className="text-[9px] uppercase tracking-widest font-bold opacity-50 mb-0.5">Auto-refresh</span>
+            <span className="font-mono tabular-nums text-[11px] font-bold">{countdown}s</span>
+          </div>
         </button>
 
-        <div className="flex items-center gap-2 text-text-secondary bg-bg-secondary px-3 py-1.5 rounded-lg border border-border">
-          <Globe size={14} />
+        {/* Language */}
+        <div className="flex items-center gap-2 text-text-secondary bg-bg-secondary px-3 py-1.5 rounded-lg border border-border hover:border-text-secondary/30 transition-colors">
+          <Globe size={14} className="opacity-70" />
           <select 
             value={lang} 
             onChange={(e) => changeLanguage(e.target.value as any)}
@@ -103,53 +101,45 @@ export const Header = () => {
           </select>
         </div>
 
+        {/* Theme Toggle */}
         <button 
           onClick={toggleTheme}
-          className="p-2 hover:bg-bg-primary rounded-lg text-text-secondary hover:text-primary transition-all duration-200 border border-transparent hover:border-border active:scale-95"
+          className="header-action"
         >
           {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
         </button>
 
+        {/* User Profile */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <div className="flex items-center gap-3 pl-4 border-l border-border ml-2 group cursor-pointer outline-none">
               <div className="text-right hidden sm:block">
-                <p className="text-sm font-semibold text-text-primary leading-tight group-hover:text-primary transition-colors">{user?.username}</p>
-                <div className="flex flex-col items-end">
-                  <p className="text-[10px] text-primary uppercase tracking-wider font-bold opacity-80 leading-none">{user?.role}</p>
-                  <p className="text-[10px] text-text-secondary font-bold uppercase tracking-widest mt-0.5">{settings?.org_name?.value || settings?.org_name || ''}</p>
-                </div>
+                <p className="text-sm font-bold text-text-primary leading-tight group-hover:text-primary transition-colors">{user?.username}</p>
+                <p className="text-[10px] text-primary uppercase tracking-widest font-extrabold opacity-80 leading-none mt-1">{user?.role}</p>
               </div>
-              <div className="w-9 h-9 rounded-lg bg-primary flex items-center justify-center text-white font-bold text-sm shadow-md shadow-primary/20 transition-all group-hover:scale-105 border border-white/10 relative">
+              <div className="w-10 h-10 rounded-xl bg-primary flex items-center justify-center text-white font-bold text-sm shadow-lg shadow-primary/20 transition-all group-hover:scale-105 border border-white/10 relative">
                 {userInitial}
-                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-bg-secondary rounded-full border border-border flex items-center justify-center">
-                  <ChevronDown size={10} className="text-text-secondary" />
-                </div>
+                <div className="absolute -bottom-1 -right-1 w-4 h-4 bg-success rounded-full border-2 border-bg-secondary" />
               </div>
             </div>
           </DropdownMenuTrigger>
-          <DropdownMenuContent align="end" className="w-56">
-             <DropdownMenuLabel className="font-normal">
-               <div className="flex flex-col space-y-2">
-                 <div className="space-y-0.5">
-                   <p className="text-[10px] text-text-secondary uppercase tracking-wider font-bold">Perfil</p>
-                   <p className="text-sm font-bold text-primary">{user?.role === 'admin' ? 'Administrador' : 'Visualizador'}</p>
-                 </div>
-                 <div className="space-y-0.5">
-                   <p className="text-[10px] text-text-secondary uppercase tracking-wider font-bold">Email</p>
-                   <p className="text-xs font-medium text-text-primary">{user?.email || '—'}</p>
-                 </div>
+          <DropdownMenuContent align="end" className="w-64 p-2">
+             <div className="px-3 py-3 mb-2 bg-bg-primary rounded-lg border border-border">
+               <p className="text-[10px] text-text-secondary uppercase tracking-widest font-bold mb-1 opacity-60">Organização</p>
+               <p className="text-sm font-bold text-text-primary truncate">{settings?.org_name?.value || 'Intelligence'}</p>
+               <div className="mt-3 pt-3 border-t border-border/50">
+                 <p className="text-[10px] text-text-secondary uppercase tracking-widest font-bold mb-1 opacity-60">Email</p>
+                 <p className="text-xs font-medium text-text-primary truncate">{user?.email || '—'}</p>
                </div>
-             </DropdownMenuLabel>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer" onClick={() => setIsPasswordModalOpen(true)}>
-              <Key className="mr-2 h-4 w-4" />
-              <span>Trocar senha</span>
+             </div>
+            <DropdownMenuItem className="cursor-pointer rounded-md py-2.5" onClick={() => setIsPasswordModalOpen(true)}>
+              <Key className="mr-2 h-4 w-4 opacity-70" />
+              <span className="font-medium">Alterar Senha</span>
             </DropdownMenuItem>
-            <DropdownMenuSeparator />
-            <DropdownMenuItem className="cursor-pointer text-danger focus:text-danger" onClick={logout}>
+            <DropdownMenuSeparator className="my-1" />
+            <DropdownMenuItem className="cursor-pointer rounded-md py-2.5 text-danger focus:text-danger focus:bg-danger/5" onClick={logout}>
               <LogOut className="mr-2 h-4 w-4" />
-              <span>Sair</span>
+              <span className="font-bold uppercase tracking-wider text-[11px]">Encerrar Sessão</span>
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
