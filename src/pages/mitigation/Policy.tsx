@@ -439,7 +439,7 @@ export default function Policy() {
                           newBlocks[idx] = e.target.value;
                           setExternalBlocks(newBlocks);
                         }}
-                        placeholder="192.168.1.0/24"
+                        placeholder="Ex: 192.0.2.0/24 ou 2001:db8::/32"
                         className="flex-grow bg-bg-primary border border-border rounded-lg px-3 py-1.5 text-[11px] font-mono text-text-primary outline-none focus:ring-2 focus:ring-primary/30" 
                       />
                       {externalBlocks.length > 1 && (
