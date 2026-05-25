@@ -33,7 +33,7 @@ import {
    Tooltip, TooltipTrigger, TooltipContent, TooltipProvider 
  } from '../components/ui/tooltip';
  import { MitigationTooltip } from '../components/MitigationTooltip';
-import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon, Settings2, Info, ArrowRight, History, Zap, CheckCircle, Clock, Globe, MapPin, Users, RefreshCw } from 'lucide-react';
+import { ArrowUp, ArrowDown, Activity, Shield, MoreVertical, BarChart2, LineChart as LineChartIcon, Settings2, Info, ArrowRight, History, Zap, CheckCircle, Clock, Globe, MapPin, Users, RefreshCw, XCircle } from 'lucide-react';
 import { Link, useNavigate } from '@tanstack/react-router';
 import { Skeleton } from '../components/Skeleton';
 import Flag from '../components/Flag';
