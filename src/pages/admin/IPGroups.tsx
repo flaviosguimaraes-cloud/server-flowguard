@@ -294,11 +294,30 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
     description: '',
     type: 'standard',
     prefixes: '',
+    prefixes_v6: '',
     anomaly_factor: 1.0,
     anomaly_min_mbps: '',
     allow_blackhole: false,
     allow_flowspec: true,
-    auto_mitigate: false
+    auto_mitigate: false,
+    
+    // IPv4 specific
+    fnm_threshold_mbps: '',
+    fnm_threshold_pps: '',
+    fnm_threshold_flows: 3500,
+    fnm_ban_for_bandwidth: true,
+    fnm_ban_for_pps: true,
+    fnm_ban_for_flows: false,
+    fnm_action: 'global' as string | null,
+
+    // IPv6 specific
+    fnm_ipv6_threshold_mbps: '',
+    fnm_ipv6_threshold_pps: '',
+    fnm_ipv6_threshold_flows: 3500,
+    fnm_ipv6_ban_for_bandwidth: true,
+    fnm_ipv6_ban_for_pps: true,
+    fnm_ipv6_ban_for_flows: false,
+    fnm_ipv6_action: 'global' as string | null,
   });
 
   useMemo(() => {
@@ -308,11 +327,28 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
         description: data.description || '',
         type: data.is_cgnat ? 'cgnat' : data.is_infrastructure ? 'infrastructure' : data.is_vip ? 'vip' : 'standard',
         prefixes: (data.prefixes || []).join(', '),
+        prefixes_v6: (data.prefixes_v6 || []).join(', '),
         anomaly_factor: data.anomaly_factor || 1.0,
         anomaly_min_mbps: data.anomaly_min_mbps || '',
         allow_blackhole: data.allow_blackhole || false,
         allow_flowspec: data.allow_flowspec || false,
-        auto_mitigate: data.auto_mitigate || false
+        auto_mitigate: data.auto_mitigate || false,
+        
+        fnm_threshold_mbps: data.fnm_threshold_mbps || '',
+        fnm_threshold_pps: data.fnm_threshold_pps || '',
+        fnm_threshold_flows: data.fnm_threshold_flows ?? 3500,
+        fnm_ban_for_bandwidth: data.fnm_ban_for_bandwidth ?? true,
+        fnm_ban_for_pps: data.fnm_ban_for_pps ?? true,
+        fnm_ban_for_flows: data.fnm_ban_for_flows ?? false,
+        fnm_action: data.fnm_action || 'global',
+
+        fnm_ipv6_threshold_mbps: data.fnm_ipv6_threshold_mbps || '',
+        fnm_ipv6_threshold_pps: data.fnm_ipv6_threshold_pps || '',
+        fnm_ipv6_threshold_flows: data.fnm_ipv6_threshold_flows ?? 3500,
+        fnm_ipv6_ban_for_bandwidth: data.fnm_ipv6_ban_for_bandwidth ?? true,
+        fnm_ipv6_ban_for_pps: data.fnm_ipv6_ban_for_pps ?? true,
+        fnm_ipv6_ban_for_flows: data.fnm_ipv6_ban_for_flows ?? false,
+        fnm_ipv6_action: data.fnm_ipv6_action || 'global',
       });
     } else {
       setFormData({
@@ -320,11 +356,26 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
         description: '',
         type: 'standard',
         prefixes: '',
+        prefixes_v6: '',
         anomaly_factor: 1.0,
         anomaly_min_mbps: '',
         allow_blackhole: false,
         allow_flowspec: true,
-        auto_mitigate: false
+        auto_mitigate: false,
+        fnm_threshold_mbps: '',
+        fnm_threshold_pps: '',
+        fnm_threshold_flows: 3500,
+        fnm_ban_for_bandwidth: true,
+        fnm_ban_for_pps: true,
+        fnm_ban_for_flows: false,
+        fnm_action: 'global',
+        fnm_ipv6_threshold_mbps: '',
+        fnm_ipv6_threshold_pps: '',
+        fnm_ipv6_threshold_flows: 3500,
+        fnm_ipv6_ban_for_bandwidth: true,
+        fnm_ipv6_ban_for_pps: true,
+        fnm_ipv6_ban_for_flows: false,
+        fnm_ipv6_action: 'global',
       });
     }
   }, [data, isOpen]);
@@ -332,6 +383,7 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const prefixesArray = formData.prefixes.split(',').map(p => p.trim()).filter(p => p);
+    const prefixesV6Array = formData.prefixes_v6.split(',').map(p => p.trim()).filter(p => p);
     
     onSubmit({
       ...formData,
@@ -339,13 +391,20 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
       is_infrastructure: formData.type === 'infrastructure',
       is_vip: formData.type === 'vip',
       prefixes: prefixesArray,
-      anomaly_min_mbps: formData.anomaly_min_mbps ? Number(formData.anomaly_min_mbps) : null
+      prefixes_v6: prefixesV6Array,
+      anomaly_min_mbps: formData.anomaly_min_mbps ? Number(formData.anomaly_min_mbps) : null,
+      fnm_action: formData.fnm_action === 'global' ? null : formData.fnm_action,
+      fnm_ipv6_action: formData.fnm_ipv6_action === 'global' ? null : formData.fnm_ipv6_action,
+      fnm_threshold_mbps: formData.fnm_threshold_mbps ? Number(formData.fnm_threshold_mbps) : null,
+      fnm_threshold_pps: formData.fnm_threshold_pps ? Number(formData.fnm_threshold_pps) : null,
+      fnm_ipv6_threshold_mbps: formData.fnm_ipv6_threshold_mbps ? Number(formData.fnm_ipv6_threshold_mbps) : null,
+      fnm_ipv6_threshold_pps: formData.fnm_ipv6_threshold_pps ? Number(formData.fnm_ipv6_threshold_pps) : null,
     });
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-xl">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>{data ? 'Editar Grupo' : 'Novo Grupo'}</DialogTitle>
           <DialogDescription>Configure as regras e prefixos para este grupo de IPs.</DialogDescription>
@@ -399,17 +458,190 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
             />
           </div>
 
-          <div className="space-y-2">
-            <Label>Prefixos CIDR (separados por vírgula)</Label>
-            <Input 
-              value={formData.prefixes} 
-              onChange={e => setFormData({ ...formData, prefixes: e.target.value })} 
-              placeholder="Ex: 45.175.50.0/24, 10.0.0.0/8"
-            />
-            <p className="text-[10px] text-text-secondary italic">Ex: 192.168.0.0/24, 200.200.10.0/24</p>
-          </div>
+          <Tabs defaultValue="ipv4" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="ipv4">IPv4</TabsTrigger>
+              <TabsTrigger value="ipv6">IPv6</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="ipv4" className="space-y-4 pt-4 animate-in fade-in-50 duration-300">
+              <div className="space-y-2">
+                <Label>Prefixos IPv4 (separados por vírgula)</Label>
+                <Input 
+                  value={formData.prefixes} 
+                  onChange={e => setFormData({ ...formData, prefixes: e.target.value })} 
+                  placeholder="Ex: 45.175.50.0/24, 10.0.0.0/8"
+                />
+              </div>
 
-          <div className="grid grid-cols-2 gap-6 p-4 bg-bg-primary rounded-xl border border-border">
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs">Threshold Mbps</Label>
+                  <Input 
+                    type="number"
+                    value={formData.fnm_threshold_mbps} 
+                    onChange={e => setFormData({ ...formData, fnm_threshold_mbps: e.target.value })} 
+                    placeholder="Padrão global (1000)"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Threshold PPS</Label>
+                  <Input 
+                    type="number"
+                    value={formData.fnm_threshold_pps} 
+                    onChange={e => setFormData({ ...formData, fnm_threshold_pps: e.target.value })} 
+                    placeholder="Padrão global (100000)"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Threshold Flows</Label>
+                  <Input 
+                    type="number"
+                    value={formData.fnm_threshold_flows} 
+                    onChange={e => setFormData({ ...formData, fnm_threshold_flows: Number(e.target.value) })} 
+                    placeholder="3500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-bg-primary rounded-lg border border-border">
+                <div className="flex flex-col gap-1">
+                  <Label className="text-xs">Gatilhos Ativos</Label>
+                  <div className="flex gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-text-secondary uppercase font-bold">Banda</span>
+                      <Switch 
+                        size="sm"
+                        checked={formData.fnm_ban_for_bandwidth} 
+                        onCheckedChange={checked => setFormData({ ...formData, fnm_ban_for_bandwidth: checked })}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-text-secondary uppercase font-bold">PPS</span>
+                      <Switch 
+                        size="sm"
+                        checked={formData.fnm_ban_for_pps} 
+                        onCheckedChange={checked => setFormData({ ...formData, fnm_ban_for_pps: checked })}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-text-secondary uppercase font-bold">Flows</span>
+                      <Switch 
+                        size="sm"
+                        checked={formData.fnm_ban_for_flows} 
+                        onCheckedChange={checked => setFormData({ ...formData, fnm_ban_for_flows: checked })}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-1.5 min-w-[180px]">
+                  <Label className="text-[10px] font-bold uppercase text-text-secondary">Ação ao detectar</Label>
+                  <Select value={formData.fnm_action || 'global'} onValueChange={v => setFormData({ ...formData, fnm_action: v })}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="global">Política Global</SelectItem>
+                      <SelectItem value="flowspec">Apenas FlowSpec</SelectItem>
+                      <SelectItem value="blackhole">Blackhole /32</SelectItem>
+                      <SelectItem value="blackhole_flowspec">Blackhole /32 + FS</SelectItem>
+                      <SelectItem value="none">Sem Ação / Monitorar</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="ipv6" className="space-y-4 pt-4 animate-in fade-in-50 duration-300">
+              <div className="space-y-2">
+                <Label>Prefixos IPv6 (separados por vírgula)</Label>
+                <Input 
+                  value={formData.prefixes_v6} 
+                  onChange={e => setFormData({ ...formData, prefixes_v6: e.target.value })} 
+                  placeholder="Ex: 2804::/32, 2001:db8::/32"
+                />
+              </div>
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs">Threshold Mbps IPv6</Label>
+                  <Input 
+                    type="number"
+                    value={formData.fnm_ipv6_threshold_mbps} 
+                    onChange={e => setFormData({ ...formData, fnm_ipv6_threshold_mbps: e.target.value })} 
+                    placeholder="Padrão global (1000)"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Threshold PPS IPv6</Label>
+                  <Input 
+                    type="number"
+                    value={formData.fnm_ipv6_threshold_pps} 
+                    onChange={e => setFormData({ ...formData, fnm_ipv6_threshold_pps: e.target.value })} 
+                    placeholder="Padrão global (100000)"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Threshold Flows IPv6</Label>
+                  <Input 
+                    type="number"
+                    value={formData.fnm_ipv6_threshold_flows} 
+                    onChange={e => setFormData({ ...formData, fnm_ipv6_threshold_flows: Number(e.target.value) })} 
+                    placeholder="3500"
+                  />
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between p-3 bg-bg-primary rounded-lg border border-border">
+                <div className="flex flex-col gap-1">
+                  <Label className="text-xs">Gatilhos Ativos IPv6</Label>
+                  <div className="flex gap-4">
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-text-secondary uppercase font-bold">Banda</span>
+                      <Switch 
+                        size="sm"
+                        checked={formData.fnm_ipv6_ban_for_bandwidth} 
+                        onCheckedChange={checked => setFormData({ ...formData, fnm_ipv6_ban_for_bandwidth: checked })}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-text-secondary uppercase font-bold">PPS</span>
+                      <Switch 
+                        size="sm"
+                        checked={formData.fnm_ipv6_ban_for_pps} 
+                        onCheckedChange={checked => setFormData({ ...formData, fnm_ipv6_ban_for_pps: checked })}
+                      />
+                    </div>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] text-text-secondary uppercase font-bold">Flows</span>
+                      <Switch 
+                        size="sm"
+                        checked={formData.fnm_ipv6_ban_for_flows} 
+                        onCheckedChange={checked => setFormData({ ...formData, fnm_ipv6_ban_for_flows: checked })}
+                      />
+                    </div>
+                  </div>
+                </div>
+                <div className="space-y-1.5 min-w-[180px]">
+                  <Label className="text-[10px] font-bold uppercase text-text-secondary">Ação ao detectar IPv6</Label>
+                  <Select value={formData.fnm_ipv6_action || 'global'} onValueChange={v => setFormData({ ...formData, fnm_ipv6_action: v })}>
+                    <SelectTrigger className="h-8 text-xs">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="global">Política Global</SelectItem>
+                      <SelectItem value="flowspec">Apenas FlowSpec</SelectItem>
+                      <SelectItem value="blackhole">Blackhole /128</SelectItem>
+                      <SelectItem value="blackhole_flowspec">Blackhole /128 + FS</SelectItem>
+                      <SelectItem value="none">Sem Ação / Monitorar</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </TabsContent>
+          </Tabs>
+
+          <div className="grid grid-cols-2 gap-6 p-4 bg-bg-primary rounded-xl border border-border mt-4">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <Label className="text-xs">Fator de Anomalia</Label>
@@ -436,16 +668,16 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
             </div>
           </div>
 
-          <div className="grid grid-cols-3 gap-4 py-2">
+          <div className="grid grid-cols-4 gap-4 py-2">
             <div className="flex flex-col gap-2">
-              <Label className="text-xs">Blackhole</Label>
+              <Label className="text-[10px] font-bold uppercase text-text-secondary">Blackhole</Label>
               <Switch 
                 checked={formData.allow_blackhole} 
                 onCheckedChange={checked => setFormData({ ...formData, allow_blackhole: checked })}
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label className="text-xs">FlowSpec</Label>
+              <Label className="text-[10px] font-bold uppercase text-text-secondary">FlowSpec</Label>
               <Switch 
                 checked={formData.allow_flowspec} 
                 onCheckedChange={checked => {
@@ -456,7 +688,7 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label className="text-xs">Auto-Mitigação</Label>
+              <Label className="text-[10px] font-bold uppercase text-text-secondary">Auto-Mitigar</Label>
               <Switch 
                 disabled={!formData.allow_flowspec}
                 checked={formData.auto_mitigate} 
