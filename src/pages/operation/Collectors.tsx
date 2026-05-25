@@ -646,25 +646,26 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, onViewDetails, 
                         <Input id="bgp_local_asn" type="number" value={formData.bgp_local_asn} onChange={e => setFormData({ ...formData, bgp_local_asn: e.target.value })} placeholder="Ex: 65000" />
                       </div>
                       <div className="md:col-span-2 space-y-3">
-                        <Label>Famílias IPv4</Label>
+                        <Label>Famílias</Label>
                         <div className="flex gap-6">
                            <div className="flex items-center space-x-2">
                              <Checkbox 
-                               id="unicast" 
-                               checked={formData.bgp_ipv4_enabled === true} 
-                               onCheckedChange={v => setFormData({ ...formData, bgp_ipv4_enabled: v === true })} 
-                             />
+                                id="unicast" 
+                                checked={formData.bgp_ipv4_enabled === true} 
+                                onCheckedChange={v => setFormData({ ...formData, bgp_ipv4_enabled: v === true })} 
+                              />
                              <label htmlFor="unicast" className="text-sm font-medium leading-none cursor-pointer">IPv4 Unicast</label>
                            </div>
                            <div className="flex items-center space-x-2">
                              <Checkbox 
-                               id="flowspec" 
-                               checked={formData.flowspec_ipv4_enabled === true} 
-                               onCheckedChange={v => setFormData({ ...formData, flowspec_ipv4_enabled: v === true })} 
-                             />
+                                id="flowspec" 
+                                checked={formData.flowspec_ipv4_enabled === true} 
+                                onCheckedChange={v => setFormData({ ...formData, flowspec_ipv4_enabled: v === true })} 
+                              />
                              <label htmlFor="flowspec" className="text-sm font-medium leading-none cursor-pointer">IPv4 FlowSpec</label>
                            </div>
                         </div>
+
                       </div>
                     </div>
                   </motion.div>
