@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as SystemRouteImport } from './routes/system'
 import { Route as SettingsRouteImport } from './routes/settings'
 import { Route as NotificationsRouteImport } from './routes/notifications'
+import { Route as MonitoringRouteImport } from './routes/monitoring'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as EventsRouteImport } from './routes/events'
 import { Route as DashboardRouteImport } from './routes/dashboard'
@@ -48,6 +49,11 @@ const SettingsRoute = SettingsRouteImport.update({
 const NotificationsRoute = NotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MonitoringRoute = MonitoringRouteImport.update({
+  id: '/monitoring',
+  path: '/monitoring',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -170,6 +176,7 @@ export interface FileRoutesByFullPath {
   '/dashboard': typeof DashboardRoute
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
+  '/monitoring': typeof MonitoringRoute
   '/notifications': typeof NotificationsRoute
   '/settings': typeof SettingsRoute
   '/system': typeof SystemRoute
@@ -197,6 +204,7 @@ export interface FileRoutesByTo {
   '/dashboard': typeof DashboardRoute
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
+  '/monitoring': typeof MonitoringRoute
   '/notifications': typeof NotificationsRoute
   '/settings': typeof SettingsRoute
   '/system': typeof SystemRoute
@@ -225,6 +233,7 @@ export interface FileRoutesById {
   '/dashboard': typeof DashboardRoute
   '/events': typeof EventsRoute
   '/login': typeof LoginRoute
+  '/monitoring': typeof MonitoringRoute
   '/notifications': typeof NotificationsRoute
   '/settings': typeof SettingsRoute
   '/system': typeof SystemRoute
@@ -254,6 +263,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/events'
     | '/login'
+    | '/monitoring'
     | '/notifications'
     | '/settings'
     | '/system'
@@ -281,6 +291,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/events'
     | '/login'
+    | '/monitoring'
     | '/notifications'
     | '/settings'
     | '/system'
@@ -308,6 +319,7 @@ export interface FileRouteTypes {
     | '/dashboard'
     | '/events'
     | '/login'
+    | '/monitoring'
     | '/notifications'
     | '/settings'
     | '/system'
@@ -336,6 +348,7 @@ export interface RootRouteChildren {
   DashboardRoute: typeof DashboardRoute
   EventsRoute: typeof EventsRoute
   LoginRoute: typeof LoginRoute
+  MonitoringRoute: typeof MonitoringRoute
   NotificationsRoute: typeof NotificationsRoute
   SettingsRoute: typeof SettingsRoute
   SystemRoute: typeof SystemRoute
@@ -376,6 +389,13 @@ declare module '@tanstack/react-router' {
       path: '/notifications'
       fullPath: '/notifications'
       preLoaderRoute: typeof NotificationsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/monitoring': {
+      id: '/monitoring'
+      path: '/monitoring'
+      fullPath: '/monitoring'
+      preLoaderRoute: typeof MonitoringRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -544,6 +564,7 @@ const rootRouteChildren: RootRouteChildren = {
   DashboardRoute: DashboardRoute,
   EventsRoute: EventsRoute,
   LoginRoute: LoginRoute,
+  MonitoringRoute: MonitoringRoute,
   NotificationsRoute: NotificationsRoute,
   SettingsRoute: SettingsRoute,
   SystemRoute: SystemRoute,
@@ -565,3 +586,13 @@ const rootRouteChildren: RootRouteChildren = {
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
   ._addFileTypes<FileRouteTypes>()
+
+import type { getRouter } from './router.tsx'
+import type { startInstance } from './start.ts'
+declare module '@tanstack/react-start' {
+  interface Register {
+    ssr: true
+    router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
+  }
+}
