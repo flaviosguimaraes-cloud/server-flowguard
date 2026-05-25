@@ -150,13 +150,14 @@ export default function Dashboard() {
     return isNaN(parsed) ? 1 : parsed;
   });
 
-  const [selectedIfaces, setSelectedIfaces] = useState<string[]>(() => {
+  const [selectedIfaces, setSelectedIfaces] = useState<number[]>(() => {
     try {
-      const saved = localStorage.getItem('fg_ifaces');
+      const saved = localStorage.getItem('fg_iface_indexes');
       const parsed = saved ? JSON.parse(saved) : null;
       return Array.isArray(parsed) ? parsed : [];
     } catch { return []; }
   });
+
 
   const [source] = useState<'snmp'>('snmp');
   const [selectedMinutes, setSelectedMinutes] = useState(() => {
