@@ -4,7 +4,7 @@ import api from '../../services/api';
 import { 
   Network, Plus, Search, Edit2, Trash2, Shield, 
   Check, X, ChevronRight, Info, AlertTriangle, 
-  Zap, Globe, Filter, UserCheck
+  Zap, Globe, Filter, UserCheck, Eye
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -24,6 +24,14 @@ import {
   Sheet, SheetContent, SheetHeader, SheetTitle, 
   SheetDescription, SheetFooter 
 } from '@/components/ui/sheet';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 
 export default function IPGroups() {
   const queryClient = useQueryClient();
