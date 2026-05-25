@@ -344,6 +344,16 @@ export default function Policy() {
         
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           <ResponseModeCard
+            id={5}
+            title="Sem Ação"
+            description="Detecta e registra ataques mas não aplica nenhuma mitigação automática."
+            icon={Eye}
+            colorClass="bg-gray-500/10 text-gray-500"
+            selected={mode === 'none'}
+            onSelect={() => handleSelectCard(5)}
+          />
+
+          <ResponseModeCard
             id={4}
             title="Mitigação externa"
             description="Anuncia blocos /24 para scrubbing externo."
