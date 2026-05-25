@@ -396,8 +396,21 @@ export default function Dashboard() {
   }, [selectedCollector]);
 
   useEffect(() => {
-    localStorage.setItem('fg_ifaces', JSON.stringify(selectedIfaces));
+    localStorage.setItem('fg_iface_indexes', JSON.stringify(selectedIfaces));
   }, [selectedIfaces]);
+
+  useEffect(() => {
+    if (selectedIfaces.length === 0 && interfaces) {
+      const list = Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []);
+      const upstreams = list
+        .filter((i: any) => i.role === 'upstream' || i.is_upstream)
+        .map((i: any) => i.if_index);
+      if (upstreams.length > 0) {
+        setSelectedIfaces(upstreams);
+      }
+    }
+  }, [interfaces, selectedIfaces.length]);
+
 
   useEffect(() => {
     localStorage.setItem('fg_traffic_source', source);
