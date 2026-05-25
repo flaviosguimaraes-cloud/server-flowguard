@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
-import { Shield, Save, Zap, Sliders, AlertTriangle, Ban, Cloud, ShieldAlert, Plus, Trash2 } from 'lucide-react';
+import { Shield, Save, Zap, Sliders, AlertTriangle, Ban, Cloud, ShieldAlert, Plus, Trash2, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "../../components/ui/tooltip";
 import {
@@ -18,7 +18,7 @@ import {
 
 import { clsx } from 'clsx';
 
-type Mode = 'blackhole' | 'external' | null;
+type Mode = 'blackhole' | 'external' | 'none' | null;
 
 export default function Policy() {
   const isAdmin = localStorage.getItem('role') === 'admin';
@@ -250,6 +250,9 @@ export default function Policy() {
     } else if (cardId === 4) {
       setMode('external');
       setAutoConfig(prev => ({ ...prev, operation_mode: 'disabled' }));
+    } else if (cardId === 5) {
+      setMode('none');
+      setAutoConfig(prev => ({ ...prev, operation_mode: 'disabled' }));
     }
   };
 
@@ -309,8 +312,8 @@ export default function Policy() {
         <div className="flex items-center gap-3">
           <Shield className="text-primary" size={24} />
           <div>
-            <h1 className="text-2xl font-bold text-text-primary">Política de Mitigação</h1>
-            <p className="text-sm text-text-secondary">Configuração de bloqueio, FlowSpec automático e limiares de detecção</p>
+            <h1 className="text-2xl font-bold text-text-primary">Política Global</h1>
+            <p className="text-sm text-text-secondary">Aplicada a IPs que não pertencem a nenhum grupo</p>
           </div>
         </div>
       </div>
@@ -340,6 +343,16 @@ export default function Policy() {
         </div>
         
         <div className="p-6 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+          <ResponseModeCard
+            id={5}
+            title="Sem Ação"
+            description="Detecta e registra ataques mas não aplica nenhuma mitigação automática."
+            icon={Eye}
+            colorClass="bg-gray-500/10 text-gray-500"
+            selected={mode === 'none'}
+            onSelect={() => handleSelectCard(5)}
+          />
+
           <ResponseModeCard
             id={4}
             title="Mitigação externa"
