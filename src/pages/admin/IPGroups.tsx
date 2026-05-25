@@ -182,19 +182,18 @@ export default function IPGroups() {
               <tr className="bg-bg-primary/50 text-text-secondary text-xs uppercase tracking-wider font-bold">
                 <th className="px-6 py-4">Nome</th>
                 <th className="px-6 py-4">Prefixos</th>
-                <th className="px-6 py-4">Ação de Detecção</th>
-                <th className="px-6 py-4">Gatilhos</th>
+                <th className="px-6 py-4">Perfil de Mitigação</th>
                 <th className="px-6 py-4 text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8"><Skeleton count={3} /></td>
+                  <td colSpan={4} className="px-6 py-8"><Skeleton count={3} /></td>
                 </tr>
               ) : filteredGroups.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-text-secondary italic">Nenhum grupo encontrado</td>
+                  <td colSpan={4} className="px-6 py-8 text-center text-text-secondary italic">Nenhum grupo encontrado</td>
                 </tr>
               ) : filteredGroups.map((group: any) => (
                 <tr 
@@ -210,17 +209,16 @@ export default function IPGroups() {
                     {group.prefixes?.length || 0} prefixos
                   </td>
                   <td className="px-6 py-4">
-                    <Badge variant="outline" className="capitalize">
-                      {group.fnm_action === 'flowspec' ? 'FlowSpec' : 
-                       group.fnm_action === 'blackhole' ? 'Blackhole' :
-                       group.fnm_action === 'blackhole_flowspec' ? 'Blackhole+FS' :
-                       group.fnm_action === 'none' ? 'Sem Ação' : 'Global'}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 flex gap-1">
-                    {group.fnm_ban_for_bandwidth && <Badge className="bg-blue-500/10 text-blue-500 border-none text-[10px]">Banda</Badge>}
-                    {group.fnm_ban_for_pps && <Badge className="bg-purple-500/10 text-purple-500 border-none text-[10px]">PPS</Badge>}
-                    {group.fnm_ban_for_flows && <Badge className="bg-orange-500/10 text-orange-500 border-none text-[10px]">Flows</Badge>}
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-text-primary">
+                        {group.profile?.name || 'Padrão Global'}
+                      </span>
+                      {group.profile?.description && (
+                        <span className="text-[10px] text-text-secondary truncate max-w-[150px]">
+                          {group.profile.description}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
