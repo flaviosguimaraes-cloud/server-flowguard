@@ -691,7 +691,7 @@ function IPGroupDrawer({ isOpen, onClose, group, onSave, onDelete, isLoading }: 
           </div>
 
           <div className="space-y-3">
-            <Label>Prefixos IPv4 ({group.prefixes?.length || 0})</Label>
+            <Label>Prefixos ({group.prefixes?.length || 0})</Label>
             <div className="flex flex-wrap gap-2">
               {group.prefixes?.map((p: string, i: number) => (
                 <Badge key={i} variant="secondary" className="font-mono py-1">
@@ -699,21 +699,7 @@ function IPGroupDrawer({ isOpen, onClose, group, onSave, onDelete, isLoading }: 
                 </Badge>
               ))}
               {(!group.prefixes || group.prefixes.length === 0) && (
-                <p className="text-xs text-text-secondary italic">Nenhum prefixo IPv4 associado</p>
-              )}
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <Label>Prefixos IPv6 ({group.prefixes_v6?.length || 0})</Label>
-            <div className="flex flex-wrap gap-2">
-              {group.prefixes_v6?.map((p: string, i: number) => (
-                <Badge key={i} variant="secondary" className="font-mono py-1 border-primary/30 text-primary">
-                  {p}
-                </Badge>
-              ))}
-              {(!group.prefixes_v6 || group.prefixes_v6.length === 0) && (
-                <p className="text-xs text-text-secondary italic">Nenhum prefixo IPv6 associado</p>
+                <p className="text-xs text-text-secondary italic">Nenhum prefixo associado</p>
               )}
             </div>
           </div>
