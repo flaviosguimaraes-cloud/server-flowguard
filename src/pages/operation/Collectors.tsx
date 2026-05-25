@@ -694,26 +694,47 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, onViewDetails, 
                     exit={{ height: 0, opacity: 0 }}
                     className="overflow-hidden"
                   >
-                    <div className="flex gap-6 pb-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="bgp_ipv6_unicast" 
-                          checked={formData.bgp_ipv6_enabled === true} 
-                          onCheckedChange={v => setFormData({ ...formData, bgp_ipv6_enabled: v === true })} 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="bgp_local_ipv6">IPv6 Local (FlowGuard)</Label>
+                        <Input 
+                          id="bgp_local_ipv6" 
+                          value={formData.bgp_local_ipv6} 
+                          onChange={e => setFormData({ ...formData, bgp_local_ipv6: e.target.value })} 
+                          placeholder="Ex: 2804:xxxx::1" 
                         />
-                        <label htmlFor="bgp_ipv6_unicast" className="text-sm font-medium leading-none cursor-pointer">BGP IPv6 Unicast</label>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="flowspec_ipv6" 
-                          checked={formData.flowspec_ipv6_enabled === true} 
-                          onCheckedChange={v => setFormData({ ...formData, flowspec_ipv6_enabled: v === true })} 
+                      <div className="space-y-2">
+                        <Label htmlFor="bgp_peer_ipv6">IPv6 Remoto (Roteador)</Label>
+                        <Input 
+                          id="bgp_peer_ipv6" 
+                          value={formData.bgp_peer_ipv6} 
+                          onChange={e => setFormData({ ...formData, bgp_peer_ipv6: e.target.value })} 
+                          placeholder="Ex: 2804:xxxx::2" 
                         />
-                        <label htmlFor="flowspec_ipv6" className="text-sm font-medium leading-none cursor-pointer">IPv6 FlowSpec</label>
+                      </div>
+                      <div className="md:col-span-2 flex gap-6 mt-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="bgp_ipv6_unicast" 
+                            checked={formData.bgp_ipv6_enabled === true} 
+                            onCheckedChange={v => setFormData({ ...formData, bgp_ipv6_enabled: v === true })} 
+                          />
+                          <label htmlFor="bgp_ipv6_unicast" className="text-sm font-medium leading-none cursor-pointer">BGP IPv6 Unicast</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="flowspec_ipv6" 
+                            checked={formData.bgp_ipv6_flowspec === true} 
+                            onCheckedChange={v => setFormData({ ...formData, bgp_ipv6_flowspec: v === true })} 
+                          />
+                          <label htmlFor="flowspec_ipv6" className="text-sm font-medium leading-none cursor-pointer">IPv6 FlowSpec</label>
+                        </div>
                       </div>
                     </div>
                   </motion.div>
                 )}
+
               </AnimatePresence>
             </section>
 
