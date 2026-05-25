@@ -398,7 +398,30 @@ export default function IPGroups() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!deleteProfileConfirm} onOpenChange={() => setDeleteProfileConfirm(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remover Perfil</DialogTitle>
+            <DialogDescription>
+              Deseja realmente remover o perfil <strong>{deleteProfileConfirm?.name}</strong>?
+              Grupos associados a este perfil voltarão para o perfil padrão.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteProfileConfirm(null)}>Cancelar</Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => deleteProfileMutation.mutate(deleteProfileConfirm.id)} 
+              disabled={deleteProfileMutation.isPending}
+            >
+              {deleteProfileMutation.isPending ? 'Removendo...' : 'Remover'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }
 
