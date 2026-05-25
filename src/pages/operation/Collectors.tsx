@@ -431,7 +431,7 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, onViewDetails, 
         ...prev,
         monitored_networks: [
           ...prev.monitored_networks,
-          { cidr: '', description: '', allow_blackhole: true, allow_flowspec: true }
+          { cidr: '', description: '' }
         ]
       }));
     };
@@ -783,24 +783,6 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, onViewDetails, 
                       </div>
                     </div>
 
-                    <div className="flex gap-4">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`bh-${index}`} 
-                          checked={net.allow_blackhole} 
-                          onCheckedChange={v => handleUpdateNetwork(index, 'allow_blackhole', v === true)}
-                        />
-                        <label htmlFor={`bh-${index}`} className="text-[10px] font-bold leading-none cursor-pointer uppercase text-text-secondary">Blackhole permitido</label>
-                      </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id={`fs-${index}`} 
-                          checked={net.allow_flowspec} 
-                          onCheckedChange={v => handleUpdateNetwork(index, 'allow_flowspec', v === true)}
-                        />
-                        <label htmlFor={`fs-${index}`} className="text-[10px] font-bold leading-none cursor-pointer uppercase text-text-secondary">FlowSpec permitido</label>
-                      </div>
-                    </div>
                   </div>
                 ))}
                 {formData.monitored_networks.length === 0 && (
@@ -966,7 +948,7 @@ function CollectorDetailsSheet({ isOpen, onClose, collector }: any) {
                   collectorId={collector.id} 
                   interfaces={ifaces} 
                   isLoading={loadingIfaces}
-                  onUpdate={(ifIndex: number, data: any) => updateIfaceMutation.mutate({ ifIndex, data })}
+                  onUpdate={(ifIndex: number, data: any) => updateIfaceMutation.mutateAsync({ ifIndex, data })}
                 />
               </TabsContent>
 
@@ -1013,12 +995,15 @@ function InterfacesTab({ collectorId, interfaces, isLoading, onUpdate }: any) {
     };
   }, [interfaces]);
 
-  const handleAutoClassify = () => {
-    const promises = interfaces.map((iface: any) => {
-      let role = iface.role || 'unknown';
-      let isUpstream = iface.is_upstream;
+  const handleAutoClassify = async () => {
+    let count = 0;
+    for (const iface of interfaces) {
+      let role = 'unknown';
+      let isUpstream = false;
       const alias = (iface.if_alias || '').toUpperCase();
-      const speed = iface.if_speed || 0;
+      const ifName = (iface.if_name || '').toUpperCase();
+      
+      const hasKnownAlias = iface.if_alias && iface.if_alias !== iface.if_name;
 
       if (['IP-', 'IMPLANTAR', 'ATC', 'GDNET'].some(k => alias.includes(k))) {
         role = 'upstream';
@@ -1026,7 +1011,7 @@ function InterfacesTab({ collectorId, interfaces, isLoading, onUpdate }: any) {
       } else if (['PPPOE', 'CGNAT', 'PPP'].some(k => alias.includes(k))) {
         role = 'access';
         isUpstream = false;
-      } else if (alias.length > 0 || speed > 0) {
+      } else if (hasKnownAlias) {
         role = 'internal';
         isUpstream = false;
       } else {
@@ -1035,15 +1020,15 @@ function InterfacesTab({ collectorId, interfaces, isLoading, onUpdate }: any) {
       }
 
       if (role !== iface.role || isUpstream !== iface.is_upstream) {
-        return onUpdate(iface.if_index, { role, is_upstream: isUpstream });
+        await onUpdate(iface.if_index, { role, is_upstream: isUpstream });
+        count++;
       }
-      return null;
-    }).filter(Boolean);
+    }
 
-    if (promises.length > 0) {
-      toast.info(`Classificando ${promises.length} interfaces...`);
+    if (count > 0) {
+      toast.success(`Classificação concluída: ${count} interfaces atualizadas.`);
     } else {
-      toast.info('Nenhuma interface nova para classificar.');
+      toast.info('Nenhuma interface precisava de atualização.');
     }
   };
 
@@ -1129,10 +1114,10 @@ function InterfacesTab({ collectorId, interfaces, isLoading, onUpdate }: any) {
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="unknown">?</SelectItem>
-                      <SelectItem value="upstream">Upstream</SelectItem>
-                      <SelectItem value="access">Acesso</SelectItem>
-                      <SelectItem value="internal">Interno</SelectItem>
+                      <SelectItem value="upstream">upstream</SelectItem>
+                      <SelectItem value="access">access</SelectItem>
+                      <SelectItem value="internal">internal</SelectItem>
+                      <SelectItem value="unknown">unknown</SelectItem>
                     </SelectContent>
                   </Select>
                 </TableCell>
@@ -1196,7 +1181,7 @@ function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
   };
 
   const handleAddNetwork = () => {
-    const newNetwork = { cidr: '', type: 'own', label: '', allow_blackhole: true, allow_flowspec: true };
+    const newNetwork = { cidr: '', description: '' };
     const updated = [...formData.monitored_networks, newNetwork];
     setFormData({ ...formData, monitored_networks: updated });
   };
@@ -1242,7 +1227,7 @@ function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
         </div>
         <div className="space-y-3">
           {formData.monitored_networks.map((net, i) => (
-            <div key={i} className="bg-bg-primary p-4 rounded-xl border border-border grid grid-cols-1 md:grid-cols-4 gap-4 items-end relative group">
+            <div key={i} className="bg-bg-primary p-4 rounded-xl border border-border grid grid-cols-1 md:grid-cols-2 gap-4 items-end relative group">
               <button 
                 onClick={() => handleRemoveNetwork(i)}
                 className="absolute -top-2 -right-2 w-6 h-6 bg-destructive text-white rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity"
@@ -1259,34 +1244,13 @@ function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[10px] uppercase font-bold text-text-secondary">Tipo</Label>
-                <Select value={net.type} onValueChange={v => { handleUpdateNetwork(i, 'type', v); onSave({ ...collector, monitored_networks: formData.monitored_networks }); }}>
-                  <SelectTrigger className="h-9"><SelectValue /></SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="own">Própria</SelectItem>
-                    <SelectItem value="client">Cliente</SelectItem>
-                    <SelectItem value="transit">Trânsito</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-[10px] uppercase font-bold text-text-secondary">Label</Label>
+                <Label className="text-[10px] uppercase font-bold text-text-secondary">Descrição</Label>
                 <Input 
-                  value={net.label} 
-                  onChange={e => handleUpdateNetwork(i, 'label', e.target.value)} 
+                  value={net.description || net.label || ''} 
+                  onChange={e => handleUpdateNetwork(i, 'description', e.target.value)} 
                   onBlur={() => onSave({ ...collector, monitored_networks: formData.monitored_networks })}
                   placeholder="Nome do cliente/link" 
                 />
-              </div>
-              <div className="flex items-center gap-4 h-9 pb-0.5">
-                <div className="flex items-center gap-2">
-                  <Checkbox checked={net.allow_blackhole} onCheckedChange={v => handleUpdateNetwork(i, 'allow_blackhole', v)} />
-                  <span className="text-[10px] font-bold uppercase text-text-secondary">BH</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox checked={net.allow_flowspec} onCheckedChange={v => handleUpdateNetwork(i, 'allow_flowspec', v)} />
-                  <span className="text-[10px] font-bold uppercase text-text-secondary">FS</span>
-                </div>
               </div>
             </div>
           ))}
