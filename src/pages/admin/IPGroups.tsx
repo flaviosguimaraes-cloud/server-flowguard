@@ -91,7 +91,7 @@ export default function IPGroups() {
     if (!Array.isArray(groups)) return { total: 0, ips: 0, autoMitigate: 0, cgnat: 0 };
     return {
       total: groups.length,
-      ips: groups.reduce((acc: number, g: any) => acc + (g.prefixes?.length || 0) + (g.prefixes_v6?.length || 0), 0),
+      ips: groups.reduce((acc: number, g: any) => acc + (g.prefixes?.length || 0), 0),
       autoMitigate: groups.filter((g: any) => g.auto_mitigate).length,
       cgnat: groups.filter((g: any) => g.is_cgnat).length
     };
