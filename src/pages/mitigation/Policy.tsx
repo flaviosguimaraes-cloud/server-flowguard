@@ -564,7 +564,7 @@ export default function Policy() {
             <AlertDialogDescription className="text-text-secondary space-y-4 pt-2">
               <p>Os limiares de detecção foram alterados.</p>
               <p>
-                O motor de detecção (FastNetMon) precisa ser reiniciado para aplicar as novas configurações.
+                O motor de detecção precisa ser reiniciado para aplicar as novas configurações.
               </p>
               <p className="font-semibold text-text-primary">
                 Durante o restart (~5s) a detecção ficará pausada.
