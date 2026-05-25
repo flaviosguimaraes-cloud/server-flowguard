@@ -948,7 +948,7 @@ function CollectorDetailsSheet({ isOpen, onClose, collector }: any) {
                   collectorId={collector.id} 
                   interfaces={ifaces} 
                   isLoading={loadingIfaces}
-                  onUpdate={(ifIndex: number, data: any) => updateIfaceMutation.mutate({ ifIndex, data })}
+                  onUpdate={(ifIndex: number, data: any) => updateIfaceMutation.mutateAsync({ ifIndex, data })}
                 />
               </TabsContent>
 
@@ -1181,7 +1181,7 @@ function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
   };
 
   const handleAddNetwork = () => {
-    const newNetwork = { cidr: '', label: '' };
+    const newNetwork = { cidr: '', description: '' };
     const updated = [...formData.monitored_networks, newNetwork];
     setFormData({ ...formData, monitored_networks: updated });
   };
@@ -1244,10 +1244,10 @@ function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
                 />
               </div>
               <div className="space-y-1.5">
-                <Label className="text-[10px] uppercase font-bold text-text-secondary">Label</Label>
+                <Label className="text-[10px] uppercase font-bold text-text-secondary">Descrição</Label>
                 <Input 
-                  value={net.label} 
-                  onChange={e => handleUpdateNetwork(i, 'label', e.target.value)} 
+                  value={net.description || net.label || ''} 
+                  onChange={e => handleUpdateNetwork(i, 'description', e.target.value)} 
                   onBlur={() => onSave({ ...collector, monitored_networks: formData.monitored_networks })}
                   placeholder="Nome do cliente/link" 
                 />
