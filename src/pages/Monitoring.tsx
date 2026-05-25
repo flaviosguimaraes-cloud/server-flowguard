@@ -59,6 +59,7 @@ const Monitoring = () => {
   const [minutes, setMinutes] = useState(60);
   const [direction, setDirection] = useState<'download' | 'upload'>('download');
   const [countdown, setCountdown] = useState(30);
+  const [isRefreshing, setIsRefreshing] = useState(false);
 
   const isAuthenticated = !!localStorage.getItem('access_token');
 
