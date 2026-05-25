@@ -188,7 +188,8 @@
       cdns: 'Ranking de CDNs',
       administration: 'Administración',
       threats: 'Amenazas',
-    }
+      monitoring: 'Monitoreo',
+    },
   };
  
  export type TranslationKey = keyof typeof translations['en'];
