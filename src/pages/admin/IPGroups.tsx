@@ -511,7 +511,6 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] text-text-secondary uppercase font-bold">Banda</span>
                       <Switch 
-                        size="sm"
                         checked={formData.fnm_ban_for_bandwidth} 
                         onCheckedChange={checked => setFormData({ ...formData, fnm_ban_for_bandwidth: checked })}
                       />
@@ -519,7 +518,6 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] text-text-secondary uppercase font-bold">PPS</span>
                       <Switch 
-                        size="sm"
                         checked={formData.fnm_ban_for_pps} 
                         onCheckedChange={checked => setFormData({ ...formData, fnm_ban_for_pps: checked })}
                       />
@@ -527,7 +525,6 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
                     <div className="flex items-center gap-2">
                       <span className="text-[10px] text-text-secondary uppercase font-bold">Flows</span>
                       <Switch 
-                        size="sm"
                         checked={formData.fnm_ban_for_flows} 
                         onCheckedChange={checked => setFormData({ ...formData, fnm_ban_for_flows: checked })}
                       />
