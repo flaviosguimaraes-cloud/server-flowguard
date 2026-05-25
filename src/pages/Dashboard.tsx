@@ -371,32 +371,22 @@ export default function Dashboard() {
      });
    }, [selectedMinutes, selectedIfaces, queryClient]);
  
-   const { data: metricsHistory, isLoading: metricsHistoryLoading } = useQuery({
-     queryKey: ['iface-history', selectedCollector, selectedMinutes, selectedIfaces],
-     queryFn: async () => {
-       if (selectedIfaces.length === 0 || !selectedCollector)
-         return null;
- 
-       console.log('Buscando histórico:', selectedCollector, selectedIfaces, selectedMinutes);
+  const { data: metricsHistory, isLoading: metricsHistoryLoading } = useQuery({
+    queryKey: ['iface-history', selectedCollector, selectedMinutes, selectedIfaces],
+    queryFn: async () => {
+      if (selectedIfaces.length === 0 || !selectedCollector)
+        return null;
 
-      const results = await Promise.all(
-         selectedIfaces.map(async ifName => {
-           const url = `/api/snmp/${selectedCollector}/metrics/history?minutes=${selectedMinutes}&if_name=${encodeURIComponent(ifName)}`;
-          console.log('URL:', url);
-          const r = await api.get(url);
-          console.log('Resultado:', ifName, r.data);
-          return {
-            ifName,
-            data: r.data?.history || []
-          };
-        })
-      );
-      return results;
+      const ifIndexes = selectedIfaces.join(',');
+      const url = `/api/snmp/${selectedCollector}/metrics/history?minutes=${selectedMinutes}&if_indexes=${ifIndexes}`;
+      const r = await api.get(url);
+      return r.data;
     },
     enabled: isAuthenticated && selectedIfaces.length > 0 && !!selectedCollector,
     refetchInterval: 60000,
     placeholderData: keepPreviousData,
   });
+
  
   useEffect(() => {
     if (selectedCollector) {
