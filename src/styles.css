@@ -97,7 +97,7 @@ aside:has(a[href*="lovable.dev"]) {
   }
 
   .fg-metric-card {
-    @apply fg-card p-6 flex flex-col justify-between;
+    @apply bg-bg-card border border-border-main rounded-xl shadow-sm overflow-hidden transition-all p-6 flex flex-col justify-between;
   }
 
   .fg-metric-value {
@@ -124,7 +124,7 @@ aside:has(a[href*="lovable.dev"]) {
 
   /* Tables */
   .fg-table-container {
-    @apply fg-card overflow-x-auto;
+    @apply bg-bg-card border border-border-main rounded-xl shadow-sm overflow-x-auto;
   }
 
   .fg-table {
