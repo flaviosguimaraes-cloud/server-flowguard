@@ -65,125 +65,92 @@
    };
  
   return (
-    <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4 transition-colors relative overflow-hidden">
-      {/* Background Pattern */}
-      <div className="absolute inset-0 z-0 opacity-[0.03] dark:opacity-[0.05] pointer-events-none">
-        <svg width="100%" height="100%" xmlns="http://www.w3.org/2000/svg">
-          <defs>
-            <pattern id="grid" width="40" height="40" patternUnits="userSpaceOnUse">
-              <path d="M 40 0 L 0 0 0 40" fill="none" stroke="currentColor" strokeWidth="1"/>
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#grid)" />
-        </svg>
-      </div>
-      
-      {/* Floating Blobs */}
-      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/10 rounded-full blur-[120px] pointer-events-none" />
-      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-primary/5 rounded-full blur-[120px] pointer-events-none" />
-
-      <div className="max-w-md w-full z-10">
-        <div className="card p-8 md:p-10 shadow-2xl shadow-primary/5 border-primary/5 relative">
-          <div className="absolute top-0 left-0 w-full h-1.5 bg-gradient-to-r from-primary/20 via-primary to-primary/20" />
-          
-          <div className="flex justify-between items-center mb-10">
-            <div className="flex items-center gap-2 bg-bg-primary px-3 py-1.5 rounded-lg border border-border">
-              <Globe className="text-text-secondary" size={14} />
-              <select 
-                value={lang} 
-                onChange={(e) => changeLanguage(e.target.value as any)}
-                className="bg-transparent border-none outline-none text-[10px] font-bold uppercase tracking-wider cursor-pointer text-text-secondary hover:text-primary transition-colors appearance-none"
-              >
-                <option value="pt-BR">PT-BR</option>
-                <option value="en">EN-US</option>
-                <option value="es">ES-ES</option>
-              </select>
-            </div>
-
-            <button 
-              type="button"
-              onClick={toggleTheme}
-              className="header-action"
+    <div className="min-h-screen bg-bg-primary flex items-center justify-center p-4 transition-colors">
+      <div className="max-w-md w-full bg-bg-secondary p-10 rounded-2xl shadow-xl border border-border transition-all duration-300 relative overflow-hidden">
+        <div className="absolute top-0 left-0 w-full h-1 bg-primary/20" />
+        <div className="flex justify-between items-center mb-10">
+          <div className="flex items-center gap-2">
+            <Globe className="text-text-secondary" size={18} />
+            <select 
+              value={lang} 
+              onChange={(e) => changeLanguage(e.target.value as any)}
+              className="bg-transparent border-none outline-none text-sm cursor-pointer text-text-secondary font-medium"
             >
-              {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-            </button>
+              <option value="pt-BR">PT</option>
+              <option value="en">EN</option>
+              <option value="es">ES</option>
+            </select>
           </div>
 
-          <div className="text-center mb-10">
-            <div className="inline-flex items-center justify-center w-20 h-20 bg-primary/10 rounded-3xl mb-6 border border-primary/20 shadow-inner relative group transition-transform hover:scale-105">
-              <Shield className="text-primary relative z-10" size={40} />
-              <div className="absolute inset-0 bg-primary/20 rounded-3xl blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-            </div>
-            <h1 className="text-4xl font-black text-text-primary tracking-tighter mb-2">FlowGuard</h1>
-            <div className="flex items-center justify-center gap-2">
-              <div className="h-[1px] w-4 bg-primary/30" />
-              <p className="text-text-secondary font-extrabold text-[10px] uppercase tracking-[0.3em] opacity-60">Network Intelligence</p>
-              <div className="h-[1px] w-4 bg-primary/30" />
-            </div>
-          </div>
-
-          <form onSubmit={handleSubmit} className="space-y-5">
-            {error && (
-              <div className="bg-danger/10 border border-danger/20 text-danger px-4 py-3 rounded-xl text-[11px] text-center font-bold uppercase tracking-widest animate-in fade-in slide-in-from-top-2 duration-300">
-                {error}
-              </div>
-            )}
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1 opacity-70">
-                Identificação
-              </label>
-              <div className="relative group">
-                <User className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-primary transition-colors" size={18} />
-                <input
-                  type="text"
-                  placeholder="Usuário ou E-mail"
-                  className="w-full bg-bg-primary border border-border rounded-xl py-3.5 pl-12 pr-4 outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/50 transition-all text-sm text-text-primary placeholder:text-text-secondary/40 font-medium"
-                  value={username}
-                  onChange={(e) => setUsername(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <div className="space-y-2">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1 opacity-70">
-                Autenticação
-              </label>
-              <div className="relative group">
-                <Lock className="absolute left-4 top-1/2 -translate-y-1/2 text-text-secondary group-focus-within:text-primary transition-colors" size={18} />
-                <input
-                  type="password"
-                  placeholder="Sua senha de acesso"
-                  className="w-full bg-bg-primary border border-border rounded-xl py-3.5 pl-12 pr-4 outline-none focus:ring-4 focus:ring-primary/10 focus:border-primary/50 transition-all text-sm text-text-primary placeholder:text-text-secondary/40 font-medium"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  required
-                />
-              </div>
-            </div>
-
-            <button 
-              disabled={loading}
-              className="w-full bg-primary hover:bg-primary/90 text-white font-black py-4 rounded-xl transition-all shadow-xl shadow-primary/20 active:scale-[0.98] mt-4 flex items-center justify-center disabled:opacity-70 uppercase tracking-widest text-[11px] gap-3"
-            >
-              {loading ? (
-                <div className="w-5 h-5 border-[3px] border-white/30 border-t-white rounded-full animate-spin" />
-              ) : (
-                <>
-                  <span>Acessar Painel</span>
-                  <div className="w-5 h-5 bg-white/10 rounded-full flex items-center justify-center">
-                    <Shield size={10} />
-                  </div>
-                </>
-              )}
-            </button>
-          </form>
-
-          <p className="mt-8 text-center text-[10px] text-text-secondary font-medium opacity-50 uppercase tracking-widest">
-            &copy; 2026 FlowGuard Security Systems
-          </p>
+          <button 
+            type="button"
+            onClick={toggleTheme}
+            className="p-2 hover:bg-bg-primary rounded-lg text-text-secondary hover:text-primary transition-all duration-200 border border-transparent hover:border-border active:scale-95"
+          >
+            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+          </button>
         </div>
+
+        <div className="text-center mb-8">
+          <div className="inline-flex items-center justify-center p-3.5 bg-primary/10 rounded-xl mb-6 border border-primary/10">
+            <Shield className="text-primary" size={40} />
+          </div>
+          <h1 className="text-3xl font-bold text-text-primary tracking-tight mb-1">FlowGuard</h1>
+          <p className="text-text-secondary font-bold text-[10px] uppercase tracking-widest opacity-60">Network Intelligence & DDoS Mitigation</p>
+        </div>
+
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {error && (
+            <div className="bg-danger/5 border border-danger/10 text-danger p-3 rounded-lg text-xs text-center font-bold uppercase tracking-wider animate-in fade-in duration-300">
+              {error}
+            </div>
+          )}
+
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wider ml-1">
+              {t('username')}
+            </label>
+            <div className="relative">
+              <User className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
+              <input
+                type="text"
+                placeholder={t('username')}
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-2 pl-9 pr-4 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <div className="space-y-1">
+            <label className="text-[11px] font-bold text-text-secondary uppercase tracking-wider ml-1">
+              {t('password')}
+            </label>
+            <div className="relative">
+              <Lock className="absolute left-3 top-1/2 -translate-y-1/2 text-text-secondary" size={16} />
+              <input
+                type="password"
+                placeholder={t('password')}
+                className="w-full bg-bg-primary/50 border border-border rounded-lg py-2 pl-9 pr-4 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                required
+              />
+            </div>
+          </div>
+
+          <button 
+            disabled={loading}
+            className="w-full bg-primary hover:bg-primary/90 text-white font-bold py-2.5 rounded-lg transition-all shadow-md shadow-primary/10 active:scale-[0.98] mt-4 flex items-center justify-center disabled:opacity-70 uppercase tracking-wider text-xs"
+          >
+            {loading ? (
+              <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
+            ) : (
+              t('login')
+            )}
+          </button>
+        </form>
       </div>
     </div>
   );
