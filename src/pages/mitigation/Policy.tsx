@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../../services/api';
-import { Shield, Save, Zap, Sliders, AlertTriangle, Ban, Cloud, ShieldAlert, Plus, Trash2 } from 'lucide-react';
+import { Shield, Save, Zap, Sliders, AlertTriangle, Ban, Cloud, ShieldAlert, Plus, Trash2, Eye } from 'lucide-react';
 import { toast } from 'sonner';
 import { Tooltip, TooltipTrigger, TooltipContent, TooltipProvider } from "../../components/ui/tooltip";
 import {
