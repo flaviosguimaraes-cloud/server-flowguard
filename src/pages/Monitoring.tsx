@@ -102,8 +102,8 @@ const Monitoring = () => {
     refetchInterval: 30000,
   });
 
-  const formatBw = (mbps: number) => {
-    if (mbps === undefined || mbps === null) return '0 Mbps';
+  const formatBw = (mbps: number | undefined | null) => {
+    if (mbps === undefined || mbps === null) return '—';
     if (mbps >= 1000)
       return (mbps / 1000).toFixed(2) + ' Gbps';
     return mbps.toFixed(2) + ' Mbps';
