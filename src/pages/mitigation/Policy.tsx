@@ -250,6 +250,9 @@ export default function Policy() {
     } else if (cardId === 4) {
       setMode('external');
       setAutoConfig(prev => ({ ...prev, operation_mode: 'disabled' }));
+    } else if (cardId === 5) {
+      setMode('none');
+      setAutoConfig(prev => ({ ...prev, operation_mode: 'disabled' }));
     }
   };
 
