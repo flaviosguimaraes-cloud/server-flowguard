@@ -150,7 +150,7 @@ const Monitoring = () => {
           boxWidth: 8,
           boxHeight: 8,
           usePointStyle: true,
-          font: { size: 10, weight: 'bold' }
+          font: { size: 10, weight: 'bold' as const }
         }
       },
       tooltip: {
