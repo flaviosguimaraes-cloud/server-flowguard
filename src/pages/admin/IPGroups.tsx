@@ -656,7 +656,7 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
   );
 }
 
-function IPGroupDrawer({ isOpen, onClose, group, onSave, onDelete, isLoading }: any) {
+function IPGroupDrawer({ isOpen, onClose, group, onEdit, onSave, onDelete, isLoading }: any) {
   const [lookupIp, setLookupIp] = useState('');
   const [lookupResult, setLookupResult] = useState<any>(null);
 
