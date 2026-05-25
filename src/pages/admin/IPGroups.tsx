@@ -36,9 +36,12 @@ export default function IPGroups() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<any>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
+  const [deleteProfileConfirm, setDeleteProfileConfirm] = useState<any>(null);
 
   const { data: groups, isLoading } = useQuery({
     queryKey: ['ip-groups'],
