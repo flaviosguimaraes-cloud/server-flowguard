@@ -62,6 +62,7 @@
       cdns: 'Ranking de CDNs',
       administration: 'Administração',
       threats: 'Ameaças',
+      monitoring: 'Monitoramento',
     },
     'en': {
      dashboard: 'Dashboard',
@@ -124,6 +125,7 @@
       cdns: 'CDN Ranking',
       administration: 'Administration',
       threats: 'Threats',
+      monitoring: 'Monitoring',
     },
     'es': {
      dashboard: 'Tablero',
@@ -186,7 +188,8 @@
       cdns: 'Ranking de CDNs',
       administration: 'Administración',
       threats: 'Amenazas',
-    }
+      monitoring: 'Monitoreo',
+    },
   };
  
  export type TranslationKey = keyof typeof translations['en'];

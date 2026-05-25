@@ -69,6 +69,7 @@ import { useUI } from '../contexts/UIContext';
     { path: '/dashboard', label: t('dashboard'), icon: LayoutDashboard },
     { path: '/analysis', label: t('analysis'), icon: Search },
     { path: '/cdns', label: t('cdns'), icon: BarChart3 },
+    { path: '/monitoring', label: t('monitoring'), icon: Activity },
     { 
       id: 'mitigation',
       label: t('mitigation'), 
