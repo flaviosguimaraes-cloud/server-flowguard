@@ -257,6 +257,7 @@ export default function IPGroups() {
         isOpen={isDrawerOpen}
         onClose={() => setIsDrawerOpen(false)}
         group={selectedGroup}
+        onEdit={() => { setIsDrawerOpen(false); setEditingGroup(selectedGroup); setIsModalOpen(true); }}
         onSave={(data: any) => updateMutation.mutate({ id: selectedGroup.id, data })}
         onDelete={() => setDeleteConfirm(selectedGroup)}
         isLoading={updateMutation.isPending}
