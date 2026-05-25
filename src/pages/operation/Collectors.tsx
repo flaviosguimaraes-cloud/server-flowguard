@@ -1336,6 +1336,24 @@ function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
               <span className="text-sm">BGP IPv4 FlowSpec</span>
               <Switch checked={formData.bgp_ipv4_flowspec_enabled} onCheckedChange={v => handleToggle('bgp_ipv4_flowspec_enabled', v)} />
             </div>
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase font-bold text-text-secondary">ASN Local</Label>
+                <Input 
+                  className="h-8 text-xs"
+                  value={formData.bgp_local_asn} 
+                  onChange={e => setFormData({ ...formData, bgp_local_asn: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase font-bold text-text-secondary">ASN Remoto</Label>
+                <Input 
+                  className="h-8 text-xs"
+                  value={formData.bgp_remote_asn} 
+                  onChange={e => setFormData({ ...formData, bgp_remote_asn: e.target.value })}
+                />
+              </div>
+            </div>
           </div>
           <div className="bg-bg-primary p-4 rounded-xl border border-border space-y-3">
             <h4 className="text-xs font-bold uppercase text-text-secondary border-b border-border pb-2">IPv6</h4>
@@ -1346,6 +1364,24 @@ function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
             <div className="flex items-center justify-between">
               <span className="text-sm">BGP IPv6 FlowSpec</span>
               <Switch checked={formData.bgp_ipv6_flowspec_enabled} onCheckedChange={v => handleToggle('bgp_ipv6_flowspec_enabled', v)} />
+            </div>
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase font-bold text-text-secondary">ASN Local IPv6</Label>
+                <Input 
+                  className="h-8 text-xs"
+                  value={formData.bgp_local_asn} 
+                  onChange={e => setFormData({ ...formData, bgp_local_asn: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase font-bold text-text-secondary">ASN Remoto IPv6</Label>
+                <Input 
+                  className="h-8 text-xs"
+                  value={formData.bgp_remote_asn} 
+                  onChange={e => setFormData({ ...formData, bgp_remote_asn: e.target.value })}
+                />
+              </div>
             </div>
           </div>
         </div>
