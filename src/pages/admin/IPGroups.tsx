@@ -289,7 +289,24 @@ export default function IPGroups() {
 }
 
 function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    name: string;
+    description: string;
+    type: string;
+    prefixes: string[];
+    anomaly_factor: number;
+    anomaly_min_mbps: string | number;
+    allow_blackhole: boolean;
+    allow_flowspec: boolean;
+    auto_mitigate: boolean;
+    fnm_threshold_mbps: string | number;
+    fnm_threshold_pps: string | number;
+    fnm_threshold_flows: number;
+    fnm_ban_for_bandwidth: boolean;
+    fnm_ban_for_pps: boolean;
+    fnm_ban_for_flows: boolean;
+    fnm_action: string | null;
+  }>({
     name: '',
     description: '',
     type: 'standard',
@@ -299,14 +316,13 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
     allow_blackhole: false,
     allow_flowspec: true,
     auto_mitigate: false,
-    
     fnm_threshold_mbps: '',
     fnm_threshold_pps: '',
     fnm_threshold_flows: 3500,
     fnm_ban_for_bandwidth: true,
     fnm_ban_for_pps: true,
     fnm_ban_for_flows: false,
-    fnm_action: null as string | null,
+    fnm_action: null,
   });
 
   const [newPrefix, setNewPrefix] = useState('');
