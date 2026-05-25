@@ -870,7 +870,7 @@ function CollectorDetailsSheet({ isOpen, onClose, collector }: any) {
 
   const { data: ifacesData, isLoading: loadingIfaces } = useQuery({
     queryKey: ['collector-interfaces', collector?.id],
-    queryFn: () => api.get(`/api/snmp/${collector.id}/interfaces`).then(r => r.data).catch(() => []),
+    queryFn: () => api.get(`/api/snmp/${collector.id}/interfaces`).then(r => r.data.interfaces || []).catch(() => []),
     enabled: !!collector?.id && isOpen,
   });
 
@@ -1015,23 +1015,26 @@ function InterfacesTab({ collectorId, interfaces, isLoading, onUpdate }: any) {
 
   const handleAutoClassify = () => {
     const promises = interfaces.map((iface: any) => {
-      let role = iface.role;
+      let role = iface.role || 'unknown';
       let isUpstream = iface.is_upstream;
       const alias = (iface.if_alias || '').toUpperCase();
-      const name = (iface.if_name || '').toUpperCase();
+      const speed = iface.if_speed || 0;
 
-      if (alias.includes('IP-')) {
+      if (['IP-', 'IMPLANTAR', 'ATC', 'GDNET'].some(k => alias.includes(k))) {
         role = 'upstream';
         isUpstream = true;
-      } else if (alias.includes('PPPOE') || alias.includes('CGNAT') || alias.includes('WAN')) {
+      } else if (['PPPOE', 'CGNAT', 'PPP'].some(k => alias.includes(k))) {
         role = 'access';
         isUpstream = false;
-      } else if (alias.includes('GERENCIA') || alias.includes('SERVIDOR') || name.startsWith('LOOPBACK')) {
+      } else if (alias.length > 0 || speed > 0) {
         role = 'internal';
+        isUpstream = false;
+      } else {
+        role = 'unknown';
         isUpstream = false;
       }
 
-      if (role !== iface.role) {
+      if (role !== iface.role || isUpstream !== iface.is_upstream) {
         return onUpdate(iface.if_index, { role, is_upstream: isUpstream });
       }
       return null;
@@ -1105,7 +1108,17 @@ function InterfacesTab({ collectorId, interfaces, isLoading, onUpdate }: any) {
             ) : filteredIfaces.map((iface: any) => (
               <TableRow key={iface.if_index} className="group">
                 <TableCell className="font-mono text-xs font-bold text-text-primary">{iface.if_name}</TableCell>
-                <TableCell className="text-xs text-text-secondary">{iface.if_alias || '—'}</TableCell>
+                <TableCell>
+                  <Input 
+                    className="h-7 text-xs bg-transparent border-transparent hover:border-border focus:bg-bg-secondary w-full"
+                    defaultValue={iface.display_name || iface.if_alias || ''}
+                    onBlur={(e) => {
+                      if (e.target.value !== (iface.display_name || iface.if_alias)) {
+                        onUpdate(iface.if_index, { display_name: e.target.value });
+                      }
+                    }}
+                  />
+                </TableCell>
                 <TableCell className="text-xs font-mono">{formatSpeed(iface.if_speed)}</TableCell>
                 <TableCell>
                   <Select 
@@ -1146,6 +1159,8 @@ function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
     bgp_ipv4_flowspec_enabled: false,
     bgp_ipv6_enabled: false,
     bgp_ipv6_flowspec_enabled: false,
+    bgp_local_asn: '',
+    bgp_remote_asn: '',
     monitored_networks: [] as any[]
   });
 
@@ -1158,6 +1173,8 @@ function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
         bgp_ipv4_flowspec_enabled: collector.flowspec_ipv4_enabled || false,
         bgp_ipv6_enabled: collector.bgp_ipv6_enabled || false,
         bgp_ipv6_flowspec_enabled: collector.flowspec_ipv6_enabled || false,
+        bgp_local_asn: collector.bgp_local_asn?.toString() || '',
+        bgp_remote_asn: collector.bgp_remote_asn?.toString() || '',
         monitored_networks: collector.monitored_networks || []
       });
     }
@@ -1210,6 +1227,8 @@ function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
       flowspec_ipv4_enabled: formData.bgp_ipv4_flowspec_enabled,
       bgp_ipv6_enabled: formData.bgp_ipv6_enabled,
       flowspec_ipv6_enabled: formData.bgp_ipv6_flowspec_enabled,
+      bgp_local_asn: Number(formData.bgp_local_asn),
+      bgp_remote_asn: Number(formData.bgp_remote_asn),
       monitored_networks: formData.monitored_networks
     });
   };
@@ -1317,6 +1336,24 @@ function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
               <span className="text-sm">BGP IPv4 FlowSpec</span>
               <Switch checked={formData.bgp_ipv4_flowspec_enabled} onCheckedChange={v => handleToggle('bgp_ipv4_flowspec_enabled', v)} />
             </div>
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase font-bold text-text-secondary">ASN Local</Label>
+                <Input 
+                  className="h-8 text-xs"
+                  value={formData.bgp_local_asn} 
+                  onChange={e => setFormData({ ...formData, bgp_local_asn: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase font-bold text-text-secondary">ASN Remoto</Label>
+                <Input 
+                  className="h-8 text-xs"
+                  value={formData.bgp_remote_asn} 
+                  onChange={e => setFormData({ ...formData, bgp_remote_asn: e.target.value })}
+                />
+              </div>
+            </div>
           </div>
           <div className="bg-bg-primary p-4 rounded-xl border border-border space-y-3">
             <h4 className="text-xs font-bold uppercase text-text-secondary border-b border-border pb-2">IPv6</h4>
@@ -1327,6 +1364,24 @@ function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
             <div className="flex items-center justify-between">
               <span className="text-sm">BGP IPv6 FlowSpec</span>
               <Switch checked={formData.bgp_ipv6_flowspec_enabled} onCheckedChange={v => handleToggle('bgp_ipv6_flowspec_enabled', v)} />
+            </div>
+            <div className="grid grid-cols-2 gap-3 pt-2">
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase font-bold text-text-secondary">ASN Local IPv6</Label>
+                <Input 
+                  className="h-8 text-xs"
+                  value={formData.bgp_local_asn} 
+                  onChange={e => setFormData({ ...formData, bgp_local_asn: e.target.value })}
+                />
+              </div>
+              <div className="space-y-1">
+                <Label className="text-[10px] uppercase font-bold text-text-secondary">ASN Remoto IPv6</Label>
+                <Input 
+                  className="h-8 text-xs"
+                  value={formData.bgp_remote_asn} 
+                  onChange={e => setFormData({ ...formData, bgp_remote_asn: e.target.value })}
+                />
+              </div>
             </div>
           </div>
         </div>
