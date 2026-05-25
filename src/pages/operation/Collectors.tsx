@@ -161,8 +161,10 @@ export default function Collectors() {
           if (modal.mode === 'add') createMutation.mutate(data);
           else updateMutation.mutate({ id: modal.data.id, data });
         }}
+        onViewDetails={(collector: any) => setDetailsSheet({ open: true, collector })}
         isLoading={createMutation.isPending || updateMutation.isPending}
       />
+
 
       <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <DialogContent>
