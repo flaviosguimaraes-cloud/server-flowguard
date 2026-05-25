@@ -312,8 +312,8 @@ export default function Policy() {
         <div className="flex items-center gap-3">
           <Shield className="text-primary" size={24} />
           <div>
-            <h1 className="text-2xl font-bold text-text-primary">Política de Mitigação</h1>
-            <p className="text-sm text-text-secondary">Configuração de bloqueio, FlowSpec automático e limiares de detecção</p>
+            <h1 className="text-2xl font-bold text-text-primary">Política Global</h1>
+            <p className="text-sm text-text-secondary">Aplicada a IPs que não pertencem a nenhum grupo</p>
           </div>
         </div>
       </div>
