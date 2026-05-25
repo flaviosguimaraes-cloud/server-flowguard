@@ -1015,23 +1015,26 @@ function InterfacesTab({ collectorId, interfaces, isLoading, onUpdate }: any) {
 
   const handleAutoClassify = () => {
     const promises = interfaces.map((iface: any) => {
-      let role = iface.role;
+      let role = iface.role || 'unknown';
       let isUpstream = iface.is_upstream;
       const alias = (iface.if_alias || '').toUpperCase();
-      const name = (iface.if_name || '').toUpperCase();
+      const speed = iface.if_speed || 0;
 
-      if (alias.includes('IP-')) {
+      if (['IP-', 'IMPLANTAR', 'ATC', 'GDNET'].some(k => alias.includes(k))) {
         role = 'upstream';
         isUpstream = true;
-      } else if (alias.includes('PPPOE') || alias.includes('CGNAT') || alias.includes('WAN')) {
+      } else if (['PPPOE', 'CGNAT', 'PPP'].some(k => alias.includes(k))) {
         role = 'access';
         isUpstream = false;
-      } else if (alias.includes('GERENCIA') || alias.includes('SERVIDOR') || name.startsWith('LOOPBACK')) {
+      } else if (alias.length > 0 || speed > 0) {
         role = 'internal';
+        isUpstream = false;
+      } else {
+        role = 'unknown';
         isUpstream = false;
       }
 
-      if (role !== iface.role) {
+      if (role !== iface.role || isUpstream !== iface.is_upstream) {
         return onUpdate(iface.if_index, { role, is_upstream: isUpstream });
       }
       return null;
@@ -1105,7 +1108,17 @@ function InterfacesTab({ collectorId, interfaces, isLoading, onUpdate }: any) {
             ) : filteredIfaces.map((iface: any) => (
               <TableRow key={iface.if_index} className="group">
                 <TableCell className="font-mono text-xs font-bold text-text-primary">{iface.if_name}</TableCell>
-                <TableCell className="text-xs text-text-secondary">{iface.if_alias || '—'}</TableCell>
+                <TableCell>
+                  <Input 
+                    className="h-7 text-xs bg-transparent border-transparent hover:border-border focus:bg-bg-secondary w-full"
+                    defaultValue={iface.display_name || iface.if_alias || ''}
+                    onBlur={(e) => {
+                      if (e.target.value !== (iface.display_name || iface.if_alias)) {
+                        onUpdate(iface.if_index, { display_name: e.target.value });
+                      }
+                    }}
+                  />
+                </TableCell>
                 <TableCell className="text-xs font-mono">{formatSpeed(iface.if_speed)}</TableCell>
                 <TableCell>
                   <Select 
