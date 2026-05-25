@@ -36,13 +36,21 @@ export default function IPGroups() {
   const [searchTerm, setSearchTerm] = useState('');
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<any>(null);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [editingProfile, setEditingProfile] = useState<any>(null);
   const [isDrawerOpen, setIsDrawerOpen] = useState(false);
   const [selectedGroup, setSelectedGroup] = useState<any>(null);
   const [deleteConfirm, setDeleteConfirm] = useState<any>(null);
+  const [deleteProfileConfirm, setDeleteProfileConfirm] = useState<any>(null);
 
   const { data: groups, isLoading } = useQuery({
     queryKey: ['ip-groups'],
     queryFn: () => api.get('/api/ip-groups').then(r => r.data || []),
+  });
+
+  const { data: profiles, isLoading: isLoadingProfiles } = useQuery({
+    queryKey: ['mitigation-profiles'],
+    queryFn: () => api.get('/api/profiles').then(r => r.data || []),
   });
 
   const createMutation = useMutation({
@@ -73,6 +81,37 @@ export default function IPGroups() {
       toast.success('Grupo removido');
       setDeleteConfirm(null);
       setIsDrawerOpen(false);
+    },
+    onError: (err: any) => toast.error(`Erro: ${err.response?.data?.message || err.message}`)
+  });
+
+  const createProfileMutation = useMutation({
+    mutationFn: (data: any) => api.post('/api/profiles', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mitigation-profiles'] });
+      toast.success('Perfil criado com sucesso');
+      setIsProfileModalOpen(false);
+    },
+    onError: (err: any) => toast.error(`Erro: ${err.response?.data?.message || err.message}`)
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => api.put(`/api/profiles/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mitigation-profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['ip-groups'] });
+      toast.success('Perfil atualizado');
+      setIsProfileModalOpen(false);
+    },
+    onError: (err: any) => toast.error(`Erro: ${err.response?.data?.message || err.message}`)
+  });
+
+  const deleteProfileMutation = useMutation({
+    mutationFn: (id: number) => api.delete(`/api/profiles/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mitigation-profiles'] });
+      toast.success('Perfil removido');
+      setDeleteProfileConfirm(null);
     },
     onError: (err: any) => toast.error(`Erro: ${err.response?.data?.message || err.message}`)
   });
@@ -143,19 +182,18 @@ export default function IPGroups() {
               <tr className="bg-bg-primary/50 text-text-secondary text-xs uppercase tracking-wider font-bold">
                 <th className="px-6 py-4">Nome</th>
                 <th className="px-6 py-4">Prefixos</th>
-                <th className="px-6 py-4">Ação de Detecção</th>
-                <th className="px-6 py-4">Gatilhos</th>
+                <th className="px-6 py-4">Perfil de Mitigação</th>
                 <th className="px-6 py-4 text-right">Ações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
               {isLoading ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8"><Skeleton count={3} /></td>
+                  <td colSpan={4} className="px-6 py-8"><Skeleton count={3} /></td>
                 </tr>
               ) : filteredGroups.length === 0 ? (
                 <tr>
-                  <td colSpan={5} className="px-6 py-8 text-center text-text-secondary italic">Nenhum grupo encontrado</td>
+                  <td colSpan={4} className="px-6 py-8 text-center text-text-secondary italic">Nenhum grupo encontrado</td>
                 </tr>
               ) : filteredGroups.map((group: any) => (
                 <tr 
@@ -171,17 +209,16 @@ export default function IPGroups() {
                     {group.prefixes?.length || 0} prefixos
                   </td>
                   <td className="px-6 py-4">
-                    <Badge variant="outline" className="capitalize">
-                      {group.fnm_action === 'flowspec' ? 'FlowSpec' : 
-                       group.fnm_action === 'blackhole' ? 'Blackhole' :
-                       group.fnm_action === 'blackhole_flowspec' ? 'Blackhole+FS' :
-                       group.fnm_action === 'none' ? 'Sem Ação' : 'Global'}
-                    </Badge>
-                  </td>
-                  <td className="px-6 py-4 flex gap-1">
-                    {group.fnm_ban_for_bandwidth && <Badge className="bg-blue-500/10 text-blue-500 border-none text-[10px]">Banda</Badge>}
-                    {group.fnm_ban_for_pps && <Badge className="bg-purple-500/10 text-purple-500 border-none text-[10px]">PPS</Badge>}
-                    {group.fnm_ban_for_flows && <Badge className="bg-orange-500/10 text-orange-500 border-none text-[10px]">Flows</Badge>}
+                    <div className="flex flex-col">
+                      <span className="text-sm font-medium text-text-primary">
+                        {group.profile?.name || 'Padrão Global'}
+                      </span>
+                      {group.profile?.description && (
+                        <span className="text-[10px] text-text-secondary truncate max-w-[150px]">
+                          {group.profile.description}
+                        </span>
+                      )}
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-right">
                     <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -210,15 +247,124 @@ export default function IPGroups() {
         </div>
       </div>
 
+      {/* Mitigation Profiles Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Shield className="text-primary" size={20} />
+            <h2 className="text-xl font-bold text-text-primary">Perfis de Mitigação</h2>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => { setEditingProfile(null); setIsProfileModalOpen(true); }} className="gap-2">
+            <Plus size={14} /> Novo Perfil
+          </Button>
+        </div>
+
+        <div className="bg-bg-secondary rounded-xl border border-border overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-bg-primary/50 text-text-secondary text-xs uppercase tracking-wider font-bold">
+                  <th className="px-6 py-4">Nome</th>
+                  <th className="px-6 py-4">Ação</th>
+                  <th className="px-6 py-4">Threshold Mbps</th>
+                  <th className="px-6 py-4">Threshold PPS</th>
+                  <th className="px-6 py-4 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {isLoadingProfiles ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8"><Skeleton count={2} /></td>
+                  </tr>
+                ) : !profiles || profiles.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8 text-center text-text-secondary italic">Nenhum perfil encontrado</td>
+                  </tr>
+                ) : profiles.map((profile: any) => (
+                  <tr key={profile.id} className="hover:bg-bg-primary/30 transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="font-bold text-text-primary flex items-center gap-2">
+                        {profile.name}
+                        {profile.is_default && <Badge className="bg-green-500/10 text-green-500 border-none text-[10px]">Padrão</Badge>}
+                      </div>
+                      <div className="text-xs text-text-secondary truncate max-w-[200px]">{profile.description || 'Sem descrição'}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <Badge 
+                        variant="outline" 
+                        className={clsx(
+                          "capitalize",
+                          profile.action === 'none' && "bg-gray-500/10 text-gray-500 border-gray-500/20",
+                          profile.action === 'blackhole' && "bg-red-500/10 text-red-500 border-red-500/20",
+                          profile.action === 'flowspec' && "bg-blue-500/10 text-blue-500 border-blue-500/20",
+                          profile.action === 'blackhole_flowspec' && "bg-orange-500/10 text-orange-500 border-orange-500/20",
+                          profile.action === 'global' && "bg-green-500/10 text-green-500 border-green-500/20"
+                        )}
+                      >
+                        {profile.action === 'flowspec' ? 'FlowSpec' : 
+                         profile.action === 'blackhole' ? 'Blackhole' :
+                         profile.action === 'blackhole_flowspec' ? 'Blackhole+FS' :
+                         profile.action === 'none' ? 'Sem Ação' : 'Global'}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-text-secondary">
+                      {profile.fnm_threshold_mbps || 'Global'}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-text-secondary">
+                      {profile.fnm_threshold_pps || 'Global'}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8" 
+                          onClick={() => { setEditingProfile(profile); setIsProfileModalOpen(true); }}
+                        >
+                          <Edit2 size={14} />
+                        </Button>
+                        {!profile.is_default && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-destructive" 
+                            onClick={() => setDeleteProfileConfirm(profile)}
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+
       <IPGroupModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         data={editingGroup}
+        profiles={profiles}
         onSubmit={(data: any) => {
           if (editingGroup) updateMutation.mutate({ id: editingGroup.id, data });
           else createMutation.mutate(data);
         }}
         isLoading={createMutation.isPending || updateMutation.isPending}
+      />
+
+      <MitigationProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        data={editingProfile}
+        onSubmit={(data: any) => {
+          if (editingProfile) updateProfileMutation.mutate({ id: editingProfile.id, data });
+          else createProfileMutation.mutate(data);
+        }}
+        isLoading={createProfileMutation.isPending || updateProfileMutation.isPending}
       />
 
       <IPGroupDrawer 
@@ -252,33 +398,44 @@ export default function IPGroups() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <Dialog open={!!deleteProfileConfirm} onOpenChange={() => setDeleteProfileConfirm(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Remover Perfil</DialogTitle>
+            <DialogDescription>
+              Deseja realmente remover o perfil <strong>{deleteProfileConfirm?.name}</strong>?
+              Grupos associados a este perfil voltarão para o perfil padrão.
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setDeleteProfileConfirm(null)}>Cancelar</Button>
+            <Button 
+              variant="destructive" 
+              onClick={() => deleteProfileMutation.mutate(deleteProfileConfirm.id)} 
+              disabled={deleteProfileMutation.isPending}
+            >
+              {deleteProfileMutation.isPending ? 'Removendo...' : 'Remover'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+
   );
 }
 
-function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
+function IPGroupModal({ isOpen, onClose, data, profiles, onSubmit, isLoading }: any) {
   const [formData, setFormData] = useState<{
     name: string;
     description: string;
     prefixes: string[];
-    fnm_threshold_mbps: string | number;
-    fnm_threshold_pps: string | number;
-    fnm_threshold_flows: string | number;
-    fnm_ban_for_bandwidth: boolean;
-    fnm_ban_for_pps: boolean;
-    fnm_ban_for_flows: boolean;
-    fnm_action: string | null;
+    profile_id: string | number;
   }>({
     name: '',
     description: '',
     prefixes: [],
-    fnm_threshold_mbps: '',
-    fnm_threshold_pps: '',
-    fnm_threshold_flows: 3500,
-    fnm_ban_for_bandwidth: true,
-    fnm_ban_for_pps: true,
-    fnm_ban_for_flows: false,
-    fnm_action: null,
+    profile_id: '',
   });
 
   const [addressType, setAddressType] = useState<'ipv4' | 'ipv6' | null>(null);
@@ -290,16 +447,9 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
         name: data.name || '',
         description: data.description || '',
         prefixes: data.prefixes || [],
-        fnm_threshold_mbps: data.fnm_threshold_mbps || '',
-        fnm_threshold_pps: data.fnm_threshold_pps || '',
-        fnm_threshold_flows: data.fnm_threshold_flows ?? 3500,
-        fnm_ban_for_bandwidth: data.fnm_ban_for_bandwidth ?? true,
-        fnm_ban_for_pps: data.fnm_ban_for_pps ?? true,
-        fnm_ban_for_flows: data.fnm_ban_for_flows ?? false,
-        fnm_action: data.fnm_action || null,
+        profile_id: data.profile_id || '',
       });
       
-      // Determine address type from first prefix
       if (data.prefixes && data.prefixes.length > 0) {
         setAddressType(data.prefixes[0].includes(':') ? 'ipv6' : 'ipv4');
       } else {
@@ -310,26 +460,18 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
         name: '',
         description: '',
         prefixes: [],
-        fnm_threshold_mbps: '',
-        fnm_threshold_pps: '',
-        fnm_threshold_flows: 3500,
-        fnm_ban_for_bandwidth: true,
-        fnm_ban_for_pps: true,
-        fnm_ban_for_flows: false,
-        fnm_action: null,
+        profile_id: profiles?.find((p: any) => p.is_default)?.id || '',
       });
       setAddressType(null);
     }
     setNewPrefix('');
-  }, [data, isOpen]);
+  }, [data, isOpen, profiles]);
 
   const addPrefix = () => {
     if (!newPrefix || !addressType) return;
-    
     const cleanPrefix = newPrefix.trim();
     if (!cleanPrefix) return;
 
-    // Validation
     if (addressType === 'ipv4' && cleanPrefix.includes(':')) {
       toast.error('Este grupo aceita apenas prefixos IPv4');
       return;
@@ -351,19 +493,17 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    
     if (formData.prefixes.length === 0) {
       toast.error('Adicione pelo menos um prefixo');
       return;
     }
-
-    onSubmit({
-      ...formData,
-      fnm_threshold_mbps: formData.fnm_threshold_mbps ? Number(formData.fnm_threshold_mbps) : null,
-      fnm_threshold_pps: formData.fnm_threshold_pps ? Number(formData.fnm_threshold_pps) : null,
-      fnm_threshold_flows: formData.fnm_threshold_flows ? Number(formData.fnm_threshold_flows) : null,
-    });
+    if (!formData.profile_id) {
+      toast.error('Selecione um perfil de mitigação');
+      return;
+    }
+    onSubmit(formData);
   };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -488,100 +628,35 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
 
           <hr className="border-border" />
 
-          {/* SEÇÃO 4 — Configuração de Detecção */}
+
+          {/* SEÇÃO 4 — Perfil de Mitigação */}
           <div className="space-y-4">
-            <h3 className="text-sm font-bold text-text-primary">Configuração de Detecção</h3>
-            
-            <div className="grid grid-cols-3 gap-4">
-              <div className="space-y-2">
-                <Label className="text-xs">Threshold Mbps</Label>
-                <Input 
-                  type="number"
-                  disabled={!formData.fnm_ban_for_bandwidth}
-                  value={formData.fnm_threshold_mbps} 
-                  onChange={e => setFormData({ ...formData, fnm_threshold_mbps: e.target.value })} 
-                  placeholder="Padrão global (1000)"
-                  className={clsx(!formData.fnm_ban_for_bandwidth && "opacity-50")}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs">Threshold PPS</Label>
-                <Input 
-                  type="number"
-                  disabled={!formData.fnm_ban_for_pps}
-                  value={formData.fnm_threshold_pps} 
-                  onChange={e => setFormData({ ...formData, fnm_threshold_pps: e.target.value })} 
-                  placeholder="Padrão global (100000)"
-                  className={clsx(!formData.fnm_ban_for_pps && "opacity-50")}
-                />
-              </div>
-              <div className="space-y-2">
-                <Label className="text-xs">Threshold Flows</Label>
-                <Input 
-                  type="number"
-                  disabled={!formData.fnm_ban_for_flows}
-                  value={formData.fnm_threshold_flows} 
-                  onChange={e => setFormData({ ...formData, fnm_threshold_flows: e.target.value })} 
-                  placeholder="3500"
-                  className={clsx(!formData.fnm_ban_for_flows && "opacity-50")}
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-2 gap-4">
-              <div className="p-4 bg-bg-primary rounded-lg border border-border space-y-4">
-                <Label className="text-xs font-bold uppercase text-text-secondary tracking-wider">Gatilhos Ativos</Label>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Banda</span>
-                    <Switch 
-                      checked={formData.fnm_ban_for_bandwidth} 
-                      onCheckedChange={checked => setFormData({ ...formData, fnm_ban_for_bandwidth: checked })}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">PPS</span>
-                    <Switch 
-                      checked={formData.fnm_ban_for_pps} 
-                      onCheckedChange={checked => setFormData({ ...formData, fnm_ban_for_pps: checked })}
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium">Flows</span>
-                    <Switch 
-                      checked={formData.fnm_ban_for_flows} 
-                      onCheckedChange={checked => setFormData({ ...formData, fnm_ban_for_flows: checked })}
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="p-4 bg-bg-primary rounded-lg border border-border space-y-3">
-                <Label className="text-xs font-bold uppercase text-text-secondary tracking-wider">Ação ao detectar</Label>
-                <Select 
-                  value={formData.fnm_action || 'global'} 
-                  onValueChange={v => setFormData({ ...formData, fnm_action: v === 'global' ? null : v })}
-                >
-                  <SelectTrigger className="bg-bg-secondary">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="global">Política Global</SelectItem>
-                    <SelectItem value="flowspec">Apenas FlowSpec</SelectItem>
-                    <SelectItem value="blackhole">Blackhole</SelectItem>
-                    <SelectItem value="blackhole_flowspec">Blackhole + FlowSpec</SelectItem>
-                    <SelectItem value="none">Sem Ação / Monitorar</SelectItem>
-                  </SelectContent>
-                </Select>
-                <div className="flex items-start gap-2 pt-1">
-                  <Info size={12} className="text-text-secondary mt-0.5" />
-                  <p className="text-[10px] text-text-secondary leading-tight italic">
-                    Blackhole usa /32 para IPv4 e /128 para IPv6 automaticamente.
-                  </p>
-                </div>
-              </div>
+            <div className="space-y-2">
+              <Label>Perfil de Mitigação</Label>
+              <Select 
+                value={formData.profile_id.toString()} 
+                onValueChange={v => setFormData({ ...formData, profile_id: v })}
+                required
+              >
+                <SelectTrigger className="bg-bg-primary h-12">
+                  <SelectValue placeholder="Selecione um perfil..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {profiles?.map((profile: any) => (
+                    <SelectItem key={profile.id} value={profile.id.toString()}>
+                      <div className="flex flex-col items-start">
+                        <span className="font-bold">{profile.name} {profile.is_default && '(Padrão Global)'}</span>
+                        {profile.description && (
+                          <span className="text-[10px] text-text-secondary italic line-clamp-1">{profile.description}</span>
+                        )}
+                      </div>
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
           </div>
+
 
           <DialogFooter className="mt-6 pt-2 border-t border-border">
             <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
@@ -671,22 +746,23 @@ function IPGroupDrawer({ isOpen, onClose, group, onEdit, onSave, onDelete, isLoa
           </div>
 
           <div className="bg-bg-primary p-5 rounded-xl border border-border space-y-4">
-            <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary">Limiares de Detecção</h4>
-            <div className="grid grid-cols-3 gap-3">
-              <div className="p-3 bg-bg-secondary rounded-lg border border-border">
-                <p className="text-[10px] text-text-secondary font-bold uppercase mb-1">Mbps</p>
-                <p className="text-lg font-bold text-text-primary">{group.fnm_threshold_mbps || 'Global'}</p>
+            <h4 className="text-xs font-bold uppercase tracking-wider text-text-secondary">Perfil de Mitigação</h4>
+            <div className="p-4 bg-bg-secondary rounded-lg border border-border space-y-2">
+              <div className="flex items-center justify-between">
+                <p className="text-lg font-bold text-text-primary">{group.profile?.name || 'Padrão Global'}</p>
+                <Badge variant="outline" className="capitalize">
+                  {group.profile?.action === 'flowspec' ? 'FlowSpec' : 
+                   group.profile?.action === 'blackhole' ? 'Blackhole' :
+                   group.profile?.action === 'blackhole_flowspec' ? 'Blackhole+FS' :
+                   group.profile?.action === 'none' ? 'Sem Ação' : 'Global'}
+                </Badge>
               </div>
-              <div className="p-3 bg-bg-secondary rounded-lg border border-border">
-                <p className="text-[10px] text-text-secondary font-bold uppercase mb-1">PPS</p>
-                <p className="text-lg font-bold text-text-primary">{group.fnm_threshold_pps || 'Global'}</p>
-              </div>
-              <div className="p-3 bg-bg-secondary rounded-lg border border-border">
-                <p className="text-[10px] text-text-secondary font-bold uppercase mb-1">Flows</p>
-                <p className="text-lg font-bold text-text-primary">{group.fnm_threshold_flows || '—'}</p>
-              </div>
+              {group.profile?.description && (
+                <p className="text-xs text-text-secondary italic">{group.profile.description}</p>
+              )}
             </div>
           </div>
+
 
           <div className="space-y-3 pt-6 border-t border-border">
             <Button className="w-full h-11" onClick={onEdit}>
@@ -701,3 +777,279 @@ function IPGroupDrawer({ isOpen, onClose, group, onEdit, onSave, onDelete, isLoa
     </Sheet>
   );
 }
+
+function MitigationProfileModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
+  const [formData, setFormData] = useState<any>({
+    name: '',
+    description: '',
+    fnm_threshold_mbps: '',
+    fnm_threshold_pps: '',
+    fnm_threshold_flows: 3500,
+    ban_for_bandwidth: true,
+    ban_for_pps: true,
+    ban_for_flows: false,
+    action: 'global',
+    fs_type: 'both',
+    fs_action: 'drop',
+    fs_rate_kbps: '',
+    fs_ttl_minutes: 2,
+    fs_direction: 'both',
+    fs_src_mode: 'attacker',
+  });
+
+  useEffect(() => {
+    if (data) {
+      setFormData({
+        name: data.name || '',
+        description: data.description || '',
+        fnm_threshold_mbps: data.fnm_threshold_mbps || '',
+        fnm_threshold_pps: data.fnm_threshold_pps || '',
+        fnm_threshold_flows: data.fnm_threshold_flows ?? 3500,
+        ban_for_bandwidth: data.ban_for_bandwidth ?? true,
+        ban_for_pps: data.ban_for_pps ?? true,
+        ban_for_flows: data.ban_for_flows ?? false,
+        action: data.action || 'global',
+        fs_type: data.fs_type || 'both',
+        fs_action: data.fs_action || 'drop',
+        fs_rate_kbps: data.fs_rate_kbps || '',
+        fs_ttl_minutes: data.fs_ttl_minutes ?? 2,
+        fs_direction: data.fs_direction || 'both',
+        fs_src_mode: data.fs_src_mode || 'attacker',
+      });
+    } else {
+      setFormData({
+        name: '',
+        description: '',
+        fnm_threshold_mbps: '',
+        fnm_threshold_pps: '',
+        fnm_threshold_flows: 3500,
+        ban_for_bandwidth: true,
+        ban_for_pps: true,
+        ban_for_flows: false,
+        action: 'global',
+        fs_type: 'both',
+        fs_action: 'drop',
+        fs_rate_kbps: '',
+        fs_ttl_minutes: 2,
+        fs_direction: 'both',
+        fs_src_mode: 'attacker',
+      });
+    }
+  }, [data, isOpen]);
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    const payload = { ...formData };
+    payload.fnm_threshold_mbps = payload.fnm_threshold_mbps ? Number(payload.fnm_threshold_mbps) : null;
+    payload.fnm_threshold_pps = payload.fnm_threshold_pps ? Number(payload.fnm_threshold_pps) : null;
+    payload.fnm_threshold_flows = payload.fnm_threshold_flows ? Number(payload.fnm_threshold_flows) : null;
+    payload.fs_rate_kbps = payload.fs_rate_kbps ? Number(payload.fs_rate_kbps) : null;
+    payload.fs_ttl_minutes = Number(payload.fs_ttl_minutes);
+    onSubmit(payload);
+  };
+
+  const showFlowSpec = formData.action === 'flowspec' || formData.action === 'blackhole_flowspec';
+
+  return (
+    <Dialog open={isOpen} onOpenChange={onClose}>
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>{data ? 'Editar Perfil' : 'Novo Perfil'}</DialogTitle>
+          <DialogDescription>Configure as regras de detecção e mitigação para este perfil.</DialogDescription>
+        </DialogHeader>
+
+        <form onSubmit={handleSubmit} className="space-y-6 py-2">
+          {/* Seção 1 — Identificação */}
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <Label>Nome do Perfil</Label>
+              <Input 
+                value={formData.name} 
+                onChange={e => setFormData({ ...formData, name: e.target.value })} 
+                placeholder="Ex: Alta Performance"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Descrição</Label>
+              <Textarea 
+                value={formData.description} 
+                onChange={e => setFormData({ ...formData, description: e.target.value })} 
+                placeholder="Descreva este perfil..."
+                className="h-20"
+              />
+            </div>
+          </div>
+
+          <hr className="border-border" />
+
+          {/* Seção 2 — Configuração de Detecção */}
+          <div className="space-y-4">
+            <h3 className="text-sm font-bold text-text-primary">Configuração de Detecção</h3>
+            <div className="grid grid-cols-3 gap-4">
+              <div className="space-y-2">
+                <Label className="text-xs">Threshold Mbps</Label>
+                <Input 
+                  type="number"
+                  disabled={!formData.ban_for_bandwidth}
+                  value={formData.fnm_threshold_mbps} 
+                  onChange={e => setFormData({ ...formData, fnm_threshold_mbps: e.target.value })} 
+                  placeholder="Padrão global (1000)"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Threshold PPS</Label>
+                <Input 
+                  type="number"
+                  disabled={!formData.ban_for_pps}
+                  value={formData.fnm_threshold_pps} 
+                  onChange={e => setFormData({ ...formData, fnm_threshold_pps: e.target.value })} 
+                  placeholder="Padrão global (100000)"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label className="text-xs">Threshold Flows</Label>
+                <Input 
+                  type="number"
+                  disabled={!formData.ban_for_flows}
+                  value={formData.fnm_threshold_flows} 
+                  onChange={e => setFormData({ ...formData, fnm_threshold_flows: e.target.value })} 
+                  placeholder="3500"
+                />
+              </div>
+            </div>
+
+            <div className="flex gap-6 p-4 bg-bg-primary rounded-lg border border-border">
+              <div className="flex items-center gap-2">
+                <Switch 
+                  checked={formData.ban_for_bandwidth} 
+                  onCheckedChange={c => setFormData({ ...formData, ban_for_bandwidth: c })}
+                />
+                <Label className="text-sm">Banda</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch 
+                  checked={formData.ban_for_pps} 
+                  onCheckedChange={c => setFormData({ ...formData, ban_for_pps: c })}
+                />
+                <Label className="text-sm">PPS</Label>
+              </div>
+              <div className="flex items-center gap-2">
+                <Switch 
+                  checked={formData.ban_for_flows} 
+                  onCheckedChange={c => setFormData({ ...formData, ban_for_flows: c })}
+                />
+                <Label className="text-sm">Flows</Label>
+              </div>
+            </div>
+          </div>
+
+          <hr className="border-border" />
+
+          {/* Seção 3 — Ação ao Detectar */}
+          <div className="space-y-4">
+            <Label>Ação ao Detectar</Label>
+            <Select 
+              value={formData.action} 
+              onValueChange={v => setFormData({ ...formData, action: v })}
+            >
+              <SelectTrigger className="bg-bg-primary h-12">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="global">Política Global</SelectItem>
+                <SelectItem value="none">Sem Ação / Monitorar</SelectItem>
+                <SelectItem value="flowspec">Apenas FlowSpec</SelectItem>
+                <SelectItem value="blackhole">Blackhole</SelectItem>
+                <SelectItem value="blackhole_flowspec">Blackhole + FlowSpec</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Seção 4 — Configuração FlowSpec */}
+          {showFlowSpec && (
+            <div className="space-y-4 p-5 bg-primary/5 rounded-xl border border-primary/20 animate-in fade-in slide-in-from-top-2 duration-300">
+              <h3 className="text-sm font-bold text-primary flex items-center gap-2">
+                <Zap size={16} /> Configuração FlowSpec
+              </h3>
+              
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs">Tipo de bloqueio</Label>
+                  <Select value={formData.fs_type} onValueChange={v => setFormData({ ...formData, fs_type: v })}>
+                    <SelectTrigger className="bg-bg-secondary"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="by_port">Por porta</SelectItem>
+                      <SelectItem value="by_protocol">Por protocolo</SelectItem>
+                      <SelectItem value="both">Ambos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Ação FlowSpec</Label>
+                  <Select value={formData.fs_action} onValueChange={v => setFormData({ ...formData, fs_action: v })}>
+                    <SelectTrigger className="bg-bg-secondary"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="rate_limit">Rate-Limit</SelectItem>
+                      <SelectItem value="drop">Descartar tudo</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              {formData.fs_action === 'rate_limit' && (
+                <div className="space-y-2 animate-in fade-in duration-300">
+                  <Label className="text-xs">Rate-Limit (Kbps)</Label>
+                  <Input 
+                    type="number" 
+                    value={formData.fs_rate_kbps} 
+                    onChange={e => setFormData({ ...formData, fs_rate_kbps: e.target.value })}
+                    placeholder="Ex: 1000"
+                  />
+                </div>
+              )}
+
+              <div className="grid grid-cols-3 gap-4">
+                <div className="space-y-2">
+                  <Label className="text-xs">TTL (minutos)</Label>
+                  <Input 
+                    type="number" 
+                    value={formData.fs_ttl_minutes} 
+                    onChange={e => setFormData({ ...formData, fs_ttl_minutes: e.target.value })}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Direção</Label>
+                  <Select value={formData.fs_direction} onValueChange={v => setFormData({ ...formData, fs_direction: v })}>
+                    <SelectTrigger className="bg-bg-secondary"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="incoming">Incoming</SelectItem>
+                      <SelectItem value="outgoing">Outgoing</SelectItem>
+                      <SelectItem value="both">Ambos</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label className="text-xs">Origem</Label>
+                  <Select value={formData.fs_src_mode} onValueChange={v => setFormData({ ...formData, fs_src_mode: v })}>
+                    <SelectTrigger className="bg-bg-secondary"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="attacker">Só IP atacante</SelectItem>
+                      <SelectItem value="any">Qualquer origem</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+            </div>
+          )}
+
+          <DialogFooter className="mt-6 pt-2 border-t border-border">
+            <Button type="button" variant="outline" onClick={onClose}>Cancelar</Button>
+            <Button type="submit" disabled={isLoading}>{isLoading ? 'Salvando...' : 'Salvar Perfil'}</Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
