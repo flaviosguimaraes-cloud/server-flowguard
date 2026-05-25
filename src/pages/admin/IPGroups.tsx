@@ -247,6 +247,103 @@ export default function IPGroups() {
         </div>
       </div>
 
+      {/* Mitigation Profiles Section */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Shield className="text-primary" size={20} />
+            <h2 className="text-xl font-bold text-text-primary">Perfis de Mitigação</h2>
+          </div>
+          <Button variant="outline" size="sm" onClick={() => { setEditingProfile(null); setIsProfileModalOpen(true); }} className="gap-2">
+            <Plus size={14} /> Novo Perfil
+          </Button>
+        </div>
+
+        <div className="bg-bg-secondary rounded-xl border border-border overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-bg-primary/50 text-text-secondary text-xs uppercase tracking-wider font-bold">
+                  <th className="px-6 py-4">Nome</th>
+                  <th className="px-6 py-4">Ação</th>
+                  <th className="px-6 py-4">Threshold Mbps</th>
+                  <th className="px-6 py-4">Threshold PPS</th>
+                  <th className="px-6 py-4 text-right">Ações</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {isLoadingProfiles ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8"><Skeleton count={2} /></td>
+                  </tr>
+                ) : !profiles || profiles.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="px-6 py-8 text-center text-text-secondary italic">Nenhum perfil encontrado</td>
+                  </tr>
+                ) : profiles.map((profile: any) => (
+                  <tr key={profile.id} className="hover:bg-bg-primary/30 transition-colors group">
+                    <td className="px-6 py-4">
+                      <div className="font-bold text-text-primary flex items-center gap-2">
+                        {profile.name}
+                        {profile.is_default && <Badge className="bg-green-500/10 text-green-500 border-none text-[10px]">Padrão</Badge>}
+                      </div>
+                      <div className="text-xs text-text-secondary truncate max-w-[200px]">{profile.description || 'Sem descrição'}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <Badge 
+                        variant="outline" 
+                        className={clsx(
+                          "capitalize",
+                          profile.action === 'none' && "bg-gray-500/10 text-gray-500 border-gray-500/20",
+                          profile.action === 'blackhole' && "bg-red-500/10 text-red-500 border-red-500/20",
+                          profile.action === 'flowspec' && "bg-blue-500/10 text-blue-500 border-blue-500/20",
+                          profile.action === 'blackhole_flowspec' && "bg-orange-500/10 text-orange-500 border-orange-500/20",
+                          profile.action === 'global' && "bg-green-500/10 text-green-500 border-green-500/20"
+                        )}
+                      >
+                        {profile.action === 'flowspec' ? 'FlowSpec' : 
+                         profile.action === 'blackhole' ? 'Blackhole' :
+                         profile.action === 'blackhole_flowspec' ? 'Blackhole+FS' :
+                         profile.action === 'none' ? 'Sem Ação' : 'Global'}
+                      </Badge>
+                    </td>
+                    <td className="px-6 py-4 text-sm text-text-secondary">
+                      {profile.fnm_threshold_mbps || 'Global'}
+                    </td>
+                    <td className="px-6 py-4 text-sm text-text-secondary">
+                      {profile.fnm_threshold_pps || 'Global'}
+                    </td>
+                    <td className="px-6 py-4 text-right">
+                      <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Button 
+                          variant="ghost" 
+                          size="icon" 
+                          className="h-8 w-8" 
+                          onClick={() => { setEditingProfile(profile); setIsProfileModalOpen(true); }}
+                        >
+                          <Edit2 size={14} />
+                        </Button>
+                        {!profile.is_default && (
+                          <Button 
+                            variant="ghost" 
+                            size="icon" 
+                            className="h-8 w-8 text-destructive" 
+                            onClick={() => setDeleteProfileConfirm(profile)}
+                          >
+                            <Trash2 size={14} />
+                          </Button>
+                        )}
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+
       <IPGroupModal 
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
