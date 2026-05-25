@@ -65,7 +65,22 @@ export const Sidebar = () => {
     localStorage.setItem('sidebar_open_groups', JSON.stringify(openGroups));
   }, [openGroups]);
 
-  const menuGroups = [
+  interface MenuItem {
+    path: string;
+    label: string;
+    icon: any;
+    badge?: number;
+    badgeColor?: string;
+  }
+
+  interface MenuGroup {
+    id: string;
+    label: string;
+    icon?: any;
+    items: MenuItem[];
+  }
+
+  const menuGroups: MenuGroup[] = [
     {
       id: 'general',
       label: 'Geral',
@@ -79,7 +94,6 @@ export const Sidebar = () => {
     {
       id: 'mitigation',
       label: 'Mitigação',
-      icon: Shield,
       items: [
         { path: '/mitigation/events', label: t('events'), icon: Activity },
         { path: '/mitigation/threats', label: t('threats'), icon: Radar, badge: activeThreats },
@@ -93,7 +107,6 @@ export const Sidebar = () => {
     {
       id: 'administration',
       label: 'Operação',
-      icon: Lock,
       items: [
         { path: '/operation/collectors', label: t('collectors'), icon: Server },
         { path: '/admin/ip-groups', label: 'Grupos de IP', icon: Network },
