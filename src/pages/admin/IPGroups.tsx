@@ -308,10 +308,10 @@ export default function IPGroups() {
                       </Badge>
                     </td>
                     <td className="px-6 py-4 text-sm text-text-secondary">
-                      {profile.fnm_threshold_mbps || 'Global'}
+                      {profile.threshold_mbps || profile.fnm_threshold_mbps || 'Global'}
                     </td>
                     <td className="px-6 py-4 text-sm text-text-secondary">
-                      {profile.fnm_threshold_pps || 'Global'}
+                      {profile.threshold_pps || profile.fnm_threshold_pps || 'Global'}
                     </td>
                     <td className="px-6 py-4 text-right">
                       <div className="flex items-center justify-end gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -782,9 +782,9 @@ function MitigationProfileModal({ isOpen, onClose, data, onSubmit, isLoading }: 
   const [formData, setFormData] = useState<any>({
     name: '',
     description: '',
-    fnm_threshold_mbps: '',
-    fnm_threshold_pps: '',
-    fnm_threshold_flows: 3500,
+    threshold_mbps: '',
+    threshold_pps: '',
+    threshold_flows: 3500,
     ban_for_bandwidth: true,
     ban_for_pps: true,
     ban_for_flows: false,
@@ -802,9 +802,9 @@ function MitigationProfileModal({ isOpen, onClose, data, onSubmit, isLoading }: 
       setFormData({
         name: data.name || '',
         description: data.description || '',
-        fnm_threshold_mbps: data.fnm_threshold_mbps || '',
-        fnm_threshold_pps: data.fnm_threshold_pps || '',
-        fnm_threshold_flows: data.fnm_threshold_flows ?? 3500,
+        threshold_mbps: data.threshold_mbps || data.fnm_threshold_mbps || '',
+        threshold_pps: data.threshold_pps || data.fnm_threshold_pps || '',
+        threshold_flows: data.threshold_flows ?? data.fnm_threshold_flows ?? 3500,
         ban_for_bandwidth: data.ban_for_bandwidth ?? true,
         ban_for_pps: data.ban_for_pps ?? true,
         ban_for_flows: data.ban_for_flows ?? false,
@@ -820,9 +820,9 @@ function MitigationProfileModal({ isOpen, onClose, data, onSubmit, isLoading }: 
       setFormData({
         name: '',
         description: '',
-        fnm_threshold_mbps: '',
-        fnm_threshold_pps: '',
-        fnm_threshold_flows: 3500,
+        threshold_mbps: '',
+        threshold_pps: '',
+        threshold_flows: 3500,
         ban_for_bandwidth: true,
         ban_for_pps: true,
         ban_for_flows: false,
@@ -840,10 +840,17 @@ function MitigationProfileModal({ isOpen, onClose, data, onSubmit, isLoading }: 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const payload = { ...formData };
-    payload.fnm_threshold_mbps = (payload.fnm_threshold_mbps !== '' && payload.fnm_threshold_mbps !== null) ? Number(payload.fnm_threshold_mbps) : null;
-    payload.fnm_threshold_pps = (payload.fnm_threshold_pps !== '' && payload.fnm_threshold_pps !== null) ? Number(payload.fnm_threshold_pps) : null;
-    payload.fnm_threshold_flows = (payload.fnm_threshold_flows !== '' && payload.fnm_threshold_flows !== null) ? Number(payload.fnm_threshold_flows) : null;
-    payload.fs_rate_kbps = (payload.fs_rate_kbps !== '' && payload.fs_rate_kbps !== null) ? Number(payload.fs_rate_kbps) : null;
+    payload.threshold_mbps = (payload.threshold_mbps !== '' && payload.threshold_mbps !== null) ? Number(payload.threshold_mbps) : null;
+    payload.threshold_pps = (payload.threshold_pps !== '' && payload.threshold_pps !== null) ? Number(payload.threshold_pps) : null;
+    payload.threshold_flows = (payload.threshold_flows !== '' && payload.threshold_flows !== null) ? Number(payload.threshold_flows) : null;
+    
+    // Se a ação for drop, o rate_kbps deve ser 0 ou omitido
+    if (payload.fs_action === 'drop') {
+      payload.fs_rate_kbps = 0;
+    } else {
+      payload.fs_rate_kbps = (payload.fs_rate_kbps !== '' && payload.fs_rate_kbps !== null) ? Number(payload.fs_rate_kbps) : null;
+    }
+
     payload.fs_ttl_minutes = payload.fs_ttl_minutes !== '' ? Number(payload.fs_ttl_minutes) : 2;
     onSubmit(payload);
   };
@@ -892,8 +899,8 @@ function MitigationProfileModal({ isOpen, onClose, data, onSubmit, isLoading }: 
                 <Input 
                   type="number"
                   disabled={!formData.ban_for_bandwidth}
-                  value={formData.fnm_threshold_mbps} 
-                  onChange={e => setFormData({ ...formData, fnm_threshold_mbps: e.target.value })} 
+                  value={formData.threshold_mbps} 
+                  onChange={e => setFormData({ ...formData, threshold_mbps: e.target.value })} 
                   placeholder="Padrão global (1000)"
                 />
               </div>
@@ -902,8 +909,8 @@ function MitigationProfileModal({ isOpen, onClose, data, onSubmit, isLoading }: 
                 <Input 
                   type="number"
                   disabled={!formData.ban_for_pps}
-                  value={formData.fnm_threshold_pps} 
-                  onChange={e => setFormData({ ...formData, fnm_threshold_pps: e.target.value })} 
+                  value={formData.threshold_pps} 
+                  onChange={e => setFormData({ ...formData, threshold_pps: e.target.value })} 
                   placeholder="Padrão global (100000)"
                 />
               </div>
@@ -912,8 +919,8 @@ function MitigationProfileModal({ isOpen, onClose, data, onSubmit, isLoading }: 
                 <Input 
                   type="number"
                   disabled={!formData.ban_for_flows}
-                  value={formData.fnm_threshold_flows} 
-                  onChange={e => setFormData({ ...formData, fnm_threshold_flows: e.target.value })} 
+                  value={formData.threshold_flows} 
+                  onChange={e => setFormData({ ...formData, threshold_flows: e.target.value })} 
                   placeholder="3500"
                 />
               </div>
