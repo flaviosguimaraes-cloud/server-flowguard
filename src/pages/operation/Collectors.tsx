@@ -1159,6 +1159,8 @@ function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
     bgp_ipv4_flowspec_enabled: false,
     bgp_ipv6_enabled: false,
     bgp_ipv6_flowspec_enabled: false,
+    bgp_local_asn: '',
+    bgp_remote_asn: '',
     monitored_networks: [] as any[]
   });
 
@@ -1171,6 +1173,8 @@ function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
         bgp_ipv4_flowspec_enabled: collector.flowspec_ipv4_enabled || false,
         bgp_ipv6_enabled: collector.bgp_ipv6_enabled || false,
         bgp_ipv6_flowspec_enabled: collector.flowspec_ipv6_enabled || false,
+        bgp_local_asn: collector.bgp_local_asn?.toString() || '',
+        bgp_remote_asn: collector.bgp_remote_asn?.toString() || '',
         monitored_networks: collector.monitored_networks || []
       });
     }
