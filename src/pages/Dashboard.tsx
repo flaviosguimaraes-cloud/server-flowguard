@@ -836,280 +836,213 @@ export default function Dashboard() {
       id: 'download',
       label: 'Download',
       value: detection?.incoming_mbps !== undefined ? formatBw(detection.incoming_mbps) : '0 Mbps',
-      detail: detection?.incoming_pps ? `PPS: ${detection.incoming_pps.toLocaleString()}` : 'PPS: 0',
-      icon: <ArrowDown className="text-blue-500" size={16} />
+      detail: detection?.incoming_pps ? `${(detection.incoming_pps / 1000).toFixed(1)}k PPS` : '0 PPS',
+      icon: <ArrowDown size={18} />,
+      color: 'text-blue-500',
+      bgColor: 'bg-blue-500/10'
     },
     {
       id: 'upload',
       label: 'Upload',
       value: detection?.outgoing_mbps !== undefined ? formatBw(detection.outgoing_mbps) : '0 Mbps',
-      detail: detection?.outgoing_pps ? `PPS: ${detection.outgoing_pps.toLocaleString()}` : 'PPS: 0',
-      icon: <ArrowUp className="text-green-500" size={16} />
+      detail: detection?.outgoing_pps ? `${(detection.outgoing_pps / 1000).toFixed(1)}k PPS` : '0 PPS',
+      icon: <ArrowUp size={18} />,
+      color: 'text-green-500',
+      bgColor: 'bg-green-500/10'
     },
     {
       id: 'flows',
-      label: 'Flows/min',
+      label: 'Flows p/ min',
       value: flowsSummary?.total_flows ? (flowsSummary.total_flows / 1000).toFixed(1) + 'M' : '0',
-      detail: 'Lag: 0s · Tailer: ativo',
-      icon: <Activity className="text-warning" size={16} />
+      detail: 'Tailer: Ativo',
+      icon: <Activity size={18} />,
+      color: 'text-warning',
+      bgColor: 'bg-warning/10'
     },
     {
       id: 'collectors',
       label: 'Coletores',
       value: activeCollectors.length,
       detail: activeCollectors.length === 1 
-        ? `${activeCollectors[0].name} · ${activeCollectors[0].host} · ${collectorDetailedInfo?.length || 0} interfaces`
-        : `${activeCollectors.length} coletores ativos`,
-      icon: <Zap className="text-primary" size={16} />
+        ? `${activeCollectors[0].host}`
+        : `${activeCollectors.length} ativos`,
+      icon: <Zap size={18} />,
+      color: 'text-primary',
+      bgColor: 'bg-primary/10'
     },
     {
       id: 'attacks',
-      label: 'ANOMALIAS HOJE',
+      label: 'Anomalias (24h)',
       value: anomaliasHoje.length,
       detail: anomaliasHoje[0] 
-        ? `Último: ${anomaliasHoje[0].ip} às ${anomaliasHoje[0].started_at.substring(11, 16)}`
-        : "Nenhuma anomalia hoje",
-      icon: <Shield className="text-danger" size={16} />
+        ? `Último: ${anomaliasHoje[0].ip}`
+        : "Nenhuma hoje",
+      icon: <Shield size={18} />,
+      color: 'text-danger',
+      bgColor: 'bg-danger/10'
     },
     {
       id: 'blackhole',
       label: 'Blackhole',
       value: activeMitigations?.total || 0,
       detail: activeMitigations?.total > 0
-        ? activeMitigations.items.slice(0, 3).map((i: any) => `${i.ip} · ${i.pps.toLocaleString()} pps`).join(' | ')
-        : 'Nenhum IP em blackhole',
-      icon: <Activity className="text-accent" size={16} />
+        ? `${activeMitigations.total} ativos`
+        : 'Nenhum ativo',
+      icon: <Activity size={18} />,
+      color: 'text-purple',
+      bgColor: 'bg-purple/10'
     }
   ];
 
   return (
     <TooltipProvider>
-      <div className="space-y-6 animate-in fade-in duration-500 pb-10">
-        <style>{`
-          @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(2px); }
-            to { opacity: 1; transform: translateY(0); }
-          }
-        `}</style>
-
-        {/* SEÇÃO 1 — Cards em linha única */}
+      <div className="page-container animate-in fade-in duration-500 pb-10">
+        {/* SEÇÃO 1 — Metric Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-6 gap-4">
-          {cards.map((card) => {
-            const isHovered = hoveredCard === card.id;
-            return (
-              <div
-                key={card.id}
-                onMouseEnter={() => setHoveredCard(card.id)}
-                onMouseLeave={() => setHoveredCard(null)}
-                className={clsx(
-                  "relative overflow-hidden flex flex-col justify-between p-5 rounded-2xl border transition-all duration-300 cursor-default min-h-[120px]",
-                  "bg-white dark:bg-bg-secondary border-border/40 shadow-[0_2px_10px_rgba(0,0,0,0.02)]",
-                  "hover:-translate-y-1.5 hover:shadow-[0_12px_30px_rgba(0,0,0,0.08)] hover:border-primary/30"
-                )}
-              >
-                <div className="flex justify-between items-start">
-                  <div className="flex flex-col gap-1">
-                    <span className="text-[9px] font-bold text-text-secondary uppercase tracking-widest opacity-60 flex items-center">
-                      {card.label}
-                      {(card.id === 'download' || card.id === 'upload' || card.id === 'flows' || card.id === 'blackhole') && <FlowBadge />}
-                    </span>
-                    <div className="text-2xl font-bold text-text-primary tracking-tight mt-1">
-                      {card.value}
-                    </div>
-                  </div>
-                  <div className={clsx(
-                    "p-2.5 rounded-xl bg-bg-primary/50 border border-border/30 transition-all duration-300",
-                    isHovered && "scale-110 bg-bg-primary border-primary/20 shadow-sm"
-                  )}>
-                    {card.icon}
-                  </div>
-                </div>
-                
+          {cards.map((card) => (
+            <div
+              key={card.id}
+              className="metric-card group"
+            >
+              <div className="flex justify-between items-start">
                 <div className={clsx(
-                  "overflow-hidden transition-all duration-300 ease-in-out",
-                  isHovered ? "max-h-12 opacity-100 mt-4" : "max-h-0 opacity-0 mt-0"
+                  "p-2 rounded-lg transition-colors",
+                  card.bgColor
                 )}>
-                  <div className="text-[10px] text-text-secondary pt-3 border-t border-border/20 whitespace-nowrap overflow-hidden text-ellipsis italic">
-                    {card.detail}
-                  </div>
+                  <span className={card.color}>{card.icon}</span>
+                </div>
+                <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest opacity-50">
+                  {card.label}
                 </div>
               </div>
-            );
-          })}
-        </div>
-
-
-
-      {/* Main Chart: Tráfego da Interface - Refined Light Theme Visuals */}
-      <div className="bg-white dark:bg-bg-secondary p-6 rounded-2xl border border-border shadow-[0_8px_30px_rgb(0,0,0,0.04)] dark:shadow-none transition-all">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-5 gap-4 border-b border-border/50 pb-5">
-          <h2 className="text-lg font-bold text-text-primary">Tráfego do Coletor</h2>
-
-          <div className="flex flex-wrap items-center gap-3">
-            <button
-              onClick={() => setShowIfaceSelector(true)}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                gap: 6,
-                padding: '6px 12px',
-                borderRadius: 6,
-                border: '1px solid #2a2d3e',
-                background: 'transparent',
-                color: '#8892a4',
-                cursor: 'pointer',
-                fontSize: 12,
-              }}>
-              ⚙ Interfaces ({selectedIfaces.length} selecionadas)
-            </button>
-
-            <div className="flex items-center gap-2 px-3 py-1.5 bg-bg-primary rounded-lg border border-border">
-              <Settings2 size={14} className="text-text-secondary" />
-              <select 
-                value={selectedCollector || ''} 
-                onChange={(e) => setSelectedCollector(Number(e.target.value))}
-                className="bg-transparent text-[11px] font-bold text-text-primary focus:outline-none cursor-pointer"
-              >
-                {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).map((c: any) => (
-                  <option key={c.id} value={c.id}>{c.name} ({c.host})</option>
-                ))}
-              </select>
-            </div>
-
-              {/* MELHORIA 4 — Seletor de período */}
-               <div className="flex bg-bg-primary p-1 rounded-lg border border-border overflow-x-auto">
-               {[
-                 { label: '30M', mins: 30 },
-                 { label: '1H', mins: 60 },
-                 { label: '6H', mins: 360 },
-                 { label: '12H', mins: 720 },
-                 { label: '24H', mins: 1440 },
-                 { label: '48H', mins: 2880 }
-               ].map((p) => (
-                 <button
-                   key={p.label}
-                   onClick={() => setSelectedMinutes(p.mins)}
-                   className={clsx(
-                     "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all whitespace-nowrap",
-                     selectedMinutes === p.mins 
-                       ? "bg-white dark:bg-[#2a2d3e] text-accent shadow-sm" 
-                       : "text-text-secondary hover:text-text-primary"
-                   )}
-                 >
-                   {p.label}
-                 </button>
-               ))}
-               </div>
- 
-             <button 
-               onClick={() => {
-                 queryClient.invalidateQueries();
-                 setCountdown(30);
-               }}
-               className="flex items-center gap-2 px-3 py-1.5 bg-bg-primary hover:bg-gray-100 dark:hover:bg-[#2a2d3e] text-text-secondary hover:text-text-primary rounded-lg transition-all text-[10px] font-bold uppercase tracking-wider border border-border"
-             >
-               <svg 
-                 xmlns="http://www.w3.org/2000/svg" 
-                 width="14" height="14" 
-                 viewBox="0 0 24 24" fill="none" 
-                 stroke="currentColor" strokeWidth="2.5" 
-                 strokeLinecap="round" strokeLinejoin="round"
-                 className={clsx(countdown === 30 && "animate-spin")}
-                 style={{ animationDuration: '1s' }}
-               >
-                 <path d="M23 4v6h-6"/>
-                 <path d="M1 20v-6h6"/>
-                 <path d="M3.51 9a9 9 0 0114.85-3.36L23 10"/>
-                 <path d="M20.49 15a9 9 0 01-14.85 3.36L1 14"/>
-               </svg>
-               <span>{countdown}s</span>
-             </button>
-          </div>
-        </div>
-
-        {/* Collector Info */}
-        <div className="flex items-center gap-2 text-xs text-text-secondary opacity-80 mb-5">
-          <Info size={14} />
-          <span className="font-medium">
-            {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).find((c: any) => c.id === selectedCollector)?.name || 'NE-20'} 
-            <span className="mx-2 opacity-30">|</span>
-            {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).find((c: any) => c.id === selectedCollector)?.host || '45.175.50.209'}
-          </span>
-        </div>
-
-         <div className="space-y-4 bg-[#F8FAFC] dark:bg-[#0f172a]/40 p-4 rounded-xl border border-border/50 relative flex flex-col items-center justify-center min-h-[400px]">
-          {metricsHistoryLoading ? (
-            <div className="flex flex-col items-center gap-3">
-              <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-              <span className="text-xs font-bold text-text-secondary uppercase tracking-widest animate-pulse">Carregando histórico...</span>
-            </div>
-          ) : chartData.length === 0 ? (
-            <div className="flex flex-col items-center gap-2 text-text-secondary opacity-60">
-              <History size={32} strokeWidth={1.5} />
-              <span className="text-xs font-bold uppercase tracking-wider">Sem dados para o período selecionado</span>
-            </div>
-          ) : (
-            <div className="w-full h-[400px] relative">
-              <div id="collector-tooltip" style={{
-                display: 'none',
-                position: 'absolute',
-                background: 'var(--color-background-primary)',
-                border: '0.5px solid var(--color-border-secondary)',
-                borderRadius: '8px',
-                padding: '8px 12px',
-                fontSize: '12px',
-                pointerEvents: 'none',
-                zIndex: 10,
-                minWidth: '140px',
-                boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'
-              }}></div>
-              <ChartLine
-                data={{
-                  labels: chartLabels,
-                  datasets: datasets
-                }}
-                options={chartOptions as any}
-              />
-            </div>
-          )}
-        </div>
-
-          {/* Compact Zabbix style stats below chart */}
-          <div className="mt-4 border-t border-border/40 pt-3 px-2">
-            <div className="flex items-center gap-4 text-[10px] text-text-secondary font-bold uppercase tracking-widest mb-2 opacity-60">
-              <Activity size={10} />
-              Estatísticas · {periodStats.label}
-            </div>
-            <div className="space-y-2">
-              {(['rx', 'tx'] as const).map(dir => (
-                <div key={dir} className="flex flex-col sm:flex-row sm:items-baseline gap-1 sm:gap-4 text-[11px] font-medium leading-none py-0.5">
-                  <span className={clsx(
-                    "font-black w-8",
-                    dir === 'rx' ? "text-blue-500" : "text-green-500"
-                  )}>
-                    {dir === 'rx' ? '↓ RX' : '↑ TX'}
-                  </span>
-                  
-                  <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5">
-                    {(['last', 'min', 'avg', 'max'] as const).map(metric => (
-                      <div key={metric} className="flex items-baseline gap-1">
-                        <span className="uppercase text-[9px] font-bold text-text-secondary opacity-50">
-                          {metric === 'last' ? 'Último' : metric === 'min' ? 'Mín' : metric === 'avg' ? 'Méd' : 'Máx'}:
-                        </span>
-                        <span className={clsx(
-                          "font-bold",
-                          metric === 'max' ? (dir === 'rx' ? "text-blue-500" : "text-green-500") : "text-text-primary"
-                        )}>
-                          {formatBpsRaw(periodStats[dir][metric])}
-                        </span>
-                      </div>
-                    ))}
-                  </div>
+              <div className="mt-3">
+                <div className="text-2xl font-bold text-text-primary tracking-tight">
+                  {card.value}
                 </div>
-              ))}
+                <div className="text-[10px] text-text-secondary font-medium mt-1 flex items-center gap-1.5">
+                  <span className="w-1 h-1 rounded-full bg-border" />
+                  {card.detail}
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* SEÇÃO 2 — Tráfego do Coletor */}
+        <div className="card p-6">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+            <div>
+              <h2 className="text-lg font-bold text-text-primary tracking-tight">Análise de Tráfego</h2>
+              <p className="text-xs text-text-secondary mt-0.5">Métricas em tempo real por interface e coletor</p>
+            </div>
+
+            <div className="flex flex-wrap items-center gap-2">
+              <button
+                onClick={() => setShowIfaceSelector(true)}
+                className="secondary-button !py-1.5 !px-3 !text-[11px]"
+              >
+                <Settings2 size={14} />
+                Interfaces ({selectedIfaces.length})
+              </button>
+
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-bg-primary rounded-lg border border-border">
+                <select 
+                  value={selectedCollector || ''} 
+                  onChange={(e) => setSelectedCollector(Number(e.target.value))}
+                  className="bg-transparent text-[11px] font-bold text-text-primary focus:outline-none cursor-pointer appearance-none pr-4 relative"
+                  style={{ backgroundImage: 'url("data:image/svg+xml,%3Csvg xmlns=\'http://www.w3.org/2000/svg\' fill=\'none\' viewBox=\'0 0 24 24\' stroke=\'currentColor\'%3E%3Cpath stroke-linecap=\'round\' stroke-linejoin=\'round\' stroke-width=\'2\' d=\'M19 9l-7 7-7-7\'%3E%3C/path%3E%3C/svg%3E")', backgroundRepeat: 'no-repeat', backgroundPosition: 'right center', backgroundSize: '10px' }}
+                >
+                  {(Array.isArray(collectors) ? collectors : (collectors?.items || collectors?.data || [])).map((c: any) => (
+                    <option key={c.id} value={c.id}>{c.name} ({c.host})</option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
+                {[
+                  { label: '30M', mins: 30 },
+                  { label: '1H', mins: 60 },
+                  { label: '6H', mins: 360 },
+                  { label: '24H', mins: 1440 }
+                ].map((p) => (
+                  <button
+                    key={p.label}
+                    onClick={() => setSelectedMinutes(p.mins)}
+                    className={clsx(
+                      "px-3 py-1 text-[10px] font-bold uppercase rounded-md transition-all",
+                      selectedMinutes === p.mins 
+                        ? "bg-bg-secondary text-primary shadow-sm border border-border/50" 
+                        : "text-text-secondary hover:text-text-primary"
+                    )}
+                  >
+                    {p.label}
+                  </button>
+                ))}
+              </div>
+
+              <button 
+                onClick={() => {
+                  queryClient.invalidateQueries();
+                  setCountdown(30);
+                }}
+                className="secondary-button !p-2"
+                title="Sincronizar"
+              >
+                <RefreshCw size={14} className={clsx(countdown === 30 && "animate-spin")} />
+              </button>
             </div>
           </div>
-      </div>
+
+          <div className="bg-bg-primary/30 p-4 rounded-xl border border-border/50 relative min-h-[400px]">
+            {metricsHistoryLoading ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-3">
+                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
+                <span className="text-[10px] font-bold text-text-secondary uppercase tracking-widest animate-pulse">Sincronizando dados...</span>
+              </div>
+            ) : chartData.length === 0 ? (
+              <div className="absolute inset-0 flex flex-col items-center justify-center gap-2 text-text-secondary opacity-40">
+                <History size={40} strokeWidth={1} />
+                <span className="text-[10px] font-bold uppercase tracking-widest">Sem telemetria no período</span>
+              </div>
+            ) : (
+              <div className="w-full h-[400px]">
+                <ChartLine
+                  data={{
+                    labels: chartLabels,
+                    datasets: datasets
+                  }}
+                  options={chartOptions as any}
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="mt-6 grid grid-cols-1 sm:grid-cols-2 gap-4">
+            {(['rx', 'tx'] as const).map(dir => (
+              <div key={dir} className="bg-bg-primary/40 p-3 rounded-lg border border-border/60">
+                <div className="flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest mb-3 opacity-60">
+                  <div className={clsx("w-1.5 h-1.5 rounded-full", dir === 'rx' ? "bg-blue-500" : "bg-green-500")} />
+                  Resumo {dir === 'rx' ? 'Download' : 'Upload'}
+                </div>
+                <div className="grid grid-cols-4 gap-2">
+                  {[
+                    { label: 'Atual', key: 'last' },
+                    { label: 'Mín', key: 'min' },
+                    { label: 'Méd', key: 'avg' },
+                    { label: 'Máx', key: 'max' }
+                  ].map(m => (
+                    <div key={m.key}>
+                      <p className="text-[9px] text-text-secondary uppercase font-bold opacity-50 mb-1">{m.label}</p>
+                      <p className="text-xs font-bold text-text-primary tabular-nums">
+                        {formatBpsRaw(periodStats[dir][m.key as keyof typeof periodStats['rx']])}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
 
 
 
