@@ -840,11 +840,11 @@ function MitigationProfileModal({ isOpen, onClose, data, onSubmit, isLoading }: 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const payload = { ...formData };
-    payload.fnm_threshold_mbps = payload.fnm_threshold_mbps ? Number(payload.fnm_threshold_mbps) : null;
-    payload.fnm_threshold_pps = payload.fnm_threshold_pps ? Number(payload.fnm_threshold_pps) : null;
-    payload.fnm_threshold_flows = payload.fnm_threshold_flows ? Number(payload.fnm_threshold_flows) : null;
-    payload.fs_rate_kbps = payload.fs_rate_kbps ? Number(payload.fs_rate_kbps) : null;
-    payload.fs_ttl_minutes = Number(payload.fs_ttl_minutes);
+    payload.fnm_threshold_mbps = (payload.fnm_threshold_mbps !== '' && payload.fnm_threshold_mbps !== null) ? Number(payload.fnm_threshold_mbps) : null;
+    payload.fnm_threshold_pps = (payload.fnm_threshold_pps !== '' && payload.fnm_threshold_pps !== null) ? Number(payload.fnm_threshold_pps) : null;
+    payload.fnm_threshold_flows = (payload.fnm_threshold_flows !== '' && payload.fnm_threshold_flows !== null) ? Number(payload.fnm_threshold_flows) : null;
+    payload.fs_rate_kbps = (payload.fs_rate_kbps !== '' && payload.fs_rate_kbps !== null) ? Number(payload.fs_rate_kbps) : null;
+    payload.fs_ttl_minutes = payload.fs_ttl_minutes !== '' ? Number(payload.fs_ttl_minutes) : 2;
     onSubmit(payload);
   };
 
