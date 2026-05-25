@@ -431,10 +431,11 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, onViewDetails, 
         ...prev,
         monitored_networks: [
           ...prev.monitored_networks,
-          { cidr: '', type: 'own', label: '', allow_blackhole: true, allow_flowspec: true }
+          { cidr: '', description: '', allow_blackhole: true, allow_flowspec: true }
         ]
       }));
     };
+
 
     const handleRemoveNetwork = (index: number) => {
       setFormData(prev => ({
