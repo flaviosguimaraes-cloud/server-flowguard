@@ -763,7 +763,7 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, onViewDetails, 
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pr-6">
                       <div className="space-y-1">
-                        <Label className="text-[10px] uppercase">CIDR</Label>
+                        <Label className="text-[10px] uppercase font-bold">CIDR</Label>
                         <Input 
                           placeholder="Ex: 45.175.50.0/24" 
                           value={net.cidr} 
@@ -772,22 +772,11 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, onViewDetails, 
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-[10px] uppercase">Tipo</Label>
-                        <Select value={net.type} onValueChange={v => handleUpdateNetwork(index, 'type', v)}>
-                          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="own">Própria</SelectItem>
-                            <SelectItem value="client">Cliente</SelectItem>
-                            <SelectItem value="transit">Trânsito</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="md:col-span-2 space-y-1">
-                        <Label className="text-[10px] uppercase">Label</Label>
+                        <Label className="text-[10px] uppercase font-bold">Descrição (Opcional)</Label>
                         <Input 
                           placeholder="Ex: UAY Internet" 
-                          value={net.label} 
-                          onChange={e => handleUpdateNetwork(index, 'label', e.target.value)}
+                          value={net.description || net.label || ''} 
+                          onChange={e => handleUpdateNetwork(index, 'description', e.target.value)}
                           className="h-8 text-xs"
                         />
                       </div>
@@ -800,7 +789,7 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, onViewDetails, 
                           checked={net.allow_blackhole} 
                           onCheckedChange={v => handleUpdateNetwork(index, 'allow_blackhole', v === true)}
                         />
-                        <label htmlFor={`bh-${index}`} className="text-[10px] font-medium leading-none cursor-pointer uppercase">Blackhole permitido</label>
+                        <label htmlFor={`bh-${index}`} className="text-[10px] font-bold leading-none cursor-pointer uppercase text-text-secondary">Blackhole permitido</label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Checkbox 
@@ -808,7 +797,7 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, onViewDetails, 
                           checked={net.allow_flowspec} 
                           onCheckedChange={v => handleUpdateNetwork(index, 'allow_flowspec', v === true)}
                         />
-                        <label htmlFor={`fs-${index}`} className="text-[10px] font-medium leading-none cursor-pointer uppercase">FlowSpec permitido</label>
+                        <label htmlFor={`fs-${index}`} className="text-[10px] font-bold leading-none cursor-pointer uppercase text-text-secondary">FlowSpec permitido</label>
                       </div>
                     </div>
                   </div>
@@ -827,16 +816,18 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, onViewDetails, 
                     <List size={18} />
                     <h3 className="font-bold text-sm uppercase tracking-wider">Interfaces de Upstream</h3>
                   </div>
-                  <Link 
-                    to="/operation/collectors"
-                    className="text-[11px] text-primary hover:underline flex items-center gap-1"
+                  <button 
+                    type="button"
+                    className="text-[11px] text-primary hover:underline flex items-center gap-1 font-bold"
                     onClick={() => {
                       onClose();
+                      if (onViewDetails) onViewDetails(data);
                     }}
                   >
                     Gerenciar interfaces <ArrowRight size={12} />
-                  </Link>
+                  </button>
                 </div>
+
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {upstreamIfaces.map((iface: any) => (
