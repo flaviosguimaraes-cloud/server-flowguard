@@ -48,6 +48,11 @@ export default function IPGroups() {
     queryFn: () => api.get('/api/ip-groups').then(r => r.data || []),
   });
 
+  const { data: profiles, isLoading: isLoadingProfiles } = useQuery({
+    queryKey: ['mitigation-profiles'],
+    queryFn: () => api.get('/api/profiles').then(r => r.data || []),
+  });
+
   const createMutation = useMutation({
     mutationFn: (data: any) => api.post('/api/ip-groups', data),
     onSuccess: () => {
@@ -76,6 +81,37 @@ export default function IPGroups() {
       toast.success('Grupo removido');
       setDeleteConfirm(null);
       setIsDrawerOpen(false);
+    },
+    onError: (err: any) => toast.error(`Erro: ${err.response?.data?.message || err.message}`)
+  });
+
+  const createProfileMutation = useMutation({
+    mutationFn: (data: any) => api.post('/api/profiles', data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mitigation-profiles'] });
+      toast.success('Perfil criado com sucesso');
+      setIsProfileModalOpen(false);
+    },
+    onError: (err: any) => toast.error(`Erro: ${err.response?.data?.message || err.message}`)
+  });
+
+  const updateProfileMutation = useMutation({
+    mutationFn: ({ id, data }: { id: number; data: any }) => api.put(`/api/profiles/${id}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mitigation-profiles'] });
+      queryClient.invalidateQueries({ queryKey: ['ip-groups'] });
+      toast.success('Perfil atualizado');
+      setIsProfileModalOpen(false);
+    },
+    onError: (err: any) => toast.error(`Erro: ${err.response?.data?.message || err.message}`)
+  });
+
+  const deleteProfileMutation = useMutation({
+    mutationFn: (id: number) => api.delete(`/api/profiles/${id}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['mitigation-profiles'] });
+      toast.success('Perfil removido');
+      setDeleteProfileConfirm(null);
     },
     onError: (err: any) => toast.error(`Erro: ${err.response?.data?.message || err.message}`)
   });
