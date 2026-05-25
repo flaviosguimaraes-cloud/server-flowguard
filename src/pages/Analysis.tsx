@@ -549,90 +549,93 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
   };
 
 
-   return (
+  return (
     <TooltipProvider>
-     <div className="space-y-6 animate-in fade-in duration-500">
-       <div className="flex justify-between items-center">
-         <h1 className="text-2xl font-bold text-text-primary">{t('analysis')}</h1>
-         <div className="flex gap-2">
-            <button 
-              onClick={exportCSV}
-              className="flex items-center gap-2 px-4 py-2 bg-bg-secondary border border-border rounded-lg text-sm font-bold text-text-primary hover:bg-gray-50 dark:hover:bg-[#2a2d3e] transition-all shadow-sm"
-            >
-             <Download size={20} />
-               Exportar CSV
-            </button>
-         </div>
-       </div>
- 
-       {/* Metrics Cards */}
-       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-         <MetricCard title="Total Conexões" value={metrics.total} icon={<Activity className="text-accent" size={20} />} />
-         <MetricCard title="IPs Únicos" value={metrics.uniqueIPs} icon={<Users className="text-success" size={20} />} />
-         <MetricCard title="Países" value={metrics.distinctCountries} icon={<Globe className="text-warning" size={20} />} />
-         <MetricCard title="Altíssimo Volume" value={metrics.suspicious} icon={<AlertCircle className="text-danger" size={20} />} />
-       </div>
- 
-        <div className="bg-bg-secondary p-4 rounded-xl border border-border shadow-sm space-y-4">
-          {/* Linha 1: Filtros de dados */}
-          <div className="flex flex-wrap items-end gap-3">
-            {/* 1. IP Origem */}
-            <div className="flex-1 min-w-[180px] space-y-1">
+      <div className="page-container animate-in fade-in duration-500 pb-10">
+        <div className="section-header">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary/10 rounded-xl text-primary shadow-sm shadow-primary/10">
+              <Search size={24} />
+            </div>
+            <div>
+              <h1 className="section-title">Análise de Tráfego</h1>
+              <p className="text-sm text-text-secondary">Explore e filtre conexões em tempo real</p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+             <button 
+               onClick={exportCSV}
+               className="secondary-button"
+             >
+              <Download size={18} />
+              Exportar CSV
+             </button>
+          </div>
+        </div>
+  
+        {/* Metrics Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+          <MetricCard title="Total Conexões" value={metrics.total} icon={<Activity size={18} />} colorClass="text-accent" bgColorClass="bg-accent/10" />
+          <MetricCard title="IPs Únicos" value={metrics.uniqueIPs} icon={<Users size={18} />} colorClass="text-success" bgColorClass="bg-success/10" />
+          <MetricCard title="Países Distintos" value={metrics.distinctCountries} icon={<Globe size={18} />} colorClass="text-warning" bgColorClass="bg-warning/10" />
+          <MetricCard title="Fluxos Suspeitos" value={metrics.suspicious} icon={<AlertCircle size={18} />} colorClass="text-danger" bgColorClass="bg-danger/10" />
+        </div>
+  
+        <div className="card p-6">
+          <div className="flex items-center gap-2 mb-6">
+            <Filter size={18} className="text-primary" />
+            <h2 className="text-sm font-bold text-text-primary uppercase tracking-wider">Filtros Avançados</h2>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+            <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">IP Origem</label>
               <input
                 type="text"
-                placeholder="Ex: 192.168.1.1 ou /24"
-                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                placeholder="Ex: 192.168.1.1"
+                className="form-input"
                 value={filters.src_ip}
                 onChange={(e) => setFilters(prev => ({ ...prev, src_ip: e.target.value }))}
               />
             </div>
 
-            {/* 2. Porta Origem */}
-            <div className="w-24 space-y-1">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Porta Orig</label>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Porta Origem</label>
               <input
                 type="number"
-                min="1"
-                max="65535"
-                placeholder="1-65535"
-                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                placeholder="Ex: 80"
+                className="form-input"
                 value={filters.src_port}
                 onChange={(e) => setFilters(prev => ({ ...prev, src_port: e.target.value }))}
               />
             </div>
 
-            {/* 3. IP Destino */}
-            <div className="flex-1 min-w-[180px] space-y-1">
+            <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">IP Destino</label>
               <input
                 type="text"
-                placeholder="Ex: 192.168.1.1 ou /24"
-                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                placeholder="Ex: 10.0.0.1"
+                className="form-input"
                 value={filters.dst_ip}
                 onChange={(e) => setFilters(prev => ({ ...prev, dst_ip: e.target.value }))}
               />
             </div>
 
-            {/* 4. Porta Destino */}
-            <div className="w-24 space-y-1">
-              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Porta Dest</label>
+            <div className="space-y-1.5">
+              <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Porta Destino</label>
               <input
                 type="number"
-                min="1"
-                max="65535"
-                placeholder="1-65535"
-                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
+                placeholder="Ex: 443"
+                className="form-input"
                 value={filters.dst_port}
                 onChange={(e) => setFilters(prev => ({ ...prev, dst_port: e.target.value }))}
               />
             </div>
 
-            {/* 5. Protocolo */}
-            <div className="w-28 space-y-1">
+            <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Protocolo</label>
               <select
-                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 appearance-none text-sm text-text-primary"
+                className="form-input appearance-none"
                 value={filters.proto}
                 onChange={(e) => setFilters(prev => ({ ...prev, proto: e.target.value }))}
               >
@@ -643,11 +646,10 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
               </select>
             </div>
 
-            {/* 6. Direção */}
-            <div className="w-28 space-y-1">
+            <div className="space-y-1.5">
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Direção</label>
               <select
-                className="w-full bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 appearance-none text-sm text-text-primary"
+                className="form-input appearance-none"
                 value={filters.direction}
                 onChange={(e) => setFilters(prev => ({ ...prev, direction: e.target.value }))}
               >
@@ -657,204 +659,164 @@ const PPSIntensity = ({ pps }: { pps: number }) => {
               </select>
             </div>
 
-            {/* 7. País (Custom Select Option B) */}
-            <div className="w-48 space-y-1 relative">
+            <div className="space-y-1.5 relative">
               <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">País</label>
-              <div className="relative">
-                <button
-                  type="button"
-                  onClick={() => setCountryOpen(!countryOpen)}
-                  className="w-full flex items-center justify-between bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 text-sm text-text-primary hover:border-primary/50 transition-all"
-                >
-                  <div className="flex items-center gap-2 overflow-hidden">
-                    {filters.country ? (
-                      <>
-                        <span className={`fi fi-${filters.country.toLowerCase()} flex-shrink-0`} />
-                        <span className="truncate">{COUNTRIES.find(c => c.code === filters.country)?.name || filters.country}</span>
-                      </>
-                    ) : (
-                      <span className="text-text-secondary/60">Todos os países</span>
-                    )}
-                  </div>
-                  <ArrowDown size={14} className={clsx("transition-transform duration-200", countryOpen && "rotate-180")} />
-                </button>
+              <button
+                type="button"
+                onClick={() => setCountryOpen(!countryOpen)}
+                className="form-input flex items-center justify-between text-left"
+              >
+                <span className="truncate">
+                  {filters.country ? (COUNTRIES.find(c => c.code === filters.country)?.name || filters.country) : 'Todos'}
+                </span>
+                <ChevronDown size={14} className={clsx("transition-transform", countryOpen && "rotate-180")} />
+              </button>
 
-                {countryOpen && (
-                  <div className="absolute top-full left-0 right-0 mt-1 bg-bg-secondary border border-border rounded-lg shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-1 duration-200">
-                    <div className="p-2 border-b border-border bg-bg-primary/30">
-                      <div className="relative">
-                        <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-text-secondary" />
-                        <input
-                          autoFocus
-                          placeholder="Buscar país..."
-                          className="w-full bg-bg-secondary border border-border rounded-md py-1 px-8 text-xs outline-none focus:ring-1 focus:ring-primary/30 transition-all"
-                          value={countrySearch}
-                          onChange={(e) => setCountrySearch(e.target.value)}
-                        />
-                        {countrySearch && (
-                          <button 
-                            onClick={() => setCountrySearch('')}
-                            className="absolute right-2 top-1/2 -translate-y-1/2 text-text-secondary hover:text-text-primary"
-                          >
-                            <X size={12} />
-                          </button>
-                        )}
-                      </div>
-                    </div>
-                    <div className="max-h-60 overflow-y-auto custom-scrollbar">
-                      <button
-                        onClick={() => {
-                          setFilters(prev => ({ ...prev, country: '' }));
-                          setCountryOpen(false);
-                          setCountrySearch('');
-                        }}
-                        className="w-full text-left px-3 py-2 text-xs hover:bg-primary/5 transition-colors flex items-center gap-2 border-b border-border/30 italic text-text-secondary"
-                      >
-                        🌐 Todos os países
-                      </button>
-                      {filteredCountries.map(c => (
-                        <button
-                          key={c.code}
-                          onClick={() => {
-                            setFilters(prev => ({ ...prev, country: c.code }));
-                            setCountryOpen(false);
-                            setCountrySearch('');
-                          }}
-                          className={clsx(
-                            "w-full text-left px-3 py-2 text-xs hover:bg-primary/5 transition-colors flex items-center gap-2",
-                            filters.country === c.code && "bg-primary/10 text-primary font-bold"
-                          )}
-                        >
-                          <span className={`fi fi-${c.code.toLowerCase()}`} />
-                          {c.name}
-                        </button>
-                      ))}
-                      {filteredCountries.length === 0 && (
-                        <div className="px-3 py-4 text-center text-xs text-text-secondary italic">
-                          Nenhum país encontrado
-                        </div>
-                      )}
-                    </div>
+              {countryOpen && (
+                <div className="absolute top-full left-0 right-0 mt-1 bg-bg-secondary border border-border rounded-xl shadow-xl z-50 overflow-hidden animate-in fade-in slide-in-from-top-1">
+                  <div className="p-2 border-b border-border bg-bg-primary/50">
+                    <input
+                      autoFocus
+                      placeholder="Buscar país..."
+                      className="w-full bg-bg-secondary border border-border rounded-lg py-1.5 px-3 text-[11px] outline-none"
+                      value={countrySearch}
+                      onChange={(e) => setCountrySearch(e.target.value)}
+                    />
                   </div>
-                )}
-              </div>
+                  <div className="max-h-60 overflow-y-auto custom-scrollbar">
+                    <button
+                      onClick={() => { setFilters(prev => ({ ...prev, country: '' })); setCountryOpen(false); }}
+                      className="w-full text-left px-4 py-2 text-xs hover:bg-bg-primary font-bold border-b border-border/30"
+                    >
+                      Mundo Inteiro
+                    </button>
+                    {filteredCountries.map(c => (
+                      <button
+                        key={c.code}
+                        onClick={() => { setFilters(prev => ({ ...prev, country: c.code })); setCountryOpen(false); }}
+                        className={clsx(
+                          "w-full text-left px-4 py-2 text-xs hover:bg-bg-primary flex items-center gap-3",
+                          filters.country === c.code && "text-primary bg-primary/5 font-bold"
+                        )}
+                      >
+                        <Flag code={c.code} size={14} className="rounded-sm" />
+                        {c.name}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Linha 2: Período e Ações */}
-          <div className="flex flex-wrap items-end gap-4 pt-2 border-t border-border/50">
-            <div className="flex items-center gap-3">
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">De</label>
-                <div className="flex gap-2">
-                  <input
-                    type="date"
-                    className="bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
-                    value={startDate}
-                    onChange={(e) => handleStartChange(e.target.value, undefined)}
-                  />
-                  <input
-                    type="time"
-                    className="w-28 bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
-                    value={startTime}
-                    onChange={(e) => handleStartChange(undefined, e.target.value)}
-                  />
+          <div className="flex flex-wrap items-center justify-between gap-6 pt-6 mt-6 border-t border-border/50">
+            <div className="flex flex-wrap items-center gap-6">
+              <div className="flex items-center gap-3">
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1 opacity-50">Início do Período</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="date"
+                      className="form-input !py-1 !px-2 !w-auto"
+                      value={startDate}
+                      onChange={(e) => handleStartChange(e.target.value, undefined)}
+                    />
+                    <input
+                      type="time"
+                      className="form-input !py-1 !px-2 !w-24"
+                      value={startTime}
+                      onChange={(e) => handleStartChange(undefined, e.target.value)}
+                    />
+                  </div>
+                </div>
+                <div className="pt-4 text-text-secondary opacity-30">
+                  <ArrowRight size={14} />
+                </div>
+                <div className="space-y-1">
+                  <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1 opacity-50">Fim do Período</label>
+                  <div className="flex gap-2">
+                    <input
+                      type="date"
+                      className="form-input !py-1 !px-2 !w-auto"
+                      value={endDate}
+                      onChange={(e) => handleEndChange(e.target.value, undefined)}
+                    />
+                    <input
+                      type="time"
+                      className="form-input !py-1 !px-2 !w-24"
+                      value={endTime}
+                      onChange={(e) => handleEndChange(undefined, e.target.value)}
+                    />
+                  </div>
                 </div>
               </div>
-              <div className="space-y-1">
-                <label className="text-[10px] font-bold text-text-secondary uppercase tracking-widest ml-1">Até</label>
-                <div className="flex gap-2">
-                  <input
-                    type="date"
-                    className="bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
-                    value={endDate}
-                    onChange={(e) => handleEndChange(e.target.value, undefined)}
-                  />
-                  <input
-                    type="time"
-                    className="w-28 bg-bg-primary/50 border border-border rounded-lg py-1.5 px-3 outline-none focus:ring-2 focus:ring-primary/20 transition-all text-sm text-text-primary"
-                    value={endTime}
-                    onChange={(e) => handleEndChange(undefined, e.target.value)}
-                  />
+
+              {intervalError && (
+                <div className="flex items-center gap-2 text-danger text-[10px] font-bold uppercase animate-pulse">
+                  <AlertCircle size={14} />
+                  {intervalError}
                 </div>
-              </div>
+              )}
             </div>
 
-            <div className="flex items-center gap-3 ml-auto">
+            <div className="flex items-center gap-3">
               <button 
                 onClick={() => {
                   setFilters({ src_ip: '', dst_ip: '', src_port: '', dst_port: '', proto: '', country: '', direction: '' });
-                  setSortCol('when');
-                  setSortDir('desc');
-                  setUseCustomRange(false);
-                  const now = new Date();
-                  const past = new Date(Date.now() - 5 * 60000);
-                  setStartDate(formatToDateInput(past));
-                  setStartTime(formatToTimeInput(past));
-                  setEndDate(formatToDateInput(now));
-                  setEndTime(formatToTimeInput(now));
-                  setIntervalError('');
-                  handleSearch();
+                  setSortCol('when'); setSortDir('desc'); setUseCustomRange(false);
+                  const now = new Date(); const past = new Date(Date.now() - 5 * 60000);
+                  setStartDate(formatToDateInput(past)); setStartTime(formatToTimeInput(past));
+                  setEndDate(formatToDateInput(now)); setEndTime(formatToTimeInput(now));
+                  setIntervalError(''); handleSearch();
                 }}
-                className="text-xs font-bold text-text-secondary hover:text-text-primary transition-all px-2 py-2"
+                className="secondary-button"
               >
-                LIMPAR
+                Resetar Filtros
               </button>
               <button 
-                onClick={() => {
-                  if (validateInterval()) {
-                    setUseCustomRange(true);
-                    handleSearch();
-                  }
-                }}
-                className="bg-primary hover:bg-primary/90 text-white font-bold px-6 py-2 rounded-lg transition-all shadow-sm text-sm uppercase tracking-wider"
+                onClick={() => { if (validateInterval()) { setUseCustomRange(true); handleSearch(); } }}
+                className="primary-button"
               >
-                Aplicar
+                Aplicar Pesquisa
               </button>
             </div>
           </div>
 
-          {intervalError && (
-            <div className="text-[11px] text-danger font-bold flex items-center gap-1 mt-2">
-              <AlertCircle size={14} />
-              {intervalError}
+          <div className="flex items-center justify-between mt-6 pt-4 border-t border-border/30">
+            <div className="flex items-center gap-4">
+              <button 
+                onClick={() => setGroupByIP(!groupByIP)}
+                className={clsx(
+                  "flex items-center gap-2 px-3 py-1.5 rounded-lg text-[10px] font-black uppercase transition-all border shadow-sm",
+                  groupByIP 
+                    ? "bg-primary border-primary text-white shadow-primary/20" 
+                    : "bg-bg-primary border-border text-text-secondary hover:text-text-primary"
+                )}
+              >
+                {groupByIP ? <LayoutGrid size={14} /> : <List size={14} />}
+                Agrupar por IP
+              </button>
+              
+              <div className="flex items-center gap-2 text-[10px] font-bold text-text-secondary uppercase tracking-[0.2em] opacity-50 px-3">
+                <Clock size={12} />
+                {useCustomRange ? `Intervalo: ${currentIntervalMinutes}m` : 'Últimos 5 minutos'}
+              </div>
             </div>
-          )}
 
-
-          <div className="flex justify-between items-center pt-3 border-t border-border/50">
-             <div className="flex items-center gap-4">
-               <button 
-                 onClick={() => setGroupByIP(!groupByIP)}
-                 className={clsx(
-                   "flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border",
-                   groupByIP 
-                     ? "bg-accent border-accent text-white shadow-md" 
-                     : "bg-bg-primary border-border text-text-secondary hover:text-text-primary"
-                 )}
-               >
-                 {groupByIP ? <LayoutGrid size={14} /> : <List size={14} />}
-                 Agrupar por IP
-               </button>
-             </div>
-             <div className="text-[10px] font-bold text-text-secondary uppercase tracking-widest flex items-center gap-2">
-               {metrics.total} conexões · 
-               {filters.direction === 'outgoing' ? '↑ Upload' : filters.direction === 'incoming' ? '↓ Download' : 'Todas Direções'} · 
-               {useCustomRange ? 'Intervalo personalizado' : 'Últimos 5 minutos'}
-             </div>
+            <div className="text-[10px] font-black text-text-secondary/50 uppercase tracking-[0.2em]">
+              Sincronizado: {new Date().toLocaleTimeString()}
+            </div>
           </div>
        </div>
- 
-        {/* Warning if hits limit */}
+  
         {!isLoading && connectionItems.length >= pageSize && (
-          <div className="bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/50 p-3 rounded-lg flex items-center gap-3 text-amber-700 dark:text-amber-400 text-xs font-medium">
-            <AlertCircle size={16} />
-            <span>Exibindo as {pageSize} conexões de maior volume. Use filtros para refinar.</span>
+          <div className="bg-warning-bg border border-warning/20 p-4 rounded-xl flex items-center gap-3 text-warning text-xs font-bold uppercase tracking-wider shadow-sm animate-in slide-in-from-top-2">
+            <AlertCircle size={18} />
+            Limite de {pageSize} conexões atingido. Refine sua busca para ver mais dados.
           </div>
         )}
 
-        {/* Table */}
-        <div className="bg-bg-secondary rounded-xl border border-border shadow-sm overflow-hidden">
+        <div className="table-container">
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse min-w-[1200px]">
                <thead>
