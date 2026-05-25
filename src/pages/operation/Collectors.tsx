@@ -291,7 +291,7 @@ export default function Collectors() {
    );
  }
 
-function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: any) {
+function CollectorModal({ isOpen, onClose, mode, data, onSubmit, onViewDetails, isLoading }: any) {
   const [snmpIpTouched, setSnmpIpTouched] = useState(false);
   const [bgpLocalIpTouched, setBgpLocalIpTouched] = useState(false);
 
@@ -330,8 +330,12 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: an
       ipv6_enabled: false,
       bgp_ipv6_enabled: false,
       flowspec_ipv6_enabled: false,
+      bgp_local_ipv6: '',
+      bgp_peer_ipv6: '',
+      bgp_ipv6_flowspec: false,
       monitored_networks: [] as any[]
     });
+
  
    useEffect(() => {
      if (isOpen) {
