@@ -410,3 +410,4 @@ const Monitoring = () => {
     </div>
   );
 };
+export default Monitoring;
