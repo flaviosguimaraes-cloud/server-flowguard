@@ -309,14 +309,15 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
     fnm_action: null as string | null,
   });
 
+  const [newPrefix, setNewPrefix] = useState('');
+
   useMemo(() => {
     if (data) {
       setFormData({
         name: data.name || '',
         description: data.description || '',
         type: data.is_cgnat ? 'cgnat' : data.is_infrastructure ? 'infrastructure' : data.is_vip ? 'vip' : 'standard',
-        prefixes: (data.prefixes || []).join(', '),
-        prefixes_v6: (data.prefixes_v6 || []).join(', '),
+        prefixes: data.prefixes || [],
         anomaly_factor: data.anomaly_factor || 1.0,
         anomaly_min_mbps: data.anomaly_min_mbps || '',
         allow_blackhole: data.allow_blackhole || false,
@@ -329,23 +330,14 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
         fnm_ban_for_bandwidth: data.fnm_ban_for_bandwidth ?? true,
         fnm_ban_for_pps: data.fnm_ban_for_pps ?? true,
         fnm_ban_for_flows: data.fnm_ban_for_flows ?? false,
-        fnm_action: data.fnm_action || 'global',
-
-        fnm_ipv6_threshold_mbps: data.fnm_ipv6_threshold_mbps || '',
-        fnm_ipv6_threshold_pps: data.fnm_ipv6_threshold_pps || '',
-        fnm_ipv6_threshold_flows: data.fnm_ipv6_threshold_flows ?? 3500,
-        fnm_ipv6_ban_for_bandwidth: data.fnm_ipv6_ban_for_bandwidth ?? true,
-        fnm_ipv6_ban_for_pps: data.fnm_ipv6_ban_for_pps ?? true,
-        fnm_ipv6_ban_for_flows: data.fnm_ipv6_ban_for_flows ?? false,
-        fnm_ipv6_action: data.fnm_ipv6_action || 'global',
+        fnm_action: data.fnm_action || null,
       });
     } else {
       setFormData({
         name: '',
         description: '',
         type: 'standard',
-        prefixes: '',
-        prefixes_v6: '',
+        prefixes: [],
         anomaly_factor: 1.0,
         anomaly_min_mbps: '',
         allow_blackhole: false,
@@ -357,37 +349,36 @@ function IPGroupModal({ isOpen, onClose, data, onSubmit, isLoading }: any) {
         fnm_ban_for_bandwidth: true,
         fnm_ban_for_pps: true,
         fnm_ban_for_flows: false,
-        fnm_action: 'global',
-        fnm_ipv6_threshold_mbps: '',
-        fnm_ipv6_threshold_pps: '',
-        fnm_ipv6_threshold_flows: 3500,
-        fnm_ipv6_ban_for_bandwidth: true,
-        fnm_ipv6_ban_for_pps: true,
-        fnm_ipv6_ban_for_flows: false,
-        fnm_ipv6_action: 'global',
+        fnm_action: null,
       });
     }
+    setNewPrefix('');
   }, [data, isOpen]);
+
+  const addPrefix = () => {
+    if (!newPrefix) return;
+    const cleanPrefix = newPrefix.trim();
+    if (cleanPrefix && !formData.prefixes.includes(cleanPrefix)) {
+      setFormData({ ...formData, prefixes: [...formData.prefixes, cleanPrefix] });
+      setNewPrefix('');
+    }
+  };
+
+  const removePrefix = (prefix: string) => {
+    setFormData({ ...formData, prefixes: formData.prefixes.filter(p => p !== prefix) });
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    const prefixesArray = formData.prefixes.split(',').map(p => p.trim()).filter(p => p);
-    const prefixesV6Array = formData.prefixes_v6.split(',').map(p => p.trim()).filter(p => p);
     
     onSubmit({
       ...formData,
       is_cgnat: formData.type === 'cgnat',
       is_infrastructure: formData.type === 'infrastructure',
       is_vip: formData.type === 'vip',
-      prefixes: prefixesArray,
-      prefixes_v6: prefixesV6Array,
       anomaly_min_mbps: formData.anomaly_min_mbps ? Number(formData.anomaly_min_mbps) : null,
-      fnm_action: formData.fnm_action === 'global' ? null : formData.fnm_action,
-      fnm_ipv6_action: formData.fnm_ipv6_action === 'global' ? null : formData.fnm_ipv6_action,
       fnm_threshold_mbps: formData.fnm_threshold_mbps ? Number(formData.fnm_threshold_mbps) : null,
       fnm_threshold_pps: formData.fnm_threshold_pps ? Number(formData.fnm_threshold_pps) : null,
-      fnm_ipv6_threshold_mbps: formData.fnm_ipv6_threshold_mbps ? Number(formData.fnm_ipv6_threshold_mbps) : null,
-      fnm_ipv6_threshold_pps: formData.fnm_ipv6_threshold_pps ? Number(formData.fnm_ipv6_threshold_pps) : null,
     });
   };
 
