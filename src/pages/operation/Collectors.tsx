@@ -1227,6 +1227,8 @@ function AdvancedConfigTab({ collector, onSave, isLoading }: any) {
       flowspec_ipv4_enabled: formData.bgp_ipv4_flowspec_enabled,
       bgp_ipv6_enabled: formData.bgp_ipv6_enabled,
       flowspec_ipv6_enabled: formData.bgp_ipv6_flowspec_enabled,
+      bgp_local_asn: Number(formData.bgp_local_asn),
+      bgp_remote_asn: Number(formData.bgp_remote_asn),
       monitored_networks: formData.monitored_networks
     });
   };
