@@ -348,11 +348,23 @@ export default function IPGroups() {
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         data={editingGroup}
+        profiles={profiles}
         onSubmit={(data: any) => {
           if (editingGroup) updateMutation.mutate({ id: editingGroup.id, data });
           else createMutation.mutate(data);
         }}
         isLoading={createMutation.isPending || updateMutation.isPending}
+      />
+
+      <MitigationProfileModal
+        isOpen={isProfileModalOpen}
+        onClose={() => setIsProfileModalOpen(false)}
+        data={editingProfile}
+        onSubmit={(data: any) => {
+          if (editingProfile) updateProfileMutation.mutate({ id: editingProfile.id, data });
+          else createProfileMutation.mutate(data);
+        }}
+        isLoading={createProfileMutation.isPending || updateProfileMutation.isPending}
       />
 
       <IPGroupDrawer 
