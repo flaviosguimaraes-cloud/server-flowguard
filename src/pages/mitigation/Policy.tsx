@@ -18,7 +18,7 @@ import {
 
 import { clsx } from 'clsx';
 
-type Mode = 'blackhole' | 'external' | null;
+type Mode = 'blackhole' | 'external' | 'none' | null;
 
 export default function Policy() {
   const isAdmin = localStorage.getItem('role') === 'admin';
