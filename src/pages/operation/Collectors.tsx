@@ -161,8 +161,10 @@ export default function Collectors() {
           if (modal.mode === 'add') createMutation.mutate(data);
           else updateMutation.mutate({ id: modal.data.id, data });
         }}
+        onViewDetails={(collector: any) => setDetailsSheet({ open: true, collector })}
         isLoading={createMutation.isPending || updateMutation.isPending}
       />
+
 
       <Dialog open={!!deleteConfirm} onOpenChange={() => setDeleteConfirm(null)}>
         <DialogContent>
@@ -289,7 +291,7 @@ export default function Collectors() {
    );
  }
 
-function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: any) {
+function CollectorModal({ isOpen, onClose, mode, data, onSubmit, onViewDetails, isLoading }: any) {
   const [snmpIpTouched, setSnmpIpTouched] = useState(false);
   const [bgpLocalIpTouched, setBgpLocalIpTouched] = useState(false);
 
@@ -328,66 +330,77 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: an
       ipv6_enabled: false,
       bgp_ipv6_enabled: false,
       flowspec_ipv6_enabled: false,
+      bgp_local_ipv6: '',
+      bgp_peer_ipv6: '',
+      bgp_ipv6_flowspec: false,
       monitored_networks: [] as any[]
     });
+
  
    useEffect(() => {
      if (isOpen) {
-         if (mode === 'edit' && data) {
+          if (mode === 'edit' && data) {
+            setFormData({
+              name: data.name || '',
+              comment: data.comment || '',
+              host: data.host || '',
+              brand: data.brand || 'huawei',
+              flow_protocol: data.flow_protocol || 'netflow_v9',
+              flow_port: data.flow_port?.toString() || '2055',
+              snmp_community: data.snmp_community || 'public',
+              snmp_version: normalizeSnmpVersion(data.snmp_version),
+              snmp_port: data.snmp_port?.toString() || '161',
+              snmp_ip: data.snmp_ip || data.host || '',
+              active: data.active !== false,
+              bgp_enabled: data.bgp_enabled || false,
+              bgp_remote_ip: data.bgp_remote_ip || '',
+              bgp_remote_asn: data.bgp_remote_asn?.toString() || '',
+              bgp_local_ip: data.bgp_local_ip || '',
+              bgp_local_asn: data.bgp_local_asn?.toString() || '65000',
+              bgp_ipv4_enabled: data.bgp_ipv4_enabled !== false,
+              flowspec_ipv4_enabled: data.flowspec_ipv4_enabled || data.bgp_flowspec || false,
+              ipv6_enabled: data.ipv6_enabled || false,
+              bgp_ipv6_enabled: data.bgp_ipv6_enabled || false,
+              flowspec_ipv6_enabled: data.flowspec_ipv6_enabled || false,
+              bgp_local_ipv6: data.bgp_local_ipv6 || '',
+              bgp_peer_ipv6: data.bgp_peer_ipv6 || '',
+              bgp_ipv6_flowspec: data.bgp_ipv6_flowspec || false,
+              monitored_networks: data.monitored_networks || []
+            });
+            setSnmpIpTouched(true);
+            setBgpLocalIpTouched(true);
+          } else {
            setFormData({
-             name: data.name || '',
-             comment: data.comment || '',
-             host: data.host || '',
-             brand: data.brand || 'huawei',
-             flow_protocol: data.flow_protocol || 'netflow_v9',
-             flow_port: data.flow_port?.toString() || '2055',
-             snmp_community: data.snmp_community || 'public',
-             snmp_version: normalizeSnmpVersion(data.snmp_version),
-             snmp_port: data.snmp_port?.toString() || '161',
-             snmp_ip: data.snmp_ip || data.host || '',
-             active: data.active !== false,
-             bgp_enabled: data.bgp_enabled || false,
-             bgp_remote_ip: data.bgp_remote_ip || '',
-             bgp_remote_asn: data.bgp_remote_asn?.toString() || '',
-             bgp_local_ip: data.bgp_local_ip || '',
-             bgp_local_asn: data.bgp_local_asn?.toString() || '65000',
-             bgp_ipv4_enabled: data.bgp_ipv4_enabled !== false,
-             flowspec_ipv4_enabled: data.flowspec_ipv4_enabled || data.bgp_flowspec || false,
-             ipv6_enabled: data.ipv6_enabled || false,
-             bgp_ipv6_enabled: data.bgp_ipv6_enabled || false,
-             flowspec_ipv6_enabled: data.flowspec_ipv6_enabled || false,
-             monitored_networks: data.monitored_networks || []
+             name: '',
+             comment: '',
+             host: '',
+             brand: 'huawei',
+             flow_protocol: 'netflow_v9',
+             flow_port: '2055',
+             snmp_community: 'public',
+             snmp_version: '2c',
+             snmp_port: '161',
+             snmp_ip: '',
+             active: true,
+             bgp_enabled: false,
+             bgp_remote_ip: '',
+             bgp_remote_asn: '',
+             bgp_local_ip: '',
+             bgp_local_asn: '65000',
+             bgp_ipv4_enabled: true,
+             flowspec_ipv4_enabled: false,
+             ipv6_enabled: false,
+             bgp_ipv6_enabled: false,
+             flowspec_ipv6_enabled: false,
+             bgp_local_ipv6: '',
+             bgp_peer_ipv6: '',
+             bgp_ipv6_flowspec: false,
+             monitored_networks: []
            });
-           setSnmpIpTouched(true);
-           setBgpLocalIpTouched(true);
-         } else {
-          setFormData({
-            name: '',
-            comment: '',
-            host: '',
-            brand: 'huawei',
-            flow_protocol: 'netflow_v9',
-            flow_port: '2055',
-            snmp_community: 'public',
-            snmp_version: '2c',
-            snmp_port: '161',
-            snmp_ip: '',
-            active: true,
-            bgp_enabled: false,
-            bgp_remote_ip: '',
-            bgp_remote_asn: '',
-            bgp_local_ip: '',
-            bgp_local_asn: '65000',
-            bgp_ipv4_enabled: true,
-            flowspec_ipv4_enabled: false,
-            ipv6_enabled: false,
-            bgp_ipv6_enabled: false,
-            flowspec_ipv6_enabled: false,
-            monitored_networks: []
-          });
-           setSnmpIpTouched(false);
-           setBgpLocalIpTouched(false);
-         }
+            setSnmpIpTouched(false);
+            setBgpLocalIpTouched(false);
+          }
+
      }
    }, [isOpen, mode, data]);
  
@@ -418,10 +431,11 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: an
         ...prev,
         monitored_networks: [
           ...prev.monitored_networks,
-          { cidr: '', type: 'own', label: '', allow_blackhole: true, allow_flowspec: true }
+          { cidr: '', description: '', allow_blackhole: true, allow_flowspec: true }
         ]
       }));
     };
+
 
     const handleRemoveNetwork = (index: number) => {
       setFormData(prev => ({
@@ -633,25 +647,26 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: an
                         <Input id="bgp_local_asn" type="number" value={formData.bgp_local_asn} onChange={e => setFormData({ ...formData, bgp_local_asn: e.target.value })} placeholder="Ex: 65000" />
                       </div>
                       <div className="md:col-span-2 space-y-3">
-                        <Label>Famílias IPv4</Label>
+                        <Label>Famílias</Label>
                         <div className="flex gap-6">
                            <div className="flex items-center space-x-2">
                              <Checkbox 
-                               id="unicast" 
-                               checked={formData.bgp_ipv4_enabled === true} 
-                               onCheckedChange={v => setFormData({ ...formData, bgp_ipv4_enabled: v === true })} 
-                             />
+                                id="unicast" 
+                                checked={formData.bgp_ipv4_enabled === true} 
+                                onCheckedChange={v => setFormData({ ...formData, bgp_ipv4_enabled: v === true })} 
+                              />
                              <label htmlFor="unicast" className="text-sm font-medium leading-none cursor-pointer">IPv4 Unicast</label>
                            </div>
                            <div className="flex items-center space-x-2">
                              <Checkbox 
-                               id="flowspec" 
-                               checked={formData.flowspec_ipv4_enabled === true} 
-                               onCheckedChange={v => setFormData({ ...formData, flowspec_ipv4_enabled: v === true })} 
-                             />
+                                id="flowspec" 
+                                checked={formData.flowspec_ipv4_enabled === true} 
+                                onCheckedChange={v => setFormData({ ...formData, flowspec_ipv4_enabled: v === true })} 
+                              />
                              <label htmlFor="flowspec" className="text-sm font-medium leading-none cursor-pointer">IPv4 FlowSpec</label>
                            </div>
                         </div>
+
                       </div>
                     </div>
                   </motion.div>
@@ -680,26 +695,47 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: an
                     exit={{ height: 0, opacity: 0 }}
                     className="overflow-hidden"
                   >
-                    <div className="flex gap-6 pb-2">
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="bgp_ipv6_unicast" 
-                          checked={formData.bgp_ipv6_enabled === true} 
-                          onCheckedChange={v => setFormData({ ...formData, bgp_ipv6_enabled: v === true })} 
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pb-4">
+                      <div className="space-y-2">
+                        <Label htmlFor="bgp_local_ipv6">IPv6 Local (FlowGuard)</Label>
+                        <Input 
+                          id="bgp_local_ipv6" 
+                          value={formData.bgp_local_ipv6} 
+                          onChange={e => setFormData({ ...formData, bgp_local_ipv6: e.target.value })} 
+                          placeholder="Ex: 2804:xxxx::1" 
                         />
-                        <label htmlFor="bgp_ipv6_unicast" className="text-sm font-medium leading-none cursor-pointer">BGP IPv6 Unicast</label>
                       </div>
-                      <div className="flex items-center space-x-2">
-                        <Checkbox 
-                          id="flowspec_ipv6" 
-                          checked={formData.flowspec_ipv6_enabled === true} 
-                          onCheckedChange={v => setFormData({ ...formData, flowspec_ipv6_enabled: v === true })} 
+                      <div className="space-y-2">
+                        <Label htmlFor="bgp_peer_ipv6">IPv6 Remoto (Roteador)</Label>
+                        <Input 
+                          id="bgp_peer_ipv6" 
+                          value={formData.bgp_peer_ipv6} 
+                          onChange={e => setFormData({ ...formData, bgp_peer_ipv6: e.target.value })} 
+                          placeholder="Ex: 2804:xxxx::2" 
                         />
-                        <label htmlFor="flowspec_ipv6" className="text-sm font-medium leading-none cursor-pointer">IPv6 FlowSpec</label>
+                      </div>
+                      <div className="md:col-span-2 flex gap-6 mt-2">
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="bgp_ipv6_unicast" 
+                            checked={formData.bgp_ipv6_enabled === true} 
+                            onCheckedChange={v => setFormData({ ...formData, bgp_ipv6_enabled: v === true })} 
+                          />
+                          <label htmlFor="bgp_ipv6_unicast" className="text-sm font-medium leading-none cursor-pointer">BGP IPv6 Unicast</label>
+                        </div>
+                        <div className="flex items-center space-x-2">
+                          <Checkbox 
+                            id="flowspec_ipv6" 
+                            checked={formData.bgp_ipv6_flowspec === true} 
+                            onCheckedChange={v => setFormData({ ...formData, bgp_ipv6_flowspec: v === true })} 
+                          />
+                          <label htmlFor="flowspec_ipv6" className="text-sm font-medium leading-none cursor-pointer">IPv6 FlowSpec</label>
+                        </div>
                       </div>
                     </div>
                   </motion.div>
                 )}
+
               </AnimatePresence>
             </section>
 
@@ -728,7 +764,7 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: an
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pr-6">
                       <div className="space-y-1">
-                        <Label className="text-[10px] uppercase">CIDR</Label>
+                        <Label className="text-[10px] uppercase font-bold">CIDR</Label>
                         <Input 
                           placeholder="Ex: 45.175.50.0/24" 
                           value={net.cidr} 
@@ -737,22 +773,11 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: an
                         />
                       </div>
                       <div className="space-y-1">
-                        <Label className="text-[10px] uppercase">Tipo</Label>
-                        <Select value={net.type} onValueChange={v => handleUpdateNetwork(index, 'type', v)}>
-                          <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                          <SelectContent>
-                            <SelectItem value="own">Própria</SelectItem>
-                            <SelectItem value="client">Cliente</SelectItem>
-                            <SelectItem value="transit">Trânsito</SelectItem>
-                          </SelectContent>
-                        </Select>
-                      </div>
-                      <div className="md:col-span-2 space-y-1">
-                        <Label className="text-[10px] uppercase">Label</Label>
+                        <Label className="text-[10px] uppercase font-bold">Descrição (Opcional)</Label>
                         <Input 
                           placeholder="Ex: UAY Internet" 
-                          value={net.label} 
-                          onChange={e => handleUpdateNetwork(index, 'label', e.target.value)}
+                          value={net.description || net.label || ''} 
+                          onChange={e => handleUpdateNetwork(index, 'description', e.target.value)}
                           className="h-8 text-xs"
                         />
                       </div>
@@ -765,7 +790,7 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: an
                           checked={net.allow_blackhole} 
                           onCheckedChange={v => handleUpdateNetwork(index, 'allow_blackhole', v === true)}
                         />
-                        <label htmlFor={`bh-${index}`} className="text-[10px] font-medium leading-none cursor-pointer uppercase">Blackhole permitido</label>
+                        <label htmlFor={`bh-${index}`} className="text-[10px] font-bold leading-none cursor-pointer uppercase text-text-secondary">Blackhole permitido</label>
                       </div>
                       <div className="flex items-center space-x-2">
                         <Checkbox 
@@ -773,7 +798,7 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: an
                           checked={net.allow_flowspec} 
                           onCheckedChange={v => handleUpdateNetwork(index, 'allow_flowspec', v === true)}
                         />
-                        <label htmlFor={`fs-${index}`} className="text-[10px] font-medium leading-none cursor-pointer uppercase">FlowSpec permitido</label>
+                        <label htmlFor={`fs-${index}`} className="text-[10px] font-bold leading-none cursor-pointer uppercase text-text-secondary">FlowSpec permitido</label>
                       </div>
                     </div>
                   </div>
@@ -792,16 +817,18 @@ function CollectorModal({ isOpen, onClose, mode, data, onSubmit, isLoading }: an
                     <List size={18} />
                     <h3 className="font-bold text-sm uppercase tracking-wider">Interfaces de Upstream</h3>
                   </div>
-                  <Link 
-                    to="/operation/collectors"
-                    className="text-[11px] text-primary hover:underline flex items-center gap-1"
+                  <button 
+                    type="button"
+                    className="text-[11px] text-primary hover:underline flex items-center gap-1 font-bold"
                     onClick={() => {
                       onClose();
+                      if (onViewDetails) onViewDetails(data);
                     }}
                   >
                     Gerenciar interfaces <ArrowRight size={12} />
-                  </Link>
+                  </button>
                 </div>
+
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
                   {upstreamIfaces.map((iface: any) => (

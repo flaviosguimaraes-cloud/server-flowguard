@@ -150,13 +150,14 @@ export default function Dashboard() {
     return isNaN(parsed) ? 1 : parsed;
   });
 
-  const [selectedIfaces, setSelectedIfaces] = useState<string[]>(() => {
+  const [selectedIfaces, setSelectedIfaces] = useState<number[]>(() => {
     try {
-      const saved = localStorage.getItem('fg_ifaces');
+      const saved = localStorage.getItem('fg_iface_indexes');
       const parsed = saved ? JSON.parse(saved) : null;
       return Array.isArray(parsed) ? parsed : [];
     } catch { return []; }
   });
+
 
   const [source] = useState<'snmp'>('snmp');
   const [selectedMinutes, setSelectedMinutes] = useState(() => {
@@ -164,7 +165,8 @@ export default function Dashboard() {
     return saved ? parseInt(saved) : 30;
   });
   const [showIfaceSelector, setShowIfaceSelector] = useState(false);
-  const [showInactive, setShowInactive] = useState(false);
+  const [roleFilter, setRoleFilter] = useState<'all' | 'upstream' | 'access' | 'internal'>('all');
+
 
   const [periodASN, setPeriodASN] = useState(60);
   const [periodCDN, setPeriodCDN] = useState(60);
@@ -370,32 +372,22 @@ export default function Dashboard() {
      });
    }, [selectedMinutes, selectedIfaces, queryClient]);
  
-   const { data: metricsHistory, isLoading: metricsHistoryLoading } = useQuery({
-     queryKey: ['iface-history', selectedCollector, selectedMinutes, selectedIfaces],
-     queryFn: async () => {
-       if (selectedIfaces.length === 0 || !selectedCollector)
-         return null;
- 
-       console.log('Buscando histórico:', selectedCollector, selectedIfaces, selectedMinutes);
+  const { data: metricsHistory, isLoading: metricsHistoryLoading } = useQuery({
+    queryKey: ['iface-history', selectedCollector, selectedMinutes, selectedIfaces],
+    queryFn: async () => {
+      if (selectedIfaces.length === 0 || !selectedCollector)
+        return null;
 
-      const results = await Promise.all(
-         selectedIfaces.map(async ifName => {
-           const url = `/api/snmp/${selectedCollector}/metrics/history?minutes=${selectedMinutes}&if_name=${encodeURIComponent(ifName)}`;
-          console.log('URL:', url);
-          const r = await api.get(url);
-          console.log('Resultado:', ifName, r.data);
-          return {
-            ifName,
-            data: r.data?.history || []
-          };
-        })
-      );
-      return results;
+      const ifIndexes = selectedIfaces.join(',');
+      const url = `/api/snmp/${selectedCollector}/metrics/history?minutes=${selectedMinutes}&if_indexes=${ifIndexes}`;
+      const r = await api.get(url);
+      return r.data;
     },
     enabled: isAuthenticated && selectedIfaces.length > 0 && !!selectedCollector,
     refetchInterval: 60000,
     placeholderData: keepPreviousData,
   });
+
  
   useEffect(() => {
     if (selectedCollector) {
@@ -404,8 +396,21 @@ export default function Dashboard() {
   }, [selectedCollector]);
 
   useEffect(() => {
-    localStorage.setItem('fg_ifaces', JSON.stringify(selectedIfaces));
+    localStorage.setItem('fg_iface_indexes', JSON.stringify(selectedIfaces));
   }, [selectedIfaces]);
+
+  useEffect(() => {
+    if (selectedIfaces.length === 0 && interfaces) {
+      const list = Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []);
+      const upstreams = list
+        .filter((i: any) => i.role === 'upstream' || i.is_upstream)
+        .map((i: any) => i.if_index);
+      if (upstreams.length > 0) {
+        setSelectedIfaces(upstreams);
+      }
+    }
+  }, [interfaces, selectedIfaces.length]);
+
 
   useEffect(() => {
     localStorage.setItem('fg_traffic_source', source);
@@ -446,31 +451,32 @@ export default function Dashboard() {
 
     const selectedIfaceData = useMemo(() => {
       const list = Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []);
-      return list.filter((i: any) => selectedIfaces.includes(i.if_name));
+      return list.filter((i: any) => selectedIfaces.includes(i.if_index));
     }, [interfaces, selectedIfaces]);
 
     const timePoints = useMemo(() => {
-      const firstSelected = selectedIfaces[0];
-      return history[firstSelected]?.map(p => p.time) || [];
-    }, [history, selectedIfaces]);
+      const historyArr = metricsHistory?.history || [];
+      const allTimes = new Set<string>();
+      historyArr.forEach((p: any) => allTimes.add(p.time_bucket));
+      return Array.from(allTimes).sort();
+    }, [metricsHistory]);
 
      const ifaceMap = useMemo(() => {
-       const map: Record<string, string> = {};
+       const map: Record<number, string> = {};
        const list = Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []);
        list.forEach((i: any) => {
-          map[i.if_name] = i.if_alias || i.display_name || i.if_name;
+          map[i.if_index] = i.if_alias || i.display_name || i.if_name;
        });
        return map;
      }, [interfaces]);
  
   const historicalChartData = useMemo(() => {
-    if (!metricsHistory?.length) return [];
+    const historyArr = metricsHistory?.history || [];
+    if (historyArr.length === 0) return [];
 
     // Coletar todos os timestamps únicos
     const allTimes = new Set<string>();
-    metricsHistory.forEach(({data}) => {
-      data.forEach((p: any) => allTimes.add(p.time_bucket));
-    });
+    historyArr.forEach((p: any) => allTimes.add(p.time_bucket));
 
     // Montar pontos do gráfico
     const fullData = Array.from(allTimes)
@@ -482,17 +488,18 @@ export default function Dashboard() {
         };
         let totalRx = 0;
         let totalTx = 0;
-        metricsHistory.forEach(({ifName, data}) => {
-          const found = data.find((p: any) => p.time_bucket === time);
-           const rxGbps = found ? (found.in_bps / 1e9) : 0;
-           const txGbps = found ? (found.out_bps / 1e9) : 0;
-           point[`${ifName}_rx`] = rxGbps;
-           point[`${ifName}_tx`] = txGbps;
-           totalRx += rxGbps;
-           totalTx += txGbps;
+        
+        selectedIfaces.forEach(ifIndex => {
+          const found = historyArr.find((p: any) => p.time_bucket === time && p.if_index === ifIndex);
+           const rxMbps = found ? (found.in_bps / 1e6) : 0;
+           const txMbps = found ? (found.out_bps / 1e6) : 0;
+           point[`${ifIndex}_rx`] = rxMbps;
+           point[`${ifIndex}_tx`] = txMbps;
+           totalRx += rxMbps;
+           totalTx += txMbps;
         });
-         point['__total_rx'] = Number(totalRx.toFixed(4));
-         point['__total_tx'] = Number(totalTx.toFixed(4));
+         point['__total_rx'] = Number(totalRx.toFixed(2));
+         point['__total_tx'] = Number(totalTx.toFixed(2));
         return point;
       });
 
@@ -507,14 +514,14 @@ export default function Dashboard() {
         const next = arr[i+1]?.[key] || 0;
         const avg = (prev + next) / 2;
         
-        // Use threshold adapted to Gbps (0.0001 Gbps = 100 Kbps)
-        if (val === 0 && avg > 0.0001) {
-          sanitized[key] = Number(avg.toFixed(4));
+        if (val === 0 && avg > 0.1) { // 0.1 Mbps = 100 Kbps
+          sanitized[key] = Number(avg.toFixed(2));
         }
       });
       return sanitized;
     });
-  }, [metricsHistory]);
+  }, [metricsHistory, selectedIfaces]);
+
 
   const chartData = useMemo(() => sampleData(historicalChartData), [historicalChartData]);
 
@@ -539,50 +546,50 @@ export default function Dashboard() {
      return (bps / 1e3).toFixed(0) + ' Kbps';
    };
 
-   const periodStats = useMemo(() => {
-     const getStats = (values: number[]) => {
-       if (!values.length) return { last: 0, min: 0, avg: 0, max: 0 };
-       return {
-         last: values[values.length - 1],
-         min: Math.min(...values),
-         avg: values.reduce((a, b) => a + b, 0) / values.length,
-         max: Math.max(...values),
-       };
-     };
-
-     if (!metricsHistory?.length) {
-       return {
-          rx: getStats([]),
-          tx: getStats([]),
-          label: selectedMinutes + ' minutos'
+    const periodStats = useMemo(() => {
+      const getStats = (values: number[]) => {
+        if (!values.length) return { last: 0, min: 0, avg: 0, max: 0 };
+        return {
+          last: values[values.length - 1],
+          min: Math.min(...values),
+          avg: values.reduce((a, b) => a + b, 0) / values.length,
+          max: Math.max(...values),
         };
-     }
+      };
 
-     const timeMap: Record<string, { rx: number, tx: number }> = {};
-     metricsHistory.forEach(({ data }) => {
-       data.forEach((p: any) => {
-         const t = p.time_bucket;
-         if (!timeMap[t]) timeMap[t] = { rx: 0, tx: 0 };
-         timeMap[t].rx += p.in_bps || 0;
-         timeMap[t].tx += p.out_bps || 0;
-       });
-     });
+      const historyArr = metricsHistory?.history || [];
+      if (historyArr.length === 0) {
+        return {
+           rx: getStats([]),
+           tx: getStats([]),
+           label: selectedMinutes + ' minutos'
+         };
+      }
 
-     const sorted = Object.keys(timeMap).sort();
-     const rxValues = sorted.map(t => timeMap[t].rx);
-     const txValues = sorted.map(t => timeMap[t].tx);
+      const timeMap: Record<string, { rx: number, tx: number }> = {};
+      historyArr.forEach((p: any) => {
+        const t = p.time_bucket;
+        if (!timeMap[t]) timeMap[t] = { rx: 0, tx: 0 };
+        timeMap[t].rx += p.in_bps || 0;
+        timeMap[t].tx += p.out_bps || 0;
+      });
 
-       return {
-         rx: getStats(rxValues),
-         tx: getStats(txValues),
-         label: selectedMinutes === 30 ? '30 minutos' :
-                selectedMinutes === 60 ? '1 hora' :
-                selectedMinutes === 360 ? '6 horas' : 
-                selectedMinutes === 720 ? '12 horas' :
-                selectedMinutes === 1440 ? '24 horas' : 
-                selectedMinutes === 2880 ? '48 horas' : selectedMinutes + ' minutos'
-       };
-    }, [selectedMinutes, metricsHistory, history, selectedIfaces]);
+      const sorted = Object.keys(timeMap).sort();
+      const rxValues = sorted.map(t => timeMap[t].rx);
+      const txValues = sorted.map(t => timeMap[t].tx);
+
+        return {
+          rx: getStats(rxValues),
+          tx: getStats(txValues),
+          label: selectedMinutes === 30 ? '30 minutos' :
+                 selectedMinutes === 60 ? '1 hora' :
+                 selectedMinutes === 360 ? '6 horas' : 
+                 selectedMinutes === 720 ? '12 horas' :
+                 selectedMinutes === 1440 ? '24 horas' : 
+                 selectedMinutes === 2880 ? '48 horas' : selectedMinutes + ' minutos'
+        };
+     }, [selectedMinutes, metricsHistory]);
+
 
 
 
@@ -654,9 +661,9 @@ export default function Dashboard() {
        pointHoverRadius: 0,
        tension: 0.4,
      },
-     ...selectedIfaces.map((ifName, idx) => ({
-       label: '__iface_down__' + ifName,
-       data: chartData.map(d => d[`${ifName}_rx`]),
+     ...selectedIfaces.map((ifIndex, idx) => ({
+       label: '__iface_down__' + (ifaceMap[ifIndex] || ifIndex),
+       data: chartData.map(d => d[`${ifIndex}_rx`]),
        borderColor: blueShades[idx % 5],
        borderWidth: 1,
        fill: false,
@@ -675,9 +682,9 @@ export default function Dashboard() {
        pointHoverRadius: 0,
        tension: 0.4,
      },
-     ...selectedIfaces.map((ifName, idx) => ({
-       label: '__iface_up__' + ifName,
-       data: chartData.map(d => d[`${ifName}_tx`]),
+     ...selectedIfaces.map((ifIndex, idx) => ({
+       label: '__iface_up__' + (ifaceMap[ifIndex] || ifIndex),
+       data: chartData.map(d => d[`${ifIndex}_tx`]),
        borderColor: greenShades[idx % 5],
        borderWidth: 1,
        fill: false,
@@ -685,7 +692,7 @@ export default function Dashboard() {
        pointHoverRadius: 0,
        tension: 0.4,
      }))
-   ], [chartData, selectedIfaces]);
+   ], [chartData, selectedIfaces, ifaceMap]);
  
     const chartOptions = useMemo(() => ({
       responsive: true,
@@ -731,19 +738,19 @@ export default function Dashboard() {
              direction = '▲';
              color = '#16a34a';
            } else if (label.startsWith('__iface_down__')) {
-             name = label.replace('__iface_down__', '');
+             name = label.replace('__iface_down__', '') + ' - Download';
              direction = '▼';
            } else if (label.startsWith('__iface_up__')) {
-             name = label.replace('__iface_up__', '');
+             name = label.replace('__iface_up__', '') + ' - Upload';
              direction = '▲';
            }
  
-           const numVal = dp.parsed.y;
+           const numVal = dp.parsed.y; // numVal is in Mbps
            let formatted = '';
-           if (numVal >= 1) {
-             formatted = numVal.toFixed(2) + ' Gbps';
+           if (numVal >= 1000) {
+             formatted = (numVal / 1000).toFixed(2) + ' Gbps';
            } else {
-             formatted = (numVal * 1000).toFixed(0) + ' Mbps';
+             formatted = numVal.toFixed(1) + ' Mbps';
            }
  
            tip.innerHTML = `
@@ -757,6 +764,7 @@ export default function Dashboard() {
                ${direction} ${formatted}
              </div>
            `;
+
  
            tip.style.display = 'block';
  
@@ -1368,7 +1376,7 @@ export default function Dashboard() {
              border: `1px solid ${isDark ? '#2a2d3e' : '#e2e8f0'}`,
              borderRadius: 12,
              padding: 24,
-             width: 450,
+             width: 480,
              maxHeight: '85vh',
              display: 'flex',
              flexDirection: 'column',
@@ -1389,7 +1397,24 @@ export default function Dashboard() {
                </button>
              </div>
 
-              <div className="flex flex-col gap-3 mb-4">
+              <div className="flex flex-col gap-4 mb-4">
+                <div className="flex bg-bg-primary p-1 rounded-lg border border-border">
+                  {(['all', 'upstream', 'access', 'internal'] as const).map((r) => (
+                    <button
+                      key={r}
+                      onClick={() => setRoleFilter(r)}
+                      className={clsx(
+                        "flex-1 py-1.5 text-[10px] font-bold uppercase rounded transition-all",
+                        roleFilter === r 
+                          ? "bg-white dark:bg-bg-secondary text-primary shadow-sm" 
+                          : "text-text-secondary hover:text-text-primary"
+                      )}
+                    >
+                      {r === 'all' ? 'Todas' : r === 'upstream' ? 'Upstream' : r === 'access' ? 'Access' : 'Internal'}
+                    </button>
+                  ))}
+                </div>
+
                 <div className="flex gap-2">
                   <button 
                     onClick={() => {
@@ -1399,41 +1424,29 @@ export default function Dashboard() {
                         const isTechnical = n.includes('null') || n.includes('loopback') || n.includes('virtual') || n.includes('template');
                         if (isTechnical) return false;
                         
-                        if (showInactive) return true;
-                        const hasTraffic = (i.rx_bps || i.in_bps || 0) > 0 || (i.tx_bps || i.out_bps || 0) > 0;
-                        const hasSpeed = (i.if_speed || 0) > 0;
-                        return hasSpeed && hasTraffic;
+                        if (roleFilter === 'all') {
+                          const hasTraffic = (i.rx_bps || i.in_bps || 0) > 0 || (i.tx_bps || i.out_bps || 0) > 0;
+                          const hasSpeed = (i.if_speed || 0) > 0;
+                          return hasSpeed && hasTraffic;
+                        }
+                        return i.role === roleFilter || (roleFilter === 'upstream' && i.is_upstream);
                       });
-                      const all = filtered.map((i: any) => i.if_name);
+                      const all = filtered.map((i: any) => i.if_index);
                       setSelectedIfaces(all);
                     }}
-                    className="text-[10px] font-bold uppercase px-3 py-1.5 bg-bg-primary border border-border rounded hover:bg-bg-secondary"
+                    className="text-[10px] font-bold uppercase px-3 py-1.5 bg-bg-primary border border-border rounded hover:bg-bg-secondary flex-1"
                   >
                     Selecionar visíveis
                   </button>
                   <button 
                     onClick={() => {
                       setSelectedIfaces([]);
-                      localStorage.setItem('fg_ifaces', JSON.stringify([]));
                     }}
-                    className="text-[10px] font-bold uppercase px-3 py-1.5 bg-bg-primary border border-border rounded hover:bg-bg-secondary"
+                    className="text-[10px] font-bold uppercase px-3 py-1.5 bg-bg-primary border border-border rounded hover:bg-bg-secondary flex-1"
                   >
                     Limpar
                   </button>
                 </div>
-                
-                <label className="flex items-center gap-2 cursor-pointer group">
-                  <div className="relative inline-flex items-center cursor-pointer">
-                    <input 
-                      type="checkbox" 
-                      className="sr-only peer"
-                      checked={showInactive}
-                      onChange={e => setShowInactive(e.target.checked)}
-                    />
-                    <div className="w-8 h-4 bg-border peer-focus:outline-none rounded-full peer peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-primary"></div>
-                  </div>
-                  <span className="text-xs text-text-secondary group-hover:text-text-primary transition-colors">Mostrar todas as interfaces (incluir inativas)</span>
-                </label>
               </div>
               
               <div style={{ overflowY: 'auto', flex: 1 }} className="pr-2 custom-scrollbar">
@@ -1443,18 +1456,20 @@ export default function Dashboard() {
                     const isTechnical = n.includes('null') || n.includes('loopback') || n.includes('virtual') || n.includes('template');
                     if (isTechnical) return false;
 
-                    if (showInactive) return true;
-                    const hasTraffic = (i.rx_bps || i.in_bps || 0) > 0 || (i.tx_bps || i.out_bps || 0) > 0;
-                    const hasSpeed = (i.if_speed || 0) > 0;
-                    return hasSpeed && hasTraffic;
+                    if (roleFilter === 'all') {
+                      const hasTraffic = (i.rx_bps || i.in_bps || 0) > 0 || (i.tx_bps || i.out_bps || 0) > 0;
+                      const hasSpeed = (i.if_speed || 0) > 0;
+                      return hasSpeed && hasTraffic;
+                    }
+                    return i.role === roleFilter || (roleFilter === 'upstream' && i.is_upstream);
                   })
                   .sort((a: any, b: any) => (b.if_speed || 0) - (a.if_speed || 0))
                   .map((iface: any) => {
                     const displayName = iface.if_alias || iface.display_name || iface.if_name;
-                    const isSelected = selectedIfaces.includes(iface.if_name);
+                    const isSelected = selectedIfaces.includes(iface.if_index);
                     return (
                       <label 
-                        key={iface.if_index || iface.if_name}
+                        key={iface.if_index}
                         style={{
                           display: 'flex',
                           alignItems: 'center',
@@ -1472,16 +1487,16 @@ export default function Dashboard() {
                           checked={isSelected}
                           onChange={() => {
                             setSelectedIfaces(prev =>
-                              prev.includes(iface.if_name)
-                                ? prev.filter(n => n !== iface.if_name)
-                                : [...prev, iface.if_name]
+                              prev.includes(iface.if_index)
+                                ? prev.filter(id => id !== iface.if_index)
+                                : [...prev, iface.if_index]
                             );
                           }}
                           className="mr-3 w-4 h-4 rounded border-border text-primary focus:ring-primary"
                         />
                         <div style={{ flex: 1 }}>
                           <div className="flex items-center justify-between">
-                            <div className="text-sm font-bold text-text-primary">{displayName}</div>
+                            <div className="text-sm font-bold text-text-primary truncate max-w-[200px]">{displayName}</div>
                             {iface.if_speed > 0 && (
                               <div className="text-[10px] px-1.5 py-0.5 rounded bg-bg-primary border border-border text-text-secondary font-mono">
                                 {fmtBps(iface.if_speed)}
@@ -1489,7 +1504,7 @@ export default function Dashboard() {
                             )}
                           </div>
                           <div className="text-[10px] text-text-secondary flex gap-3 mt-0.5">
-                            {iface.if_alias && iface.if_alias !== iface.if_name && <span className="opacity-60">{iface.if_name}</span>}
+                            <span className="opacity-60 font-mono">idx: {iface.if_index}</span>
                             <span>RX: <span className="text-accent font-bold">{fmtBps(iface.rx_bps || iface.in_bps)}</span></span>
                             <span>TX: <span className="text-success font-bold">{fmtBps(iface.tx_bps || iface.out_bps)}</span></span>
                           </div>
@@ -1497,6 +1512,18 @@ export default function Dashboard() {
                       </label>
                     );
                   })}
+                {/* Fallback when no interfaces found */}
+                {(Array.isArray(interfaces) ? interfaces : (interfaces?.interfaces || []))
+                  .filter((i: any) => {
+                    if (roleFilter === 'all') {
+                      const hasTraffic = (i.rx_bps || i.in_bps || 0) > 0 || (i.tx_bps || i.out_bps || 0) > 0;
+                      const hasSpeed = (i.if_speed || 0) > 0;
+                      return hasSpeed && hasTraffic;
+                    }
+                    return i.role === roleFilter || (roleFilter === 'upstream' && i.is_upstream);
+                  }).length === 0 && (
+                    <div className="py-8 text-center text-xs text-text-secondary italic">Nenhuma interface encontrada com este filtro</div>
+                  )}
               </div>
 
              <button 
@@ -1508,6 +1535,7 @@ export default function Dashboard() {
            </div>
          </div>
         )}
+
 
         </div>
         </TooltipProvider>
