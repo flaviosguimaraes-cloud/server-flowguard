@@ -615,7 +615,10 @@ export default function BGP() {
         <SheetContent className="sm:max-w-md bg-bg-secondary border-l border-border">
           <SheetHeader className="text-left pb-4">
             <SheetTitle className="flex items-center gap-2 text-xl font-bold">
-              {selectedRoute?.type === 'flowspec' ? 'Regra FlowSpec' : 'Rota Blackhole'}
+              {selectedRoute?.type === 'flowspec' ? 'Regra FlowSpec' : 
+               selectedRoute?.type === 'external' ? 'Anúncio Externo' : 
+               selectedRoute?.type === 'blackhole_flowspec' ? 'Blackhole + FlowSpec' : 
+               'Rota Blackhole'}
             </SheetTitle>
           </SheetHeader>
           
