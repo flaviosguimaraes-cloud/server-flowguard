@@ -184,10 +184,16 @@ export default function BGP() {
   const routes = routesData?.routes || [];
   
   // Contadores para os cards
-  const activeFlowspecCount = routes.filter((r: any) => r.type === 'flowspec').length;
-  const activeUnicastCount = routes.filter((r: any) => 
-    r.type === 'blackhole' || r.type === 'external'
-  ).length;
+  // Contadores para os cards - Ajustado para mostrar apenas rotas que geram anúncio BGP
+  const activeFlowspecCount = routes.filter((r: any) => {
+    const type = (r.action_type || r.type || '').toLowerCase();
+    return type === 'blackhole_flowspec';
+  }).length;
+
+  const activeUnicastCount = routes.filter((r: any) => {
+    const type = (r.action_type || r.type || '').toLowerCase();
+    return type === 'blackhole' || type === 'external' || type === 'blackhole_flowspec';
+  }).length;
 
   const refresh = () => {
     refetchSessions();
