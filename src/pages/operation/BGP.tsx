@@ -473,11 +473,20 @@ export default function BGP() {
                       new Date((route.expires_at || rule?.expires_at).replace(' ', 'T')).getTime() <= now.getTime();
 
                     const getFormattedAction = () => {
-                      if (type === 'blackhole' || type === 'blacklist') {
+                      if (type === 'blackhole' || type === 'blacklist' || type === 'blackhole_flowspec') {
                         return (
                           <div className="flex items-center gap-1 text-danger font-bold">
                             <span className="text-sm">🚫</span>
-                            <span>Descartar</span>
+                            <span>Descartar{type === 'blackhole_flowspec' ? ' (BH+FS)' : ''}</span>
+                          </div>
+                        );
+                      }
+
+                      if (type === 'external') {
+                        return (
+                          <div className="flex items-center gap-1 text-orange-600 font-bold">
+                            <span className="text-sm">🌐</span>
+                            <span>Anunciar /24</span>
                           </div>
                         );
                       }
