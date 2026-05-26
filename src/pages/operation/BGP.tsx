@@ -418,7 +418,14 @@ export default function BGP() {
                   const rules = flowspecData?.rules || flowspecData?.items || [];
                   
                   const displayedRoutes = routes.filter((r: any) => {
+                    const actionType = (r.action_type || r.type || '').toLowerCase();
+                    const allowedTypes = ['blackhole', 'blackhole_flowspec', 'external'];
+                    
+                    // Filtrar apenas tipos que geram anúncio BGP
+                    if (!allowedTypes.includes(actionType)) return false;
+
                     if (showHistory) return true;
+                    
                     const rule = rules.find((f: any) => 
                       f.dst_prefix === r.prefix || f.src_prefix === r.prefix
                     );
