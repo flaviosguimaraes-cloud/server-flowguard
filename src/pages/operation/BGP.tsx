@@ -518,7 +518,7 @@ export default function BGP() {
                     };
 
                     const getFormattedMatch = () => {
-                      if (type !== 'flowspec') return route.community || '—';
+                      if (type !== 'flowspec' && type !== 'blackhole_flowspec') return route.community || '—';
                       // Transform "src:34.18.209.206/32, proto:tcp" into "src:34.18.209.206/32 · proto:TCP"
                       return (route.reason || '')
                         .split(',')
