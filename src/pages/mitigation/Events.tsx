@@ -87,18 +87,34 @@ function SectionDivider({ title }: { title: string }) {
       staleTime: 0,
    });
  
-    const { data: activeMitigations, dataUpdatedAt: activeMitigationsUpdatedAt } = useQuery({
-     queryKey: ['mitigation-active-events'],
-     queryFn: async () => {
-       const r = await api.get('/api/mitigation/active');
-       return r.data;
-     },
+    const { data: activeMitigationsRaw, dataUpdatedAt: activeMitigationsUpdatedAt } = useQuery({
+      queryKey: ['mitigation-active-events'],
+      queryFn: async () => {
+        const r = await api.get('/api/mitigation/active');
+        return r.data;
+      },
       staleTime: 0,
       gcTime: 0,
       refetchInterval: 5000,
       refetchOnMount: 'always',
       refetchOnWindowFocus: true,
-   });
+    });
+
+    const activeMitigations = useMemo(() => {
+      if (!activeMitigationsRaw?.items) return activeMitigationsRaw;
+      
+      const allowedTypes = ['blackhole', 'blackhole_flowspec', 'external'];
+      const filteredItems = activeMitigationsRaw.items.filter((i: any) => {
+        const actionType = (i.action_type || i.type || '').toLowerCase();
+        return allowedTypes.includes(actionType);
+      });
+      
+      return {
+        ...activeMitigationsRaw,
+        items: filteredItems,
+        total: filteredItems.length
+      };
+    }, [activeMitigationsRaw]);
 
     const { data: flowspecRules } = useQuery({
       queryKey: ['mitigation-flowspec-active'],

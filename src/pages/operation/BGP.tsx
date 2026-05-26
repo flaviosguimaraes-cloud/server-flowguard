@@ -184,10 +184,16 @@ export default function BGP() {
   const routes = routesData?.routes || [];
   
   // Contadores para os cards
-  const activeFlowspecCount = routes.filter((r: any) => r.type === 'flowspec').length;
-  const activeUnicastCount = routes.filter((r: any) => 
-    r.type === 'blackhole' || r.type === 'external'
-  ).length;
+  // Contadores para os cards - Ajustado para mostrar apenas rotas que geram anúncio BGP
+  const activeFlowspecCount = routes.filter((r: any) => {
+    const type = (r.action_type || r.type || '').toLowerCase();
+    return type === 'blackhole_flowspec';
+  }).length;
+
+  const activeUnicastCount = routes.filter((r: any) => {
+    const type = (r.action_type || r.type || '').toLowerCase();
+    return type === 'blackhole' || type === 'external' || type === 'blackhole_flowspec';
+  }).length;
 
   const refresh = () => {
     refetchSessions();
@@ -412,7 +418,14 @@ export default function BGP() {
                   const rules = flowspecData?.rules || flowspecData?.items || [];
                   
                   const displayedRoutes = routes.filter((r: any) => {
+                    const actionType = (r.action_type || r.type || '').toLowerCase();
+                    const allowedTypes = ['blackhole', 'blackhole_flowspec', 'external'];
+                    
+                    // Filtrar apenas tipos que geram anúncio BGP
+                    if (!allowedTypes.includes(actionType)) return false;
+
                     if (showHistory) return true;
+                    
                     const rule = rules.find((f: any) => 
                       f.dst_prefix === r.prefix || f.src_prefix === r.prefix
                     );

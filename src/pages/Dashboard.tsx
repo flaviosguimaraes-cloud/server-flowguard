@@ -416,16 +416,32 @@ export default function Dashboard() {
     localStorage.setItem('fg_traffic_source', source);
   }, [source]);
 
-    const { data: activeMitigations, dataUpdatedAt: mitigationsUpdatedAt } = useQuery({
-     queryKey: ['mitigation-active-dashboard'],
-     queryFn: () => api.get('/api/mitigation/active').then(r => r.data),
+    const { data: activeMitigationsRaw, dataUpdatedAt: mitigationsUpdatedAt } = useQuery({
+      queryKey: ['mitigation-active-dashboard'],
+      queryFn: () => api.get('/api/mitigation/active').then(r => r.data),
       enabled: isAuthenticated,
       staleTime: 0,
       gcTime: 0,
       refetchInterval: 10000,
       refetchOnMount: 'always',
       refetchOnWindowFocus: true,
-   });
+    });
+
+    const activeMitigations = useMemo(() => {
+      if (!activeMitigationsRaw?.items) return activeMitigationsRaw;
+      
+      const allowedTypes = ['blackhole', 'blackhole_flowspec', 'external'];
+      const filteredItems = activeMitigationsRaw.items.filter((i: any) => {
+        const actionType = (i.action_type || i.type || '').toLowerCase();
+        return allowedTypes.includes(actionType);
+      });
+      
+      return {
+        ...activeMitigationsRaw,
+        items: filteredItems,
+        total: filteredItems.length
+      };
+    }, [activeMitigationsRaw]);
  
    const { data: connections, dataUpdatedAt } = useQuery({
      queryKey: ['connections'],
