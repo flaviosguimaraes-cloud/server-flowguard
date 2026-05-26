@@ -550,7 +550,7 @@ export default function BGP() {
                             <span className="text-text-secondary">
                               {getFormattedMatch()}
                             </span>
-                            {type === 'flowspec' && (
+                            {(type === 'flowspec' || type === 'blackhole_flowspec') && (
                               <span className="text-[10px]">
                                 {getFormattedAction()}
                               </span>
