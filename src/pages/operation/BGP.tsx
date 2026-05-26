@@ -88,7 +88,7 @@ export default function BGP() {
 
   const { data: routesData, isLoading: loadingRoutes, isRefetching: refetchingRoutes, refetch: refetchRoutes } = useQuery({
     queryKey: ['bgp-routes'],
-    queryFn: () => api.get('/api/bgp/routes').then(r => r.data).catch(() => ({ routes: [] })),
+    queryFn: () => api.get('/api/mitigation/bgp-announcements/active').then(r => r.data).catch(() => ({ items: [], total: 0 })),
     refetchInterval: 10000,
   });
 
@@ -181,17 +181,17 @@ export default function BGP() {
   };
 
   const sessions = sessionsData?.sessions || [];
-  const routes = routesData?.routes || [];
+  const routes = routesData?.items || routesData?.routes || [];
+  const totalRoutes = routesData?.total ?? routes.length;
   
-  // Contadores para os cards
   // Contadores para os cards - Ajustado para mostrar apenas rotas que geram anúncio BGP
   const activeFlowspecCount = routes.filter((r: any) => {
-    const type = (r.action_type || r.type || '').toLowerCase();
-    return type === 'blackhole_flowspec';
+    const type = (r.type || r.action_type || '').toLowerCase();
+    return type === 'flowspec' || type === 'blackhole_flowspec';
   }).length;
 
   const activeUnicastCount = routes.filter((r: any) => {
-    const type = (r.action_type || r.type || '').toLowerCase();
+    const type = (r.type || r.action_type || '').toLowerCase();
     return type === 'blackhole' || type === 'external' || type === 'blackhole_flowspec';
   }).length;
 
@@ -405,12 +405,12 @@ export default function BGP() {
                       <td colSpan={8} className="px-4 py-4"><div className="h-4 bg-border/50 rounded w-full" /></td>
                     </tr>
                   ))
-                ) : routes.length === 0 ? (
+                ) : totalRoutes === 0 ? (
                   <tr>
-                    <td colSpan={8} className="px-4 py-10 text-center text-text-secondary font-medium">
+                    <td colSpan={9} className="px-4 py-10 text-center text-text-secondary font-medium">
                       <div className="flex flex-col items-center gap-2">
-                        <p className="italic">Nenhuma mitigação BGP ativa no momento.</p>
-                        <p className="text-[10px] opacity-70">Rotas aparecem aqui quando IPs são colocados em blackhole ou bloqueados.</p>
+                        <p className="italic">Não há anúncios BGP/FlowSpec ativos no momento.</p>
+                        <p className="text-[10px] opacity-70">Anúncios aparecem aqui quando há mitigações ativas ou rotas externas anunciadas.</p>
                       </div>
                     </td>
                   </tr>
@@ -418,11 +418,11 @@ export default function BGP() {
                   const rules = flowspecData?.rules || flowspecData?.items || [];
                   
                   const displayedRoutes = routes.filter((r: any) => {
-                    const actionType = (r.action_type || r.type || '').toLowerCase();
-                    const allowedTypes = ['blackhole', 'blackhole_flowspec', 'external'];
+                    const actionType = (r.type || r.action_type || '').toLowerCase();
+                    const allowedTypes = ['blackhole', 'blackhole_flowspec', 'external', 'flowspec'];
                     
-                    // Filtrar apenas tipos que geram anúncio BGP
-                    if (!allowedTypes.includes(actionType)) return false;
+                    // Filtrar apenas tipos que geram anúncio BGP e ignorar explicitamente fastnetmon_ban
+                    if (!allowedTypes.includes(actionType) || actionType === 'fastnetmon_ban') return false;
 
                     if (showHistory) return true;
                     
@@ -431,6 +431,8 @@ export default function BGP() {
                     );
                     const expiryStr = r.expires_at || rule?.expires_at;
                     if (!expiryStr) return true;
+                    
+                    // Se estiver no histórico (expirado), mas showHistory for false, não mostra
                     return new Date(expiryStr.replace(' ', 'T')).getTime() > now.getTime();
                   });
 
@@ -439,7 +441,7 @@ export default function BGP() {
                       <tr>
                         <td colSpan={9} className="px-4 py-10 text-center text-text-secondary font-medium">
                           <div className="flex flex-col items-center gap-2">
-                            <p className="italic">Nenhuma mitigação BGP ativa no momento.</p>
+                            <p className="italic">Nenhum anúncio BGP/FlowSpec ativo no momento.</p>
                             {showHistory && <p className="text-[10px] opacity-70">O histórico está vazio.</p>}
                             {!showHistory && routes.length > 0 && (
                               <Button 
@@ -448,7 +450,7 @@ export default function BGP() {
                                 onClick={() => setShowHistory(true)}
                                 className="text-primary text-[10px]"
                               >
-                                Ver {routes.length} rotas no histórico
+                                Ver {routes.length} anúncios no histórico
                               </Button>
                             )}
                           </div>
@@ -471,11 +473,20 @@ export default function BGP() {
                       new Date((route.expires_at || rule?.expires_at).replace(' ', 'T')).getTime() <= now.getTime();
 
                     const getFormattedAction = () => {
-                      if (type === 'blackhole' || type === 'blacklist') {
+                      if (type === 'blackhole' || type === 'blacklist' || type === 'blackhole_flowspec') {
                         return (
                           <div className="flex items-center gap-1 text-danger font-bold">
                             <span className="text-sm">🚫</span>
-                            <span>Descartar</span>
+                            <span>Descartar{type === 'blackhole_flowspec' ? ' (BH+FS)' : ''}</span>
+                          </div>
+                        );
+                      }
+
+                      if (type === 'external') {
+                        return (
+                          <div className="flex items-center gap-1 text-orange-600 font-bold">
+                            <span className="text-sm">🌐</span>
+                            <span>Anunciar /24</span>
                           </div>
                         );
                       }
@@ -507,7 +518,7 @@ export default function BGP() {
                     };
 
                     const getFormattedMatch = () => {
-                      if (type !== 'flowspec') return route.community || '—';
+                      if (type !== 'flowspec' && type !== 'blackhole_flowspec') return route.community || '—';
                       // Transform "src:34.18.209.206/32, proto:tcp" into "src:34.18.209.206/32 · proto:TCP"
                       return (route.reason || '')
                         .split(',')
@@ -539,7 +550,7 @@ export default function BGP() {
                             <span className="text-text-secondary">
                               {getFormattedMatch()}
                             </span>
-                            {type === 'flowspec' && (
+                            {(type === 'flowspec' || type === 'blackhole_flowspec') && (
                               <span className="text-[10px]">
                                 {getFormattedAction()}
                               </span>
@@ -613,7 +624,10 @@ export default function BGP() {
         <SheetContent className="sm:max-w-md bg-bg-secondary border-l border-border">
           <SheetHeader className="text-left pb-4">
             <SheetTitle className="flex items-center gap-2 text-xl font-bold">
-              {selectedRoute?.type === 'flowspec' ? 'Regra FlowSpec' : 'Rota Blackhole'}
+              {selectedRoute?.type === 'flowspec' ? 'Regra FlowSpec' : 
+               selectedRoute?.type === 'external' ? 'Anúncio Externo' : 
+               selectedRoute?.type === 'blackhole_flowspec' ? 'Blackhole + FlowSpec' : 
+               'Rota Blackhole'}
             </SheetTitle>
           </SheetHeader>
           
@@ -622,15 +636,26 @@ export default function BGP() {
               {/* Status Header */}
               <div className={clsx(
                 "p-4 rounded-xl border flex items-center gap-3",
-                selectedRoute.type === 'flowspec' ? "bg-primary/5 border-primary/20 text-primary" : "bg-danger/5 border-danger/20 text-danger"
+                selectedRoute.type === 'flowspec' ? "bg-primary/5 border-primary/20 text-primary" : 
+                selectedRoute.type === 'external' ? "bg-orange-500/5 border-orange-500/20 text-orange-600" :
+                "bg-danger/5 border-danger/20 text-danger"
               )}>
-                <div className={clsx("p-2 rounded-lg", selectedRoute.type === 'flowspec' ? "bg-primary/10" : "bg-danger/10")}>
-                  {selectedRoute.type === 'flowspec' ? <Shield size={24} /> : <AlertCircle size={24} />}
+                <div className={clsx("p-2 rounded-lg", 
+                  selectedRoute.type === 'flowspec' ? "bg-primary/10" : 
+                  selectedRoute.type === 'external' ? "bg-orange-500/10" :
+                  "bg-danger/10"
+                )}>
+                  {selectedRoute.type === 'flowspec' ? <Shield size={24} /> : 
+                   selectedRoute.type === 'external' ? <Network size={24} /> :
+                   <AlertCircle size={24} />}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-black uppercase tracking-wider text-xs">
-                      {selectedRoute.type === 'flowspec' ? '🟣 FLOWSPEC' : '🔴 BLACKHOLE'}
+                      {selectedRoute.type === 'flowspec' ? '🟣 FLOWSPEC' : 
+                       selectedRoute.type === 'external' ? '🟠 EXTERNAL' :
+                       selectedRoute.type === 'blackhole_flowspec' ? '🔴🟣 BH + FS' :
+                       '🔴 BLACKHOLE'}
                     </span>
                     {selectedRoute.type === 'flowspec' && (
                       <span className="font-bold">· {selectedRoute.action === 'discard' ? 'Descartar' : 'Rate Limit'}</span>
