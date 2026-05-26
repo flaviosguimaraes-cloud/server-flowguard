@@ -88,7 +88,7 @@ export default function BGP() {
 
   const { data: routesData, isLoading: loadingRoutes, isRefetching: refetchingRoutes, refetch: refetchRoutes } = useQuery({
     queryKey: ['bgp-routes'],
-    queryFn: () => api.get('/api/bgp/routes').then(r => r.data).catch(() => ({ routes: [] })),
+    queryFn: () => api.get('/api/mitigation/bgp-announcements/active').then(r => r.data).catch(() => ({ items: [], total: 0 })),
     refetchInterval: 10000,
   });
 
