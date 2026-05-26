@@ -627,15 +627,26 @@ export default function BGP() {
               {/* Status Header */}
               <div className={clsx(
                 "p-4 rounded-xl border flex items-center gap-3",
-                selectedRoute.type === 'flowspec' ? "bg-primary/5 border-primary/20 text-primary" : "bg-danger/5 border-danger/20 text-danger"
+                selectedRoute.type === 'flowspec' ? "bg-primary/5 border-primary/20 text-primary" : 
+                selectedRoute.type === 'external' ? "bg-orange-500/5 border-orange-500/20 text-orange-600" :
+                "bg-danger/5 border-danger/20 text-danger"
               )}>
-                <div className={clsx("p-2 rounded-lg", selectedRoute.type === 'flowspec' ? "bg-primary/10" : "bg-danger/10")}>
-                  {selectedRoute.type === 'flowspec' ? <Shield size={24} /> : <AlertCircle size={24} />}
+                <div className={clsx("p-2 rounded-lg", 
+                  selectedRoute.type === 'flowspec' ? "bg-primary/10" : 
+                  selectedRoute.type === 'external' ? "bg-orange-500/10" :
+                  "bg-danger/10"
+                )}>
+                  {selectedRoute.type === 'flowspec' ? <Shield size={24} /> : 
+                   selectedRoute.type === 'external' ? <Network size={24} /> :
+                   <AlertCircle size={24} />}
                 </div>
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-black uppercase tracking-wider text-xs">
-                      {selectedRoute.type === 'flowspec' ? '🟣 FLOWSPEC' : '🔴 BLACKHOLE'}
+                      {selectedRoute.type === 'flowspec' ? '🟣 FLOWSPEC' : 
+                       selectedRoute.type === 'external' ? '🟠 EXTERNAL' :
+                       selectedRoute.type === 'blackhole_flowspec' ? '🔴🟣 BH + FS' :
+                       '🔴 BLACKHOLE'}
                     </span>
                     {selectedRoute.type === 'flowspec' && (
                       <span className="font-bold">· {selectedRoute.action === 'discard' ? 'Descartar' : 'Rate Limit'}</span>
