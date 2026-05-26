@@ -181,17 +181,17 @@ export default function BGP() {
   };
 
   const sessions = sessionsData?.sessions || [];
-  const routes = routesData?.routes || [];
+  const routes = routesData?.items || routesData?.routes || [];
+  const totalRoutes = routesData?.total ?? routes.length;
   
-  // Contadores para os cards
   // Contadores para os cards - Ajustado para mostrar apenas rotas que geram anúncio BGP
   const activeFlowspecCount = routes.filter((r: any) => {
-    const type = (r.action_type || r.type || '').toLowerCase();
-    return type === 'blackhole_flowspec';
+    const type = (r.type || r.action_type || '').toLowerCase();
+    return type === 'flowspec' || type === 'blackhole_flowspec';
   }).length;
 
   const activeUnicastCount = routes.filter((r: any) => {
-    const type = (r.action_type || r.type || '').toLowerCase();
+    const type = (r.type || r.action_type || '').toLowerCase();
     return type === 'blackhole' || type === 'external' || type === 'blackhole_flowspec';
   }).length;
 
